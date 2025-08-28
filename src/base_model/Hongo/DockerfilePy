@@ -1,0 +1,22 @@
+FROM ubuntu:24.04 AS build-env
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=Asia/Tokyo
+
+RUN apt-get update
+RUN apt-get -y --no-install-recommends install build-essential
+RUN apt-get -y --no-install-recommends install clang
+RUN apt-get -y --no-install-recommends install cmake
+RUN apt-get -y --no-install-recommends install python3.12-dev
+RUN apt-get -y --no-install-recommends install python3-pip
+RUN apt-get -y --no-install-recommends install swig
+RUN pip3 install --break-system-packages setuptools
+
+
+WORKDIR /app
+COPY src /app/src
+COPY CMakeLists.txt /app/
+COPY setup.py /app/
+COPY build.sh /app/
+
+ENV BUILD_DIR=/app/build

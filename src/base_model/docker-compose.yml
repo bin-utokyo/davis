@@ -1,0 +1,38 @@
+name: mfdrl_hongo
+
+services:
+  hongo_py:
+    build:
+      context: ./Hongo
+      dockerfile: DockerfilePy
+    image: hongo_py
+    container_name: hongo_py
+    working_dir: /app
+    command: ["bash", "build.sh"]
+    env_file:
+      - .env.local
+    volumes:
+      - type: volume
+        source: hongo_build
+        target: /app/build
+  mfdrl_hongo:
+    build:
+      context: ./MFDRL-Hongo
+      dockerfile: Dockerfile
+    image: mfdrl_hongo
+    container_name: mfdrl_hongo
+    working_dir: /app
+    command: ["bash", "run.sh"]
+    env_file:
+      - .env.local
+    volumes:
+      - ./MFDRL-Hongo:/app
+      - type: volume
+        source: hongo_build
+        target: /Hongo/build
+    depends_on:
+      - hongo_py
+volumes:
+  hongo_build:
+
+

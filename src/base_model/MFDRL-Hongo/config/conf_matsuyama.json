@@ -1,0 +1,36 @@
+{
+  "input_dir_hongo": "data/Hongo/input/matsuyama/",
+  "output_dir_hongo": "data/Hongo/output/matsuyama/",
+  "input_dir_mfdrl": "data/MFD-RL/input/matsuyama/",
+  "output_dir_mfdrl": "data/MFD-RL/output/matsuyama/",
+  "output_dir": "data/output/matsuyama/",
+  "mesh_file_mfdrl": "data/500mesh/ehime500m.csv",
+  "node_mesh_file": "data/Hongo/input/matsuyama/node_mesh.pickle",
+  "bb_coord": [
+    [132.742417,33.847367],
+    [132.785740,33.856259],
+    [132.791491,33.838777],
+    [132.742567,33.829544]
+  ],
+  "plane_num": 4,
+  "date_time": 1602147610,
+  "start_time": 36000,
+  "end_time": 39600,
+  "hongo_meshes": [
+    503265192,
+    503265094,
+    503265092,
+    503266003,
+    503266102,
+    503266004,
+    503266002,
+    503266111,
+    503266013,
+    503266011,
+    503266112,
+    503266014,
+    503266012
+  ],
+  "satellite_dir": null,
+  "population_file": "data/mobaku/clipped_mesh_pop_201910151100_00000.csv"
+}

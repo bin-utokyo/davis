@@ -1,0 +1,9 @@
+shapely
+geopandas
+pyproj
+pandas
+numpy
+scipy
+networkx
+osmnx
+momepy
