@@ -1,0 +1,166 @@
+# macOS
+.AppleDouble
+.LSOverride
+Icon?
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# VSCode
+.vscode/
+
+# JetBrains IDEs
+.idea/
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.Python
+env/
+venv/
+ENV/
+.env/
+.venv/
+env.bak/
+venv.bak/
+.mypy_cache/
+.pytest_cache/
+.coverage
+coverage.xml
+*.cover
+.hypothesis/
+.tox/
+.nox/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Ruby
+.bundle/
+log/
+tmp/
+*.gem
+.rbenv-version
+.ruby-version
+.ruby-gemset
+vendor/bundle/
+
+# Java
+*.class
+*.jar
+*.war
+*.ear
+*.iml
+.classpath
+.project
+.settings/
+target/
+
+# C/C++
+*.o
+*.obj
+*.so
+*.exe
+*.dll
+*.out
+*.a
+*.dylib
+*.lib
+*.app
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+
+# Go
+bin/
+pkg/
+*.test
+
+# Rust
+target/
+Cargo.lock
+
+# Logs
+*.log
+logs/
+
+# Build
+dist/
+build/
+tmp/
+temp/
+.cache/
+.next/
+.nuxt/
+.parcel-cache/
+.svelte-kit/
+.vercel/
+.output/
+
+# Dependency directories
+jspm_packages/
+bower_components/
+
+# dotenv environment variables
+.env
+.env.*
+!.env.example
+
+# Backup & temp files
+*.bak
+*.swp
+*.swo
+*.tmp
+*.temp
+*.orig
+*.old
+*.save
+*.pid
+*.seed
+*.pid.lock
+
+# Others
+.DS_Store
+.AppleDouble
+.LSOverride
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+node_modules/
+coverage/
+lib-cov/
+npm-debug.log
+testem.log
+tests/coverage/
+libpeerconnection.log
+*.seed
+*.log
+*.csv
+*.dat
+*.out
+*.pid
+*.gz
+
+# Custom
+# !.gitkeep
