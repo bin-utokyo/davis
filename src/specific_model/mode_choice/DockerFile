@@ -1,0 +1,12 @@
+# ベースイメージ
+FROM python:3
+
+# 作業ディレクトリの作成
+WORKDIR /app
+
+# 必要なファイルをコピー（requirements.txtがあれば先にコピー）
+COPY requirements.txt ./
+
+# 依存パッケージのインストール
+RUN pip install --no-cache-dir -r requirements.txt
+

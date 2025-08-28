@@ -1,0 +1,23 @@
+services:
+  routechoice:
+    build: 
+      context: .
+      dockerfile: DockerFile
+    image: routechoice:latest
+    container_name: routechoice
+    command: ["python", "code/main_rl.py", "${ESTIMATE_MODE}", "${INPUT}", "${OUTPUT}"]
+    working_dir: /app
+    env_file:
+      - .env
+    volumes:
+      - type: bind
+        source: ./code
+        target: /app/code
+      - type: bind
+        source: ./data/input
+        target: /app/input
+        read_only: true
+      - type: bind
+        source: ./data/output
+        target: /app/output
+    tty: true
