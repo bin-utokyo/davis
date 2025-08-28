@@ -10,6 +10,7 @@ data/input/     # 入力データ
 data/output/    # 出力結果
 requirements.txt
 DockerFile
+docker-compose.yml
 .env            # 実行モードやパスの設定
 ```
 
