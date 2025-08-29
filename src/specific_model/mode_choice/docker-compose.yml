@@ -5,7 +5,7 @@ services:
       dockerfile: DockerFile
     image: modechoice:latest
     container_name: modechoice
-    command: ["python", "code/main_mc.py", "${ESTIMATE_MODE}", "${INPUT}", "${OUTPUT}"]
+    command: ["python", "-m", "code.main_mc", "${ESTIMATE_MODE}", "${INPUT}", "${OUTPUT}", "${MODEL_NAME}"]
     working_dir: /app
     env_file:
       - .env

@@ -6,15 +6,21 @@ import pandas as pd
 
 from scipy.optimize import minimize
 
-from definition import Los, Trip
+from .definition import Los, Trip
+from .abc import ModeChoiceModel
+from .model import MNL
 
 
-def estimate(input_dir: str, output_dir: Optional[str]) -> None:
+def get_model(model_name: str) -> ModeChoiceModel:
+    if model_name == "MNL":
+        return MNL()
+    else:
+        raise ValueError(f"Unknown model: {model_name}")
+
+
+def estimate(input_dir: str, output_dir: Optional[str], model_name: str = "MNL") -> None:
     df_los = pd.read_csv(os.path.join(input_dir, "los.csv"), engine="pyarrow")
     df_trip = pd.read_csv(os.path.join(input_dir, "trip.csv"), engine="pyarrow")
-    print([row
-        for row in df_los.to_dict(orient="records")
-    ])
 
     los_dict = {
         (row["OZone"], row["DZone"]): Los.from_dict(row)
@@ -30,6 +36,8 @@ def estimate(input_dir: str, output_dir: Optional[str]) -> None:
         "Mode": int
     })
 
+    model = get_model(model_name)
+
     trips = [
         Trip(
             trip_id=row["TripID"],
@@ -37,6 +45,7 @@ def estimate(input_dir: str, output_dir: Optional[str]) -> None:
             arr_time=row["ArrivalTime"],
             o_zone=row["OZone"],
             d_zone=row["DZone"],
+            model=model,  # dependency injection
             mode=row["Mode"]
         )
         for row in df_trip.to_records(index=False)
@@ -65,7 +74,6 @@ def estimate(input_dir: str, output_dir: Optional[str]) -> None:
                             + compute_minus_ll(params + h * e_i - h * e_j)
                             + compute_minus_ll(params - h * e_i + h * e_j)
                             - compute_minus_ll(params - h * e_i - h * e_j)) / (4 * h * h)
-        print(res)
         return res
 
     def tval(x: np.ndarray) -> np.ndarray:
@@ -102,14 +110,15 @@ def estimate(input_dir: str, output_dir: Optional[str]) -> None:
 if __name__ == "__main__":
     argv = sys.argv
     if len(argv) < 4:
-        print("Usage: python main_mc.py <estimation_mode> <input_dir> <output_dir>")
+        print("Usage: python main_mc.py <estimation_mode> <input_dir> <output_dir> [<model_name>]")
         print(argv)
         exit(1)
 
     estimation_mode = bool(argv[1])
     input_dir = argv[2]
     output_dir = argv[3]
+    model_name = argv[4] if len(argv) > 4 else "MNL"
     if estimation_mode:
-        estimate(input_dir, output_dir)
+        estimate(input_dir, output_dir, model_name)
     else:
         raise NotImplementedError(f"Estimation mode '{estimation_mode}' is not supported.")
