@@ -18,9 +18,6 @@ class MNL(ModeChoiceModel):
         Returns:
             dict[int, float]: Dictionary of mode choice probabilities.
         """
-        if not self.isValid(los, params):
-            raise ValueError("Parameter vector length must match attribute names length.")
-
         utilities = np.full(len(los.availability), -np.inf, dtype=np.float32)
         for i, mode in enumerate(los.availability.keys()):
             available = los.availability[int(mode)]

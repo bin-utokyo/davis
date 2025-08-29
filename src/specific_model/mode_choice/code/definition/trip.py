@@ -36,9 +36,26 @@ class Trip:
         """
         if self.mode is None:
             raise ValueError("Chosen mode is not specified for the trip.")
+        if not self.model.isValid(los, params):
+            raise ValueError("Invalid Level of Service data or parameters.")
 
         probabilities = self.model.calculate_mode_probability(los, params)
         return float(np.log(np.clip(probabilities[int(self.mode)], 1e-10, None)) if int(self.mode) in probabilities and probabilities[int(self.mode)] > 0 else 0)
+    
+    def choose_mode(self, los: Los, params: np.ndarray) -> int:
+        """
+        Choose the mode stochastically for a given level of service (LOS) and parameters.
+
+        Args:
+            los (Los): The level of service object containing relevant attributes.
+            params (np.ndarray): The model parameters to use for the choice.
+
+        Returns:
+            int: The ID of the chosen mode.
+        """
+        if not self.model.isValid(los, params):
+            raise ValueError("Invalid Level of Service data or parameters.")
+        return self.model.choose_mode(los, params)
 
 
 # 遅延インポート
