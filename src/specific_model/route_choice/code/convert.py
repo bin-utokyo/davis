@@ -1,14 +1,16 @@
+from typing import Optional
 import pandas as pd
 import numpy as np
 
-def to_hongo_params(result_paths):
+def to_hongo_params(result_paths: dict[int, str]) -> pd.DataFrame:
     """
     Convert parameters to Hongo format.
     
     Parameters:
-    result_paths (dict): Dictionary with keys 0, 3 or 6 (0: car, 3: ped, 6: bus), each containing the path to the result file.
+        result_paths (dict): Dictionary with keys 0, 3 or 6 (0: car, 3: ped, 6: bus), each containing the path to the result file.
+
     Returns:
-    pd.DataFrame: DataFrame with parameters and feature names.
+        pd.DataFrame: DataFrame with parameters and feature names.
     """
     dfs = []
     for k, v in result_paths.items():
@@ -28,20 +30,20 @@ def to_hongo_params(result_paths):
     return df
 
 
-def to_hongo_link(link_veh, node, link_ped=None, velocity=None, lanes=None):
+def to_hongo_link(link_veh: pd.DataFrame, node: pd.DataFrame, link_ped: Optional[pd.DataFrame] = None, velocity: Optional[np.ndarray] = None, lanes: Optional[np.ndarray] = None) -> tuple[pd.DataFrame, pd.DataFrame]:
     """
     Convert link data to Hongo format.
     
     Parameters:
-    link_veh (pd.DataFrame): DataFrame containing vehicle link data with columns LinkID, ONodeID, DNodeID, prop1, prop2, ...
-    node (pd.DataFrame): DataFrame containing node data with columns NodeID, Longitude, Latitude.
-    link_ped (pd.DataFrame, optional): DataFrame containing pedestrian link data with columns LinkID, ONodeID, DNodeID, prop1, prop2, ...
-    velocity (np.ndarray, optional): Default velocity for link_veh. If None, defaults to 30.
-    lanes (np.ndarray, optional): Default number of lanes for link_veh. If None, defaults to 1.
+        link_veh (pd.DataFrame): DataFrame containing vehicle link data with columns LinkID, ONodeID, DNodeID, prop1, prop2, ...
+        node (pd.DataFrame): DataFrame containing node data with columns NodeID, Longitude, Latitude.
+        link_ped (pd.DataFrame, optional): DataFrame containing pedestrian link data with columns LinkID, ONodeID, DNodeID, prop1, prop2, ...
+        velocity (np.ndarray, optional): Default velocity for link_veh. If None, defaults to 30.
+        lanes (np.ndarray, optional): Default number of lanes for link_veh. If None, defaults to 1.
 
     Returns:
-    pd.DataFrame: DataFrame with Hongo format link data. Columns: ID,ONodeID,DNodeID,Velocity,LeftCarNum,LeftPedNum,LeftBeltNum,RightCarNum,RightPedNum,RightBeltNum,upNodeLat,upNodeLon,dnNodeLat,dnNodeLon
-    pd.DataFrame: DataFrame with Hongo format link prop data. Columns: LinkID,prop1,prop2,...
+        pd.DataFrame: DataFrame with Hongo format link data. Columns: ID,ONodeID,DNodeID,Velocity,LeftCarNum,LeftPedNum,LeftBeltNum,RightCarNum,RightPedNum,RightBeltNum,upNodeLat,upNodeLon,dnNodeLat,dnNodeLon
+        pd.DataFrame: DataFrame with Hongo format link prop data. Columns: LinkID,prop1,prop2,...
     """
     node = node.set_index('NodeID', drop=False)
 
@@ -117,15 +119,15 @@ def to_hongo_link(link_veh, node, link_ped=None, velocity=None, lanes=None):
 
     return link_hongo, link_prop
 
-def to_hongo_node(nodes):
+def to_hongo_node(nodes: pd.DataFrame | list[pd.DataFrame]) -> pd.DataFrame:
     """
     Convert node data to Hongo format.
     
     Parameters:
-    nodes (pd.DataFrame | list[pd.DataFrame]): DataFrame containing node data with columns NodeID, Longitude, Latitude.
+        nodes (pd.DataFrame | list[pd.DataFrame]): DataFrame containing node data with columns NodeID, Longitude, Latitude.
     
     Returns:
-    pd.DataFrame: DataFrame with Hongo format node data. Columns: ID,Lat,Lon
+        pd.DataFrame: DataFrame with Hongo format node data. Columns: ID,Lat,Lon
     """
     if isinstance(nodes, list):
         nodes = pd.concat(nodes, ignore_index=True)
