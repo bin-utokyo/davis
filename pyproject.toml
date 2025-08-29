@@ -7,14 +7,14 @@ requires-python = ">=3.13"
 dev = ["mypy>=1.17.1", "ruff>=0.12.10"]
 
 [tool.uv.workspace]
-members = ["src/*"]
+members = ["packages/*"]
 
 [tool.ruff]
 select = ["ALL"]
 ignore = ["D", "E501", "S101", "RUF001", "RUF003"]
 
 [tool.setuptools.packages.find]
-include = ["src*"]
+include = ["packages*"]
 exclude = ["data"]
 
 [project.urls]

@@ -4,7 +4,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field, HttpUrl, field_validator
 
-from .dataset_config import LocalizedStr
+from dataset_cli.schemas.dataset_config import LocalizedStr
 
 
 class PdfUrls(BaseModel):
