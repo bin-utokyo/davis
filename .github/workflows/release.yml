@@ -1,0 +1,44 @@
+name: Create Release and Upload Assets
+
+on:
+    push:
+        tags:
+            - "v*"
+
+permissions:
+    contents: write
+
+jobs:
+    build-and-release:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v5
+
+            - name: Install uv
+              uses: astral-sh/setup-uv@v6
+              with:
+                  enable-cache: true
+
+            - name: Setup DVC with Secrets
+              run: |
+                  uv run dvc remote modify --local gdrive_remote gdrive_client_id ${{ secrets.GDRIVE_CLIENT_ID }}
+                  uv run dvc remote modify --local gdrive_remote gdrive_client_secret ${{ secrets.GDRIVE_CLIENT_SECRET }}
+
+            - name: Create dist directory
+              run: mkdir dist
+
+            - name: Generate Manifest and Bootstrap Package
+              run: |
+                  uv run davis manage generate-manifest --output dist/manifest.json
+                  uv run davis manage create-bootstrap --output dist/dvc-bootstrap.zip
+
+            - name: Build Python package
+              run: uv build --out-dir dist
+
+            - name: Create GitHub Release
+              id: create_release
+              uses: softprops/action-gh-release@v2
+              with:
+                  files: dist/*
+                  token: ${{ secrets.GITHUB_TOKEN }}

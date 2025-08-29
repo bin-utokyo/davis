@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+    <head>
+        <meta charset="UTF-8" />
+        <title>README: {{ data.name[lang] }}</title>
+    </head>
+    <body>
+        <header>
+            <h1>{{ data.name[lang] }}</h1>
+            <p class="subtitle">
+                {{ data.year }}{% if lang == 'ja' %}年{% endif %} / {{ data.city[lang]
+                }}
+            </p>
+        </header>
+
+        <section id="description">
+            <h2>{% if lang == 'ja' %} 概要 {% else %} Overview {% endif %}</h2>
+            <p>{{ data.description[lang] }}</p>
+        </section>
+
+        <section id="license">
+            <h2>
+                {% if lang == 'ja' %} ライセンス {% else %} License {% endif %}
+            </h2>
+            <p>{{ data.license_[lang] }}</p>
+        </section>
+
+        <section id="columns">
+            <h2>
+                {% if lang == 'ja' %} データカラム仕様 {% else %} Data Column
+                Specification {% endif %}
+            </h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th class="column-name">
+                            {% if lang == 'ja' %} カラム名 {% else %} Column
+                            Name {% endif %}
+                        </th>
+                        <th class="column-schema">
+                            {% if lang == 'ja' %} データ型 {% else %} Data Type
+                            {% endif %}
+                        </th>
+                        <th class="column-description">
+                            {% if lang == 'ja' %} 説明 {% else %} Description {% endif
+                            %}
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for column in data.columns %}
+                    <tr>
+                        <td class="column-name">{{ column.name }}</td>
+                        <td class="column-schema">
+                            <code> {{ column.type_.name }} </code>
+                        </td>
+                        <td class="column-description">
+                            {# descriptionが辞書か文字列かnullかを判定して表示 #} {% if
+                            column.description %} {{
+                            column.description[lang] }} {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </section>
+
+        <footer>
+            <h2>
+                {% if lang == 'ja' %} ハッシュ値 (SHA-256) {% else %} Hash Value
+                {% endif %}
+            </h2>
+            <pre class="hash"><code>{{ data.hash_ }}</code></pre>
+        </footer>
+        <div id="footer-info">
+            <p>
+                {% if lang == 'ja' %} 最終更新日 {% else %} Last Updated {% endif
+                %}: {%if lang == 'ja' %}{{ last_updated.strftime("%Y年%m月%d日
+                %H:%M:%S") }}{% else %}{{ last_updated.strftime("%Y-%m-%d
+                %H:%M:%S") }}{% endif %}
+            </p>
+            <p>
+                &copy;{% if lang == 'ja' %}東大交通研{% else %}BinN, UTokyo{% endif
+                %} {{ last_updated.year }}.
+            </p>
+        </div>
+    </body>
+</html>

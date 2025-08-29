@@ -1,0 +1,36 @@
+[project]
+name = "davis-cli"
+version = "0.1.0"
+requires-python = ">=3.13"
+dependencies = [
+    "httpx>=0.28.1",
+    "polars>=1.32.3",
+    "pydantic>=2.11.7",
+    "pyyaml>=6.0.2",
+    "rich>=14.1.0",
+    "typer>=0.16.1",
+    "weasyprint>=65.1",
+    "jinja2>=3.1.6",
+    "charset-normalizer>=3.4.2",
+]
+
+[project.scripts]
+davis = "dataset_cli.main:app"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/dataset_cli"]
+
+[tool.uv.sources]
+dataset-cli = { workspace = true }
+
+[dependency-groups]
+dev = [
+    "types-pyyaml>=6.0.12.20250822",
+]
+
+[tool.uv]
+package = true
