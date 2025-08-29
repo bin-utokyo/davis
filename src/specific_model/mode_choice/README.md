@@ -20,9 +20,10 @@ docker-compose.yml
 
 ## .envファイル例
 ```
-ESTIMATE_MODE=1
+ESTIMATE_MODE=true
 INPUT=input/test
 OUTPUT=output/test
+MODEL_NAME=MNL
 ```
 
 ## ビルドと実行
@@ -35,8 +36,9 @@ $ docker-compose up
 ```
 
 ## コマンド・モード切替
-- `.env`の`ESTIMATE_MODE`を0，1に変更することで、実行内容を切り替えられます。
+- `.env`の`ESTIMATE_MODE`をtrue，falseに変更することで、実行内容を切り替えられます。
 - 必要に応じて`INPUT`や`OUTPUT`のパスも変更してください。
+- `MODEL_NAME`を変更することで、使用するモデルを切り替えられます。（現状のサポートはcode/modelフォルダ内のもののみ）
 
 ## 注意事項
 - データや出力の永続化のため、`volumes`でローカルディレクトリとコンテナ内ディレクトリをバインドしています。
