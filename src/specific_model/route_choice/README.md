@@ -41,4 +41,9 @@ $ docker-compose up
 ## 注意事項
 - データや出力の永続化のため、`volumes`でローカルディレクトリとコンテナ内ディレクトリをバインドしています。
 - Pythonコードの修正は`code/`ディレクトリ内で行ってください。
+- 
+---
 
+# JupyterNotebook 実行手順
+
+code/main.ipynb内の指示に従って順にセルを実行して下さい．
