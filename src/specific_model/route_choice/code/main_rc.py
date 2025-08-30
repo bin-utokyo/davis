@@ -68,9 +68,9 @@ def estimate(input_dir: str, output_dir: str, model_name: str = "RL") -> None:
 
     result_str = f"""
     sample number = {len(transition_list)}
-        variables = {', '.join(map(str, network.f_name))}
-        parameter = {', '.join(map(str, res.x))}
-          t value = {', '.join(map(str, t_val))}
+        variables = [{', '.join(map(str, network.f_name))}]
+        parameter = [{', '.join(map(str, res.x))}]
+          t value = [{', '.join(map(str, t_val))}]
                L0 = {LL0}
                LL = {LL}
              rho2 = {rho2}
@@ -96,7 +96,6 @@ def simulate(input_dir: str, output_dir: str, model_name: str = "RL") -> None:
 
     df_transition.drop(columns="NextLinkID", inplace=True)
     transition_list = [LinkTransition.from_dict(row, network, model) for row in df_transition.to_dict(orient="records")]
-    transition_list = [t for t in transition_list if t is not None]# remove None values
 
     # Read parameter
     param_path = os.path.join(input_dir, "result.txt")
@@ -113,8 +112,11 @@ def simulate(input_dir: str, output_dir: str, model_name: str = "RL") -> None:
     # Simulation
     next_link_ids = []
     for transition in transition_list:
-        next_link_id = model.choose_transition(transition, params)
-        next_link_ids.append(next_link_id)
+        if transition is not None:
+            next_link_id = model.choose_transition(transition, params)
+            next_link_ids.append(next_link_id)
+        else:
+            next_link_ids.append(None)
 
     df_transition["NextLinkID"] = next_link_ids
     df_transition.to_csv(os.path.join(output_dir, "transition_simulated.csv"), index=False)
