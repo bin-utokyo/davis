@@ -1,3 +1,5 @@
+import os
+from logging import getLogger, StreamHandler, Formatter
 
 import numpy as np
 from scipy.sparse import csr_matrix, lil_matrix, csr_array, vstack, hstack
@@ -5,6 +7,17 @@ from scipy.sparse import csr_matrix, lil_matrix, csr_array, vstack, hstack
 from ..abc import RouteChoiceModel
 
 __all__ = ["RL"]
+
+# logger
+loglevel = os.environ.get("LOGLEVEL", "WARNING").upper()
+log_format = "[%(asctime)s] %(levelname)s:%(filename)s %(lineno)d:%(message)s"
+
+logger = getLogger(__name__)
+formatter = Formatter(log_format)
+handler = StreamHandler()
+handler.setFormatter(formatter)
+logger.addHandler(handler)
+logger.setLevel(loglevel)
 
 
 class RL(RouteChoiceModel):
@@ -54,8 +67,9 @@ class RL(RouteChoiceModel):
         beta = self.get_beta(params)
 
         down_link_idxs = np.array([self.network.link_id2idx[lid] for lid in link_transition.down_link_ids])
+        link_idx = self.network.link_id2idx[link_transition.link_id]
 
-        probs = exp_u[down_link_idxs] * (exp_v[down_link_idxs] ** beta) / exp_v[link_transition.link_id]
+        probs = exp_u[down_link_idxs] * (exp_v[down_link_idxs] ** beta) / exp_v[link_idx]
 
         # normalize
         probs = probs / probs.sum()
@@ -108,15 +122,13 @@ class RL(RouteChoiceModel):
 
         utils = np.einsum('ij,j->i', self.X, params)  # (1, n_link + 1)
         utils = np.clip(utils, -30, 30)  # Avoid overflow
-        print("utils")
-
         exp_mu_utils = np.exp(mu * utils)
-        print(self.link_adj_matrix.shape, exp_mu_utils.shape)
+
         M = self.link_adj_matrix.tocsc(copy=True)
         for i in range(M.shape[1]):
             M.data[M.indptr[i]:M.indptr[i + 1]] *= exp_mu_utils[i]
         M = M.tocsr()
-        print("M")
+
         self.M_cache[cache_key] = csr_matrix(M)
         return self.M_cache[cache_key]
     
@@ -130,7 +142,7 @@ class RL(RouteChoiceModel):
             float: Discount factor (beta).
         """
         if self.estimate_discount:
-            return params[-1]
+            return 1 / (1 + np.exp(params[-1]))
         else:
             return self.beta
 
@@ -158,7 +170,7 @@ class RL(RouteChoiceModel):
         b = csr_array(b)
 
         M_d = M.tolil(copy=True)
-        d_idxs = np.array([self.network.link_id2idx[lid] for lid in self.network.up_link_idx[d_node_id]])
+        d_idxs = np.array(self.network.up_link_idx[d_node_id])
         M_d[d_idxs, -1] = 1
         M_d = M_d.tocsr()
 
@@ -168,15 +180,16 @@ class RL(RouteChoiceModel):
         tms = 1
         dl_z = 100.
         while dl_z > 0.1 or tms <= (np.sqrt(self.network.n_link) * 2):
-            V_pre = V
+            V_pre = V.copy()
             V_new = M_d @ (csr_array(V ** beta)) + b
             V = V_new.toarray()
             dl_z = np.linalg.norm(V_new - V_pre, axis=0)
             tms += 1
-            print("dl_z", dl_z)
-            if tms > 10000:
-                print("Warning: Value iteration did not converge within 10000 iterations.")
-        print(dl_z, tms)
+            if tms > 100000:
+                logger.warning("Value iteration did not converge within 100000 iterations.")
+                break
+            if np.isnan(V).any():
+                raise ValueError("NaN encountered in value iteration. Check model parameters.")
 
         self.V_cache[cache_key] = V.flatten()
         return self.V_cache[cache_key]
@@ -190,6 +203,9 @@ class RL(RouteChoiceModel):
         """
         X = np.zeros((self.network.n_link + 1, len(self.network.f_name)), dtype=np.float32) # last link is dummy link
         for i, val in enumerate(self.network.attr.values()):
+            if np.isnan(val).any():
+                logger.warning("NaN values found in link attributes. They will be treated as 0.")
+                val = np.nan_to_num(val, nan=0)
             X[:-1, i] = val
         return X
 

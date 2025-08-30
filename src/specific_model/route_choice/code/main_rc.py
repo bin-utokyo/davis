@@ -27,6 +27,7 @@ def estimate(input_dir: str, output_dir: str, model_name: str = "RL") -> None:
     model = get_model(model_name, network)
 
     transition_list = [LinkTransition.from_dict(row, network, model) for row in df_transition.to_dict(orient="records")]
+    transition_list = [t for t in transition_list if t is not None]# remove None values
 
     # function to compute ll
     def compute_minus_ll(params: np.ndarray) -> float:
@@ -67,9 +68,9 @@ def estimate(input_dir: str, output_dir: str, model_name: str = "RL") -> None:
 
     result_str = f"""
     sample number = {len(transition_list)}
-        variables = {network.f_name}
-        parameter = {res.x}
-          t value = {t_val}
+        variables = {', '.join(map(str, network.f_name))}
+        parameter = {', '.join(map(str, res.x))}
+          t value = {', '.join(map(str, t_val))}
                L0 = {LL0}
                LL = {LL}
              rho2 = {rho2}
@@ -95,6 +96,7 @@ def simulate(input_dir: str, output_dir: str, model_name: str = "RL") -> None:
 
     df_transition.drop(columns="NextLinkID", inplace=True)
     transition_list = [LinkTransition.from_dict(row, network, model) for row in df_transition.to_dict(orient="records")]
+    transition_list = [t for t in transition_list if t is not None]# remove None values
 
     # Read parameter
     param_path = os.path.join(input_dir, "result.txt")
@@ -121,7 +123,6 @@ if __name__ == "__main__":
     argv = sys.argv
     if len(argv) < 4:
         print("Usage: python main_mc.py <estimation_mode> <input_dir> <output_dir> [<model_name>]")
-        print(argv)
         exit(1)
 
     estimation_mode = argv[1]

@@ -1,8 +1,21 @@
+import os
+from logging import getLogger, StreamHandler, Formatter
+
 from dataclasses import dataclass
 import numpy as np
 import pandas as pd
 from scipy.sparse import csr_matrix, lil_matrix, csr_array
 from pyproj import Proj
+
+# logger
+loglevel = os.environ.get("LOGLEVEL", "WARNING").upper()
+log_format = "[%(asctime)s] %(levelname)s:%(filename)s %(lineno)d:%(message)s"
+logger = getLogger(__name__)
+formatter = Formatter(log_format)
+handler = StreamHandler()
+handler.setFormatter(formatter)
+logger.addHandler(handler)
+logger.setLevel(loglevel)
 
 @dataclass
 class Network:
@@ -38,7 +51,7 @@ class Network:
         self.link_adj_matrix = self._link_adj_matrix()
 
         if not Network.check_attr(self.attr, min_thresh=-10, max_thresh=10):
-            print("Warning: Some link attributes are out of the expected range (-10, 10).")
+            logger.warning("Some link attributes are out of the expected range (-10, 10).")
 
     def get_od_matrix(self, od_table: pd.DataFrame) -> tuple[csr_array, list[int]]:
         """

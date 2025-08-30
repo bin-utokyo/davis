@@ -53,7 +53,7 @@ class LinkTransition:
     
 
     @staticmethod
-    def from_dict(data: dict, network: "Network", model: "RouteChoiceModel") -> "LinkTransition":
+    def from_dict(data: dict, network: "Network", model: "RouteChoiceModel") -> Optional["LinkTransition"]:
         """Create a LinkTransition instance from a dictionary.
 
         Args:
@@ -62,12 +62,21 @@ class LinkTransition:
             model (RouteChoiceModel): The route choice model.
 
         Returns:
-            LinkTransition: The created LinkTransition instance.
+            Optional[LinkTransition]: The created LinkTransition instance.
         """
+        if data["LinkID"] not in network.link_id2idx or data["DestinationNodeID"] not in network.node_id2idx:
+            return None
+        
         row_idx = network.link_id2idx[data["LinkID"]]
         row = network.link_adj_matrix.getrow(row_idx)
         down_link_idxs = row.indices  # 非ゼロ要素の列インデックス
         down_link_ids = [network.link_list[i] for i in down_link_idxs]
+
+        if "NextLinkID" in data:
+            if data["NextLinkID"] not in network.link_id2idx:
+                return None
+            if data["NextLinkID"] not in down_link_ids:
+                return None
 
         return LinkTransition(
             trip_id=data["TripID"],

@@ -105,9 +105,9 @@ def estimate(input_dir: str, output_dir: Optional[str], model_name: str = "MNL")
 
     result_str = f"""
     sample number = {len(trips)}
-        variables = {los_dict[list(los_dict.keys())[0]].attribute_names}
-        parameter = {res.x}
-          t value = {t_val}
+        variables = {', '.join(los_dict[list(los_dict.keys())[0]].attribute_names)}
+        parameter = {', '.join(map(str, res.x))}
+          t value = {', '.join(map(str, t_val))}
                L0 = {LL0}
                LL = {LL}
              rho2 = {rho2}
@@ -180,10 +180,9 @@ if __name__ == "__main__":
     argv = sys.argv
     if len(argv) < 4:
         print("Usage: python main_mc.py <estimation_mode> <input_dir> <output_dir> [<model_name>]")
-        print(argv)
         exit(1)
 
-    estimation_mode =argv[1]
+    estimation_mode = argv[1]
     input_dir = argv[2]
     output_dir = argv[3]
     model_name = argv[4] if len(argv) > 4 else "MNL"
