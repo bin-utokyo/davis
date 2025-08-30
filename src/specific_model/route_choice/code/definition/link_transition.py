@@ -32,7 +32,7 @@ class LinkTransition:
         Returns:
             float: The log likelihood of the link transition.
         """
-        if not self.model.isValid(params):
+        if not self.model.is_valid(params):
             raise ValueError("Invalid link transition or parameters.")
         if self.next_link_id is None:
             raise ValueError("Next link ID is not specified for the link transition.")
@@ -50,7 +50,7 @@ class LinkTransition:
         Returns:
             int: The ID of the next link to transition to.
         """
-        if not self.model.isValid(params):
+        if not self.model.is_valid(params):
             raise ValueError("Invalid model parameters.")
 
         return self.model.choose_transition(self, params)

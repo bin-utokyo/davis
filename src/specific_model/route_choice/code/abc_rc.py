@@ -27,7 +27,7 @@ class RouteChoiceModel(ABC):
         pass
 
     @abstractmethod
-    def isValid(self, params: np.ndarray) -> bool:
+    def is_valid(self, params: np.ndarray) -> bool:
         """Check if the model parameters are valid.
 
         Args:

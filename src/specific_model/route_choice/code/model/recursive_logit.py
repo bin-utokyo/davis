@@ -45,7 +45,7 @@ class RL(RouteChoiceModel):
         """
         return (len(self.network.f_name) + (1 if self.estimate_discount else 0))
 
-    def isValid(self, params: np.ndarray) -> bool:
+    def is_valid(self, params: np.ndarray) -> bool:
         """Check if the model parameters are valid.
 
         Args:
