@@ -8,9 +8,9 @@ from scipy.optimize import minimize
 import re
 import ast
 
-from .abc import RouteChoiceModel
-from .model import RL
-from .definition import Network, LinkTransition
+from abc_rc import RouteChoiceModel
+from model import RL
+from definition import Network, LinkTransition
 
 def get_model(model_name: str, network: Network, estimate_discount: bool = True, beta: float = 0.9) -> RouteChoiceModel:
     if model_name == "RL":

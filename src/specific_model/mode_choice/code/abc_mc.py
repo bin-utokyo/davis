@@ -1,7 +1,9 @@
+import os
+import sys
+
 from abc import ABC, abstractmethod
 
 import numpy as np
-
 
 __all__ = ["ModeChoiceModel"]
 
@@ -58,4 +60,4 @@ class ModeChoiceModel(ABC):
 
 
 # 遅延インポート
-from .definition import Los
+from definition import Los

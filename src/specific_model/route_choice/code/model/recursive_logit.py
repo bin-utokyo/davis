@@ -1,10 +1,14 @@
 import os
+import sys
 from logging import getLogger, StreamHandler, Formatter
 
 import numpy as np
 from scipy.sparse import csr_matrix, lil_matrix, csr_array, vstack, hstack
 
-from ..abc import RouteChoiceModel
+
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
+
+from abc_rc import RouteChoiceModel
 
 __all__ = ["RL"]
 
@@ -221,4 +225,4 @@ class RL(RouteChoiceModel):
         link_adj_matrix = vstack([link_adj_matrix, lil_matrix((1, link_adj_matrix.shape[1]))])
         return link_adj_matrix.tocsr()
 
-from ..definition import Network, LinkTransition
+from definition import Network, LinkTransition

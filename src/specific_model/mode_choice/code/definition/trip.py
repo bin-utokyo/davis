@@ -1,10 +1,14 @@
+import os
+import sys
+
 from typing import Optional
 from dataclasses import dataclass
 from datetime import datetime
 
 import numpy as np
 
-from .los import Los
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
+from los import Los
 
 __all__ = ["Trip"]
 
@@ -59,4 +63,4 @@ class Trip:
 
 
 # 遅延インポート
-from ..abc import ModeChoiceModel
+from abc_mc import ModeChoiceModel

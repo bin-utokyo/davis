@@ -9,9 +9,9 @@ import pandas as pd
 
 from scipy.optimize import minimize
 
-from .definition import Los, Trip
-from .abc import ModeChoiceModel
-from .model import MNL
+from definition import Los, Trip
+from abc_mc import ModeChoiceModel
+from model import MNL
 
 
 def get_model(model_name: str) -> ModeChoiceModel:

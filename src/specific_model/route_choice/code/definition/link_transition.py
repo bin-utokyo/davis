@@ -1,10 +1,14 @@
+import os
+import sys
 from dataclasses import dataclass
 
 from typing import Optional
 import numpy as np
 import datetime
 
-from .network import Network
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
+
+from network import Network
 
 __all__ = ["LinkTransition"]
 
@@ -89,4 +93,4 @@ class LinkTransition:
 
 
 # 遅延インポート
-from ..abc import RouteChoiceModel
+from abc_rc import RouteChoiceModel

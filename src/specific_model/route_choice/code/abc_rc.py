@@ -59,4 +59,4 @@ class RouteChoiceModel(ABC):
         raise ValueError("No valid transition found.")
 
 
-from .definition import LinkTransition
+from definition import LinkTransition
