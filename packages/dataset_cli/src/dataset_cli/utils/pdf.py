@@ -5,7 +5,7 @@ from pathlib import Path
 import jinja2
 import typer
 from rich import print as pprint
-from weasyprint import CSS, HTML # type: ignore[import-untyped]
+from weasyprint import CSS, HTML
 
 from dataset_cli.schemas.dataset_config import DatasetConfig
 from dataset_cli.utils.parser import parse_yaml_and_validate
@@ -47,8 +47,9 @@ def create_readme_pdf(
         encoding="utf-8",
     )
     env = jinja2.Environment(
-        loader=jinja2.BaseLoader(), autoescape=True,
-    )  # S701
+        loader=jinja2.BaseLoader(),
+        autoescape=jinja2.select_autoescape(),
+    )
     template = env.from_string(template_html_content)
 
     # 3. CSSも同様に、パスではなく中身を直接読み込む

@@ -1,5 +1,3 @@
-# ./src/dataset_cli/src/dataset_cli/utils/dvc.py
-
 import subprocess
 from collections.abc import Sequence
 from pathlib import Path
@@ -24,12 +22,7 @@ class DVCError(Exception):
         self.stderr = stderr
 
     def __str__(self) -> str:
-        return (
-            f"{super().__str__()}\n"
-            f"Return Code: {self.return_code}\n"
-            f"--- STDOUT ---\n{self.stdout}\n"
-            f"--- STDERR ---\n{self.stderr}"
-        )
+        return f"{super().__str__()}\nReturn Code: {self.return_code}\n--- STDOUT ---\n{self.stdout}\n--- STDERR ---\n{self.stderr}"
 
 
 class DVCClient:
@@ -41,21 +34,28 @@ class DVCClient:
         repo_path (Path): DVCリポジトリのルートパス。
     """
 
-    def __init__(self, repo_path: Path = Path()) -> None:
+    def __init__(self, repo_path: str | Path = ".") -> None:
         """
         DVCClientを初期化します。
 
         Args:
-            repo_path (Path, optional): DVCリポジトリのパス。
-                                        デフォルトはカレントディレクトリ。
+            repo_path (str | Path, optional): DVCリポジトリのパス。
+                                              デフォルトはカレントディレクトリ。
         """
-        self.repo_path = repo_path.resolve()
+        self.repo_path = Path(repo_path).resolve()
         if not (self.repo_path / ".dvc").exists():
             rprint(
-                f"[yellow]警告: 指定されたパスに.dvcディレクトリが見つかりません: {self.repo_path}. DVCリポジトリを初期化してください。[/yellow]",
+                f"[yellow]警告: 指定されたパスに.dvcディレクトリが見つかりません: {self.repo_path}[/yellow]",
             )
+            execute_dvc_init = typer.confirm(
+                "このディレクトリで `dvc init` を実行しますか？",
+                default=True,
+            )
+            if execute_dvc_init:
+                self._run_command(["init"])
+                rprint("[green]DVCリポジトリを初期化しました。[/green]")
 
-    def _run_command(
+    def _run_command(  # noqa: C901
         self,
         command: list[str],
         *,
@@ -75,67 +75,86 @@ class DVCClient:
             DVCError: コマンドの実行が失敗した場合。
         """
         full_command = ["dvc", *command]
-        rprint(f"[cyan]実行中: {' '.join(full_command)}[/cyan]")
+        rprint(f"[cyan]実行中: {" ".join(full_command)}[/cyan]")
 
         try:
-            process = subprocess.run(  # noqa: S603
+            # Popenを使用してサブプロセスを開始し、出力をリアルタイムでストリーミング
+            process = subprocess.Popen(  # noqa: S603
                 full_command,
                 cwd=self.repo_path,
-                check=True,
-                capture_output=True,  # Always capture output
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
                 text=True,
                 encoding="utf-8",
             )
-            stdout = process.stdout
-            stderr = process.stderr
 
-            if stream_output:
-                if stdout:
-                    rprint(f"[stdout] {stdout.strip()}")
-                if stderr:
-                    rprint(f"[stderr][red]{stderr.strip()}[/red]")
+            stdout_lines: list[str] = []
+            stderr_lines: list[str] = []
 
-            return stdout, stderr  # noqa: TRY300
+            # 標準出力を読み取る
+            if process.stdout:
+                while True:
+                    output = process.stdout.readline()
+                    if output == "" and process.poll() is not None:
+                        break
+                    if output:
+                        line = output.strip()
+                        stdout_lines.append(line)
+                        if stream_output:
+                            rprint(f"[stdout] {line}")
+
+            # 標準エラーを読み取る
+            if process.stderr:
+                stderr_output = process.stderr.read()
+                if stderr_output:
+                    stderr_lines = stderr_output.strip().splitlines()
+                    if stream_output:
+                        for line in stderr_lines:
+                            rprint(f"[stderr][red]{line}[/red]")
+
+            return_code = process.wait()
+            stdout = "\n".join(stdout_lines)
+            stderr = "\n".join(stderr_lines)
+
+            if return_code != 0:
+                msg = f"DVCコマンド '{' '.join(full_command)}' の実行に失敗しました。"
+                raise DVCError(  # noqa: TRY301
+                    msg,
+                    return_code,
+                    stdout,
+                    stderr,
+                )
 
         except FileNotFoundError as e:
             rprint(
                 "[red]エラー: 'dvc'コマンドが見つかりませんでした。DVCはインストールされていますか？[/red]",
             )
             raise typer.Exit(code=127) from e
-        except subprocess.CalledProcessError as e:
-            msg = f"DVCコマンド '{' '.join(full_command)}' の実行に失敗しました。"
+        except DVCError as e:
+            # DVCErrorを再度送出して、呼び出し元でキャッチできるようにする
+            msg = f"DVCコマンドの実行に失敗しました: {e}"
             raise DVCError(
                 msg,
-                e.returncode,
-                e.stdout or "",
-                e.stderr or "",
+                e.return_code,
+                e.stdout,
+                e.stderr,
             ) from e
 
-    def url(self, target: str) -> str:
+        return stdout, stderr
+
+    def add(self, targets: str | Sequence[str]) -> None:
         """
-        DVCで管理されているファイルの公開URLを取得します。(要認証)
+        `dvc add` を実行して、ファイルやディレクトリをDVCの管理下に置きます。
 
         Args:
-            target (str): 対象ファイルのパス。
-
-        Returns:
-            str: 公開URL。
+            targets (str | Sequence[str]): 対象のファイルまたはディレクトリ。
         """
-        stdout, _ = self._run_command(["url", target], stream_output=False)
-        return stdout.strip()
-
-    def add(self, targets: Sequence[str]) -> None:
-        """
-        `dvc add` を実行して、ファイルをDVCの管理下に置きます。
-
-        Args:
-            targets (Sequence[str]): 対象のファイルまたはディレクトリのリスト。
-        """
-        self._run_command(["add", *targets], stream_output=False)
+        target_list = [targets] if isinstance(targets, str) else list(targets)
+        self._run_command(["add", *target_list])
 
     def commit(
         self,
-        targets: Sequence[str] | None = None,
+        targets: str | Sequence[str] | None = None,
         *,
         force: bool = False,
     ) -> None:
@@ -143,66 +162,86 @@ class DVCClient:
         `dvc commit` を実行して、.dvcファイルの変更を記録します。
 
         Args:
-            targets (Optional[Sequence[str]], optional): コミット対象。指定しない場合は全て。
+            targets (Optional[str | Sequence[str]], optional): コミット対象。指定しない場合は全て。
             force (bool, optional): Trueの場合、`--force`フラグを付与します。
         """
         cmd = ["commit"]
         if force:
             cmd.append("--force")
         if targets:
-            cmd.extend(targets)
-        self._run_command(cmd, stream_output=False)
+            target_list = [targets] if isinstance(targets, str) else list(targets)
+            cmd.extend(target_list)
+        self._run_command(cmd)
 
     def push(
         self,
-        targets: Sequence[str] | None = None,
+        targets: str | Sequence[str] | None = None,
         remote: str | None = None,
     ) -> None:
         """
         `dvc push` を実行して、データをリモートストレージにアップロードします。
 
         Args:
-            targets (Optional[Sequence[str]]): プッシュ対象。Noneの場合は全て。
-            remote (Optional[str]): 使用するリモートストレージの名前。
+            targets (Optional[str | Sequence[str]], optional): プッシュ対象。指定しない場合は全て。
+            remote (Optional[str], optional): 使用するリモートストレージの名前。
         """
         cmd = ["push"]
         if remote:
             cmd.extend(["-r", remote])
         if targets:
-            cmd.extend(targets)
-        self._run_command(cmd, stream_output=False)
+            target_list = [targets] if isinstance(targets, str) else list(targets)
+            cmd.extend(target_list)
+        self._run_command(cmd)
 
     def pull(
         self,
-        targets: Sequence[str] | None = None,
+        targets: str | Sequence[str] | None = None,
         remote: str | None = None,
     ) -> None:
         """
         `dvc pull` を実行して、データをリモートストレージからダウンロードします。
 
         Args:
-            targets (Optional[Sequence[str]]): プル対象。Noneの場合は全て。
-            remote (Optional[str]): 使用するリモートストレージの名前。
+            targets (Optional[str | Sequence[str]], optional): プル対象。指定しない場合は全て。
+            remote (Optional[str], optional): 使用するリモートストレージの名前。
         """
         cmd = ["pull"]
         if remote:
             cmd.extend(["-r", remote])
         if targets:
-            cmd.extend(targets)
-        self._run_command(cmd, stream_output=False)
+            target_list = [targets] if isinstance(targets, str) else list(targets)
+            cmd.extend(target_list)
+        self._run_command(cmd)
 
-    def status(self, *, json_output: bool = False) -> str:
+    def status(self) -> str:
         """
         `dvc status` を実行して、リポジトリの状態を確認します。
-
-        Args:
-            json_output (bool): Trueの場合、`--json`フラグを付けてJSON文字列を返す。
 
         Returns:
             str: `dvc status`の標準出力。
         """
-        cmd = ["status"]
-        if json_output:
-            cmd.append("--json")
-        stdout, _ = self._run_command(cmd, stream_output=False)
+        stdout, _ = self._run_command(["status"], stream_output=False)
         return stdout
+
+    def remote_modify(
+        self,
+        remote: str,
+        option: str,
+        value: str,
+        *,
+        local: bool = False,
+    ) -> None:
+        """
+        `dvc remote modify` を実行して、リモートの設定を変更します。
+
+        Args:
+            remote (str): 変更するリモートの名前。
+            option (str): 変更するオプション。
+            value (str): 設定する値。
+            local (bool, optional): Trueの場合、`--local`フラグを付与します。
+        """
+        cmd = ["remote", "modify"]
+        if local:
+            cmd.append("--local")
+        cmd.extend([remote, option, value])
+        self._run_command(cmd, stream_output=False)

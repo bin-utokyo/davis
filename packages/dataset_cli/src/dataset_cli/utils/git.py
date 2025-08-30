@@ -1,0 +1,30 @@
+from pathlib import Path
+
+import git
+
+
+def get_git_repo() -> git.Repo:
+    """Gitリポジトリを取得するヘルパー関数。
+
+    Returns
+    -------
+    git.Repo
+        カレントディレクトリのGitリポジトリオブジェクト。
+
+    Raises
+    ------
+    RuntimeError
+        カレントディレクトリがGitリポジトリではない場合。
+    """
+
+    repo_path = Path.cwd()
+    if not (repo_path / ".git").exists():
+        msg = "このディレクトリはGitリポジトリではありません。"
+        raise RuntimeError(msg)
+
+    return git.Repo(
+        repo_path,
+    )
+
+
+repo = get_git_repo()

@@ -1,14 +1,14 @@
 import mimetypes
 from pathlib import Path
-from typing import TypeVar
 
 import yaml
 from pydantic import BaseModel
 
-T = TypeVar("T", bound=BaseModel)
 
-
-def parse_yaml_and_validate(yaml_path: str | Path, pydantic_model_class: type[T]) -> T: # noqa: UP047
+def parse_yaml_and_validate[T: BaseModel](
+    yaml_path: str | Path,
+    pydantic_model_class: type[T],
+) -> T:
     """
     指定されたYAMLファイルをパースし、指定されたPydanticモデルで検証します。
 
@@ -38,7 +38,7 @@ def parse_yaml_and_validate(yaml_path: str | Path, pydantic_model_class: type[T]
     if not path.is_file():
         msg = f"指定されたパスはファイルではありません: {yaml_path}"
         raise FileNotFoundError(msg)
-    if path.suffix.lower() != ".yaml" and path.suffix.lower() != ".yml":
+    if path.suffix.lower() not in (".yaml", ".yml"):
         msg = f"指定されたパスはYAMLファイルではありません: {yaml_path}"
         raise ValueError(msg)
 

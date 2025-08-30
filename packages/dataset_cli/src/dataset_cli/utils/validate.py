@@ -8,7 +8,7 @@ import yaml
 from pydantic import ValidationError
 from rich import print as rprint
 
-from dataset_cli.schemas import DatasetConfig
+from dataset_cli.schemas.dataset_config import DatasetConfig
 from dataset_cli.schemas.polars import get_polars_data_type
 from dataset_cli.utils.parser import infer_file_type, parse_yaml_and_validate
 
