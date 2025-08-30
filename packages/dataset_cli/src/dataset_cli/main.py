@@ -2,7 +2,7 @@
 
 import typer
 
-from .commands import data, get, info
+from .commands import data, get, info, setup
 from .commands.admin import release
 
 app = typer.Typer(
@@ -13,6 +13,9 @@ app = typer.Typer(
 )
 
 # --- エンドユーザー向けコマンド ---
+app.command("setup", help="このツールの初回セットアップを行います。")(
+    setup.setup_davis,
+)
 app.command("get", help="データセットをダウンロードします。")(get.get_dataset)
 app.command("list", help="利用可能なデータセットの一覧を表示します。")(
     info.list_datasets,
