@@ -1,7 +1,9 @@
+import os
+import sys
+
 from abc import ABC, abstractmethod
 
 import numpy as np
-
 
 __all__ = ["ModeChoiceModel"]
 
@@ -22,7 +24,7 @@ class ModeChoiceModel(ABC):
     pass
 
   @abstractmethod
-  def isValid(self, los: "Los", params: np.ndarray) -> bool:
+  def is_valid(self, los: "Los", params: np.ndarray) -> bool:
     """
     Validate the model parameters for a given level of service (LOS).
 
@@ -58,4 +60,4 @@ class ModeChoiceModel(ABC):
 
 
 # 遅延インポート
-from .definition import Los
+from definition import Los

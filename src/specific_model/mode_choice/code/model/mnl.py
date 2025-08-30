@@ -1,7 +1,10 @@
+import os
+import sys
 import numpy as np
 
-from ..definition import Los
-from ..abc import ModeChoiceModel
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
+from definition import Los
+from abc_mc import ModeChoiceModel
 
 __all__ = ["MNL"]
 
@@ -34,5 +37,5 @@ class MNL(ModeChoiceModel):
         return probabilities_dict
     
 
-    def isValid(self, los: Los, params: np.ndarray) -> bool:
+    def is_valid(self, los: Los, params: np.ndarray) -> bool:
         return len(params) == len(los.attribute_names)

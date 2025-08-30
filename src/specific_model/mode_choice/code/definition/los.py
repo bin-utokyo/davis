@@ -15,6 +15,14 @@ class Los:
 
     @staticmethod
     def from_dict(data: dict[Hashable, Any]) -> "Los":
+        """Create a Los instance from a dictionary.
+
+        Args:
+            data (dict[Hashable, Any]): The input dictionary.
+
+        Returns:
+            Los: The created Los instance.
+        """
         o_zone = int(data["OZone"])
         d_zone = int(data["DZone"])
 

@@ -3,6 +3,5 @@ import sys
 
 sys.path.append(os.path.join(os.path.dirname(__file__)))
 
-from abc_mc import *
-from model import *
-from definition import *
+from network import *
+from link_transition import *

@@ -1,10 +1,14 @@
+import os
+import sys
+
 from typing import Optional
 from dataclasses import dataclass
 from datetime import datetime
 
 import numpy as np
 
-from .los import Los
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
+from los import Los
 
 __all__ = ["Trip"]
 
@@ -36,7 +40,7 @@ class Trip:
         """
         if self.mode is None:
             raise ValueError("Chosen mode is not specified for the trip.")
-        if not self.model.isValid(los, params):
+        if not self.model.is_valid(los, params):
             raise ValueError("Invalid Level of Service data or parameters.")
 
         probabilities = self.model.calculate_mode_probability(los, params)
@@ -53,10 +57,10 @@ class Trip:
         Returns:
             int: The ID of the chosen mode.
         """
-        if not self.model.isValid(los, params):
+        if not self.model.is_valid(los, params):
             raise ValueError("Invalid Level of Service data or parameters.")
         return self.model.choose_mode(los, params)
 
 
 # 遅延インポート
-from ..abc import ModeChoiceModel
+from abc_mc import ModeChoiceModel
