@@ -105,9 +105,9 @@ def estimate(input_dir: str, output_dir: Optional[str], model_name: str = "MNL")
 
     result_str = f"""
     sample number = {len(trips)}
-        variables = {', '.join(los_dict[list(los_dict.keys())[0]].attribute_names)}
-        parameter = {', '.join(map(str, res.x))}
-          t value = {', '.join(map(str, t_val))}
+        variables = [{', '.join(los_dict[list(los_dict.keys())[0]].attribute_names)}]
+        parameter = [{', '.join(map(str, res.x))}]
+          t value = [{', '.join(map(str, t_val))}]
                L0 = {LL0}
                LL = {LL}
              rho2 = {rho2}

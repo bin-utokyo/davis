@@ -40,7 +40,7 @@ class Trip:
         """
         if self.mode is None:
             raise ValueError("Chosen mode is not specified for the trip.")
-        if not self.model.isValid(los, params):
+        if not self.model.is_valid(los, params):
             raise ValueError("Invalid Level of Service data or parameters.")
 
         probabilities = self.model.calculate_mode_probability(los, params)
@@ -57,7 +57,7 @@ class Trip:
         Returns:
             int: The ID of the chosen mode.
         """
-        if not self.model.isValid(los, params):
+        if not self.model.is_valid(los, params):
             raise ValueError("Invalid Level of Service data or parameters.")
         return self.model.choose_mode(los, params)
 

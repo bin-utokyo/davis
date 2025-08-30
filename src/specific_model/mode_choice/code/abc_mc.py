@@ -24,7 +24,7 @@ class ModeChoiceModel(ABC):
     pass
 
   @abstractmethod
-  def isValid(self, los: "Los", params: np.ndarray) -> bool:
+  def is_valid(self, los: "Los", params: np.ndarray) -> bool:
     """
     Validate the model parameters for a given level of service (LOS).
 

@@ -37,5 +37,5 @@ class MNL(ModeChoiceModel):
         return probabilities_dict
     
 
-    def isValid(self, los: Los, params: np.ndarray) -> bool:
+    def is_valid(self, los: Los, params: np.ndarray) -> bool:
         return len(params) == len(los.attribute_names)
