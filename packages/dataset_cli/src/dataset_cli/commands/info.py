@@ -1,5 +1,6 @@
 # ./src/dataset_cli/src/dataset_cli/commands/info.py
 
+import webbrowser
 from typing import Annotated
 
 import httpx
@@ -44,7 +45,7 @@ def list_datasets() -> None:
     rprint(table)
 
 
-def show_info(
+def show_info(  # noqa: C901
     dataset_id: Annotated[
         str,
         typer.Argument(
@@ -52,6 +53,15 @@ def show_info(
             show_default=False,
         ),
     ],
+    *,
+    open_in_browser: Annotated[
+        bool,
+        typer.Option(
+            "--open",
+            "-o",
+            help="関連ドキュメントのPDFリンクをブラウザで開く",
+        ),
+    ] = False,
 ) -> None:
     """指定されたデータセットの詳細情報を表示します。"""
     try:
@@ -101,3 +111,9 @@ def show_info(
             pdf_table.add_row(f"{filename} (ja)", f"[link={urls.ja}]{urls.ja}[/link]")
             pdf_table.add_row(f"{filename} (en)", f"[link={urls.en}]{urls.en}[/link]")
         rprint(pdf_table)
+
+        if open_in_browser:
+            rprint("ブラウザでPDFリンクを開きます...")
+            for urls in dataset.pdf_urls.values():
+                webbrowser.open(str(urls.ja))
+                webbrowser.open(str(urls.en))

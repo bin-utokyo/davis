@@ -22,7 +22,7 @@ def generate_manifest(
             dir_okay=False,
             resolve_path=True,
         ),
-    ] = Path("manifest.json"),
+    ] = Path("dist/manifest.json"),
     repo_url: Annotated[
         str,
         typer.Option(help="GitHubリポジトリのURL (例: https://github.com/user/repo)"),
@@ -41,6 +41,7 @@ def generate_manifest(
 
     このコマンドは 'dvc url' を使用するため、DVCの認証設定が必要です。
     """
+    output_path.parent.mkdir(parents=True, exist_ok=True)
     rprint(f"[bold]'{output_path}' を生成します...[/bold]")
     bootstrap_filename = "dvc-bootstrap.zip"
     bootstrap_url = f"{repo_url}/releases/download/{tag}/{bootstrap_filename}"
@@ -73,11 +74,12 @@ def create_bootstrap(
             dir_okay=False,
             resolve_path=True,
         ),
-    ] = Path("dvc-bootstrap.zip"),
+    ] = Path("dist/dvc-bootstrap.zip"),
 ) -> None:
     """
     dvc-bootstrap.zip を作成します。
     """
+    output_path.parent.mkdir(parents=True, exist_ok=True)
     rprint(f"[bold]'{output_path}' を作成します...[/bold]")
     try:
         with zipfile.ZipFile(output_path, "w", zipfile.ZIP_DEFLATED) as zipf:
@@ -87,7 +89,7 @@ def create_bootstrap(
                 zipf.write(config_path, arcname=".dvc/config")
             else:
                 rprint(
-                    f"  - [yellow]W[/yellow] '{config_path}' が見つかりません。スキップします。"
+                    f"  - [yellow]W[/yellow] '{config_path}' が見つかりません。スキップします。",
                 )
 
             # dataディレクトリ以下の.dvcファイルをzipに追加
@@ -95,7 +97,7 @@ def create_bootstrap(
             dvc_files = list(data_dir.rglob("*.dvc"))
             if not dvc_files:
                 rprint(
-                    f"  - [yellow]W[/yellow] '{data_dir}' 内に.dvcファイルが見つかりません。"
+                    f"  - [yellow]W[/yellow] '{data_dir}' 内に.dvcファイルが見つかりません。",
                 )
                 # bootstrapファイルとしては不完全だが、処理は継続
             for dvc_file in dvc_files:

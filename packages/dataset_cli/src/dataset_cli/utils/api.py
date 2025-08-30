@@ -1,5 +1,7 @@
 # ./src/dataset_cli/src/dataset_cli/utils/api.py
+import json
 from functools import lru_cache
+from pathlib import Path
 
 import httpx
 from rich import print as rprint
@@ -48,3 +50,20 @@ def get_latest_manifest() -> Manifest:
     except httpx.ConnectError:
         rprint("[bold red]ネットワークエラー: GitHub APIに接続できません。[/bold red]")
         raise
+    except httpx.HTTPStatusError as e:
+        rprint(
+            f"[bold red]HTTPエラー: {e.response.status_code} - {e.response.reason_phrase}[/bold red]",
+        )
+        manifest_json = Path("dist/manifest.json")
+        if manifest_json.exists():
+            rprint("[yellow]ローカルの 'dist/manifest.json' を使用します。[/yellow]")
+            content = json.loads(
+                manifest_json.read_text(encoding="utf-8"),
+            )
+            return Manifest.model_validate(content)
+        msg = "GitHub APIからmanifest.jsonを取得できません。"
+        raise httpx.HTTPStatusError(
+            msg,
+            request=e.request,
+            response=e.response,
+        ) from e

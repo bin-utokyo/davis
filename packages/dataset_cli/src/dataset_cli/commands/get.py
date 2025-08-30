@@ -114,6 +114,10 @@ def _download_bootstrap_config(url: str, output_dir: Path) -> None:
                 f"[bold red]エラー: DVC設定ファイルのダウンロードに失敗しました: {e}[/bold red]",
             )
             raise typer.Exit(code=1) from e
+        except httpx.HTTPStatusError as e:
+            rprint(
+                f"[bold red]エラー: DVC設定ファイルのダウンロードに失敗しました (HTTP {e.response.status_code})[/bold red]",
+            )
 
 
 def _run_dvc_pull(dvc_files: list[str], output_dir: Path) -> None:

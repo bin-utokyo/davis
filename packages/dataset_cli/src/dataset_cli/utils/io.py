@@ -98,10 +98,6 @@ def generate_manifest_data(
         raise FileNotFoundError(msg)
 
     dvc_files = sorted(data_root.rglob("*.dvc"))
-    rprint(
-        # table of files
-        list(dvc_files),
-    )
     rprint(f"  - {len(dvc_files)} 個の .dvc ファイルを発見しました。")
 
     datasets: dict[str, DatasetInfo] = {}
