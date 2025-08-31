@@ -20,17 +20,12 @@ jobs:
               with:
                   enable-cache: true
 
-            - name: Setup DVC with Secrets
-              run: |
-                  uv run dvc remote modify --local gdrive_remote gdrive_client_id ${{ secrets.GDRIVE_CLIENT_ID }}
-                  uv run dvc remote modify --local gdrive_remote gdrive_client_secret ${{ secrets.GDRIVE_CLIENT_SECRET }}
-
             - name: Create dist directory
               run: mkdir dist
 
             - name: Generate Manifest and Bootstrap Package
               run: |
-                  uv run davis manage generate-manifest --output dist/manifest.json
+                  uv run davis manage generate-manifest --output dist/manifest.json --tag ${{ github.ref_name }} --branch main
                   uv run davis manage create-bootstrap --output dist/dvc-bootstrap.zip
 
             - name: Build Python package
