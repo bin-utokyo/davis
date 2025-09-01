@@ -10,21 +10,16 @@
 ```
 packages/
   dataset_cli/          # データセット管理ツール
+
 src/
-	specific_model/
+	specific_model/       # 個別モデル
 		mode_choice/        # モード選択モデル（MNL等）
 		route_choice/       # 経路選択モデル（RL等）
+
 	base_model/           # ベースモデル（MFD-RL+Hongo）
 		Hongo/              # Hongoシミュレーターのソース
 		MFDRL-Hongo/        # MFD-RL+Hongoシミュレーターのソース
 ```
-各モデルディレクトリには以下が含まれます：
-- code/           # Pythonコード（main_mc.py, main_rl.py など）
-- requirements.txt
-- DockerFile
-- docker-compose.yml
-- .env            # 実行モードやパスの設定
-- README.md       # モデルごとの説明
 
 ## ダウンロード
 最新版のコードはGitHubからクローンしてください：

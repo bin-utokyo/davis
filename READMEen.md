@@ -10,21 +10,16 @@ This repository provides tools for distributing data usable at the Summer School
 ```
 packages/
   dataset_cli/          # Dataset management tool
+
 src/
-  specific_model/
+  specific_model/       # Individual behavior models
     mode_choice/        # Mode choice models (e.g., MNL)
     route_choice/       # Route choice models (e.g., RL)
+
   base_model/           # Base model (MFD-RL+Hongo)
     Hongo/              # Hongo simulator source
     MFDRL-Hongo/        # MFD-RL+Hongo simulator source
 ```
-Each model directory includes:
-- code/           # Python code (main_mc.py, main_rl.py, etc.)
-- requirements.txt
-- DockerFile
-- docker-compose.yml
-- .env            # Settings for execution mode and paths
-- README.md       # Model-specific documentation
 
 ## Download
 Please clone the latest code from GitHub:
