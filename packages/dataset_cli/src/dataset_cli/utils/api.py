@@ -15,9 +15,13 @@ def get_repo_url() -> str:
     """
     インストールされたパッケージのメタデータからリポジトリURLを動的に取得する。
     """
-    repo_url = get_monorepo_config_value("project", "urls").get("Repository")
+    urls = get_monorepo_config_value("project", "urls")
+    if not isinstance(urls, dict):
+        urls = {}
+    repo_url = urls.get("Repository")
     if repo_url:
         return str(repo_url)
+
     msg = "pyproject.tomlに'repository' URLが見つかりません。"
     raise KeyError(msg)
 
