@@ -24,7 +24,6 @@ from dataset_cli.utils.parser import infer_file_type
 from dataset_cli.utils.pdf import create_readme_pdf
 from dataset_cli.utils.validate import (
     detect_encoding,
-    generate_file_hash,
     read_data_with_schema,
     validate_paths,
 )
@@ -284,8 +283,6 @@ def _validate_directory(
     if not schema_path.exists():
         rprint(f"[red]スキーマファイルが見つかりません: {schema_path}[/red]")
         raise typer.Exit(code=1)
-
-    generate_file_hash(dir_path)
 
     with ThreadPoolExecutor() as executor:
         futures = {
