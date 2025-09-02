@@ -85,7 +85,7 @@ def read_data_with_schema(
                 loaded_dataframe = pl.read_parquet(file_path, schema=schema_dict)
             case _:
                 msg = f"サポートされていないファイルタイプ: {file_type}"
-                raise ValueError(msg)  # noqa: TRY301
+                raise NotImplementedError(msg)
 
         # 読み込み後の列チェック
         if set(loaded_dataframe.columns) != set(schema_dict.keys()):

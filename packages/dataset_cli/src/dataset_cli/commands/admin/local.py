@@ -345,7 +345,7 @@ def infer_schema(
             input_dataframe = pl.read_parquet(file_path)
         else:
             msg = f"サポートされていないファイルタイプ: {file_type}"
-            raise ValueError(msg)  # noqa: TRY301
+            raise NotImplementedError(msg)
 
         jst_year = datetime.datetime.now(
             tz=datetime.timezone(datetime.timedelta(hours=9)),

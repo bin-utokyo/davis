@@ -193,7 +193,7 @@ def infer_schema(
                 input_dataframe = pl.read_parquet(file_path)
             case _:
                 msg = f"サポートされていないファイルタイプ: {file_type}"
-                raise ValueError(msg)  # noqa: TRY301
+                raise NotImplementedError(msg)  # noqa: TRY301
 
         schema = DatasetConfig(
             name=LocalizedStr(
