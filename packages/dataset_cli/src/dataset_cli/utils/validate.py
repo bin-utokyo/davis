@@ -116,16 +116,22 @@ def read_data_with_schema(
 def generate_file_hash(file_or_dir_path: str | Path) -> str:
     """ファイルまたはディレクトリのSHA-256ハッシュを生成する。"""
     sha256 = hashlib.sha256()
-    path = Path(file_or_dir_path)
+    path = (
+        file_or_dir_path
+        if isinstance(file_or_dir_path, Path)
+        else Path(file_or_dir_path)
+    )
+
+    chunk_size = 8192
 
     if path.is_file():
         with path.open("rb") as f:
-            for chunk in iter(lambda: f.read(8192), b""):
+            for chunk in iter(lambda: f.read(chunk_size), b""):
                 sha256.update(chunk)
         return sha256.hexdigest().lower()
 
     if path.is_dir():
-        include_extensions = {(".csv", ".json", ".parquet", ".xlsx", ".xls")}
+        include_extensions = {".csv", ".json", ".parquet", ".xlsx", ".xls"}
         for file in sorted(path.rglob("*")):
             if file.suffix.lower() not in include_extensions:
                 continue
@@ -134,7 +140,7 @@ def generate_file_hash(file_or_dir_path: str | Path) -> str:
                 sha256.update(relative_path)
                 # ファイル内容も追加
                 with file.open("rb") as f:
-                    for chunk in iter(lambda: f.read(8192), b""):
+                    for chunk in iter(lambda: f.read(chunk_size), b""):
                         sha256.update(chunk)
         return sha256.hexdigest().lower()
 
