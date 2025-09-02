@@ -1,0 +1,29 @@
+[project]
+name = "davis"
+version = "0.1.0"
+requires-python = ">=3.13"
+dependencies = ["davis-cli"]
+
+[dependency-groups]
+dev = [
+    "mypy>=1.17.1",
+    "ruff>=0.12.10",
+    "types-pyyaml>=6.0.12.20250822",
+]
+
+[tool.uv.workspace]
+members = ["packages/*"]
+
+[tool.uv.sources]
+davis-cli = { workspace = true }
+
+[tool.ruff]
+select = ["ALL"]
+ignore = ["D", "E501", "S101", "RUF001", "RUF003"]
+
+[tool.setuptools.packages.find]
+include = ["packages*"]
+exclude = ["data"]
+
+[project.urls]
+Repository = "https://github.com/bin-utokyo/davis"

@@ -1,0 +1,117 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Noto+Sans+JP&display=swap");
+
+* {
+    --color-secondary: #777;
+    --color-text: #000;
+    --font-family: "Inter", "BIZ UDPGothic", sans-serif;
+}
+
+body {
+    font-family: var(--font-family);
+    line-height: 1.6;
+    color: var(--color-text);
+    font-size: 9.5pt;
+}
+
+@page {
+    size: A4;
+    margin: 25mm;
+    @bottom-center {
+        content: counter(page) " / " counter(pages);
+        font-family: var(--font-family);
+        font-size: 9pt;
+    }
+}
+
+h1,
+h2,
+h3 {
+    margin-top: 1.5em;
+    margin-bottom: 0.5em;
+    line-break: strict;
+    page-break-after: avoid;
+}
+
+h1 {
+    font-size: 1.8em;
+    border-bottom: 2px solid var(--color-secondary);
+    padding-bottom: 0.3em;
+    text-align: left;
+    bookmark-level: 1;
+}
+
+h2 {
+    font-size: 1.4em;
+    bookmark-level: 2;
+}
+
+h3 {
+    font-size: 1.2em;
+    bookmark-level: 3;
+}
+
+#footer-info {
+    font-size: 0.9em;
+    text-align: right;
+}
+
+.subtitle {
+    text-align: left;
+    margin-top: -0.8em;
+    margin-bottom: 1em;
+    font-size: 0.9em;
+    color: var(--color-secondary);
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1em;
+    margin-bottom: 1em;
+}
+
+th,
+td {
+    border: 1px solid #ddd;
+    padding: 8px 10px;
+    text-align: left;
+    vertical-align: top;
+}
+
+th {
+    background-color: #f0f0f0;
+}
+
+tbody tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+code {
+    font-family: "JetBrains Mono", monospace;
+    background-color: #f7f7f7;
+    padding: 2px 4px;
+    font-size: 0.9em;
+}
+
+.column-name,
+.column-schema {
+    width: 0;
+    white-space: nowrap;
+}
+
+footer {
+    margin-top: 3em;
+    border-top: 1px solid #ccc;
+    padding-top: 1em;
+    font-size: 0.8em;
+    color: #000;
+    text-align: center;
+}
+
+pre.hash {
+    font-family: "JetBrains Mono", monospace;
+    background-color: #f7f7f7;
+    padding: 10px 0;
+    white-space: pre-wrap;
+    word-break: break-all;
+}
