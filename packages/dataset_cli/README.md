@@ -15,9 +15,10 @@
 
 現在、`davis-cli` は `uv` または `pip` を使ってGitリポジトリから直接インストールする必要があります。
 （PyPIでの公開は予定していません。）
+特別な理由がなければ、`uv` を使うことを強く推奨します。
 
 ```bash
-# uvを使う場合（推奨）
+# uvを使う場合（強く推奨。特別な理由がなければこちらを使用してください）
 uv tool install git+https://github.com/bin-utokyo/davis#subdirectory=packages/dataset_cli
 
 # pipを使う場合
@@ -25,6 +26,7 @@ pip install git+https://github.com/bin-utokyo/davis.git#subdirectory=packages/da
 ```
 
 インストール後、PATHが通っていることを確認してください。
+`davis --help` コマンドが実行できれば成功です。
 
 uvを使ってインストールした場合は、PATHの通し方が表示されることがありますので、その指示に従ってください。
 
