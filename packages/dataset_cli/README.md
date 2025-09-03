@@ -14,10 +14,11 @@
 ## 1. インストール
 
 現在、`davis-cli` は `uv` または `pip` を使ってGitリポジトリから直接インストールする必要があります。
+（PyPIでの公開は予定していません。）
 
 ```bash
-# uvを使う場合
-uv pip install git+https://github.com/bin-utokyo/davis.git#subdirectory=packages/dataset_cli
+# uvを使う場合（推奨）
+uv tool install git+https://github.com/bin-utokyo/davis#subdirectory=packages/dataset_cli
 
 # pipを使う場合
 pip install git+https://github.com/bin-utokyo/davis.git#subdirectory=packages/dataset_cli
@@ -110,6 +111,8 @@ davis info PT_data --open
 ```bash
 davis get <DATASET_ID>
 ```
+
+ファイル単位でダウンロードすることもできますし、ディレクトリ単位でまとめてダウンロードすることも可能です。
 
 - ダウンロード先のディレクトリを指定する場合は `--out` または `-o` オプションを使用します。
 
