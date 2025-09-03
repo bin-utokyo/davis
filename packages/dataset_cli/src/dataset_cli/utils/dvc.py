@@ -6,6 +6,8 @@ from pathlib import Path
 import typer
 from rich import print as rprint
 
+from .config import load_user_config
+
 
 class DVCError(Exception):
     """DVCコマンドの実行に失敗した際に送出されるカスタム例外。"""
@@ -56,7 +58,7 @@ class DVCClient:
                 self._run_command(["init"])
                 rprint("[green]DVCリポジトリを初期化しました。[/green]")
 
-    def _run_command(  # noqa: C901, PLR0912
+    def _run_command(  # noqa: C901
         self,
         command: list[str],
         *,
@@ -75,12 +77,11 @@ class DVCClient:
         Raises:
             DVCError: コマンドの実行が失敗した場合。
         """
-        dvc_path = shutil.which("dvc")
-        if not dvc_path:
-            msg = "DVCコマンドが見つかりません。DVCはインストールされていますか？"
-            raise FileNotFoundError(msg)
+        config = load_user_config()
+        dvc_path_fallback = shutil.which("dvc") or "dvc"
+        dvc_executable_path = config.get("dvc_executable_path", dvc_path_fallback)
 
-        full_command = [dvc_path, *command]
+        full_command = [dvc_executable_path, *command]
         rprint(f"[cyan]実行中: {' '.join(full_command)}[/cyan]")
 
         try:
