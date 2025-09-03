@@ -1,29 +1,12 @@
 # ./src/dataset_cli/src/dataset_cli/utils/api.py
 import json
-from functools import lru_cache
 from pathlib import Path
 
 import httpx
 from rich import print as rprint
 
 from dataset_cli.schemas.manifest import Manifest
-from dataset_cli.utils.config import get_monorepo_config_value
-
-
-@lru_cache(maxsize=1)
-def get_repo_url() -> str:
-    """
-    インストールされたパッケージのメタデータからリポジトリURLを動的に取得する。
-    """
-    urls = get_monorepo_config_value("project", "urls")
-    if not isinstance(urls, dict):
-        urls = {}
-    repo_url = urls.get("Repository")
-    if repo_url:
-        return str(repo_url)
-
-    msg = "pyproject.tomlに'repository' URLが見つかりません。"
-    raise KeyError(msg)
+from dataset_cli.utils.config import get_repo_url
 
 
 def get_latest_manifest() -> Manifest:

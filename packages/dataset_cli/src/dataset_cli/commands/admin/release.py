@@ -7,7 +7,7 @@ from typing import Annotated
 import typer
 from rich import print as rprint
 
-from dataset_cli.utils.config import get_monorepo_config_value
+from dataset_cli.utils.api import get_repo_url
 from dataset_cli.utils.io import generate_manifest_data
 
 
@@ -26,7 +26,7 @@ def generate_manifest(
     repo_url: Annotated[
         str,
         typer.Option(help="GitHubリポジトリのURL (例: https://github.com/user/repo)"),
-    ] = get_monorepo_config_value("project", "urls").get("Repository", ""),
+    ] = get_repo_url(),
     tag: Annotated[
         str,
         typer.Option(help="リリース対象のGitタグ (例: v1.0.0)"),
