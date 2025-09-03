@@ -1,0 +1,36 @@
+city:
+  en: Tokyo
+  ja: 東京
+columns:
+- description: null
+  name: NodeNo
+  type_:
+    name: Int64
+- description: null
+  name: NodeName
+  type_:
+    name: String
+- description: null
+  name: NodeType
+  type_:
+    name: Int64
+- description: null
+  name: NodeX
+  type_:
+    name: Float64
+- description: null
+  name: NodeY
+  type_:
+    name: Float64
+description:
+  en: Node data of Tokyo bus network.
+  ja: 東京のバス路線ネットワークのnodeデータです。
+hash_: 9b663a9c9e2694ec315eefdaf6432b7e909c7ad4c6d0bc00710be22ad529d9f3
+license_:
+  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+    Networks.
+  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+name:
+  en: bus_node
+  ja: bus_node
+year: 2019

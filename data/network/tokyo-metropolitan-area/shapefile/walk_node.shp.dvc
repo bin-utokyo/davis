@@ -1,0 +1,5 @@
+outs:
+- md5: 155acb4c2bd6a46ce425730741741442
+  size: 3966580
+  hash: md5
+  path: walk_node.shp

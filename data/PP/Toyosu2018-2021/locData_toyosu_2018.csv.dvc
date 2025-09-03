@@ -1,0 +1,5 @@
+outs:
+- md5: 5dccd5b484022a39150cc3e5f2a5ef26
+  size: 574790127
+  hash: md5
+  path: locdata_toyosu_2018.csv

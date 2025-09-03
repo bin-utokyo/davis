@@ -1,0 +1,5 @@
+outs:
+- md5: 6e7891ac2b0cc17f1db4f538b4331baf
+  size: 7116860
+  hash: md5
+  path: public_node.shp

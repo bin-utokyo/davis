@@ -1,0 +1,5 @@
+outs:
+- md5: f7219ace98aa98afee7ada9dfd0d4ac9
+  size: 91370436
+  hash: md5
+  path: public_link.shp

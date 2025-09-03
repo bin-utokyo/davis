@@ -1,0 +1,52 @@
+city:
+  en: Yokohama
+  ja: 横浜
+columns:
+- description: null
+  name: LinkID
+  type_:
+    name: Int64
+- description: null
+  name: O
+  type_:
+    name: Int64
+- description: null
+  name: D
+  type_:
+    name: Int64
+- description: null
+  name: length
+  type_:
+    name: Float64
+- description: null
+  name: lanes
+  type_:
+    name: Int64
+- description: null
+  name: value
+  type_:
+    name: String
+- description: null
+  name: maxspeed
+  type_:
+    name: Int64
+- description: null
+  name: motorcar
+  type_:
+    name: String
+- description: null
+  name: foot
+  type_:
+    name: String
+description:
+  en: Link data of Yokohama city road network.
+  ja: 横浜市内道路ネットワークのlinkデータです。
+hash_: 0c5fb96c1be25c02fb3ffc4e15c23c2ac3664dac7c24e8f67cd3a2471cf40152
+license_:
+  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+    Networks.
+  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+name:
+  en: YOKOHAMAlink
+  ja: YOKOHAMAlink
+year: 2025

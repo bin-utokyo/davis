@@ -1,0 +1,42 @@
+city:
+  en: Toyosu
+  ja: 豊洲
+columns:
+- description: null
+  name: ID
+  type_:
+    name: Int64
+- description: null
+  name: UserID
+  type_:
+    name: Int64
+- description: null
+  name: Time
+  type_:
+    name: Datetime
+- description: null
+  name: Lat(WGS)
+  type_:
+    name: Float64
+- description: null
+  name: Lon(WGS)
+  type_:
+    name: Float64
+- description:
+    en: Standard regional mesh (tertiary regional division) . See https://www.stat.go.jp/data/mesh/pdf/gaiyo1.pdf
+    ja: 基準地域メッシュ（第3次地域区画）。https://www.stat.go.jp/data/mesh/pdf/gaiyo1.pdf
+  name: mesh_code
+  type_:
+    name: Int64
+description:
+  en: GPS traces of 334 individuals from 07/07~08/09
+  ja: 334人の07/07~08/09の移動のGPS軌跡
+hash_: 7e85eed9296b90430757296ab33871dfd54f4f6f635b96b3400af9b00e02a741
+license_:
+  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+    Networks.
+  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+name:
+  en: locData.csv
+  ja: locData.csv
+year: 2019

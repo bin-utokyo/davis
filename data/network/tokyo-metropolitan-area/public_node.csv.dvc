@@ -1,0 +1,5 @@
+outs:
+- md5: 3f8e91a226a06106cbd0e4376933bee8
+  size: 12836071
+  hash: md5
+  path: public_node.csv

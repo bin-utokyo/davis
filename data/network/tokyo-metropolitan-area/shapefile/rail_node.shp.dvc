@@ -1,0 +1,5 @@
+outs:
+- md5: 18efd311151fba2ef52776f49452fc84
+  size: 127892
+  hash: md5
+  path: rail_node.shp

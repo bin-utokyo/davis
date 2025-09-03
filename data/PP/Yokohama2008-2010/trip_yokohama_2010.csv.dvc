@@ -1,0 +1,5 @@
+outs:
+- md5: dae8ab4fc8fe4994e7727beb90d91112
+  size: 230267
+  hash: md5
+  path: trip_yokohama_2010.csv

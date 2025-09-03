@@ -1,0 +1,48 @@
+city:
+  en: Yokohama
+  ja: 横浜市
+columns:
+- description: null
+  name: tripID
+  type_:
+    name: Int64
+- description: null
+  name: monitorID
+  type_:
+    name: String
+- description: null
+  name: purposeID
+  type_:
+    name: Int64
+- description: null
+  name: purpose
+  type_:
+    name: String
+- description: null
+  name: DepartureTime
+  type_:
+    name: Datetime
+- description: null
+  name: ArrivalTime
+  type_:
+    name: Datetime
+- description: null
+  name: time(second)
+  type_:
+    name: Int64
+- description: null
+  name: validity
+  type_:
+    name: Int64
+description:
+  en: Trips of 131 individuals from 10/29~11/06
+  ja: 131人の11/10~11/25の移動(トリップ)データ
+hash_: 900be76aa3a70e9703ccbbaa10197ba2e0aa33dfa6ce6d86137a2416856b054b
+license_:
+  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+    Networks.
+  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+name:
+  en: Yokohama_Trip
+  ja: 横浜_トリップデータ
+year: 2008

@@ -1,0 +1,5 @@
+outs:
+- md5: bfcdd41e30acf155f170f84ff1ceb996
+  size: 2494838
+  hash: md5
+  path: df_stay_var.csv

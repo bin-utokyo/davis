@@ -1,0 +1,5 @@
+outs:
+- md5: a72cc94f4167779fff5f580f8abc2f77
+  size: 29292182
+  hash: md5
+  path: walk_link.dbf

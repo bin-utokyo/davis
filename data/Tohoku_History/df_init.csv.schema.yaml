@@ -1,0 +1,118 @@
+city:
+  en: Tohoku
+  ja: 東北
+columns:
+- description:
+    en: Record number (row index in the dataset)
+    ja: レコード番号（観測行の通し番号）
+  name: 'no'
+  type_:
+    name: Int64
+- description:
+    en: Gender (1 = male, 0 = female)
+    ja: 性別（1=男性、0=女性）
+  name: gender
+  type_:
+    name: Int64
+- description:
+    en: Age (normalized between 0 and 1)
+    ja: 年齢（0〜1に正規化された値）
+  name: age
+  type_:
+    name: Float64
+- description:
+    en: Marital status at the initial observation (1 = married, 0 = unmarried)
+    ja: 初期時点での婚姻状態（1=既婚、0=未婚）
+  name: married
+  type_:
+    name: Int64
+- description:
+    en: Number of children at the initial observation (integer or normalized value)
+    ja: 初期時点での子供の人数（整数または正規化値）
+  name: child_num
+  type_:
+    name: Int64
+- description:
+    en: Disaster experience indicator (1 = affected by disaster, 0 = not affected)
+    ja: 災害被災経験の有無（1=被災経験あり、0=なし）
+  name: disaster
+  type_:
+    name: Int64
+- description:
+    en: Unique identifier for the individual
+    ja: 個人を識別する一意のID
+  name: id
+  type_:
+    name: Int64
+- description:
+    en: Annual household income (normalized or transformed value)
+    ja: 年収（正規化または変換済み値）
+  name: transformed_income
+  type_:
+    name: Float64
+- description:
+    en: Employment type of the male household member (1 = permanent, 0 = non-permanent)
+    ja: 男性世帯員の雇用形態（1=正規雇用、0=非正規）
+  name: man_permanent
+  type_:
+    name: Int64
+- description:
+    en: Employment type of the female household member (1 = permanent, 0 = non-permanent)
+    ja: 女性世帯員の雇用形態（1=正規雇用、0=非正規）
+  name: woman_permanent
+  type_:
+    name: Int64
+- description:
+    en: Education level of the male household member (1 = university graduate, 0 =
+      otherwise)
+    ja: 男性世帯員の学歴（1=大学卒、0=その他）
+  name: man_univ_grad
+  type_:
+    name: Int64
+- description:
+    en: Education level of the female household member (1 = university graduate, 0
+      = otherwise)
+    ja: 女性世帯員の学歴（1=大学卒、0=その他）
+  name: woman_univ_grad
+  type_:
+    name: Int64
+- description:
+    en: Initial residence in Sendai City (1 = yes, 0 = no)
+    ja: 初期居住地が仙台市かどうか（1=仙台市、0=その他）
+  name: Sendai
+  type_:
+    name: Int64
+- description:
+    en: Initial residence in Iwate Prefecture (1 = yes, 0 = no)
+    ja: 初期居住地が岩手県かどうか（1=岩手県、0=その他）
+  name: Iwate
+  type_:
+    name: Int64
+- description:
+    en: Initial residence in Miyagi Prefecture (excluding Sendai) (1 = yes, 0 = no)
+    ja: 初期居住地が宮城県（仙台市を除く）かどうか（1=該当、0=その他）
+  name: Miyagi
+  type_:
+    name: Int64
+- description:
+    en: Initial residence in Fukushima Prefecture (1 = yes, 0 = no)
+    ja: 初期居住地が福島県かどうか（1=福島県、0=その他）
+  name: Fukushima
+  type_:
+    name: Int64
+description:
+  en: This dataset represents the initial state of each individual at the start of
+    observation, including demographic, socio-economic, and locational attributes
+    such as gender, age, marital status, number of children, disaster experience,
+    and initial place of residence. Some values are normalized, while education and
+    employment type are expressed as binary indicators.
+  ja: 本データセットは、各個人の初期時点（観測開始時）の状態を示したものであり、性別、年齢、婚姻状態、子供の有無・人数、被災経験、初期居住地などの社会・経済属性を含む。数値の一部は正規化されており、学歴や雇用形態はバイナリ変数で表される。
+hash_: b183e24fc6350700bbc9cb3cc4622cc82a6bf72dbe073d1419ec40862963e1ec
+license_:
+  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+    Networks.
+  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+name:
+  en: Initial state of the individual
+  ja: 個人の初期時点の状態 (被災者・非被災者どちらも含む)
+year: 2024

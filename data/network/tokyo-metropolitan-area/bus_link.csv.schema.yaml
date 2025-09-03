@@ -1,0 +1,132 @@
+city:
+  en: Tokyo
+  ja: 東京
+columns:
+- description: null
+  name: ID
+  type_:
+    name: Int64
+- description: null
+  name: route ID
+  type_:
+    name: Int64
+- description: null
+  name: operator name
+  type_:
+    name: String
+- description: null
+  name: route name
+  type_:
+    name: String
+- description: null
+  name: link type code
+  type_:
+    name: Int64
+- description: null
+  name: link type
+  type_:
+    name: String
+- description: null
+  name: morning service interval (min)
+  type_:
+    name: Int64
+- description: null
+  name: daytime service interval (min)
+  type_:
+    name: Int64
+- description: null
+  name: holiday service interval (min)
+  type_:
+    name: Int64
+- description: null
+  name: speed (km/h)
+  type_:
+    name: Float64
+- description: null
+  name: length (km)
+  type_:
+    name: Float64
+- description: null
+  name: direction restrictions
+  type_:
+    name: String
+- description: null
+  name: turn restrictions
+  type_:
+    name: Int64
+- description: null
+  name: fare code
+  type_:
+    name: Int64
+- description: null
+  name: Fare system
+  type_:
+    name: Int64
+- description: null
+  name: Base fare
+  type_:
+    name: Int64
+- description: null
+  name: Distance-based fare
+  type_:
+    name: Float64
+- description: null
+  name: Pavement structure code
+  type_:
+    name: Int64
+- description: null
+  name: Pavement width code
+  type_:
+    name: Int64
+- description: null
+  name: Station layout code
+  type_:
+    name: Int64
+- description: null
+  name: 3D structure
+  type_:
+    name: Int64
+- description: null
+  name: ONodeNo
+  type_:
+    name: Int64
+- description: null
+  name: ONodeName
+  type_:
+    name: String
+- description: null
+  name: ONodeX
+  type_:
+    name: Float64
+- description: null
+  name: ONodeY
+  type_:
+    name: Float64
+- description: null
+  name: DNodeNo
+  type_:
+    name: Int64
+- description: null
+  name: DNodeName
+  type_:
+    name: String
+- description: null
+  name: DNodeX
+  type_:
+    name: Float64
+- description: null
+  name: DNodeY
+  type_:
+    name: Float64
+description:
+  en: Link data of Tokyo bus network.
+  ja: 東京のバス路線ネットワークのlinkデータです。
+hash_: 8bb05d5e6d927f51f6a938b73ccbe612a7913f3736cf1ab492e212150382e192
+license_:
+  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+    Networks.
+  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+name:
+  en: bus_link
+  ja: bus_link
+year: 2019

@@ -1,0 +1,115 @@
+city:
+  en: Tohoku
+  ja: 東北
+columns:
+- description:
+    en: Row index or placeholder column (auxiliary for data structure)
+    ja: 行インデックスまたは欠番列（データ構造上の補助列）
+  name: ''
+  type_:
+    name: Int64
+- description:
+    en: Record number (row index in the dataset)
+    ja: レコード番号（観測行の通し番号）
+  name: 'no'
+  type_:
+    name: Int64
+- description:
+    en: Gender (1 = male, 2 = female)
+    ja: 性別（1=男性、2=女性）
+  name: gender
+  type_:
+    name: Int64
+- description:
+    en: Age (integer, in years)
+    ja: 年齢（整数、単位、歳）
+  name: age
+  type_:
+    name: Int64
+- description:
+    en: Marital status (1 = married, 0 = unmarried)
+    ja: 婚姻状態（1=既婚、0=未婚）
+  name: married
+  type_:
+    name: Int64
+- description:
+    en: Number of children (integer)
+    ja: 子供の人数（整数）
+  name: child_num
+  type_:
+    name: Int64
+- description:
+    en: Individual’s occupation code in 2004
+    ja: 本人の2004年時点の職業コード
+  name: own_2004_job
+  type_:
+    name: Int64
+- description:
+    en: Individual’s first occupation code
+    ja: 本人の初職（初めての職業）コード
+  name: own_first_job
+  type_:
+    name: Int64
+- description:
+    en: Spouse’s occupation code in 2004
+    ja: 配偶者の2004年時点の職業コード
+  name: sp_2004_job
+  type_:
+    name: Int64
+- description:
+    en: Spouse’s first occupation code
+    ja: 配偶者の初職（初めての職業）コード
+  name: sp_first_job
+  type_:
+    name: Int64
+- description:
+    en: Individual’s highest education level (code)
+    ja: 本人の最終学歴コード
+  name: school
+  type_:
+    name: Int64
+- description:
+    en: Spouse’s highest education level (code)
+    ja: 配偶者の最終学歴コード
+  name: sp_school
+  type_:
+    name: Float64
+- description:
+    en: Disaster experience (1 = affected, 0 = not affected)
+    ja: 災害被災経験（1=被災、0=非被災）
+  name: disaster
+  type_:
+    name: Int64
+- description:
+    en: Prefecture of origin (code or name)
+    ja: 出身都道府県（コードまたは名称）
+  name: s_prefecture
+  type_:
+    name: Float64
+- description:
+    en: Municipality of origin (name)
+    ja: 出身市区町村（名称）
+  name: s_municipality
+  type_:
+    name: String
+- description:
+    en: Unique identifier for the individual
+    ja: 個人を識別する一意のID
+  name: id
+  type_:
+    name: Int64
+description:
+  en: This dataset contains basic socio-economic attributes of disaster-affected individuals,
+    including gender, age, marital status, number of children, occupation and education
+    of both the individual and spouse, disaster experience, and place of origin (prefecture
+    and municipality).
+  ja: このデータは、被災者の基本的な社会・経済属性をまとめたもので、性別、年齢、婚姻状態、子供の有無・人数、本人および配偶者の職業や学歴、被災経験、出身地（都道府県・市区町村）などを含む。
+hash_: bd7faa4e78bc92d511f57e83a566546f54ba2117fc12c92ebe9c20767d1ec0a0
+license_:
+  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+    Networks.
+  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+name:
+  en: Basic attributes of disaster-affected individuals
+  ja: 被災者に関する基本属性データ
+year: 2024

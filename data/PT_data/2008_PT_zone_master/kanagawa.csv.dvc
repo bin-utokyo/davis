@@ -1,0 +1,5 @@
+outs:
+- md5: e0936569b8a2cf53c291b9e8f7adc2d9
+  size: 92022
+  hash: md5
+  path: kanagawa.csv

@@ -1,0 +1,5 @@
+outs:
+- md5: 772de944b625e789be735cf4c06e5da7
+  size: 120935656
+  hash: md5
+  path: locData_yokohama_2008.csv

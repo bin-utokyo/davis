@@ -1,0 +1,5 @@
+outs:
+- md5: 59c338f0f82d4a7697a2bb935d84e688
+  size: 115146835
+  hash: md5
+  path: locData_Matsuyama_Shinjuku2022.csv

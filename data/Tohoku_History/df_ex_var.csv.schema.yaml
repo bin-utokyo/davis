@@ -1,0 +1,74 @@
+city:
+  en: Tohoku
+  ja: 東北
+columns:
+- description:
+    en: Unique identifier for the individual
+    ja: 個人を識別する一意のID
+  name: individual_id
+  type_:
+    name: Int64
+- description:
+    en: Observation year (Gregorian calendar)
+    ja: 観測年（西暦）
+  name: time
+  type_:
+    name: Int64
+- description:
+    en: Identifier for the alternative city
+    ja: 選択肢となる都市を示すID
+  name: city
+  type_:
+    name: Int64
+- description:
+    en: Residential density in the city’s habitable area (normalized)
+    ja: 当該都市の可住地居住密度（正規化値）
+  name: density
+  type_:
+    name: Float64
+- description:
+    en: Distance from current residence to the city (normalized)
+    ja: 現居住地から当該都市までの距離（正規化値）
+  name: distance_array
+  type_:
+    name: Float64
+- description:
+    en: Distance from the city to the male household member’s workplace (normalized)
+    ja: 世帯内の男性の職場までの距離（正規化値）
+  name: man_commute
+  type_:
+    name: Float64
+- description:
+    en: Distance from the city to the female household member’s workplace (normalized)
+    ja: 世帯内の女性の職場までの距離（正規化値）
+  name: woman_commute
+  type_:
+    name: Float64
+- description:
+    en: Presence or proximity of male household member’s relatives in the city
+    ja: 世帯内の男性側の血縁者が当該都市に居住している場合の有無または近接度
+  name: man_family
+  type_:
+    name: Float64
+- description:
+    en: Presence or proximity of female household member’s relatives in the city
+    ja: 世帯内の女性側の血縁者が当該都市に居住している場合の有無または近接度
+  name: woman_family
+  type_:
+    name: Float64
+description:
+  en: This dataset contains individual-level choice-specific explanatory variables
+    for disaster victims, recorded across time and alternative cities. Each row represents
+    the attributes of a given city as an alternative for a specific individual (individual_id)
+    in a particular year (time). It includes geographical and socio-economic attributes
+    such as population density, commuting costs, and presence of relatives.
+  ja: 本データセットは、**個人単位の選択肢説明変数（被災者データ）**を記録したものであり、時系列（year）および都市ごとの選択肢属性を含む。各は、特定の個人（individual_id）が特定の年（time）に、各候補都市（city）を選択肢とした場合の説明変数を示す。都市ごとの地理的条件や通勤コスト、家族の所在地などが含まれている。
+hash_: fabde83b3db19bb1a012fa2d7697d05310d2b39e47eba3d3b931a48e3518a185
+license_:
+  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+    Networks.
+  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+name:
+  en: Choice-specific attributes by individual
+  ja: 避難個人毎の選択肢説明変数
+year: 2024

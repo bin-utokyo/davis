@@ -1,0 +1,5 @@
+outs:
+- md5: ace9cb2e59fcde3ffc951ea133f641a4
+  size: 3022588
+  hash: md5
+  path: bus_node.shp

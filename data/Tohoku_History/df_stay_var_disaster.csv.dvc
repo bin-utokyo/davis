@@ -1,0 +1,5 @@
+outs:
+- md5: 27d3123e10b20dd469ce27a8bb948c32
+  size: 416695
+  hash: md5
+  path: df_stay_var_disaster.csv

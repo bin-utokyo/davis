@@ -1,0 +1,42 @@
+city:
+  en: Chiba Prefecture
+  ja: 千葉県
+columns:
+- description: null
+  name: Zone Large
+  type_:
+    name: Int64
+- description: null
+  name: Zone Medium
+  type_:
+    name: Int64
+- description: null
+  name: Planning Base Zone
+  type_:
+    name: Int64
+- description: null
+  name: Zone Small
+  type_:
+    name: Int64
+- description: null
+  name: City/Town/Village
+  type_:
+    name: String
+- description: null
+  name: Neighborhood/Area Name
+  type_:
+    name: String
+description:
+  en: List of codes for large zones, medium zones, basic planning zones, and small
+    zones by municipality in Chiba Prefecture. For Chiba City, the codes are separated
+    by ward, since it is an ordinance-designated city (政令指定都市).
+  ja: 千葉県の市町村別の大ゾーン、中ゾーン、計画基本ゾーン、小ゾーンのコード一覧。千葉市は政令指定都市のため、区ごとに分かれている。
+hash_: d9352857eec864eebed0b4aca754fd53ea931306d98e56103c536e3efa7db697
+license_:
+  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+    Networks.
+  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+name:
+  en: List of zones by municipality in Chiba Prefecture
+  ja: 千葉県 市町村別ゾーン一覧
+year: 2008

@@ -1,0 +1,5 @@
+outs:
+- md5: 8575b97845c7e1da0cb5c9eebc2b957c
+  size: 31923220
+  hash: md5
+  path: car_link.shp

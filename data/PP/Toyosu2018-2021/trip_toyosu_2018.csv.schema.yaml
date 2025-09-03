@@ -1,0 +1,192 @@
+city:
+  en: Toyosu2018
+  ja: 豊洲2018
+columns:
+- description: null
+  name: TripID
+  type_:
+    name: Int64
+- description: null
+  name: UserID
+  type_:
+    name: Int64
+- description: null
+  name: PurposeID
+  type_:
+    name: Int64
+- description: null
+  name: Purpose
+  type_:
+    name: String
+- description: null
+  name: DepartureTime
+  type_:
+    name: Datetime
+- description: null
+  name: ArrivalTime
+  type_:
+    name: Datetime
+- description: null
+  name: TripTime
+  type_:
+    name: Int64
+- description: null
+  name: MainTransportationCode
+  type_:
+    name: Int64
+- description: null
+  name: MainTransportationName
+  type_:
+    name: String
+- description: null
+  name: ODDirectDistance
+  type_:
+    name: Float64
+- description: null
+  name: LonO
+  type_:
+    name: Float64
+- description: null
+  name: LatO
+  type_:
+    name: Float64
+- description: null
+  name: Node_nameO
+  type_:
+    name: Int64
+- description: null
+  name: LonD
+  type_:
+    name: Float64
+- description: null
+  name: LatD
+  type_:
+    name: Float64
+- description: null
+  name: Node_nameD
+  type_:
+    name: Int64
+- description: null
+  name: Whether_alternatives_can_be_generated_Car
+  type_:
+    name: Float64
+- description: null
+  name: Distance_Car
+  type_:
+    name: Float64
+- description: null
+  name: Time_Car
+  type_:
+    name: Float64
+- description: null
+  name: Whether_alternatives_can_be_generated_Train
+  type_:
+    name: Float64
+- description: null
+  name: Distance_Train
+  type_:
+    name: Float64
+- description: null
+  name: Time_Train
+  type_:
+    name: Float64
+- description: null
+  name: Fare_Train
+  type_:
+    name: Float64
+- description: null
+  name: Number_of_Change_Transportation_Train
+  type_:
+    name: Float64
+- description: null
+  name: Access_Distance_Train
+  type_:
+    name: Float64
+- description: null
+  name: Access_Time_Train
+  type_:
+    name: Float64
+- description: null
+  name: Egress_Distance_Train
+  type_:
+    name: Float64
+- description: null
+  name: Egress_Time_Train
+  type_:
+    name: Float64
+- description: null
+  name: Total_Time_Train
+  type_:
+    name: Float64
+- description: null
+  name: Whether_alternatives_can_be_generated_Walk
+  type_:
+    name: Float64
+- description: null
+  name: Distance_Walk
+  type_:
+    name: Float64
+- description: null
+  name: Time_Walk
+  type_:
+    name: Float64
+- description: null
+  name: Whether_alternatives_can_be_generated_Bus
+  type_:
+    name: Float64
+- description: null
+  name: Distance_Bus
+  type_:
+    name: Float64
+- description: null
+  name: Time_Bus
+  type_:
+    name: Float64
+- description: null
+  name: Fare_Bus
+  type_:
+    name: Float64
+- description: null
+  name: Number_of_Change_Transportation_Bus
+  type_:
+    name: Float64
+- description: null
+  name: Access_Distance_Bus
+  type_:
+    name: Float64
+- description: null
+  name: Access_Time_Bus
+  type_:
+    name: Float64
+- description: null
+  name: Egress_Distance_Bus
+  type_:
+    name: Float64
+- description: null
+  name: Egress_Time_Bus
+  type_:
+    name: Float64
+- description: null
+  name: Total_Time_Bus
+  type_:
+    name: Float64
+- description: null
+  name: Mesh3_O
+  type_:
+    name: Int64
+- description: null
+  name: Mesh3_D
+  type_:
+    name: Int64
+description:
+  en: Trips of 244 individuals from 08/27 to 11/19
+  ja: 244人の08/27~11/19の(トリップ)データ
+hash_: 4897141af5515d79241a1452e77ab3c9f2863e9474132c7a1410102560a3f617
+license_:
+  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+    Networks.
+  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+name:
+  en: Toyosu2018_trip
+  ja: 豊洲2018_トリップ
+year: 2018

@@ -1,0 +1,5 @@
+outs:
+- md5: 987df466f1c731f4804630a12df8b45e
+  size: 105197
+  hash: md5
+  path: saitama.csv

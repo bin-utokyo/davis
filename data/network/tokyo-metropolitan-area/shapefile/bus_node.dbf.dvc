@@ -1,0 +1,5 @@
+outs:
+- md5: 4f24dba46831ffff1015321fccde4358
+  size: 35946243
+  hash: md5
+  path: bus_node.dbf

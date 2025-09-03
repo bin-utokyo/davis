@@ -1,0 +1,223 @@
+city:
+  en: Tohoku
+  ja: 東北
+columns:
+- description:
+    en: Individual number (identifier for each disaster-affected person)
+    ja: 個人番号（被災者ごとの識別子）
+  name: 'no'
+  type_:
+    name: Int64
+- description:
+    en: Gender (1 = Male, 2 = Female)
+    ja: 性別（1=男性, 2=女性）
+  name: gender
+  type_:
+    name: Int64
+- description:
+    en: Observation year
+    ja: 観測年
+  name: year
+  type_:
+    name: Int64
+- description:
+    en: Code of origin prefecture
+    ja: 出発地の都道府県コード
+  name: s_prefecture
+  type_:
+    name: Int64
+- description:
+    en: Name of origin municipality
+    ja: 出発地の市区町村名
+  name: s_municipality
+  type_:
+    name: String
+- description:
+    en: Code of destination prefecture
+    ja: 到着地の都道府県コード
+  name: t_prefecture
+  type_:
+    name: Int64
+- description:
+    en: Name of destination municipality
+    ja: 到着地の市区町村名
+  name: t_municipality
+  type_:
+    name: String
+- description:
+    en: Code of destination housing type
+    ja: 到着地の住宅タイプコード
+  name: t_house_type
+  type_:
+    name: Int64
+- description:
+    en: Move indicator (0 = No, 1 = Yes)
+    ja: 移動の有無（0=なし, 1=あり）
+  name: move_mark
+  type_:
+    name: Int64
+- description:
+    en: Marital status (0 = Single, 1 = Married, etc.)
+    ja: 婚姻状況（0=未婚, 1=既婚など）
+  name: marital_status
+  type_:
+    name: Int64
+- description:
+    en: Marriage event indicator (0 = No, 1 = Yes)
+    ja: 結婚イベントの有無（0=なし, 1=あり）
+  name: ev_married
+  type_:
+    name: Int64
+- description:
+    en: Divorce event indicator (0 = No, 1 = Yes)
+    ja: 離婚イベントの有無（0=なし, 1=あり）
+  name: ev_divorced
+  type_:
+    name: Int64
+- description:
+    en: Number of children
+    ja: 子供の人数
+  name: children_count
+  type_:
+    name: Int64
+- description:
+    en: Birth event indicator (0 = No, 1 = Yes)
+    ja: 出産イベントの有無（0=なし, 1=あり）
+  name: ev_birth
+  type_:
+    name: Int64
+- description:
+    en: Child independence event indicator (0 = No, 1 = Yes)
+    ja: 子供の独立イベントの有無（0=なし, 1=あり）
+  name: ev_independent
+  type_:
+    name: Int64
+- description:
+    en: Employment status code at origin
+    ja: 出発時の就業ステータスコード
+  name: start_status
+  type_:
+    name: Int64
+- description:
+    en: Employment status code at destination
+    ja: 到着時の就業ステータスコード
+  name: end_status
+  type_:
+    name: Int64
+- description:
+    en: Residential location code at origin
+    ja: 出発時の居住地コード
+  name: start_location
+  type_:
+    name: Int64
+- description:
+    en: Residential location code at destination
+    ja: 到着時の居住地コード
+  name: end_location
+  type_:
+    name: Int64
+- description:
+    en: Retirement event indicator (0 = No, 1 = Yes)
+    ja: 退職イベントの有無（0=なし, 1=あり）
+  name: ev_retire
+  type_:
+    name: Int64
+- description:
+    en: Job change event indicator (0 = No, 1 = Yes)
+    ja: 転職イベントの有無（0=なし, 1=あり）
+  name: ev_change_job
+  type_:
+    name: Int64
+- description:
+    en: Workplace location change event indicator (0 = No, 1 = Yes)
+    ja: 職場の所在地変更イベントの有無（0=なし, 1=あり）
+  name: ev_change_loc
+  type_:
+    name: Int64
+- description:
+    en: Spouse's employment status code at origin
+    ja: 配偶者の出発時就業ステータスコード
+  name: sp_start_status
+  type_:
+    name: Int64
+- description:
+    en: Spouse's employment status code at destination
+    ja: 配偶者の到着時就業ステータスコード
+  name: sp_end_status
+  type_:
+    name: Int64
+- description:
+    en: Spouse's residential location code at origin
+    ja: 配偶者の出発時居住地コード
+  name: sp_start_location
+  type_:
+    name: Int64
+- description:
+    en: Spouse's residential location code at destination
+    ja: 配偶者の到着時居住地コード
+  name: sp_end_location
+  type_:
+    name: Int64
+- description:
+    en: Spouse's retirement event indicator (0 = No, 1 = Yes)
+    ja: 配偶者の退職イベントの有無（0=なし, 1=あり）
+  name: sp_ev_retire
+  type_:
+    name: Int64
+- description:
+    en: Spouse's job change event indicator (0 = No, 1 = Yes)
+    ja: 配偶者の転職イベントの有無（0=なし, 1=あり）
+  name: sp_ev_change_job
+  type_:
+    name: Int64
+- description:
+    en: Spouse's workplace location change event indicator (0 = No, 1 = Yes)
+    ja: 配偶者の職場所在地変更イベントの有無（0=なし, 1=あり）
+  name: sp_ev_change_loc
+  type_:
+    name: Int64
+- description:
+    en: Disaster experience indicator (0 = No, 1 = Yes)
+    ja: 被災経験の有無（0=なし, 1=あり）
+  name: disaster
+  type_:
+    name: Int64
+- description:
+    en: Identifier for target residential location or migration destination
+    ja: 居住地選択や移動先のターゲットを示す識別子
+  name: target
+  type_:
+    name: Int64
+- description:
+    en: Current residence code
+    ja: 現在の居住地コード
+  name: residence
+  type_:
+    name: Int64
+- description:
+    en: Code of the actual chosen behavior or destination
+    ja: 実際に選択した行動や移動先のコード
+  name: choice
+  type_:
+    name: Int64
+- description:
+    en: Unique identifier for the individual
+    ja: 個人識別用のID
+  name: id
+  type_:
+    name: Int64
+description:
+  en: This dataset records the annual mobility history, life events (such as marriage,
+    childbirth, retirement, job change, and relocation), and choice behavior (including
+    residential choices and target setting) of disaster-affected individuals. It includes
+    changes in both the individual's and spouse's status and location.
+  ja: このデータは、被災者の年ごとの移動履歴、ライフイベント（結婚、出産、退職、転職、転居など）、およびその際の選択行動（居住地選択やターゲット設定）を記録したものである。本人と配偶者それぞれのステータスや位置情報の変化も含まれている。
+hash_: c7938d180371f5f315c15c3c786abe11b313d4ebbb22cf9abc16856522669b71
+license_:
+  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+    Networks.
+  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+name:
+  en: Mobility history, life events, and choice behavior of disaster-affected individuals
+  ja: 被災者の移動履歴・ライフイベントと選択行動
+year: 2024

@@ -1,0 +1,5 @@
+outs:
+- md5: b490b820ec7aa70e132c667fe170e5e9
+  size: 12604729
+  hash: md5
+  path: car_node.dbf

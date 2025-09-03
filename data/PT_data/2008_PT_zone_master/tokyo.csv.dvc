@@ -1,0 +1,5 @@
+outs:
+- md5: 2110ae995057db1415cdfca73a966d1b
+  size: 72269
+  hash: md5
+  path: tokyo.csv

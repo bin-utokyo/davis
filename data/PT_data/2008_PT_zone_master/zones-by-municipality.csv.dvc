@@ -1,0 +1,5 @@
+outs:
+- md5: 579e83a3213af34211d8e69655abf475
+  size: 70634
+  hash: md5
+  path: zones-by-municipality.csv

@@ -1,0 +1,42 @@
+city:
+  en: Tokyo
+  ja: 東京
+columns:
+- description: null
+  name: NodeNo
+  type_:
+    name: Int64
+- description: null
+  name: NodeName
+  type_:
+    name: String
+- description: null
+  name: NodeType
+  type_:
+    name: Int64
+- description: null
+  name: NodeX
+  type_:
+    name: Float64
+- description: null
+  name: NodeY
+  type_:
+    name: Float64
+- description:
+    en: Standard regional mesh (tertiary regional division) . See https://www.stat.go.jp/data/mesh/pdf/gaiyo1.pdf
+    ja: 基準地域メッシュ（第3次地域区画）。https://www.stat.go.jp/data/mesh/pdf/gaiyo1.pdf
+  name: mesh_code
+  type_:
+    name: Int64
+description:
+  en: Node data of Tokyo car road network. NodeName is not used.
+  ja: 東京の自動車道路ネットワークのnodeデータです。NodeNameは使いません。
+hash_: afb97998c1252633af7690b903bb7be7ea192f11d981d78c6162fbe3c2edb47a
+license_:
+  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+    Networks.
+  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+name:
+  en: car_node
+  ja: car_node
+year: 2019

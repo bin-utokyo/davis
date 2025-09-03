@@ -1,0 +1,5 @@
+outs:
+- md5: 047e01d33a0f1bb2dbb0f896b80260d7
+  size: 265705
+  hash: md5
+  path: trip_all.csv

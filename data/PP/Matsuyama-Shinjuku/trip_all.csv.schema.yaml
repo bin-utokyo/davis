@@ -1,0 +1,48 @@
+city:
+  en: Matsuyama-Shinjuku
+  ja: 松山-新宿
+columns:
+- description: null
+  name: ID
+  type_:
+    name: Int64
+- description: null
+  name: userID
+  type_:
+    name: Int64
+- description: null
+  name: creationDate
+  type_:
+    name: Datetime
+- description: null
+  name: departureTime
+  type_:
+    name: Datetime
+- description: null
+  name: arrivalTime
+  type_:
+    name: Datetime
+- description: null
+  name: updateDate
+  type_:
+    name: Datetime
+- description: null
+  name: validity
+  type_:
+    name: Int64
+- description: null
+  name: purposeCode
+  type_:
+    name: Int64
+description:
+  en: All trip (movement) data of Probe Person (PP) between Matsuyama and Shinjuku.
+  ja: 松山と新宿間のプローブパーソン(PP)の全トリップ（移動）データ
+hash_: 6229c047961bc6b82985d20e4274cf69d64c8db1702ca8fdd91da66451a3324b
+license_:
+  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+    Networks.
+  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+name:
+  en: Matsuyama-Shinjuku
+  ja: 松山-新宿
+year: 2022

@@ -1,0 +1,42 @@
+city:
+  en: Tokyo
+  ja: 東京
+columns:
+- description: null
+  name: NodeNo
+  type_:
+    name: Int64
+- description: null
+  name: NodeName
+  type_:
+    name: String
+- description: null
+  name: NodeType
+  type_:
+    name: Int64
+- description: null
+  name: NodeX
+  type_:
+    name: Float64
+- description: null
+  name: NodeY
+  type_:
+    name: Float64
+- description:
+    en: Standard regional mesh (tertiary regional division) . See https://www.stat.go.jp/data/mesh/pdf/gaiyo1.pdf
+    ja: 基準地域メッシュ（第3次地域区画）。https://www.stat.go.jp/data/mesh/pdf/gaiyo1.pdf
+  name: mesh_code
+  type_:
+    name: Int64
+description:
+  en: Node data of Tokyo pedestrian road network. NodeName is not used.
+  ja: 東京の歩行者ネットワークのnodeデータです。NodeNameは使いません。
+hash_: 3e7d3d895ac0b9cd2256af7a5700cb3ad53a2e460fa52ec2b93e3c7d098c825f
+license_:
+  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+    Networks.
+  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+name:
+  en: walk_node
+  ja: walk_node
+year: 2019

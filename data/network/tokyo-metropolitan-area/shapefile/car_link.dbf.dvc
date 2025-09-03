@@ -1,0 +1,5 @@
+outs:
+- md5: 2f7c357822c6bc3a6104bb958fc741e0
+  size: 33547450
+  hash: md5
+  path: car_link.dbf

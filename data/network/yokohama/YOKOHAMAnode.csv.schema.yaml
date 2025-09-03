@@ -1,0 +1,32 @@
+city:
+  en: Yokohama
+  ja: 横浜
+columns:
+- description: null
+  name: nodeID
+  type_:
+    name: Int64
+- description: null
+  name: lat
+  type_:
+    name: Float64
+- description: null
+  name: lon
+  type_:
+    name: Float64
+- description: null
+  name: signal
+  type_:
+    name: Int64
+description:
+  en: Node data of Yokohama city road network.
+  ja: 横浜市内道路ネットワークのnodeデータです。
+hash_: fb792e33a8a07a42d35ed73ff81743dbf19b36d85f590d34ce992e5720db7e45
+license_:
+  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+    Networks.
+  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+name:
+  en: YOKOHAMAnode
+  ja: YOKOHAMAnode
+year: 2025

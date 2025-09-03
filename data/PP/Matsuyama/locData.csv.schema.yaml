@@ -1,0 +1,68 @@
+city:
+  en: Matsuyama
+  ja: 松山市
+columns:
+- description: null
+  name: tripID
+  type_:
+    name: Int64
+- description: null
+  name: dataID
+  type_:
+    name: Int64
+- description: null
+  name: purpose
+  type_:
+    name: String
+- description: null
+  name: monitorID
+  type_:
+    name: String
+- description: null
+  name: time
+  type_:
+    name: Datetime
+- description: null
+  name: latitude(Tokyo Datum)
+  type_:
+    name: Float64
+- description: null
+  name: longitude(Tokyo Datum)
+  type_:
+    name: Float64
+- description: null
+  name: latitude(WGS)
+  type_:
+    name: Float64
+- description: null
+  name: longitude(WGS)
+  type_:
+    name: Float64
+- description: null
+  name: positioning mode
+  type_:
+    name: Int64
+- description: null
+  name: validity
+  type_:
+    name: Int64
+- description:
+    en: Standard regional mesh (tertiary regional division) . See https://www.stat.go.jp/data/mesh/pdf/gaiyo1.pdf
+    ja: 基準地域メッシュ（第3次地域区画）。https://www.stat.go.jp/data/mesh/pdf/gaiyo1.pdf
+  name: mesh_code
+  type_:
+    name: Int64
+description:
+  en: This dataset contains PP (Probe Person) data collected in Matsuyama City in
+    2007, comprising 1,253,114 location records gathered between February 19 and March
+    23, 2007.
+  ja: 2007年に松山市で収集されたPP（プローブパーソン）データ 1,253,114件の位置情報レコード 2007年2月19日~3月23日
+hash_: 6fe44f27bda27e586428cbf0a4d5f9671ee6de05e29cd234f5ace7f61063da4a
+license_:
+  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+    Networks.
+  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+name:
+  en: Matsuyama PP locdata
+  ja: 松山PP位置データ
+year: 2007

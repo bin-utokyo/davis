@@ -1,0 +1,5 @@
+outs:
+- md5: 13b0a8facc53f3770874567be4230b84
+  size: 3720311
+  hash: md5
+  path: trip_toyosu_2018.csv
