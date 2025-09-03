@@ -27,6 +27,36 @@ src/
 git clone https://github.com/bin-utokyo/davis.git
 ```
 
+## インストール方法
+
+このプロジェクトのCLIツール (`davis-cli`) は、GitHubの[リリースページ](https://github.com/bin-utokyo/davis/releases)からインストールできます。
+
+### 1. リリースページからアセットをダウンロード
+
+最新のリリースから、お使いの環境に合った`whl`ファイルまたは`tar.gz`ファイルをダウンロードします。
+
+### 2. `uv` または `pip` を使ってインストール
+
+ダウンロードしたファイルを指定して、以下のコマンドでインストールします。
+
+**`whl`ファイルの場合:**
+```sh
+# uv を使う場合
+uv pip install /path/to/downloaded_file.whl
+
+# pip を使う場合
+pip install /path/to/downloaded_file.whl
+```
+
+**`tar.gz`ファイルの場合:**
+```sh
+# uv を使う場合
+uv pip install /path/to/downloaded_file.tar.gz
+
+# pip を使う場合
+pip install /path/to/downloaded_file.tar.gz
+```
+
 ## 注意事項
 - 詳細や.envの例は各モデルのREADMEをご参照ください．
 
