@@ -131,6 +131,8 @@ def setup_davis() -> None:  # noqa: C901, PLR0912, PLR0915
         "gdrive_folder_id": folder_id,
         "gdrive_client_id": client_id,
         "gdrive_client_secret": client_secret,
+        "git_executable_path": str(Path(git_path).resolve()),
+        "dvc_executable_path": dvc_abs_path,
     }
     save_user_config(new_config)
 
