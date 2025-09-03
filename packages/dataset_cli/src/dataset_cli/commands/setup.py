@@ -13,7 +13,7 @@ from rich import print as rprint
 from dataset_cli.utils.config import CONFIG_FILE, load_user_config, save_user_config
 
 
-def setup_davis() -> None:
+def setup_davis() -> None:  # noqa: C901, PLR0912, PLR0915
     """
     Davis CLI の初回セットアップを対話的に行います。
     Google DriveのフォルダIDと、ご自身の認証情報を設定します。
@@ -75,14 +75,19 @@ def setup_davis() -> None:
             rprint(
                 "dvcをインストールし、システムのPATHに登録してください。",
             )
+            # Recommend installing via pip if uv is not available
+            rprint(
+                "`uv tool install dvc[gdrive]` または `pip install dvc[gdrive]` でインストールできます。",
+            )
+            # Provide platform-specific installation hints
             if platform.system() == "Darwin":
                 rprint(
-                    "Homebrewをお使いの場合は `brew install dvc` でインストールできます。",
+                    "Homebrewをお使いの場合は `brew install dvc` でもインストールできます。",
                 )
                 rprint("https://dvc.org/doc/install/macos も参照してください。")
             elif platform.system() == "Windows":
                 rprint(
-                    "Chocolateyをお使いの場合は `choco install dvc` でインストールできます。",
+                    "Chocolateyをお使いの場合は `choco install dvc` でもインストールできます。",
                 )
                 rprint("https://dvc.org/doc/install/windows も参照してください。")
         raise typer.Abort

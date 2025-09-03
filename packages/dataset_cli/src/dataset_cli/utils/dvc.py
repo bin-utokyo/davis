@@ -1,3 +1,4 @@
+import shutil
 import subprocess
 from collections.abc import Sequence
 from pathlib import Path
@@ -55,7 +56,7 @@ class DVCClient:
                 self._run_command(["init"])
                 rprint("[green]DVCリポジトリを初期化しました。[/green]")
 
-    def _run_command(  # noqa: C901
+    def _run_command(  # noqa: C901, PLR0912
         self,
         command: list[str],
         *,
@@ -74,7 +75,12 @@ class DVCClient:
         Raises:
             DVCError: コマンドの実行が失敗した場合。
         """
-        full_command = ["dvc", *command]
+        dvc_path = shutil.which("dvc")
+        if not dvc_path:
+            msg = "DVCコマンドが見つかりません。DVCはインストールされていますか？"
+            raise FileNotFoundError(msg)
+
+        full_command = [dvc_path, *command]
         rprint(f"[cyan]実行中: {' '.join(full_command)}[/cyan]")
 
         try:
@@ -197,6 +203,7 @@ class DVCClient:
         self,
         targets: str | Sequence[str] | None = None,
         remote: str | None = None,
+        *,
         force: bool = False,
     ) -> None:
         """
