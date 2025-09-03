@@ -6,10 +6,13 @@ from typing import Annotated
 import httpx
 import typer
 from rich import print as rprint
+from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
 from dataset_cli.utils.api import get_latest_manifest
+
+MIN_RECOMMENDED_WIDTH = 120  # この幅 (文字数) より狭いと警告
 
 
 def list_datasets() -> None:
@@ -43,6 +46,15 @@ def list_datasets() -> None:
         )
 
     rprint(table)
+
+    console = Console()
+    if console.width < MIN_RECOMMENDED_WIDTH:
+        rprint(
+            Panel(
+                f"[bold]ターミナルの幅が狭いため、表が見づらい可能性があります。幅を広げることをお勧めします (現在の幅: {console.width}文字）。[/bold]",
+                title="注意",
+            ),
+        )
 
 
 def show_info(  # noqa: C901
