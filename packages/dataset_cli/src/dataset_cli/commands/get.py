@@ -200,10 +200,17 @@ def _download_with_dvc(  # noqa: PLR0913, PLR0915
         dvc_config_path.write_text(dvc_config_content, encoding="utf-8")
 
         rprint("  - DVCコマンドを実行し、データをダウンロードします...")
+        git_path = shutil.which("git")
+        if not git_path:
+            rprint("[bold red]エラー: 'git' コマンドが見つかりません。[/bold red]")
+            rprint(
+                "[dim]Gitがインストールされ、PATHが通っていることを確認してください。[/dim]",
+            )
+            raise typer.Exit(code=1)
         try:
             # Gitリポジトリを初期化
-            subprocess.run(
-                ["git", "init"],  # noqa: S607
+            subprocess.run(  # noqa: S603
+                [git_path, "init"],
                 cwd=tmp_path,
                 check=True,
                 capture_output=True,
