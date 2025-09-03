@@ -28,6 +28,14 @@ def get_repo_url() -> str:
 
 def get_latest_manifest() -> Manifest:
     """GitHubの最新リリースからmanifest.jsonを取得してパースする。"""
+    local_manifest = Path("dist/manifest.json")
+    if local_manifest.exists():
+        rprint("[yellow]ローカルの 'dist/manifest.json' を使用します。[/yellow]")
+        content = json.loads(
+            local_manifest.read_text(encoding="utf-8"),
+        )
+        return Manifest.model_validate(content)
+
     repo_url = get_repo_url()
     # "github.com" を "api.github.com/repos" に置換してAPIエンドポイントを構築
     api_base_url = repo_url.replace("github.com", "api.github.com/repos")

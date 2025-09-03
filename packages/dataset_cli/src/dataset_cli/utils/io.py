@@ -117,8 +117,8 @@ def generate_manifest_data(
         except (FileNotFoundError, ValueError, RuntimeError, ValidationError):
             continue
 
-        # データセットIDは 'data/' を除いたディレクトリパス
-        dataset_id = original_file.parent.relative_to(data_root).as_posix()
+        # データセットIDは 'data/' を除いたファイルパス
+        dataset_id = original_file.relative_to(data_root).as_posix()
 
         if dataset_id not in datasets:
             datasets[dataset_id] = DatasetInfo(
