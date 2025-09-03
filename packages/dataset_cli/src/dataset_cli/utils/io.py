@@ -134,7 +134,7 @@ def generate_manifest_data(
         pdf_ja_path = original_file.with_suffix(original_file.suffix + ".ja.pdf")
         pdf_en_path = original_file.with_suffix(original_file.suffix + ".en.pdf")
         if pdf_ja_path.exists() and pdf_en_path.exists():
-            pdf_base_url = f"{repo_url}/blob/{branch}"
+            pdf_base_url = f"{repo_url}/raw/{branch}"
             pdf_url_ja, pdf_url_en = (
                 HttpUrl(f"{pdf_base_url}/{pdf_ja_path.as_posix()}"),
                 HttpUrl(f"{pdf_base_url}/{pdf_en_path.as_posix()}"),
