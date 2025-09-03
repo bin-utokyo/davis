@@ -20,6 +20,7 @@ from dataset_cli.schemas.dataset_config import (
     LocalizedStr,
 )
 from dataset_cli.schemas.polars import get_polars_data_type_name
+from dataset_cli.utils.dvc import DVCClient
 from dataset_cli.utils.parser import infer_file_type
 from dataset_cli.utils.validate import (
     detect_encoding,
@@ -44,21 +45,14 @@ def _get_and_validate_repo() -> Repo:
     return repo
 
 
-def _get_dvc_deleted_files(repo_path: Path) -> list[str]:
+def _get_dvc_deleted_files(dvc_client: DVCClient) -> list[str]:
     try:
-        result = subprocess.run(
-            ["dvc", "status", "--quiet", "--json"],  # noqa: S607
-            cwd=repo_path,
-            check=True,
-            capture_output=True,
-            text=True,
-            encoding="utf-8",
-        )
-        if not result.stdout:
+        result = dvc_client.status("--quiet", "--json")
+        if not result:
             return []
-        status = json.loads(result.stdout)
+        status = json.loads(result)
         return [item["path"] for item in status.get("deleted", [])]
-    except (FileNotFoundError, subprocess.CalledProcessError, json.JSONDecodeError):
+    except json.JSONDecodeError:
         return []
 
 
@@ -66,9 +60,9 @@ def _is_excluded(path: Path) -> bool:
     return any(str(path).endswith(suffix) for suffix in DVC_EXCLUDE_SUFFIXES)
 
 
-def _detect_changes(repo: Repo, repo_path: Path) -> list[Path]:
+def _detect_changes(repo: Repo, repo_path: Path, dvc_client: DVCClient) -> list[Path]:
     rprint("\n[bold]Step 1: データセットの変更を検出します...[/bold]")
-    deleted_files = _get_dvc_deleted_files(repo_path)
+    deleted_files = _get_dvc_deleted_files(dvc_client)
     if deleted_files:
         rprint(f"  [red]削除を検出 (DVC):[/red] {', '.join(deleted_files)}")
         dvc_files_to_remove = [f"{f}.dvc" for f in deleted_files]
@@ -100,17 +94,15 @@ def _detect_changes(repo: Repo, repo_path: Path) -> list[Path]:
     return all_data_files
 
 
-def _dvc_add_and_validate(repo_path: Path, files: list[Path]) -> None:
+def _dvc_add_and_validate(
+    repo_path: Path, files: list[Path], dvc_client: DVCClient
+) -> None:
     rprint("\n[bold]Step 2: DVCへの追加とスキーマ検証を開始します...[/bold]")
     if not files:
         return
 
     files_to_add_str = [str(p) for p in files]
-    subprocess.run(  # noqa: S603
-        ["dvc", "add", *files_to_add_str],  # noqa: S607
-        check=False,
-        cwd=repo_path,
-    )
+    dvc_client.add(files_to_add_str)
     rprint("  [cyan]✓[/cyan] `dvc add` を実行し、DVCの追跡情報を更新しました。")
 
     files_for_validation_check = [
@@ -158,7 +150,9 @@ def _generate_pdfs_and_stage(repo: Repo, repo_path: Path) -> None:
     rprint("  [green]✓[/green] 全ての変更をGitにステージングしました。")
 
 
-def _commit_and_push(repo: Repo, repo_path: Path, message: str) -> None:
+def _commit_and_push(
+    repo: Repo, repo_path: Path, message: str, dvc_client: DVCClient
+) -> None:
     rprint("\n[bold]Step 4: コミットとプッシュを行います...[/bold]")
     if not repo.index.diff(repo.head.commit):
         rprint(
@@ -174,7 +168,7 @@ def _commit_and_push(repo: Repo, repo_path: Path, message: str) -> None:
     rprint(f"[green]✅ Gitにコミットしました: '{final_commit_message}'[/green]")
 
     if typer.confirm("\nDVC と Git の変更をリモートにプッシュしますか？", default=True):
-        subprocess.run(["dvc", "push"], cwd=repo_path, check=True, text=True)  # noqa: S607
+        dvc_client.push()
         current_branch = repo.active_branch
         if current_branch.tracking_branch() is None:
             rprint(
@@ -200,11 +194,12 @@ def sync_dataset(
 ) -> None:
     repo = _get_and_validate_repo()
     repo_path = Path(repo.working_dir)
+    dvc_client = DVCClient(repo_path=repo_path)
     try:
-        changed_files = _detect_changes(repo, repo_path)
-        _dvc_add_and_validate(repo_path, changed_files)
+        changed_files = _detect_changes(repo, repo_path, dvc_client)
+        _dvc_add_and_validate(repo_path, changed_files, dvc_client)
         _generate_pdfs_and_stage(repo, repo_path)
-        _commit_and_push(repo, repo_path, commit_message)
+        _commit_and_push(repo, repo_path, commit_message, dvc_client)
     except (
         GitCommandError,
         subprocess.CalledProcessError,

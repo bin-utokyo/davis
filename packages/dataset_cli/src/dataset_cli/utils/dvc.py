@@ -75,7 +75,7 @@ class DVCClient:
             DVCError: コマンドの実行が失敗した場合。
         """
         full_command = ["dvc", *command]
-        rprint(f"[cyan]実行中: {" ".join(full_command)}[/cyan]")
+        rprint(f"[cyan]実行中: {' '.join(full_command)}[/cyan]")
 
         try:
             # Popenを使用してサブプロセスを開始し、出力をリアルタイムでストリーミング
@@ -197,6 +197,7 @@ class DVCClient:
         self,
         targets: str | Sequence[str] | None = None,
         remote: str | None = None,
+        force: bool = False,
     ) -> None:
         """
         `dvc pull` を実行して、データをリモートストレージからダウンロードします。
@@ -204,8 +205,11 @@ class DVCClient:
         Args:
             targets (Optional[str | Sequence[str]], optional): プル対象。指定しない場合は全て。
             remote (Optional[str], optional): 使用するリモートストレージの名前。
+            force (bool, optional): Trueの場合、`--force`フラグを付与します。
         """
         cmd = ["pull"]
+        if force:
+            cmd.append("--force")
         if remote:
             cmd.extend(["-r", remote])
         if targets:
@@ -213,14 +217,18 @@ class DVCClient:
             cmd.extend(target_list)
         self._run_command(cmd)
 
-    def status(self) -> str:
+    def status(self, *args: str) -> str:
         """
         `dvc status` を実行して、リポジトリの状態を確認します。
+
+        Args:
+            *args: `dvc status` に渡す追加の引数。
 
         Returns:
             str: `dvc status`の標準出力。
         """
-        stdout, _ = self._run_command(["status"], stream_output=False)
+        cmd = ["status", *args]
+        stdout, _ = self._run_command(cmd, stream_output=False)
         return stdout
 
     def remote_modify(

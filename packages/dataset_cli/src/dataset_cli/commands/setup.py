@@ -1,5 +1,12 @@
 # ./packages/dataset_cli/src/dataset_cli/commands/setup.py
 
+import os
+import platform
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+
 import typer
 from rich import print as rprint
 
@@ -14,6 +21,75 @@ def setup_davis() -> None:
     rprint(
         "[bold]Davisデータセットツールの初回セットアップを開始します。[/bold]",
     )
+
+    rprint("\n[bold]依存関係をチェックしています...[/bold]")
+
+    # Check for git
+    if not (git_path := shutil.which("git")):
+        rprint("[bold red]エラー: 'git' コマンドが見つかりません。[/bold red]")
+        rprint("Gitをインストールし、システムのPATHに登録してください。")
+        rprint("Gitは https://git-scm.com/downloads からダウンロードできます。")
+        if platform.system() == "Darwin":
+            rprint(
+                "macOSをご利用の場合は、Xcodeコマンドラインツールに含まれています。また、Homebrewをお使いの場合は `brew install git` でインストールできます。",
+            )
+        elif platform.system() == "Windows":
+            rprint(
+                "Windowsをご利用の場合は、Git for Windows (https://gitforwindows.org/) をインストールしてください。",
+            )
+        raise typer.Abort
+
+    rprint("  - [green]✅ git はインストール済みです。[/green]")
+    rprint(f"    [dim]Gitのパス: {Path(git_path).resolve()}[/dim]")
+
+    # Check for dvc
+    dvc_path = shutil.which("dvc")
+    if not dvc_path:
+        # If not in PATH, check next to the python executable
+        py_executable_dir = Path(sys.executable).parent
+        dvc_in_env = py_executable_dir / "dvc"
+        if dvc_in_env.is_file() and os.access(dvc_in_env, os.X_OK):
+            dvc_path = str(dvc_in_env)
+
+    if not dvc_path:
+        rprint("[bold red]エラー: 'dvc' コマンドが見つかりません。[/bold red]")
+        rprint(
+            "PATHまたは現在のPython環境で 'dvc' 実行可能ファイルが見つかりませんでした。",
+        )
+        # if uv is installed, suggest using uv
+        if shutil.which("uv"):
+            install_cmd = "uv tool install dvc[gdrive]"
+            execute_auto_install = typer.confirm(
+                f"uvが見つかりました。`{install_cmd}` を実行してdvcをインストールしますか？",
+                default=True,
+            )
+            if execute_auto_install:
+                rprint(f"[dim]実行中: {install_cmd}[/dim]")
+                subprocess.run(  # noqa: S602
+                    install_cmd,
+                    shell=True,
+                    check=False,
+                )
+                dvc_path = shutil.which("dvc")
+        if not dvc_path:
+            rprint(
+                "dvcをインストールし、システムのPATHに登録してください。",
+            )
+            if platform.system() == "Darwin":
+                rprint(
+                    "Homebrewをお使いの場合は `brew install dvc` でインストールできます。",
+                )
+                rprint("https://dvc.org/doc/install/macos も参照してください。")
+            elif platform.system() == "Windows":
+                rprint(
+                    "Chocolateyをお使いの場合は `choco install dvc` でインストールできます。",
+                )
+                rprint("https://dvc.org/doc/install/windows も参照してください。")
+        raise typer.Abort
+
+    dvc_abs_path = str(Path(dvc_path).resolve())
+    rprint("  - [green]✅ dvc はインストール済みです。[/green]")
+    rprint(f"    [dim]DVCのパス: {dvc_abs_path}[/dim]")
     rprint(
         "[dim]このツールはDVCを利用してGoogle Driveからデータをダウンロードします。[/dim]",
     )
@@ -33,7 +109,7 @@ def setup_davis() -> None:
                 if "secret" in key and len(value) > 8  # noqa: PLR2004
                 else value
             )
-            rprint(f"  - [cyan]{key}[/cyan]: {display_value}")
+            rprint(f"  - [cyan]{key}[/cyan]: [white]{display_value}[/white]")
         if not typer.confirm("\n設定を上書きしますか？"):
             rprint("セットアップを中止しました。")
             raise typer.Abort
