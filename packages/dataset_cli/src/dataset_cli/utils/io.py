@@ -117,8 +117,8 @@ def generate_manifest_data(
         except (FileNotFoundError, ValueError, RuntimeError, ValidationError):
             continue
 
-        # データセットIDは 'data/' を除いたディレクトリパス
-        dataset_id = original_file.parent.relative_to(data_root).as_posix()
+        # データセットIDは 'data/' を除いたファイルパス
+        dataset_id = original_file.relative_to(data_root).as_posix()
 
         if dataset_id not in datasets:
             datasets[dataset_id] = DatasetInfo(
@@ -134,7 +134,7 @@ def generate_manifest_data(
         pdf_ja_path = original_file.with_suffix(original_file.suffix + ".ja.pdf")
         pdf_en_path = original_file.with_suffix(original_file.suffix + ".en.pdf")
         if pdf_ja_path.exists() and pdf_en_path.exists():
-            pdf_base_url = f"{repo_url}/blob/{branch}"
+            pdf_base_url = f"{repo_url}/raw/{branch}"
             pdf_url_ja, pdf_url_en = (
                 HttpUrl(f"{pdf_base_url}/{pdf_ja_path.as_posix()}"),
                 HttpUrl(f"{pdf_base_url}/{pdf_en_path.as_posix()}"),

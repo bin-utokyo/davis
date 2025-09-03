@@ -21,7 +21,6 @@ from dataset_cli.schemas.dataset_config import (
 )
 from dataset_cli.schemas.polars import get_polars_data_type_name
 from dataset_cli.utils.parser import infer_file_type
-from dataset_cli.utils.pdf import create_readme_pdf
 from dataset_cli.utils.validate import (
     detect_encoding,
     read_data_with_schema,
@@ -425,6 +424,8 @@ def generate_pdf(
         typer.Argument(help="リポジトリのルートパス"),
     ] = ".",
 ) -> None:
+    from dataset_cli.utils.pdf import create_readme_pdf  # noqa: PLC0415
+
     repo_path = Path(root_path)
     data_dir = repo_path / "data"
 
