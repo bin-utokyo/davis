@@ -21,6 +21,7 @@ from rich.progress import (
 from dataset_cli.schemas.manifest import Manifest
 from dataset_cli.utils.api import get_latest_manifest
 from dataset_cli.utils.config import load_user_config
+from dataset_cli.utils.dvc import DVCClient, DVCError
 
 
 def get_dataset(
@@ -69,7 +70,6 @@ def get_dataset(
         output_dir,
     )
     _download_pdfs(pdf_urls_to_download)
-    _cleanup_dvc_files(output_dir)
 
     rprint(
         f"\n[bold green]✅ 全ての処理が完了しました:[/bold green] {output_dir.resolve()}",
@@ -136,7 +136,7 @@ def _collect_targets(
     return dvc_files_to_pull, pdf_urls_to_download
 
 
-def _download_with_dvc(  # noqa: PLR0913
+def _download_with_dvc(  # noqa: PLR0913, PLR0915
     dvc_files: list[str],
     manifest: Manifest,
     folder_id: str,
@@ -201,43 +201,58 @@ def _download_with_dvc(  # noqa: PLR0913
 
         rprint("  - DVCコマンドを実行し、データをダウンロードします...")
         try:
+            # Gitリポジトリを初期化
             subprocess.run(
                 ["git", "init"],  # noqa: S607
                 cwd=tmp_path,
                 check=True,
                 capture_output=True,
-            )
-            command = ["dvc", "pull", *dvc_files, "--force"]
-            subprocess.run(  # noqa: S603
-                command,
-                cwd=tmp_path,
-                check=True,
                 text=True,
-                encoding="utf-8",
-                capture_output=False,
             )
 
-            # ダウンロードした data/ を移動
-            data_dir_in_tmp = tmp_path / "data"
-            if data_dir_in_tmp.exists():
-                shutil.copytree(data_dir_in_tmp, output_dir, dirs_exist_ok=True)
+            # DVCClientを初期化し、dvc pullを実行
+            dvc_client = DVCClient(repo_path=tmp_path)
+            dvc_client.pull(targets=dvc_files, force=True)
+
+            # ダウンロードしたファイルを個別にコピー
+            rprint("  - ファイルを最終的な出力先にコピーしています...")
+            for dvc_file_rel_path_str in dvc_files:
+                data_file_rel_path = Path(dvc_file_rel_path_str.removesuffix(".dvc"))
+
+                src_path = tmp_path / data_file_rel_path
+                dest_path = output_dir / data_file_rel_path
+
+                if src_path.exists():
+                    dest_path.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copy(src_path, dest_path)
+                else:
+                    rprint(
+                        f"[yellow]警告: dvc pull後にファイルが見つかりませんでした: {src_path}[/yellow]",
+                    )
 
         except FileNotFoundError as e:
+            # git initが失敗した場合
             rprint(
-                "[bold red]エラー: 'dvc' または 'git' コマンドが見つかりませんでした。[/bold red]",
+                "[bold red]エラー: 'git' コマンドが見つかりませんでした。[/bold red]",
             )
             rprint(
-                "[dim]これらのコマンドがインストールされ、PATHが通っていることを確認してください。[/dim]",
+                "[dim]Gitがインストールされ、PATHが通っていることを確認してください。[/dim]",
             )
             raise typer.Exit(code=1) from e
-        except subprocess.CalledProcessError as e:
+        except DVCError as e:
             rprint("[bold red]DVC pull の実行中にエラーが発生しました。[/bold red]")
+            rprint(f"[dim]{e}[/dim]")
             rprint(
                 "[dim]Google Driveの認証に失敗したか、ファイルにアクセス権がない可能性があります。[/dim]",
             )
             rprint(
                 "[dim]ブラウザが開いて認証を求められた場合は、許可してください。[/dim]",
             )
+            raise typer.Exit(code=1) from e
+        except subprocess.CalledProcessError as e:
+            # git initが失敗した場合
+            rprint("[bold red]Gitの初期化中にエラーが発生しました。[/bold red]")
+            rprint(f"[dim]{e.stderr}[/dim]")
             raise typer.Exit(code=1) from e
 
     rprint(f"\n[bold green]✅ ダウンロード完了:[/bold green] {output_dir.resolve()}")
@@ -277,14 +292,3 @@ def _download_pdfs(pdf_urls_to_download: list[tuple[str, Path]]) -> None:
                 rprint(
                     f"[yellow]警告: HTTPエラー {e.response.status_code} - {e.response.reason_phrase} でダウンロードに失敗しました: {url}[/yellow]",
                 )
-
-
-def _cleanup_dvc_files(output_dir: Path) -> None:
-    """不要な .dvc ファイルを削除。"""
-    rprint("  - クリーンアップ中...")
-    deleted_count = 0
-    for dvc_file_path in output_dir.rglob("*.dvc"):
-        if dvc_file_path.is_file():
-            dvc_file_path.unlink()
-            deleted_count += 1
-    rprint(f"  - [green]✓[/green] {deleted_count}個の.dvcファイルを削除しました。")
