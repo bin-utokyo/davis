@@ -1,0 +1,46 @@
+city:
+  en: Tokyo Metropolis
+  ja: 東京都
+columns:
+- description: null
+  name: Zone Large
+  type_:
+    name: Int64
+- description: null
+  name: Zone Medium
+  type_:
+    name: Int64
+- description: null
+  name: Planning Base Zone
+  type_:
+    name: Int64
+- description: null
+  name: Zone Small
+  type_:
+    name: Int64
+- description:
+    en: Includes special wards, which are treated as separate municipalities like
+      cities, towns, and villages.
+    ja: 特別区を含む。
+  name: City/Town/Village
+  type_:
+    name: String
+- description: null
+  name: Neighborhood/Area Name
+  type_:
+    name: String
+description:
+  en: List of codes for large zones, medium zones, basic planning zones, and small
+    zones by municipality in Tokyo Metropolis. Tokyo has 23 special wards, which are
+    treated as separate municipalities, unlike other wards(区) in ordinance-designated
+    cities(政令指定都市).
+  ja: 東京都の市区町村別の大ゾーン、中ゾーン、計画基本ゾーン、小ゾーンのコード一覧。
+hash_: d67ba09421f2695222d51ad1a75d0bc35fd1392bf296031b9ac2e0b607b7dbe2
+license_:
+  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+    Networks.
+  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+name:
+  en: List of zones by municipality in Tokyo
+  ja: 東京都 市町村別ゾーン一覧
+year: 2008

@@ -1,0 +1,5 @@
+outs:
+- md5: cdbf6dab706b637e80f637c7202146c0
+  size: 974438
+  hash: md5
+  path: trip_Shibuya_2023.csv

@@ -1,0 +1,36 @@
+city:
+  en: Matsuyama
+  ja: 松山
+columns:
+- description: null
+  name: LinkID
+  type_:
+    name: Int64
+- description: null
+  name: StartNodeID
+  type_:
+    name: Int64
+- description: null
+  name: EndNodeID
+  type_:
+    name: Int64
+- description: null
+  name: Length
+  type_:
+    name: Int64
+- description: null
+  name: Speed
+  type_:
+    name: Int64
+description:
+  en: Link data of Matsuyama city road network.
+  ja: 松山市内道路ネットワークのlinkデータです。
+hash_: d27ada8848299f56fe85956d81d73098fe0f61cc267df1a58f74dd9d70057132
+license_:
+  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+    Networks.
+  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+name:
+  en: link
+  ja: link
+year: 2025

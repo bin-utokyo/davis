@@ -1,0 +1,58 @@
+city:
+  en: Tohoku
+  ja: 東北
+columns:
+- description:
+    en: Unique identifier for the individual
+    ja: 個人を識別する一意のID
+  name: individual_id
+  type_:
+    name: Int64
+- description:
+    en: Observation year (Gregorian calendar)
+    ja: 観測年（西暦）
+  name: time
+  type_:
+    name: Int64
+- description:
+    en: Level of activities at the current residence (normalized indicator for community
+      participation, hobbies, interactions, etc.)
+    ja: 現居住地における活動の度合い（地域活動・趣味・交流などを正規化した指標）
+  name: act
+  type_:
+    name: Float64
+- description:
+    en: Proximity to family members at the current residence (normalized based on
+      number and distance)
+    ja: 現居住地における家族の近接度（人数・距離を基に正規化）
+  name: fam
+  type_:
+    name: Float64
+- description:
+    en: Duration of residence at the current location (normalized cumulative years)
+    ja: 現居住地での累積居住年数（正規化値）
+  name: dur
+  type_:
+    name: Float64
+- description:
+    en: Home ownership status at the current residence (1 = owned, 0 = rented/other)
+    ja: 現在の住居が持ち家かどうか（1=持ち家、0=賃貸等）
+  name: own
+  type_:
+    name: Float64
+description:
+  en: This dataset records, for disaster-affected individuals, annual information
+    about activities at their current residence, proximity to family members, duration
+    of residence, and home ownership status. Activity and family proximity are expressed
+    as normalized indicators, duration is normalized cumulative years, and ownership
+    is a binary variable.
+  ja: 本データは、被災者の現居住地における活動、家族との近接度、居住年数、持ち家の有無を年ごとに記録したものである。活動や家族近接度は正規化された指標で表され、居住年数は累積年数を正規化して示す。持ち家はバイナリ変数として表される。
+hash_: c12ec1913560d9bda36ce25f18268cdf7a0c6ab0688e114013ce5b8e2e3a3927
+license_:
+  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+    Networks.
+  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+name:
+  en: Activities at the individual's current residence
+  ja: 個人の現居住地における活動など
+year: 2024

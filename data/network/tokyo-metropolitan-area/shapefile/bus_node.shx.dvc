@@ -1,0 +1,5 @@
+outs:
+- md5: 7f5e7a286e3bc0dba1b3dabef03fca39
+  size: 863668
+  hash: md5
+  path: bus_node.shx

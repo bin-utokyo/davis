@@ -1,0 +1,29 @@
+city:
+  en: Tokyo metropolitan area
+  ja: 東京都市圏
+columns:
+- description: null
+  name: Zone Code
+  type_:
+    name: String
+- description: null
+  name: Foreign
+  type_:
+    name: String
+- description: null
+  name: Place Name
+  type_:
+    name: String
+description:
+  en: Codes to indicate locations for trips departing from and arriving at destinations
+    outside the target area.
+  ja: 対象領域の外側を発着するトリップについて、その場所を表すためのコード。
+hash_: e3b805b76592dbaa2b0498fffa3fb6727de19ce918e5c6e72f20eb6ee64f470a
+license_:
+  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+    Networks.
+  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+name:
+  en: Out-of-zone code for overseas
+  ja: 域外コード（海外）
+year: 2008

@@ -1,0 +1,5 @@
+outs:
+- md5: 42482ee6b184eac1e131e29cf6cd6065
+  size: 381558
+  hash: md5
+  path: df_individual_disaster.csv

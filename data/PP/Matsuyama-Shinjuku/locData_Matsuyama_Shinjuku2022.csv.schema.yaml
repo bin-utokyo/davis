@@ -1,0 +1,47 @@
+city:
+  en: Matsuyama-Shinjuku
+  ja: 松山ー新宿
+columns:
+- description: null
+  name: ID
+  type_:
+    name: Int64
+- description: null
+  name: userID
+  type_:
+    name: Int64
+- description: null
+  name: datetime
+  type_:
+    name: Datetime
+- description:
+    en: Latitude (World Geodetic System)
+    ja: 緯度（世界測地系）
+  name: latitude
+  type_:
+    name: Float64
+- description:
+    en: Longitude (World Geodetic System)
+    ja: 経度（世界測地系）
+  name: longitude
+  type_:
+    name: Float64
+- description:
+    en: Standard regional mesh (tertiary regional division) . See https://www.stat.go.jp/data/mesh/pdf/gaiyo1.pdf
+    ja: 基準地域メッシュ（第3次地域区画）。https://www.stat.go.jp/data/mesh/pdf/gaiyo1.pdf
+  name: mesh_code
+  type_:
+    name: Int64
+description:
+  en: 115 individuals from08/29~09/07 Trip data of Probe Person (PP) between Matsuyama
+    and Shinjuku, matched with coordinates in the World Geodetic System (WGS).
+  ja: 115人の08/29~09/07 松山と新宿間のプローブパーソン(PP)のトリップと世界測地系（WGS）での座標を対応させたデータ
+hash_: a831414a629036f5c9d05bec131794b4bc98b3a23694f9d04fc5593923972029
+license_:
+  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+    Networks.
+  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+name:
+  en: Matsuyama-Shinjuku2022
+  ja: 松山市-新宿 2022
+year: 2022

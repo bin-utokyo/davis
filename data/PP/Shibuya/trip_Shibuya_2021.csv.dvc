@@ -1,0 +1,5 @@
+outs:
+- md5: 747defab4fcaa137ccfd4591a04ef6f2
+  size: 623394
+  hash: md5
+  path: trip_Shibuya_2021.csv

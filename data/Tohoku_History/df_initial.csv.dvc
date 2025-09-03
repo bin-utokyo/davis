@@ -1,0 +1,5 @@
+outs:
+- md5: 1656d1821387e590b708f303482e5085
+  size: 186037
+  hash: md5
+  path: df_initial.csv

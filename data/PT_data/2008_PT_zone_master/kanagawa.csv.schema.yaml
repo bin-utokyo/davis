@@ -1,0 +1,43 @@
+city:
+  en: Kanagawa Prefecture
+  ja: 神奈川県
+columns:
+- description: null
+  name: Zone Large
+  type_:
+    name: Int64
+- description: null
+  name: Zone Medium
+  type_:
+    name: Int64
+- description: null
+  name: Planning Base Zone
+  type_:
+    name: Int64
+- description: null
+  name: Zone Small
+  type_:
+    name: Int64
+- description: null
+  name: City/Town/Village
+  type_:
+    name: String
+- description: null
+  name: Neighborhood/Area Name
+  type_:
+    name: String
+description:
+  en: List of codes for large zones, medium zones, basic planning zones, and small    zones
+    by municipality in Kanagawa Prefecture. For Yokohama City and Kawasaki City, the
+    codes are separated by ward, since both cities are ordinance-designated cities
+    (政令指定都市).
+  ja: 神奈川県の市町村別の大ゾーン、中ゾーン、計画基本ゾーン、小ゾーンのコード一覧。横浜市と川崎市は政令指定都市のため、区ごとに分かれている。
+hash_: b18a340ac8723cf85fd8a924d8ae4cc0dc98af30724667ca3b0a12f8dd3362a9
+license_:
+  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+    Networks.
+  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+name:
+  en: List of zones by municipality in Kanagawa Prefecture
+  ja: 神奈川県 市町村別ゾーン一覧
+year: 2008

@@ -1,0 +1,148 @@
+city:
+  en: Tokyo
+  ja: 東京
+columns:
+- description: null
+  name: ID
+  type_:
+    name: Int64
+- description: null
+  name: node1
+  type_:
+    name: String
+- description: null
+  name: node2
+  type_:
+    name: String
+- description: null
+  name: NodeNo1
+  type_:
+    name: Int64
+- description: null
+  name: NodeNo2
+  type_:
+    name: Int64
+- description: null
+  name: Administrative Area
+  type_:
+    name: Int64
+- description: null
+  name: Major_Route_Manager
+  type_:
+    name: Int64
+- description: null
+  name: Major_Route_Road_Type
+  type_:
+    name: Int64
+- description: null
+  name: Lane_Number_Code
+  type_:
+    name: Int64
+- description: null
+  name: Toll_Road
+  type_:
+    name: Int64
+- description: null
+  name: Distance_Toll_Code
+  type_:
+    name: Int64
+- description: null
+  name: Fixed_Toll_Code
+  type_:
+    name: Int64
+- description: null
+  name: Link_Length_Calculated_Value
+  type_:
+    name: Float64
+- description: null
+  name: Link_Type
+  type_:
+    name: Int64
+- description: null
+  name: Motorway
+  type_:
+    name: Int64
+- description: null
+  name: Link_Passable
+  type_:
+    name: Int64
+- description: null
+  name: Traffic_Restriction_Type
+  type_:
+    name: String
+- description: null
+  name: Traffic_Restriction_Condition_Type
+  type_:
+    name: Int64
+- description: null
+  name: Restricted_Speed
+  type_:
+    name: Int64
+- description: null
+  name: Travel Speed
+  type_:
+    name: Float64
+- description:
+    en: Probably longitude in World Geodetic System
+    ja: おそらく世界測地系の経度
+  name: LongitudeW_Origin
+  type_:
+    name: Float64
+- description:
+    en: Probably latitude in World Geodetic System
+    ja: おそらく世界測地系の緯度
+  name: LatitudeW_Origin
+  type_:
+    name: Float64
+- description:
+    en: Probably longitude in World Geodetic System
+    ja: おそらく世界測地系の経度
+  name: LongitudeW_Dest
+  type_:
+    name: Float64
+- description:
+    en: Probably latitude in World Geodetic System
+    ja: おそらく世界測地系の緯度
+  name: LatitudeW_Dest
+  type_:
+    name: Float64
+- description: null
+  name: LongitudeUTM_Origin
+  type_:
+    name: Float64
+- description: null
+  name: LatitudeUTM_Origin
+  type_:
+    name: Float64
+- description: null
+  name: LongitudeUTM_Dest
+  type_:
+    name: Float64
+- description: null
+  name: LatitudeUTM_Dest
+  type_:
+    name: Float64
+- description:
+    en: Standard regional mesh (tertiary regional division) . See https://www.stat.go.jp/data/mesh/pdf/gaiyo1.pdf
+    ja: 基準地域メッシュ（第3次地域区画）。https://www.stat.go.jp/data/mesh/pdf/gaiyo1.pdf
+  name: mesh_code_origin
+  type_:
+    name: Int64
+- description:
+    en: Standard regional mesh (tertiary regional division) . See https://www.stat.go.jp/data/mesh/pdf/gaiyo1.pdf
+    ja: 基準地域メッシュ（第3次地域区画）。https://www.stat.go.jp/data/mesh/pdf/gaiyo1.pdf
+  name: mesh_code_dest
+  type_:
+    name: Int64
+description:
+  en: Link data of Tokyo car road network. Node1 and node2 are not used.
+  ja: 東京の自動車道路ネットワークのlinkデータです。node1、node2は使いません。
+hash_: 6d9c13aa303c03c0ecf382088e75500c93495067ac85281e929371e39162850c
+license_:
+  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+    Networks.
+  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+name:
+  en: car_link
+  ja: car_link
+year: 2019

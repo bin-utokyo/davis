@@ -1,0 +1,61 @@
+city:
+  en: Shibuya
+  ja: 渋谷区
+columns:
+- description: null
+  name: ID
+  type_:
+    name: Int64
+- description: null
+  name: UserID
+  type_:
+    name: Int64
+- description: null
+  name: Timestamp
+  type_:
+    name: Datetime
+- description: null
+  name: Latitude
+  type_:
+    name: Float64
+- description: null
+  name: Longitude
+  type_:
+    name: Float64
+- description: null
+  name: Altitude
+  type_:
+    name: Int64
+- description: null
+  name: Accuracy
+  type_:
+    name: Float64
+- description: null
+  name: Bearing
+  type_:
+    name: Float64
+- description: null
+  name: Speed
+  type_:
+    name: Float64
+- description: null
+  name: CreatedAt
+  type_:
+    name: Datetime
+- description: null
+  name: Mesh3
+  type_:
+    name: Int64
+description:
+  en: This dataset is person trip (PP) data at Shibuya that was recorded from November
+    15 to December 2, 2023
+  ja: 2023年11/15~12/02までのデータを格納しています
+hash_: 7fa2e862d8cae94de0542d80ec535711e09d304819e10ad888be0f95f7602c19
+license_:
+  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+    Networks.
+  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+name:
+  en: Shibuya_2023
+  ja: Shibuya_2023
+year: 2023

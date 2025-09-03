@@ -1,0 +1,5 @@
+outs:
+- md5: e4873f6f127481bac26399c4b1f58ac4
+  size: 4201612
+  hash: md5
+  path: car_node.shp

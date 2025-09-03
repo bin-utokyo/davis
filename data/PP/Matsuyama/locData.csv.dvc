@@ -1,0 +1,5 @@
+outs:
+- md5: 217fcb0edb03fb98dc728d188f0ab42d
+  size: 104610916
+  hash: md5
+  path: locData.csv

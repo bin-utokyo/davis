@@ -1,0 +1,41 @@
+city:
+  en: Ibaraki Prefecture
+  ja: 茨城県
+columns:
+- description: null
+  name: Zone Large
+  type_:
+    name: Int64
+- description: null
+  name: Zone Medium
+  type_:
+    name: Int64
+- description: null
+  name: Planning Base Zone
+  type_:
+    name: Int64
+- description: null
+  name: Zone Small
+  type_:
+    name: Int64
+- description: null
+  name: City/Town/Village
+  type_:
+    name: String
+- description: null
+  name: Neighborhood/Area Name
+  type_:
+    name: String
+description:
+  en: List of codes for large zones, medium zones, basic planning zones, and small
+    zones by municipality in Ibaraki Prefecture.
+  ja: 茨城県の市町村別の大ゾーン、中ゾーン、計画基本ゾーン、小ゾーンのコード一覧。
+hash_: ffb241a4fe9d10d695b3ecdc86cc03a69ec3f8f0784810a91b5d988c5252c9f2
+license_:
+  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+    Networks.
+  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+name:
+  en: List of zones by municipality in Ibaraki Prefecture
+  ja: 茨城県 市町村別ゾーン一覧
+year: 2008

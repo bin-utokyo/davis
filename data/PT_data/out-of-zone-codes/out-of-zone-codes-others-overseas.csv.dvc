@@ -1,0 +1,5 @@
+outs:
+- md5: 961c9e6beb3ba17dea0f510739910adc
+  size: 306
+  hash: md5
+  path: out-of-zone-codes-others-overseas.csv

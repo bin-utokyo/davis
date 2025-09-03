@@ -1,0 +1,5 @@
+outs:
+- md5: 3640024a2f6b1fc0f59979d589e7cb2e
+  size: 202205046
+  hash: md5
+  path: public_link.dbf

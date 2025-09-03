@@ -1,0 +1,357 @@
+city:
+  en: Matsuyama
+  ja: 松山市
+columns:
+- description: null
+  name: tripID
+  type_:
+    name: Int64
+- description: null
+  name: monitorID
+  type_:
+    name: String
+- description: null
+  name: purposeID
+  type_:
+    name: Int64
+- description: null
+  name: purpose
+  type_:
+    name: String
+- description: null
+  name: DepartureTime
+  type_:
+    name: Datetime
+- description: null
+  name: ArrivalTime
+  type_:
+    name: Datetime
+- description: null
+  name: time(second)
+  type_:
+    name: Int64
+- description: null
+  name: DepartureCode
+  type_:
+    name: Int64
+- description: null
+  name: DepartureName
+  type_:
+    name: String
+- description: null
+  name: User'sDepartureName
+  type_:
+    name: String
+- description: null
+  name: DepartureCode_duplicated_0
+  type_:
+    name: Int64
+- description: null
+  name: DepartureAttribute
+  type_:
+    name: String
+- description: null
+  name: DepartureLat(JGS)
+  type_:
+    name: Float64
+- description: null
+  name: DepartureLon(JGS)
+  type_:
+    name: Float64
+- description: null
+  name: DepartureLat(WGS)
+  type_:
+    name: Float64
+- description: null
+  name: DepartureLon(WGS)
+  type_:
+    name: Float64
+- description: null
+  name: GoalCode
+  type_:
+    name: Int64
+- description: null
+  name: Goal
+  type_:
+    name: String
+- description: null
+  name: User'sGoalName
+  type_:
+    name: String
+- description: null
+  name: GoalAttributeCode
+  type_:
+    name: Int64
+- description: null
+  name: GoalAttribute
+  type_:
+    name: String
+- description: null
+  name: GoalLat(JGS)
+  type_:
+    name: Float64
+- description: null
+  name: GoalLon(JGS)
+  type_:
+    name: Float64
+- description: null
+  name: GoalLat(WGS)
+  type_:
+    name: Float64
+- description: null
+  name: GoalLon(WGS)
+  type_:
+    name: Float64
+- description: null
+  name: ArrivalCode
+  type_:
+    name: Int64
+- description: null
+  name: ArrivalName
+  type_:
+    name: String
+- description: null
+  name: User'sArrivalName
+  type_:
+    name: String
+- description: null
+  name: ArrivalCode_duplicated_0
+  type_:
+    name: Int64
+- description: null
+  name: ArrivalAttribute
+  type_:
+    name: String
+- description: null
+  name: ArrivalLat(JGS)
+  type_:
+    name: Float64
+- description: null
+  name: ArrivalLon(JGS)
+  type_:
+    name: Float64
+- description: null
+  name: ArrivalLat(WGS)
+  type_:
+    name: Float64
+- description: null
+  name: ArrivalLon(WGS)
+  type_:
+    name: Float64
+- description: null
+  name: compatibility
+  type_:
+    name: Int64
+- description: null
+  name: CreationFlag
+  type_:
+    name: Int64
+- description: null
+  name: ArrivalFlag
+  type_:
+    name: Int64
+- description: null
+  name: validity
+  type_:
+    name: Int64
+- description: null
+  name: TransportationCode
+  type_:
+    name: Int64
+- description: null
+  name: Transportation
+  type_:
+    name: String
+- description: null
+  name: TransportationChange1_CD
+  type_:
+    name: Int64
+- description: null
+  name: TransportationChange1_Name
+  type_:
+    name: String
+- description: null
+  name: TransportationChange1_Time
+  type_:
+    name: Datetime
+- description: null
+  name: TransportationChange2_CD
+  type_:
+    name: Int64
+- description: null
+  name: TransportationChange2_Name
+  type_:
+    name: String
+- description: null
+  name: TransportationChange2_Time
+  type_:
+    name: Datetime
+- description: null
+  name: TransportationChange3_CD
+  type_:
+    name: Int64
+- description: null
+  name: TransportationChange3_Name
+  type_:
+    name: String
+- description: null
+  name: TransportationChange3_Time
+  type_:
+    name: Datetime
+- description: null
+  name: TransportationChange4_CD
+  type_:
+    name: String
+- description: null
+  name: TransportationChange4_Name
+  type_:
+    name: String
+- description: null
+  name: TransportationChange4_Time
+  type_:
+    name: String
+- description: null
+  name: TransportationChange5_CD
+  type_:
+    name: String
+- description: null
+  name: TransportationChange5_Name
+  type_:
+    name: String
+- description: null
+  name: TransportationChange5_Time
+  type_:
+    name: String
+- description: null
+  name: TransportationChange6_CD
+  type_:
+    name: String
+- description: null
+  name: TransportationChange6_Name
+  type_:
+    name: String
+- description: null
+  name: TransportationChange6_Time
+  type_:
+    name: String
+- description: null
+  name: TransportationChange7_CD
+  type_:
+    name: String
+- description: null
+  name: TransportationChange7_Name
+  type_:
+    name: String
+- description: null
+  name: TransportationChange7_Time
+  type_:
+    name: String
+- description: null
+  name: TransportationChange8_CD
+  type_:
+    name: String
+- description: null
+  name: TransportationChange8_Name
+  type_:
+    name: String
+- description: null
+  name: TransportationChange8_Time
+  type_:
+    name: String
+- description: null
+  name: TransportationChange9_CD
+  type_:
+    name: String
+- description: null
+  name: TransportationChange9_Name
+  type_:
+    name: String
+- description: null
+  name: TransportationChange9_Time
+  type_:
+    name: String
+- description: null
+  name: TransportationChange10_CD
+  type_:
+    name: String
+- description: null
+  name: TransportationChange10_Name
+  type_:
+    name: String
+- description: null
+  name: TransportationChange10_Time
+  type_:
+    name: String
+- description: null
+  name: TransportationChange11_CD
+  type_:
+    name: String
+- description: null
+  name: TransportationChange11_Name
+  type_:
+    name: String
+- description: null
+  name: TransportationChange11_Time
+  type_:
+    name: String
+- description: null
+  name: TransportationChange12_CD
+  type_:
+    name: String
+- description: null
+  name: TransportationChange12_Name
+  type_:
+    name: String
+- description: null
+  name: TransportationChange12_Time
+  type_:
+    name: String
+- description: null
+  name: TransportationChange13_CD
+  type_:
+    name: String
+- description: null
+  name: TransportationChange13_Name
+  type_:
+    name: String
+- description: null
+  name: TransportationChange13_Time
+  type_:
+    name: String
+- description: null
+  name: TransportationChange14_CD
+  type_:
+    name: String
+- description: null
+  name: TransportationChange14_Name
+  type_:
+    name: String
+- description: null
+  name: TransportationChange14_Time
+  type_:
+    name: String
+- description: null
+  name: Mesh3_Departure
+  type_:
+    name: String
+- description: null
+  name: Mesh3_Goal
+  type_:
+    name: String
+- description: null
+  name: Mesh3_Arrival
+  type_:
+    name: String
+description:
+  en: This dataset contains PP (Probe Person) data collected in Matsuyama City in
+    2007, comprising 7,810 trips gathered between February 19 and March 23, 2007.
+  ja: 2007年に松山市で収集されたPP（プローブパーソン）データ 1,253,114件の位置情報レコード 2007年2月19日~3月23日
+hash_: c68fabe08121bb7db86019a88709b739e51af8cb0233676f494f3542920cdd70
+license_:
+  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+    Networks.
+  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+name:
+  en: Matsuyama PP Trip Data
+  ja: 松山市PP Tripデータ
+year: 2007

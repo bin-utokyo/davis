@@ -1,0 +1,5 @@
+outs:
+- md5: 069ca8c31ebb1ae39bb33d2db46afef9
+  size: 10807558
+  hash: md5
+  path: trip_toyosu_2021.csv

@@ -1,0 +1,138 @@
+city:
+  en: Tohoku
+  ja: 東北
+columns:
+- description:
+    en: Record number (row index in the dataset)
+    ja: レコード番号（観測行の通し番号）
+  name: 'no'
+  type_:
+    name: Int64
+- description:
+    en: Observation year (Gregorian calendar)
+    ja: 観測年（西暦）
+  name: time
+  type_:
+    name: Int64
+- description:
+    en: Marriage event indicator (1 = occurred, 0 = not occurred)
+    ja: 結婚イベントの有無（1=発生, 0=なし）
+  name: ev_married
+  type_:
+    name: Int64
+- description:
+    en: Divorce or bereavement event indicator
+    ja: 離婚または死別イベントの有無
+  name: ev_divorced
+  type_:
+    name: Int64
+- description:
+    en: Childbirth event indicator
+    ja: 子供の出生イベントの有無
+  name: ev_birth
+  type_:
+    name: Int64
+- description:
+    en: Child’s independence from the household indicator
+    ja: 世帯からの子供の独立イベントの有無
+  name: ev_independent
+  type_:
+    name: Int64
+- description:
+    en: Migration from Tohoku to the Tokyo metropolitan area indicator
+    ja: 東北から首都圏への移動（上京）の有無
+  name: Jokyo
+  type_:
+    name: Int64
+- description:
+    en: Migration from the Tokyo metropolitan area back to Tohoku indicator
+    ja: 首都圏から東北への移動（Uターン）の有無
+  name: U-turn
+  type_:
+    name: Int64
+- description:
+    en: Migration from non-Sendai Tohoku to Sendai indicator
+    ja: 非仙台の東北から仙台への移動の有無
+  name: to-Sendai
+  type_:
+    name: Int64
+- description:
+    en: Home ownership status
+    ja: 持ち家の有無
+  name: own_house
+  type_:
+    name: Float64
+- description:
+    en: First employment or re-employment after long-term unemployment indicator
+    ja: 初めての就職、または長期無職からの就職イベント
+  name: Shushoku
+  type_:
+    name: Int64
+- description:
+    en: Transition from dual-earner to single-earner household indicator
+    ja: 共働きから片働きへの移行（共働き解消）
+  name: quit_tomobataraki
+  type_:
+    name: Int64
+- description:
+    en: Transition from single-earner to dual-earner household indicator
+    ja: 片働きから共働きへの移行
+  name: start_tomobataraki
+  type_:
+    name: Int64
+- description:
+    en: Retirement event indicator
+    ja: 退職イベントの有無
+  name: retirement
+  type_:
+    name: Int64
+- description:
+    en: Unique identifier for the individual
+    ja: 個人を識別する一意のID
+  name: individual_id
+  type_:
+    name: Int64
+- description:
+    en: ID of the chosen residential alternative (correct label in analysis). Represents
+      the actual residence selected from the set of spatial alternatives. Alternatives
+      are coded as 0=Stay (remain in current residence), 1=Iwate, 2=Sendai City, 3=Miyagi
+      Prefecture (excluding Sendai), 4=Fukushima, 5=Ibaraki, 6=Saitama, 7=Chiba, 8=Tokyo
+      Special Wards, 9=Tokyo, 10=Kanagawa.
+    ja: 選択された居住地候補のID（分析における正解ラベル）。空間的な選択肢の中から実際に選ばれた居住地を表す。選択肢コード：0=滞在（現在の居住を継続）、1=岩手県、2=仙台市、3=宮城県（仙台市を除く）、4=福島県、5=茨城県、6=埼玉県、7=千葉県、8=東京都特別区、9=東京都、10=神奈川県。
+  name: target
+  type_:
+    name: Int64
+- description:
+    en: ID of a residential alternative in the choice set. Used to represent each
+      possible spatial alternative evaluated in the model. Alternatives are coded
+      as 0=Stay (remain in current residence), 1=Iwate, 2=Sendai City, 3=Miyagi Prefecture
+      (excluding Sendai), 4=Fukushima, 5=Ibaraki, 6=Saitama, 7=Chiba, 8=Tokyo Special
+      Wards, 9=Tokyo, 10=Kanagawa.
+    ja: 選択肢集合内の居住地候補のID。モデルで評価される各空間的選択肢を表す。選択肢コード：0=滞在（現在の居住を継続）、1=岩手県、2=仙台市、3=宮城県（仙台市を除く）、4=福島県、5=茨城県、6=埼玉県、7=千葉県、8=東京都特別区、9=東京都、10=神奈川県。
+  name: choice
+  type_:
+    name: Int64
+- description:
+    en: ID of the current residence at the time of observation. Indicates the municipality
+      or zone where the individual resided. Alternatives are coded as 0=Stay (remain
+      in current residence), 1=Iwate, 2=Sendai City, 3=Miyagi Prefecture (excluding
+      Sendai), 4=Fukushima, 5=Ibaraki, 6=Saitama, 7=Chiba, 8=Tokyo Special Wards,
+      9=Tokyo, 10=Kanagawa.
+    ja: 観測時点での現居住地のID。個人が居住している市区町村またはゾーンを示す。選択肢コード：0=滞在（現在の居住を継続）、1=岩手県、2=仙台市、3=宮城県（仙台市を除く）、4=福島県、5=茨城県、6=埼玉県、7=千葉県、8=東京都特別区、9=東京都、10=神奈川県。
+  name: residence
+  type_:
+    name: Int64
+description:
+  en: This dataset contains 20 years of panel data for disaster-affected individuals,
+    including life events (marriage, divorce, childbirth, employment, retirement,
+    interregional migration, etc.) and residential choice information for each year.
+  ja: 本データセットは、被災者の20年間にわたるライフイベント（結婚、離婚、出産、就職、退職、地域間移動等）と、その年における居住地選択に関する情報を含むパネルデータである。
+hash_: 39504ef0a4f7c32c684bcac9ad72be0721b7687ba47f6104d35baa650319bbdc
+license_:
+  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+    Networks.
+  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+name:
+  en: 20-year panel data on individual states and transitions
+  ja: 個人の20年間の状態・変化の記録
+year: 2024

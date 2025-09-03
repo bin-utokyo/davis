@@ -1,0 +1,5 @@
+outs:
+- md5: 200a7f2146d0ed7f205b9572d9090e00
+  size: 82097103
+  hash: md5
+  path: public_node.dbf

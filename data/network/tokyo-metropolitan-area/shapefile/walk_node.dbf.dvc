@@ -1,0 +1,5 @@
+outs:
+- md5: c567021103374cef33fcc4fc24d6c4e7
+  size: 45756373
+  hash: md5
+  path: walk_node.dbf

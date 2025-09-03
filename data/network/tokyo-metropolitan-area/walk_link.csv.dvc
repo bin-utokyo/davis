@@ -1,0 +1,5 @@
+outs:
+- md5: 0d160f9adc6639a1719a77ed3b5aa568
+  size: 55742613
+  hash: md5
+  path: walk_link.csv

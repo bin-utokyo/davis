@@ -1,0 +1,5 @@
+outs:
+- md5: f9675a92d8cd9c6d47d82152eca71633
+  size: 36011585
+  hash: md5
+  path: bus_link.dbf

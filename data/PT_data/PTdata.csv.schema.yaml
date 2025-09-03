@@ -1,0 +1,112 @@
+city:
+  en: Tokyo metropolitan area
+  ja: 東京都市圏
+columns:
+- description:
+    en: An ID that identifies a movement with a pair of departure and destination.
+    ja: 出発地と目的地のペアをもつ移動を識別するID。
+  name: TripID
+  type_:
+    name: Int64
+- description:
+    en: An ID that identifies a series of trips made by the same person.
+    ja: 同一人物が行う一連のトリップを識別するID。
+  name: TripChainID
+  type_:
+    name: Int64
+- description:
+    en: '1: Male, 2: Female'
+    ja: '1: 男性, 2: 女性'
+  name: Sex
+  type_:
+    name: Enum
+    options:
+    - '1'
+    - '2'
+- description:
+    en: Represents age groups in 5-year intervals. For 1≦n≦17, it means from 5n-5
+      to 5n-1 years old. For n=18, it means 85 years and older.
+    ja: 年齢層を5歳区切りで表す。1≦n≦17のとき、5n-5歳以上5n-1歳以下。n=18の時、85歳以上。
+  name: Age
+  type_:
+    name: Int64
+- description:
+    en: The total number of trips in a series of trips.
+    ja: 一連のトリップの合計回数。
+  name: TripNumber
+  type_:
+    name: Int64
+- description:
+    en: The order of the trip in a series of trips.
+    ja: 一連のトリップの中での順番。
+  name: TripOrder
+  type_:
+    name: Int64
+- description:
+    en: The zone code of the small zone of the origin.
+    ja: 出発地の小ゾーンのゾーンコード。
+  name: Ozone
+  type_:
+    name: Int64
+- description:
+    en: The zone code of the small zone of the destination.
+    ja: 目的地の小ゾーンのゾーンコード。
+  name: Dzone
+  type_:
+    name: Int64
+- description:
+    en: '1: To work, 2: To school, 3: To home, 4: For shopping, 5: For dining/socializing/entertainment,
+      6: For sightseeing/leisure, 7: For medical visits, 8: For other personal matters,
+      9: For pick-up/drop-off, 10: For sales/delivery/purchase, 11: For meetings/conferences/gatherings/house
+      calls, 12: For work/repair, 13: For agricultural/forestry/fishing work, 14:
+      For other business, 99: Unknown'
+    ja: '1: 勤務先へ、2: 通学先へ、3: 自宅へ、4: 買い物へ、5: 食事・社交・娯楽へ、6: 観光・行楽・レジャーへ、7: 通院、8: その他の私用へ、9:
+      送迎、10: 販売・配達・仕入・購入先へ、11: 打ち合わせ・会議・集会・往診へ、12: 作業・修理へ、13: 農林漁業作業へ、14: その他業務へ、99:
+      不明'
+  name: Purpose
+  type_:
+    name: Int64
+- description:
+    en: A coefficient used to estimate the actual population size from the sample
+      size obtained in the PT survey.
+    ja: 調査で得られたサンプル数から実際の母集団数を推定するための係数。
+  name: EnlargeCoefficient
+  type_:
+    name: Int64
+- description:
+    en: '1: Train, 2: Bus, 3: Car, 4: Motorcycle, 5: Bicycle, 6: Walking, 7: Other,
+      8: Unknown'
+    ja: '1: 鉄道、2: バス、3: 自動車、4: 二輪車、5: 自転車、6: 徒歩、7: その他、8: 不明'
+  name: Transportation
+  type_:
+    name: Int64
+- description:
+    en: Departure time, expressed as the number of seconds elapsed since 0:00.
+    ja: 出発時刻。0:00から経過した秒数で表されている。
+  name: Stime
+  type_:
+    name: Int64
+- description:
+    en: Arrival time, expressed as the number of seconds elapsed since 0:00.
+    ja: 到着時刻。0:00から経過した秒数で表されている。
+  name: Gtime
+  type_:
+    name: Int64
+- description:
+    en: Stay time, expressed in seconds.
+    ja: 滞在時間。秒単位で表されている。
+  name: StayTime
+  type_:
+    name: Int64
+description:
+  en: Data from a PT survey conducted in the Tokyo metropolitan area.
+  ja: 東京都市圏で実施したPT調査のデータ。
+hash_: 33c310f31479f98dade7866073649059ffaeff7771602c60276eca4489538fb5
+license_:
+  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+    Networks.
+  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+name:
+  en: Tokyo metropolitan area PT survey
+  ja: 東京都市圏PT調査
+year: 2008

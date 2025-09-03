@@ -1,0 +1,66 @@
+city:
+  en: Yokohama
+  ja: 横浜
+columns:
+- description: null
+  name: TripID
+  type_:
+    name: Int64
+- description: null
+  name: PositioningDataID
+  type_:
+    name: Int64
+- description: null
+  name: Mode
+  type_:
+    name: String
+- description: null
+  name: UserCode
+  type_:
+    name: String
+- description: null
+  name: DateTime
+  type_:
+    name: Datetime
+- description: null
+  name: Lat_JGS
+  type_:
+    name: Float64
+- description: null
+  name: Lon_JGS
+  type_:
+    name: Float64
+- description: null
+  name: Lat_WGS
+  type_:
+    name: Float64
+- description: null
+  name: Lon_WGS
+  type_:
+    name: Float64
+- description: null
+  name: PositioningMode
+  type_:
+    name: Int64
+- description: null
+  name: Validity
+  type_:
+    name: Int64
+- description:
+    en: Standard regional mesh (tertiary regional division) . See https://www.stat.go.jp/data/mesh/pdf/gaiyo1.pdf
+    ja: 基準地域メッシュ（第3次地域区画）。https://www.stat.go.jp/data/mesh/pdf/gaiyo1.pdf
+  name: mesh_code
+  type_:
+    name: Int64
+description:
+  en: GPS traces of 31 individuals from 10/29~11/06
+  ja: 31人の10/29~11/06の移動のGPS軌跡
+hash_: b043e29bc111969da18890fce4932ffa0fd7d3703c56c8092ab5d9093181d25c
+license_:
+  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+    Networks.
+  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+name:
+  en: locData.csv
+  ja: locData.csv
+year: 2009

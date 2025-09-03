@@ -1,0 +1,5 @@
+outs:
+- md5: f21bbec82785c66ce5569b9e9a7c54bc
+  size: 524227
+  hash: md5
+  path: rail_link.dbf
