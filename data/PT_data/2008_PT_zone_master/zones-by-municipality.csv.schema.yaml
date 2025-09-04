@@ -1,45 +1,45 @@
 city:
-    en: Tokyo metropolitan area
-    ja: 首都圏
+  en: Tokyo metropolitan area
+  ja: 首都圏
 columns:
-    - description: null
-      name: Prefecture
-      type_:
-          name: String
-    - description:
-          ja: 特別区を含む。
-          en: Includes special wards, which are treated as separate municipalities like cities, towns, and villages.
-      name: City/Town/Village
-      type_:
-          name: String
-    - description: null
-      name: Zone Large
-      type_:
-          name: String
-    - description: null
-      name: Zone Medium
-      type_:
-          name: String
-    - description: null
-      name: Planning Base Zone
-      type_:
-          name: String
-    - description: null
-      name: Zone Small
-      type_:
-          name: String
+- description: null
+  name: Prefecture
+  type_:
+    name: String
+- description:
+    en: Includes special wards, which are treated as separate municipalities like
+      cities, towns, and villages.
+    ja: 特別区を含む。
+  name: City/Town/Village
+  type_:
+    name: String
+- description: null
+  name: Zone Large
+  type_:
+    name: String
+- description: null
+  name: Zone Medium
+  type_:
+    name: String
+- description: null
+  name: Planning Base Zone
+  type_:
+    name: String
+- description: null
+  name: Zone Small
+  type_:
+    name: String
 description:
-    en:
-        Codes for large zones, medium zones, basic planning zones, and small zones are
-        specified for each prefecture and municipality. Use in conjunction with the person
-        trip survey data.
-    ja: 都県、市区町村別に大ゾーン、中ゾーン、計画基本ゾーン、小ゾーンのコードを定めている。パーソントリップ調査データと照合して用いる。
+  en: Codes for large zones, medium zones, basic planning zones, and small zones are
+    specified for each prefecture and municipality. Use in conjunction with the person
+    trip survey data.
+  ja: 都県、市区町村別に大ゾーン、中ゾーン、計画基本ゾーン、小ゾーンのコードを定めている。パーソントリップ調査データと照合して用いる。
+hash_: c763c045bb23f50f4fcd6755d829a0eda5a486181d3d0947ca1e3edee6495fc6
 license_:
-    en:
-        Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
-        Networks.
-    ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+    Networks.
+  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
 name:
-    en: List of zones by municipality
-    ja: 市区町村別ゾーン一覧
+  en: List of zones by municipality
+  ja: 市区町村別ゾーン一覧
 year: 2008
