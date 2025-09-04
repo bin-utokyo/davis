@@ -86,7 +86,11 @@ class DVCClient:
         dvc_executable_path = config.get("dvc_executable_path", dvc_path_fallback)
 
         full_command = [dvc_executable_path, *command]
-        rprint(f"[cyan]実行中: {' '.join(full_command)}[/cyan]")
+        rprint(
+            _("[cyan]実行中: {full_command}[/cyan]").format(
+                full_command=" ".join(full_command),
+            ),
+        )
 
         try:
             # Popenを使用してサブプロセスを開始し、出力をリアルタイムでストリーミング
