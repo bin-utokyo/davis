@@ -5,7 +5,12 @@ requires-python = ">=3.13"
 dependencies = ["davis-cli"]
 
 [dependency-groups]
-dev = ["mypy>=1.17.1", "ruff>=0.12.10", "types-pyyaml>=6.0.12.20250822"]
+dev = [
+    "mypy>=1.17.1",
+    "ruff>=0.12.10",
+    "types-pyyaml>=6.0.12.20250822",
+    "babel>=2.17.0",
+]
 
 [tool.uv.workspace]
 members = ["packages/*"]

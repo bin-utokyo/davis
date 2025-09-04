@@ -10,17 +10,26 @@ from rich import print as rprint
 
 from dataset_cli.schemas.dataset_config import DatasetConfig
 from dataset_cli.schemas.polars import get_polars_data_type
+from dataset_cli.utils.i18n import _
 from dataset_cli.utils.parser import infer_file_type, parse_yaml_and_validate
 
 
 def validate_paths(file_path: str, schema_path: Path) -> None:
     """データファイルとスキーマファイルの存在を検証する。"""
     if not Path(file_path).exists():
-        rprint(f"[red]ファイルが見つかりません: {file_path}[/red]")
+        rprint(
+            _("[red]ファイルが見つかりません: {file_path}[/red]").format(
+                file_path=file_path,
+            ),
+        )
         raise typer.Exit(code=1)
 
     if not schema_path.exists():
-        rprint(f"[red]スキーマファイルが見つかりません: {schema_path}[/red]")
+        rprint(
+            _("[red]スキーマファイルが見つかりません: {schema_path}[/red]").format(
+                schema_path=schema_path,
+            ),
+        )
         raise typer.Exit(code=1)
 
 
@@ -33,10 +42,10 @@ def load_and_validate_schema(
     try:
         schema = parse_yaml_and_validate(schema_path, DatasetConfig)
         if not quiet:
-            rprint("[green]スキーマは有効です。[/green]")
+            rprint(_("[green]スキーマは有効です。[/green]"))
 
     except ValidationError as e:
-        rprint("[red]スキーマの形式が無効です。[/red]")
+        rprint(_("[red]スキーマの形式が無効です。[/red]"))
         rprint(e.json(indent=2))
         raise typer.Exit(code=1) from e
 
@@ -84,18 +93,28 @@ def read_data_with_schema(
             case "application/x-parquet":
                 loaded_dataframe = pl.read_parquet(file_path, schema=schema_dict)
             case _:
-                msg = f"サポートされていないファイルタイプ: {file_type}"
+                msg = _("サポートされていないファイルタイプ: {file_type}").format(
+                    file_type=file_type,
+                )
                 raise NotImplementedError(msg)
 
         # 読み込み後の列チェック
         if set(loaded_dataframe.columns) != set(schema_dict.keys()):
-            rprint("[red]ファイルの列がスキーマと一致しません。[/red]")
-            rprint(f"ファイル側: {sorted(loaded_dataframe.columns)}")
-            rprint(f"スキーマ側: {sorted(schema_dict.keys())}")
+            rprint(_("[red]ファイルの列がスキーマと一致しません。[/red]"))
+            rprint(
+                _("ファイル側: {loaded_columns}").format(
+                    loaded_columns=sorted(loaded_dataframe.columns),
+                ),
+            )
+            rprint(
+                _("スキーマ側: {schema_dict}").format(
+                    schema_dict=sorted(schema_dict.keys()),
+                ),
+            )
             raise typer.Exit(code=1)
 
     except (pl.exceptions.ShapeError, pl.exceptions.SchemaError) as e:
-        rprint("[red]ファイルはスキーマに適合していません。[/red]")
+        rprint(_("[red]ファイルはスキーマに適合していません。[/red]"))
         rprint(f"[red]{e}[/red]")
         raise typer.Exit(code=1) from e
 
@@ -107,7 +126,11 @@ def read_data_with_schema(
         try:
             write_file_hash(file_path, schema_path)
         except ValueError as e:
-            rprint(f"[red]ハッシュの書き込みに失敗しました: {e}[/red]")
+            rprint(
+                _("[red]ハッシュの書き込みに失敗しました: {e}[/red]").format(
+                    e=e,
+                ),
+            )
             raise typer.Exit(code=1) from e
 
     return loaded_dataframe, schema_config
@@ -144,7 +167,7 @@ def generate_file_hash(file_or_dir_path: str | Path) -> str:
                         sha256.update(chunk)
         return sha256.hexdigest().lower()
 
-    msg = f"無効なパス: {file_or_dir_path}"
+    msg = _("無効なパス: {file_or_dir_path}").format(file_or_dir_path=file_or_dir_path)
     raise ValueError(msg)
 
 
@@ -160,10 +183,14 @@ def write_file_hash(
         with schema_path.open("w", encoding="utf-8") as f:
             yaml.dump(schema_config.model_dump(), f, allow_unicode=True)
         rprint(
-            f"[green]スキーマファイルにハッシュを保存しました[/green] {file_hash}",
+            _(
+                "[green]スキーマファイルにハッシュを保存しました[/green] {file_hash}",
+            ).format(
+                file_hash=file_hash,
+            ),
         )
     except ValidationError as e:
-        rprint("[red]スキーマの形式が無効です。[/red]")
+        rprint(_("[red]スキーマの形式が無効です。[/red]"))
         rprint(e.json(indent=2))
         raise typer.Exit(code=1) from e
 
@@ -176,7 +203,12 @@ def validate_file_hash(
     actual_hash = generate_file_hash(file_path)
     if actual_hash != expected_hash:
         rprint(
-            f"[red]ファイルのハッシュが一致しません。\n期待値: {expected_hash}\n実際の値: {actual_hash}[/red]",
+            _(
+                "[red]ファイルのハッシュが一致しません。\n期待値: {expected_hash}\n実際の値: {actual_hash}[/red]",
+            ).format(
+                expected_hash=expected_hash,
+                actual_hash=actual_hash,
+            ),
         )
         return False
     return True

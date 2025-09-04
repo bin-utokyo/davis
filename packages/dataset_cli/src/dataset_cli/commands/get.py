@@ -22,13 +22,14 @@ from dataset_cli.schemas.manifest import Manifest
 from dataset_cli.utils.api import get_latest_manifest
 from dataset_cli.utils.config import load_user_config
 from dataset_cli.utils.dvc import DVCClient, DVCError
+from dataset_cli.utils.i18n import _
 
 
 def get_dataset(
     dataset_id: Annotated[
         str,
         typer.Argument(
-            help="`davis list`で表示されるデータセットID (ディレクトリも指定可)",
+            help=_("`davis list`で表示されるデータセットID (ディレクトリも指定可)"),
             show_default=False,
         ),
     ],
@@ -37,11 +38,11 @@ def get_dataset(
         typer.Option(
             "--out",
             "-o",
-            help="保存先のディレクトリ",
+            help=_("保存先のディレクトリ"),
             writable=True,
             file_okay=False,
             resolve_path=True,
-            show_default="現在のディレクトリ",
+            show_default=_("現在のディレクトリ"),
         ),
     ] = Path(),
 ) -> None:
@@ -57,7 +58,13 @@ def get_dataset(
     )
 
     rprint(
-        f"🚚 [bold cyan]{dataset_id}[/bold cyan] 以下のデータセット ({len(dvc_files_to_pull)}データファイル, {len(pdf_urls_to_download)}ドキュメント) をダウンロードします...",
+        _(
+            "🚚 [bold cyan]{dataset_id}[/bold cyan] 以下のデータセット ({num_dvc}データファイル, {num_docs}ドキュメント) をダウンロードします...",
+        ).format(
+            dataset_id=dataset_id,
+            num_dvc=len(dvc_files_to_pull),
+            num_docs=len(pdf_urls_to_download),
+        ),
     )
     output_dir.mkdir(exist_ok=True, parents=True)
 
@@ -72,7 +79,9 @@ def get_dataset(
     _download_pdfs(pdf_urls_to_download)
 
     rprint(
-        f"\n[bold green]✅ 全ての処理が完了しました:[/bold green] {output_dir.resolve()}",
+        _(
+            "\n[bold green]✅ 全ての処理が完了しました:[/bold green] {output_dir}",
+        ).format(output_dir=output_dir.resolve()),
     )
 
 
@@ -83,9 +92,11 @@ def _validate_config(config: dict) -> tuple[str, str, str]:
     client_secret = config.get("gdrive_client_secret")
 
     if not folder_id or not client_id or not client_secret:
-        rprint("[bold red]エラー: CLIの設定が不完全です。[/bold red]")
+        rprint(_("[bold red]エラー: CLIの設定が不完全です。[/bold red]"))
         rprint(
-            "[dim]'davis setup' を実行して、初回セットアップを完了してください。[/dim]",
+            _(
+                "[dim]'davis setup' を実行して、初回セットアップを完了してください。[/dim]",
+            ),
         )
         raise typer.Exit(code=1)
 
@@ -98,7 +109,9 @@ def _load_manifest_safe() -> Manifest:
         return get_latest_manifest()
     except Exception as e:
         rprint(
-            "[bold red]エラー: データセットの目録(manifest)の取得に失敗しました。[/bold red]",
+            _(
+                "[bold red]エラー: データセットの目録(manifest)の取得に失敗しました。[/bold red]",
+            ),
         )
         rprint(f"[dim]{e}[/dim]")
         raise typer.Exit(code=1) from e
@@ -129,7 +142,9 @@ def _collect_targets(
 
     if not found:
         rprint(
-            f"[bold red]エラー: データセット '{dataset_id}' は見つかりません。[/bold red]",
+            _(
+                "[bold red]エラー: データセット '{dataset_id}' は見つかりません。[/bold red]",
+            ).format(dataset_id=dataset_id),
         )
         raise typer.Exit(code=1)
 
@@ -168,12 +183,16 @@ def _download_with_dvc(  # noqa: PLR0913, PLR0915
                 zip_ref.extractall(tmp_path)
         except httpx.HTTPStatusError as e:
             rprint(
-                f"[bold red]HTTPエラー: ブートストラップパッケージのダウンロードに失敗しました (HTTP {e.response.status_code})[/bold red]",
+                _(
+                    "[bold red]HTTPエラー: ブートストラップパッケージのダウンロードに失敗しました (HTTP {status_code})[/bold red]",
+                ).format(status_code=e.response.status_code),
             )
             local_bootstrap = Path("dist/dvc-bootstrap.zip")
             if local_bootstrap.exists():
                 rprint(
-                    f"[yellow]ローカルの '{local_bootstrap}' を使用します。[/yellow]",
+                    _(
+                        "[yellow]ローカルの '{local_bootstrap}' を使用します。[/yellow]",
+                    ).format(local_bootstrap=local_bootstrap),
                 )
                 shutil.copy(local_bootstrap, bootstrap_zip_path)
                 with zipfile.ZipFile(bootstrap_zip_path, "r") as zip_ref:
@@ -182,7 +201,9 @@ def _download_with_dvc(  # noqa: PLR0913, PLR0915
                 raise typer.Exit(code=1) from e
         except Exception as e:
             rprint(
-                f"[bold red]ブートストラップパッケージの処理中にエラーが発生しました: {e}[/bold red]",
+                _(
+                    "[bold red]ブートストラップパッケージの処理中にエラーが発生しました: {e}[/bold red]",
+                ).format(e=e),
             )
             raise typer.Exit(code=1) from e
 
@@ -199,7 +220,7 @@ def _download_with_dvc(  # noqa: PLR0913, PLR0915
 """
         dvc_config_path.write_text(dvc_config_content, encoding="utf-8")
 
-        rprint("  - DVCコマンドを実行し、データをダウンロードします...")
+        rprint(_("  - DVCコマンドを実行し、データをダウンロードします..."))
         config = load_user_config()
         git_path_fallback = shutil.which("git") or "git"
         git_executable_path = config.get("git_executable_path", git_path_fallback)
@@ -218,7 +239,7 @@ def _download_with_dvc(  # noqa: PLR0913, PLR0915
             dvc_client.pull(targets=dvc_files, force=True)
 
             # ダウンロードしたファイルを個別にコピー
-            rprint("  - ファイルを最終的な出力先にコピーしています...")
+            rprint(_("  - ファイルを最終的な出力先にコピーしています..."))
             for dvc_file_rel_path_str in dvc_files:
                 data_file_rel_path = Path(dvc_file_rel_path_str.removesuffix(".dvc"))
 
@@ -230,35 +251,49 @@ def _download_with_dvc(  # noqa: PLR0913, PLR0915
                     shutil.copy(src_path, dest_path)
                 else:
                     rprint(
-                        f"[yellow]警告: dvc pull後にファイルが見つかりませんでした: {src_path}[/yellow]",
+                        _(
+                            "[yellow]警告: dvc pull後にファイルが見つかりませんでした: {src_path}[/yellow]",
+                        ).format(src_path=src_path),
                     )
 
         except FileNotFoundError as e:
             # git initが失敗した場合
             rprint(
-                "[bold red]エラー: 'git' コマンドが見つかりませんでした。[/bold red]",
+                _(
+                    "[bold red]エラー: 'git' コマンドが見つかりませんでした。[/bold red]",
+                ),
             )
             rprint(
-                "[dim]Gitがインストールされ、PATHが通っていることを確認してください。[/dim]",
+                _(
+                    "[dim]Gitがインストールされ、PATHが通っていることを確認してください。[/dim]",
+                ),
             )
             raise typer.Exit(code=1) from e
         except DVCError as e:
-            rprint("[bold red]DVC pull の実行中にエラーが発生しました。[/bold red]")
+            rprint(_("[bold red]DVC pull の実行中にエラーが発生しました。[/bold red]"))
             rprint(f"[dim]{e}[/dim]")
             rprint(
-                "[dim]Google Driveの認証に失敗したか、ファイルにアクセス権がない可能性があります。[/dim]",
+                _(
+                    "[dim]Google Driveの認証に失敗したか、ファイルにアクセス権がない可能性があります。[/dim]",
+                ),
             )
             rprint(
-                "[dim]ブラウザが開いて認証を求められた場合は、許可してください。[/dim]",
+                _(
+                    "[dim]ブラウザが開いて認証を求められた場合は、許可してください。[/dim]",
+                ),
             )
             raise typer.Exit(code=1) from e
         except subprocess.CalledProcessError as e:
             # git initが失敗した場合
-            rprint("[bold red]Gitの初期化中にエラーが発生しました。[/bold red]")
+            rprint(_("[bold red]Gitの初期化中にエラーが発生しました。[/bold red]"))
             rprint(f"[dim]{e.stderr}[/dim]")
             raise typer.Exit(code=1) from e
 
-    rprint(f"\n[bold green]✅ ダウンロード完了:[/bold green] {output_dir.resolve()}")
+    rprint(
+        _("\n[bold green]✅ ダウンロード完了:[/bold green] {output_dir}").format(
+            output_dir=output_dir.resolve(),
+        ),
+    )
 
 
 def _download_pdfs(pdf_urls_to_download: list[tuple[str, Path]]) -> None:
@@ -266,7 +301,7 @@ def _download_pdfs(pdf_urls_to_download: list[tuple[str, Path]]) -> None:
     if not pdf_urls_to_download:
         return
 
-    rprint("  - ドキュメント(PDF)をダウンロード中...")
+    rprint(_("  - ドキュメント(PDF)をダウンロード中..."))
     with (
         httpx.Client(follow_redirects=True, timeout=30) as client,
         Progress(
@@ -290,8 +325,18 @@ def _download_pdfs(pdf_urls_to_download: list[tuple[str, Path]]) -> None:
                     f.write(response.content)
                 progress.update(task, advance=1)
             except httpx.RequestError:
-                rprint(f"[yellow]警告: PDFのダウンロードに失敗しました: {url}[/yellow]")
+                rprint(
+                    _(
+                        "[yellow]警告: PDFのダウンロードに失敗しました: {url}[/yellow]",
+                    ).format(url=url),
+                )
             except httpx.HTTPStatusError as e:
                 rprint(
-                    f"[yellow]警告: HTTPエラー {e.response.status_code} - {e.response.reason_phrase} でダウンロードに失敗しました: {url}[/yellow]",
+                    _(
+                        "[yellow]警告: HTTPエラー {status_code} - {reason_phrase} でダウンロードに失敗しました: {url}[/yellow]",
+                    ).format(
+                        status_code=e.response.status_code,
+                        reason_phrase=e.response.reason_phrase,
+                        url=url,
+                    ),
                 )

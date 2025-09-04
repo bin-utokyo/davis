@@ -11,6 +11,7 @@ import typer
 from rich import print as rprint
 
 from dataset_cli.utils.config import CONFIG_FILE, load_user_config, save_user_config
+from dataset_cli.utils.i18n import _
 
 
 def setup_davis() -> None:  # noqa: C901, PLR0912, PLR0915
@@ -19,28 +20,36 @@ def setup_davis() -> None:  # noqa: C901, PLR0912, PLR0915
     Google DriveのフォルダIDと、ご自身の認証情報を設定します。
     """
     rprint(
-        "[bold]Davisデータセットツールの初回セットアップを開始します。[/bold]",
+        _("[bold]Davisデータセットツールの初回セットアップを開始します。[/bold]"),
     )
 
-    rprint("\n[bold]依存関係をチェックしています...[/bold]")
+    rprint(_("\n[bold]依存関係をチェックしています...[/bold]"))
 
     # Check for git
     if not (git_path := shutil.which("git")):
-        rprint("[bold red]エラー: 'git' コマンドが見つかりません。[/bold red]")
-        rprint("Gitをインストールし、システムのPATHに登録してください。")
-        rprint("Gitは https://git-scm.com/downloads からダウンロードできます。")
+        rprint(_("[bold red]エラー: 'git' コマンドが見つかりません。[/bold red]"))
+        rprint(_("Gitをインストールし、システムのPATHに登録してください。"))
+        rprint(_("Gitは https://git-scm.com/downloads からダウンロードできます。"))
         if platform.system() == "Darwin":
             rprint(
-                "macOSをご利用の場合は、Xcodeコマンドラインツールに含まれています。また、Homebrewをお使いの場合は `brew install git` でインストールできます。",
+                _(
+                    "macOSをご利用の場合は、Xcodeコマンドラインツールに含まれています。また、Homebrewをお使いの場合は `brew install git` でインストールできます。",
+                ),
             )
         elif platform.system() == "Windows":
             rprint(
-                "Windowsをご利用の場合は、Git for Windows (https://gitforwindows.org/) をインストールしてください。",
+                _(
+                    "Windowsをご利用の場合は、Git for Windows (https://gitforwindows.org/) をインストールしてください。",
+                ),
             )
         raise typer.Abort
 
-    rprint("  - [green]✅ git はインストール済みです。[/green]")
-    rprint(f"    [dim]Gitのパス: {Path(git_path).resolve()}[/dim]")
+    rprint(_("  - [green]✅ git はインストール済みです。[/green]"))
+    rprint(
+        _("    [dim]Gitのパス: {git_path}[/dim]").format(
+            git_path=Path(git_path).resolve(),
+        ),
+    )
 
     # Check for dvc
     dvc_path = shutil.which("dvc")
@@ -52,19 +61,27 @@ def setup_davis() -> None:  # noqa: C901, PLR0912, PLR0915
             dvc_path = str(dvc_in_env)
 
     if not dvc_path:
-        rprint("[bold red]エラー: 'dvc' コマンドが見つかりません。[/bold red]")
+        rprint(_("[bold red]エラー: 'dvc' コマンドが見つかりません。[/bold red]"))
         rprint(
-            "PATHまたは現在のPython環境で 'dvc' 実行可能ファイルが見つかりませんでした。",
+            _(
+                "PATHまたは現在のPython環境で 'dvc' 実行可能ファイルが見つかりませんでした。",
+            ),
         )
         # if uv is installed, suggest using uv
         if shutil.which("uv"):
             install_cmd = "uv tool install dvc[gdrive]"
             execute_auto_install = typer.confirm(
-                f"uvが見つかりました。`{install_cmd}` を実行してdvcをインストールしますか？",
+                _(
+                    "uvが見つかりました。`{install_cmd}` を実行してdvcをインストールしますか？",
+                ).format(install_cmd=install_cmd),
                 default=True,
             )
             if execute_auto_install:
-                rprint(f"[dim]実行中: {install_cmd}[/dim]")
+                rprint(
+                    _("[dim]実行中: {install_cmd}[/dim]").format(
+                        install_cmd=install_cmd,
+                    ),
+                )
                 subprocess.run(  # noqa: S602
                     install_cmd,
                     shell=True,
@@ -73,40 +90,54 @@ def setup_davis() -> None:  # noqa: C901, PLR0912, PLR0915
                 dvc_path = shutil.which("dvc")
         if not dvc_path:
             rprint(
-                "dvcをインストールし、システムのPATHに登録してください。",
+                _("dvcをインストールし、システムのPATHに登録してください。"),
             )
             # Recommend installing via pip if uv is not available
             rprint(
-                "`uv tool install dvc[gdrive]` または `pip install dvc[gdrive]` でインストールできます。",
+                _(
+                    "`uv tool install dvc[gdrive]` または `pip install dvc[gdrive]` でインストールできます。",
+                ),
             )
             # Provide platform-specific installation hints
             if platform.system() == "Darwin":
                 rprint(
-                    "Homebrewをお使いの場合は `brew install dvc` でもインストールできます。",
+                    _(
+                        "Homebrewをお使いの場合は `brew install dvc` でもインストールできます。",
+                    ),
                 )
-                rprint("https://dvc.org/doc/install/macos も参照してください。")
+                rprint(_("https://dvc.org/doc/install/macos も参照してください。"))
             elif platform.system() == "Windows":
                 rprint(
-                    "Chocolateyをお使いの場合は `choco install dvc` でもインストールできます。",
+                    _(
+                        "Chocolateyをお使いの場合は `choco install dvc` でもインストールできます。",
+                    ),
                 )
-                rprint("https://dvc.org/doc/install/windows も参照してください。")
+                rprint(_("https://dvc.org/doc/install/windows も参照してください。"))
         raise typer.Abort
 
     dvc_abs_path = str(Path(dvc_path).resolve())
-    rprint("  - [green]✅ dvc はインストール済みです。[/green]")
-    rprint(f"    [dim]DVCのパス: {dvc_abs_path}[/dim]")
+    rprint(_("  - [green]✅ dvc はインストール済みです。[/green]"))
     rprint(
-        "[dim]このツールはDVCを利用してGoogle Driveからデータをダウンロードします。[/dim]",
+        _("    [dim]DVCのパス: {dvc_abs_path}[/dim]").format(
+            dvc_abs_path=dvc_abs_path,
+        ),
     )
     rprint(
-        "[dim]設定情報はすべてローカルPCに保存され、外部に送信されることはありません。[/dim]",
+        _(
+            "[dim]このツールはDVCを利用してGoogle Driveからデータをダウンロードします。[/dim]",
+        ),
+    )
+    rprint(
+        _(
+            "[dim]設定情報はすべてローカルPCに保存され、外部に送信されることはありません。[/dim]",
+        ),
     )
 
     current_config = load_user_config()
 
     # 既存の設定があれば表示
     if current_config:
-        rprint("\n[bold]現在の設定:[/bold]")
+        rprint(_("\n[bold]現在の設定:[/bold]"))
         for key, value in current_config.items():
             # シークレットは一部をマスクして表示
             display_value = (
@@ -115,15 +146,17 @@ def setup_davis() -> None:  # noqa: C901, PLR0912, PLR0915
                 else value
             )
             rprint(f"  - [cyan]{key}[/cyan]: [white]{display_value}[/white]")
-        if not typer.confirm("\n設定を上書きしますか？"):
-            rprint("セットアップを中止しました。")
+        if not typer.confirm(_("\n設定を上書きしますか？")):
+            rprint(_("セットアップを中止しました。"))
             raise typer.Abort
 
     rprint(
-        "\n[bold]管理者から提供された案内に記載されている情報を入力してください:[/bold]",
+        _(
+            "\n[bold]管理者から提供された案内に記載されている情報を入力してください:[/bold]",
+        ),
     )
 
-    folder_id = typer.prompt("  - Google Drive フォルダID")
+    folder_id = typer.prompt(_("  - Google Drive フォルダID"))
     client_id = typer.prompt("  - Google Cloud Client ID")
     client_secret = typer.prompt("  - Google Cloud Client Secret", hide_input=True)
 
@@ -136,5 +169,9 @@ def setup_davis() -> None:  # noqa: C901, PLR0912, PLR0915
     }
     save_user_config(new_config)
 
-    rprint(f"\n[bold green]✅ 設定を {CONFIG_FILE} に保存しました。[/bold green]")
-    rprint("これで `davis get <DATASET_ID>` コマンドが使用できます。")
+    rprint(
+        _("\n[bold green]✅ 設定を {config_file} に保存しました。[/bold green]").format(
+            config_file=CONFIG_FILE,
+        ),
+    )
+    rprint(_("これで `davis get <DATASET_ID>` コマンドが使用できます。"))

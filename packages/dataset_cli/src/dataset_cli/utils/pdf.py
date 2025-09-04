@@ -8,6 +8,7 @@ from rich import print as pprint
 from weasyprint import CSS, HTML
 
 from dataset_cli.schemas.dataset_config import DatasetConfig
+from dataset_cli.utils.i18n import _
 from dataset_cli.utils.parser import parse_yaml_and_validate
 from dataset_cli.utils.validate import validate_file_hash
 
@@ -26,7 +27,9 @@ def create_readme_pdf(
     data = parse_yaml_and_validate(Path(config_path), DatasetConfig)
     if data.hash_ is None:
         pprint(
-            "[red]スキーマファイルにハッシュが設定されていません。先に `davis data validate-file` を実行してください。[/red]",
+            _(
+                "[red]スキーマファイルにハッシュが設定されていません。先に `davis data validate-file` を実行してください。[/red]",
+            ),
         )
         raise typer.Exit(1)
 
@@ -35,7 +38,9 @@ def create_readme_pdf(
         data.hash_,
     ):
         pprint(
-            "[red]ファイルのハッシュがスキーマと一致しません。先に `davis data validate-file` を実行してください。[/red]",
+            _(
+                "[red]ファイルのハッシュがスキーマと一致しません。先に `davis data validate-file` を実行してください。[/red]",
+            ),
         )
         raise typer.Exit(1)
 
@@ -72,4 +77,8 @@ def create_readme_pdf(
 
     HTML(string=rendered_html).write_pdf(output_path, stylesheets=[css])
 
-    pprint(f"[green]README PDFを {output_path} に保存しました。[/green]")
+    pprint(
+        _("[green]README PDFを {output_path} に保存しました。[/green]").format(
+            output_path=output_path,
+        ),
+    )

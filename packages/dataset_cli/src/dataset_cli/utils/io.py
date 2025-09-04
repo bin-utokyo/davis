@@ -13,6 +13,7 @@ from rich.progress import track
 
 from dataset_cli.schemas import DatasetConfig, Manifest
 from dataset_cli.schemas.manifest import DatasetInfo, PdfUrls
+from dataset_cli.utils.i18n import _
 
 
 def parse_yaml_and_validate[T: BaseModel](
@@ -23,10 +24,12 @@ def parse_yaml_and_validate[T: BaseModel](
     指定されたYAMLファイルをパースし、指定されたPydanticモデルで検証します。
     """
     if not yaml_path.exists():
-        msg = f"YAMLファイルが見つかりません: {yaml_path}"
+        msg = _("YAMLファイルが見つかりません: {yaml_path}").format(yaml_path=yaml_path)
         raise FileNotFoundError(msg)
     if not yaml_path.is_file() or yaml_path.suffix.lower() not in (".yaml", ".yml"):
-        msg = f"指定されたパスはYAMLファイルではありません: {yaml_path}"
+        msg = _("指定されたパスはYAMLファイルではありません: {yaml_path}").format(
+            yaml_path=yaml_path,
+        )
         raise ValueError(msg)
 
     try:
@@ -34,10 +37,14 @@ def parse_yaml_and_validate[T: BaseModel](
             data = yaml.safe_load(f)
         return pydantic_model_class.model_validate(data)
     except yaml.YAMLError as e:
-        msg = f"YAMLの読み込みに失敗しました: {yaml_path}"
+        msg = _("YAMLの読み込みに失敗しました: {yaml_path}").format(yaml_path=yaml_path)
         raise RuntimeError(msg) from e
     except ValidationError as e:
-        rprint(f"[bold red]スキーマ検証エラー in {yaml_path}:[/bold red]")
+        rprint(
+            _("[bold red]スキーマ検証エラー in {yaml_path}:[/bold red]").format(
+                yaml_path=yaml_path,
+            ),
+        )
         rprint(e)
         raise  # TRY201: Use raise without specifying exception name
 
@@ -91,24 +98,32 @@ def generate_manifest_data(
     """
     リポジリ内の全データセット情報をスキャンし、Manifestオブジェクトを生成します。
     """
-    rprint("🔎 [bold]データファイルをスキャンしています...[/bold]")
+    rprint(_("🔎 [bold]データファイルをスキャンしています...[/bold]"))
     data_root = Path("data")
     if not data_root.is_dir():
-        msg = "'data' ディレクトリが見つかりません。リポジトリのルートで実行してください。"
+        msg = _(
+            "'data' ディレクトリが見つかりません。リポジトリのルートで実行してください。",
+        )
         raise FileNotFoundError(msg)
 
     dvc_files = sorted(data_root.rglob("*.dvc"))
-    rprint(f"  - {len(dvc_files)} 個の .dvc ファイルを発見しました。")
+    rprint(
+        _("  - {num_dvc} 個の .dvc ファイルを発見しました。").format(
+            num_dvc=len(dvc_files),
+        ),
+    )
 
     datasets: dict[str, DatasetInfo] = {}
 
-    for dvc_file in track(dvc_files, description="スキーマとURLを処理中..."):
+    for dvc_file in track(dvc_files, description=_("スキーマとURLを処理中...")):
         original_file = dvc_file.with_suffix("")
         schema_file = dvc_file.with_suffix(".schema.yaml")
 
         if not schema_file.exists():
             rprint(
-                f"[yellow]警告: スキーマファイルが見つかりません: {schema_file}。スキップします。[/yellow]",
+                _(
+                    "[yellow]警告: スキーマファイルが見つかりません: {schema_file}。スキップします。[/yellow]",
+                ).format(schema_file=schema_file),
             )
             continue
 

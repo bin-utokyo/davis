@@ -1,5 +1,14 @@
 # Davis CLI：データセット管理ツール<!-- omit in toc -->
 
+<table>
+    <thead>
+        <tr>
+            <th style="text-align:center"><a href="README_en.md">English</a></th>
+            <th style="text-align:center">日本語</th>
+        </tr>
+    </thead>
+</table>
+
 `davis-cli` は、行動モデル夏の学校で利用するデータセットを簡単に取得・管理するためのコマンドラインツールです。
 
 > [!WARNING]

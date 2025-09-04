@@ -4,6 +4,8 @@ from pathlib import Path
 import yaml
 from pydantic import BaseModel
 
+from dataset_cli.utils.i18n import _
+
 
 def parse_yaml_and_validate[T: BaseModel](
     yaml_path: str | Path,
@@ -32,21 +34,25 @@ def parse_yaml_and_validate[T: BaseModel](
     path: Path = Path(yaml_path) if isinstance(yaml_path, str) else yaml_path
 
     if not path.exists():
-        msg = f"YAMLファイルが見つかりません: {yaml_path}"
+        msg = _("YAMLファイルが見つかりません: {yaml_path}").format(yaml_path=yaml_path)
         raise FileNotFoundError(msg)
 
     if not path.is_file():
-        msg = f"指定されたパスはファイルではありません: {yaml_path}"
+        msg = _("指定されたパスはファイルではありません: {yaml_path}").format(
+            yaml_path=yaml_path,
+        )
         raise FileNotFoundError(msg)
     if path.suffix.lower() not in (".yaml", ".yml"):
-        msg = f"指定されたパスはYAMLファイルではありません: {yaml_path}"
+        msg = _("指定されたパスはYAMLファイルではありません: {yaml_path}").format(
+            yaml_path=yaml_path,
+        )
         raise ValueError(msg)
 
     try:
         with path.open("r", encoding="utf-8") as f:
             data = yaml.safe_load(f)
     except yaml.YAMLError as e:
-        msg = f"YAMLの読み込みに失敗しました: {e}"
+        msg = _("YAMLの読み込みに失敗しました: {e}").format(e=e)
         raise RuntimeError(msg) from e
 
     return pydantic_model_class(**data)

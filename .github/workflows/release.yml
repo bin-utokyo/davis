@@ -28,8 +28,11 @@ jobs:
                   uv run davis manage generate-manifest --output dist/manifest.json --tag ${{ github.ref_name }} --branch main
                   uv run davis manage create-bootstrap --output dist/dvc-bootstrap.zip
 
+            - name: Compile translations
+              run: uv run pybabel compile -d packages/dataset_cli/src/dataset_cli/locales
+
             - name: Build Python package
-              run: uv build --out-dir dist
+              run: uv build --all-packages --out-dir dist
 
             - name: Create GitHub Release
               id: create_release
