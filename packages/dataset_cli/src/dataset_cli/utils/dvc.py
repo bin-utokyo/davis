@@ -6,6 +6,8 @@ from pathlib import Path
 import typer
 from rich import print as rprint
 
+from dataset_cli.utils.i18n import _
+
 from .config import load_user_config
 
 
@@ -48,15 +50,17 @@ class DVCClient:
         self.repo_path = Path(repo_path).resolve()
         if not (self.repo_path / ".dvc").exists():
             rprint(
-                f"[yellow]警告: 指定されたパスに.dvcディレクトリが見つかりません: {self.repo_path}[/yellow]",
+                _(
+                    "[yellow]警告: 指定されたパスに.dvcディレクトリが見つかりません: {repo_path}[/yellow]",
+                ).format(repo_path=self.repo_path),
             )
             execute_dvc_init = typer.confirm(
-                "このディレクトリで `dvc init` を実行しますか？",
+                _("このディレクトリで `dvc init` を実行しますか？"),
                 default=True,
             )
             if execute_dvc_init:
                 self._run_command(["init"])
-                rprint("[green]DVCリポジトリを初期化しました。[/green]")
+                rprint(_("[green]DVCリポジトリを初期化しました。[/green]"))
 
     def _run_command(  # noqa: C901
         self,
@@ -124,7 +128,9 @@ class DVCClient:
             stderr = "\n".join(stderr_lines)
 
             if return_code != 0:
-                msg = f"DVCコマンド '{' '.join(full_command)}' の実行に失敗しました。"
+                msg = _(
+                    "DVCコマンド '{full_command}' の実行に失敗しました。",
+                ).format(full_command=" ".join(full_command))
                 raise DVCError(  # noqa: TRY301
                     msg,
                     return_code,
@@ -134,12 +140,14 @@ class DVCClient:
 
         except FileNotFoundError as e:
             rprint(
-                "[red]エラー: 'dvc'コマンドが見つかりませんでした。DVCはインストールされていますか？[/red]",
+                _(
+                    "[red]エラー: 'dvc'コマンドが見つかりませんでした。DVCはインストールされていますか？[/red]",
+                ),
             )
             raise typer.Exit(code=127) from e
         except DVCError as e:
             # DVCErrorを再度送出して、呼び出し元でキャッチできるようにする
-            msg = f"DVCコマンドの実行に失敗しました: {e}"
+            msg = _("DVCコマンドの実行に失敗しました: {e}").format(e=e)
             raise DVCError(
                 msg,
                 e.return_code,

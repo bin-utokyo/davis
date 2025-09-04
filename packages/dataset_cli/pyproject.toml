@@ -22,6 +22,10 @@ davis = "dataset_cli.main:app"
 package = true
 
 [dependency-groups]
-dev = [
-    "types-pyyaml>=6.0.12.20250822",
-]
+dev = ["types-pyyaml>=6.0.12.20250822"]
+
+[tool.setuptools.package-data]
+dataset_cli = ["locales/*/LC_MESSAGES/*.mo"]
+
+[tool.uv.scripts]
+post-install = "uv run pybabel compile"

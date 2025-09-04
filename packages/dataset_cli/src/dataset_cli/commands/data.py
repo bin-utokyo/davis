@@ -17,6 +17,7 @@ from dataset_cli.schemas.dataset_config import (
     LocalizedStr,
 )
 from dataset_cli.schemas.polars import get_polars_data_type_name
+from dataset_cli.utils.i18n import _
 from dataset_cli.utils.parser import infer_file_type, parse_yaml_and_validate
 from dataset_cli.utils.pdf import create_readme_pdf
 from dataset_cli.utils.validate import (
@@ -37,15 +38,15 @@ JST_YEAR = datetime.datetime.now(
 def validate_schema(
     config_path: Annotated[
         str,
-        typer.Argument(help="検証するデータセット設定ファイルのパス"),
+        typer.Argument(help=_("検証するデータセット設定ファイルのパス")),
     ],
 ) -> DatasetConfig:
     """データセット設定ファイルを検証する。"""
     try:
         config = parse_yaml_and_validate(Path(config_path), DatasetConfig)
-        rprint("[green]データセット設定は有効です。[/green]")
+        rprint(_("[green]データセット設定は有効です。[/green]"))
     except ValidationError as e:
-        rprint("[red]データセット設定の形式が無効です。[/red]")
+        rprint(_("[red]データセット設定の形式が無効です。[/red]"))
         rprint(e.json(indent=2))
         raise typer.Exit(code=1) from e
 
@@ -56,15 +57,15 @@ def validate_schema(
 def validate(
     file_or_dir_path: Annotated[
         str,
-        typer.Argument(help="検証するファイルまたはディレクトリのパス"),
+        typer.Argument(help=_("検証するファイルまたはディレクトリのパス")),
     ],
     schema_path_str: Annotated[
         str | None,
-        typer.Option("--schema", "-s", help="検証に使用するスキーマファイルのパス"),
+        typer.Option("--schema", "-s", help=_("検証に使用するスキーマファイルのパス")),
     ] = None,
     encoding: Annotated[
         str | None,
-        typer.Option(help="ファイルエンコーディング（例: utf-8, cp932 など）"),
+        typer.Option(help=_("ファイルエンコーディング（例: utf-8, cp932 など）")),
     ] = None,
 ) -> None:
     """
@@ -75,7 +76,11 @@ def validate(
     """
     path_obj = Path(file_or_dir_path)
     if not path_obj.exists():
-        rprint(f"[red]指定されたパスが存在しません: {file_or_dir_path}[/red]")
+        rprint(
+            _("[red]指定されたパスが存在しません: {file_or_dir_path}[/red]").format(
+                file_or_dir_path=file_or_dir_path,
+            ),
+        )
         raise typer.Exit(code=1)
 
     if path_obj.is_file():
@@ -83,7 +88,11 @@ def validate(
     elif path_obj.is_dir():
         _validate_directory(file_or_dir_path, schema_path_str, encoding)
     else:
-        rprint(f"[red]不明なパスのタイプです: {file_or_dir_path}[/red]")
+        rprint(
+            _("[red]不明なパスのタイプです: {file_or_dir_path}[/red]").format(
+                file_or_dir_path=file_or_dir_path,
+            ),
+        )
         raise typer.Exit(code=1)
 
 
@@ -97,7 +106,7 @@ def _validate_file(
     )
     validate_paths(file_path, schema_path)
     read_data_with_schema(file_path, schema_path, encoding=encoding)
-    rprint("[green]ファイルはスキーマに適合しています。[/green]")
+    rprint(_("[green]ファイルはスキーマに適合しています。[/green]"))
 
 
 def _validate_directory(
@@ -107,7 +116,11 @@ def _validate_directory(
 ) -> None:
     dir_path_obj = Path(dir_path)
     if not dir_path_obj.is_dir():
-        rprint(f"[red]無効なディレクトリ: {dir_path}[/red]")
+        rprint(
+            _("[red]無効なディレクトリ: {dir_path}[/red]").format(
+                dir_path=dir_path,
+            ),
+        )
         raise typer.Exit(code=1)
 
     file_paths = list(
@@ -118,14 +131,18 @@ def _validate_directory(
     )
 
     if not file_paths:
-        rprint("[yellow]検証対象のファイルが見つかりませんでした。[/yellow]")
+        rprint(_("[yellow]検証対象のファイルが見つかりませんでした。[/yellow]"))
         return
 
     schema_path = (
         Path(schema_path_str) if schema_path_str else dir_path_obj / "schema.yaml"
     )
     if not schema_path.exists():
-        rprint(f"[red]スキーマファイルが見つかりません: {schema_path}[/red]")
+        rprint(
+            _("[red]スキーマファイルが見つかりません: {schema_path}[/red]").format(
+                schema_path=schema_path,
+            ),
+        )
         raise typer.Exit(code=1)
 
     write_file_hash(dir_path, schema_path)
@@ -150,7 +167,7 @@ def _validate_directory(
             try:
                 future.result()
             except Exception as e:  # noqa: BLE001
-                rprint(f"[red]エラー: {e}[/red]")
+                rprint(_("[red]エラー: {e}[/red]").format(e=e))
 
 
 @app.command()
@@ -158,18 +175,22 @@ def infer_schema(
     file_path: Annotated[str, typer.Argument(help="スキーマを推測するファイルのパス")],
     encoding: Annotated[
         str | None,
-        typer.Option(help="ファイルエンコーディング（例: utf-8, cp932 など）"),
+        typer.Option(help=_("ファイルエンコーディング（例: utf-8, cp932 など）")),
     ] = None,
 ) -> None:
     """指定されたファイルからスキーマを推測する。"""
     path = Path(file_path)
     if not path.exists():
-        rprint(f"[red]ファイルが見つかりません: {file_path}[/red]")
+        rprint(
+            _("[red]ファイルが見つかりません: {file_path}[/red]").format(
+                file_path=file_path,
+            ),
+        )
         raise typer.Exit(code=1)
 
     file_type = infer_file_type(file_path)
     if not file_type:
-        rprint("[red]ファイルタイプを推測できませんでした。[/red]")
+        rprint(_("[red]ファイルタイプを推測できませんでした。[/red]"))
         raise typer.Exit(code=1)
 
     enc = encoding if encoding else detect_encoding(file_path)
@@ -192,33 +213,35 @@ def infer_schema(
             case "application/x-parquet":
                 input_dataframe = pl.read_parquet(file_path)
             case _:
-                msg = f"サポートされていないファイルタイプ: {file_type}"
+                msg = _("サポートされていないファイルタイプ: {file_type}").format(
+                    file_type=file_type,
+                )
                 raise NotImplementedError(msg)  # noqa: TRY301
 
         schema = DatasetConfig(
             name=LocalizedStr(
-                ja=typer.prompt("データセットの名称（日本語）"),
-                en=typer.prompt("データセットの名称（英語）"),
+                ja=typer.prompt(_("データセットの名称（日本語）")),
+                en=typer.prompt(_("データセットの名称（英語）")),
             ),
             description=LocalizedStr(
-                ja=typer.prompt("データセットの説明（日本語）"),
-                en=typer.prompt("データセットの説明（英語）"),
+                ja=typer.prompt(_("データセットの説明（日本語）")),
+                en=typer.prompt(_("データセットの説明（英語）")),
             ),
             license_=LocalizedStr(
                 ja=typer.prompt(
-                    "データセットのライセンス（日本語）",
+                    _("データセットのライセンス（日本語）"),
                     default=f"{JST_YEAR}年度の行動モデル夏の学校のための利用のみ許可します。",
                 ),
                 en=typer.prompt(
-                    "データセットのライセンス（英語）",
+                    _("データセットのライセンス（英語）"),
                     default=f"Use is permitted only for the {JST_YEAR} Summer Course on Behavior Modeling in Transportation Networks.",
                 ),
             ),
             city=LocalizedStr(
-                ja=typer.prompt("データセットの都市（日本語）"),
-                en=typer.prompt("データセットの都市（英語）"),
+                ja=typer.prompt(_("データセットの都市（日本語）")),
+                en=typer.prompt(_("データセットの都市（英語）")),
             ),
-            year=typer.prompt("データセットの年", type=int),
+            year=typer.prompt(_("データセットの年"), type=int),
             columns=[
                 ColumnConfig(
                     name=name,
@@ -236,12 +259,18 @@ def infer_schema(
 
         schema_path = path.with_suffix(path.suffix + ".schema.yaml")
         if schema_path.exists():
-            rprint(f"[yellow]スキーマファイルが既に存在します: {schema_path}[/yellow]")
+            rprint(
+                _(
+                    "[yellow]スキーマファイルが既に存在します: {schema_path}[/yellow]",
+                ).format(
+                    schema_path=schema_path,
+                ),
+            )
             if not typer.confirm(
-                "既存のスキーマファイルを上書きしますか？",
+                _("既存のスキーマファイルを上書きしますか？"),
                 default=False,
             ):
-                rprint("[red]スキーマの推測を中止しました。[/red]")
+                rprint(_("[red]スキーマの推測を中止しました。[/red]"))
                 raise typer.Exit(code=1)  # noqa: TRY301
 
         schema_path.parent.mkdir(parents=True, exist_ok=True)
@@ -254,10 +283,18 @@ def infer_schema(
                 sort_keys=False,
             )
 
-        rprint(f"[green]スキーマを {schema_path} に保存しました。[/green]")
+        rprint(
+            _("[green]スキーマを {schema_path} に保存しました。[/green]").format(
+                schema_path=schema_path,
+            ),
+        )
 
     except Exception as e:
-        rprint(f"[red]スキーマの推測に失敗しました: {e}[/red]")
+        rprint(
+            _("[red]スキーマの推測に失敗しました: {e}[/red]").format(
+                e=e,
+            ),
+        )
         raise typer.Exit(code=1) from e
 
 
@@ -265,7 +302,7 @@ def infer_schema(
 def generate_readme(
     file_path: Annotated[
         str,
-        typer.Argument(help="READMEを生成するデータセットファイルのパス"),
+        typer.Argument(help=_("READMEを生成するデータセットファイルのパス")),
     ],
 ) -> None:
     """指定されたファイルのREADMEを生成する。"""

@@ -2,6 +2,8 @@ from pathlib import Path
 
 import git
 
+from dataset_cli.utils.i18n import _
+
 
 def get_git_repo() -> git.Repo:
     """Gitリポジトリを取得するヘルパー関数。
@@ -19,7 +21,7 @@ def get_git_repo() -> git.Repo:
 
     repo_path = Path.cwd()
     if not (repo_path / ".git").exists():
-        msg = "このディレクトリはGitリポジトリではありません。"
+        msg = _("このディレクトリはGitリポジトリではありません。")
         raise RuntimeError(msg)
 
     return git.Repo(

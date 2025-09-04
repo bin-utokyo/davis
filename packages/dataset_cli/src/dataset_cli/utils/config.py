@@ -25,12 +25,9 @@ def get_repo_url() -> str:
 
 
 def save_user_config(config_data: dict[str, str]) -> None:
-    """
-    ユーザー設定を指定された辞書データで上書き保存します。
+    """ユーザー設定を保存"""
+    from dataset_cli.utils.i18n import _  # noqa: PLC0415
 
-    Args:
-        config_data (Dict[str, str]): 保存する設定データ。
-    """
     try:
         CONFIG_DIR.mkdir(parents=True, exist_ok=True)
         config = configparser.ConfigParser()
@@ -39,19 +36,16 @@ def save_user_config(config_data: dict[str, str]) -> None:
             config.write(f)
     except OSError as e:
         rprint(
-            f"[bold red]エラー: 設定ファイルの書き込みに失敗しました: {CONFIG_FILE}[/bold red]",
+            _(
+                "[bold red]エラー: 設定ファイルの書き込みに失敗しました: {config_file}[/bold red]",
+            ).format(config_file=CONFIG_FILE),
         )
         rprint(f"[dim]{e}[/dim]")
         raise typer.Exit(code=1) from e
 
 
 def load_user_config() -> dict[str, str]:
-    """
-    ユーザー設定をファイルから読み込みます。
-
-    Returns:
-        Dict[str, str]: 読み込まれた設定データ。存在しない場合は空の辞書。
-    """
+    """ユーザー設定を読み込み"""
     if not CONFIG_FILE.exists():
         return {}
 
@@ -60,10 +54,14 @@ def load_user_config() -> dict[str, str]:
         config.read(CONFIG_FILE, encoding="utf-8")
         if "default" in config:
             return dict(config["default"])
-
     except (OSError, configparser.Error) as e:
         rprint(
-            f"[bold red]エラー: 設定ファイルの読み込みに失敗しました: {CONFIG_FILE}[/bold red]",
+            (
+                f"[bold red]エラー: 設定ファイルの読み込みに失敗しました: {CONFIG_FILE}[/bold red]",
+            ),
+        )
+        rprint(
+            f"[bold red]Error: Failed to read config file: {CONFIG_FILE}[/bold red]",
         )
         rprint(f"[dim]{e}[/dim]")
         return {}

@@ -95,7 +95,9 @@ def _detect_changes(repo: Repo, repo_path: Path, dvc_client: DVCClient) -> list[
 
 
 def _dvc_add_and_validate(
-    repo_path: Path, files: list[Path], dvc_client: DVCClient
+    repo_path: Path,
+    files: list[Path],
+    dvc_client: DVCClient,
 ) -> None:
     rprint("\n[bold]Step 2: DVCへの追加とスキーマ検証を開始します...[/bold]")
     if not files:
@@ -151,7 +153,10 @@ def _generate_pdfs_and_stage(repo: Repo, repo_path: Path) -> None:
 
 
 def _commit_and_push(
-    repo: Repo, repo_path: Path, message: str, dvc_client: DVCClient
+    repo: Repo,
+    repo_path: Path,
+    message: str,
+    dvc_client: DVCClient,
 ) -> None:
     rprint("\n[bold]Step 4: コミットとプッシュを行います...[/bold]")
     if not repo.index.diff(repo.head.commit):
