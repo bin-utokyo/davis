@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2025-09-05 00:15+0900\n"
+"POT-Creation-Date: 2025-09-05 03:20+0900\n"
 "PO-Revision-Date: 2025-09-04 17:55+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -895,7 +895,6 @@ msgid "YAMLの読み込みに失敗しました: {e}"
 msgstr "Failed to load YAML: {e}"
 
 #: packages/dataset_cli/build/lib/dataset_cli/utils/pdf.py:31
-#: packages/dataset_cli/src/dataset_cli/utils/pdf.py:31
 msgid ""
 "[red]スキーマファイルにハッシュが設定されていません。先に `davis data validate-file` "
 "を実行してください。[/red]"
@@ -904,7 +903,6 @@ msgstr ""
 "file` first.[/red]"
 
 #: packages/dataset_cli/build/lib/dataset_cli/utils/pdf.py:42
-#: packages/dataset_cli/src/dataset_cli/utils/pdf.py:42
 msgid "[red]ファイルのハッシュがスキーマと一致しません。先に `davis data validate-file` を実行してください。[/red]"
 msgstr ""
 "[red]File hash does not match the schema. Please run `davis data "
@@ -984,3 +982,19 @@ msgstr ""
 #, python-brace-format
 msgid "[cyan]実行中: {full_command}[/cyan]"
 msgstr "[cyan]Running: {full_command}[/cyan]"
+
+#: packages/dataset_cli/src/dataset_cli/utils/pdf.py:31
+msgid ""
+"[red]スキーマファイルにハッシュが設定されていません。先に `davis manage local validate` "
+"を実行してください。[/red]"
+msgstr ""
+"[red]Hash not set in the schema file. Please run `davis manage local validate` "
+"first.[/red]"
+
+#: packages/dataset_cli/src/dataset_cli/utils/pdf.py:42
+msgid ""
+"[red]ファイルのハッシュがスキーマと一致しません。先に `davis manage local validate` "
+"を実行してください。[/red]"
+msgstr ""
+"[red]File hash does not match the schema. Please run `davis manage local "
+"validate` first.[/red]"

@@ -28,7 +28,7 @@ def create_readme_pdf(
     if data.hash_ is None:
         pprint(
             _(
-                "[red]スキーマファイルにハッシュが設定されていません。先に `davis data validate-file` を実行してください。[/red]",
+                "[red]スキーマファイルにハッシュが設定されていません。先に `davis manage local validate` を実行してください。[/red]",
             ),
         )
         raise typer.Exit(1)
@@ -39,7 +39,7 @@ def create_readme_pdf(
     ):
         pprint(
             _(
-                "[red]ファイルのハッシュがスキーマと一致しません。先に `davis data validate-file` を実行してください。[/red]",
+                "[red]ファイルのハッシュがスキーマと一致しません。先に `davis manage local validate` を実行してください。[/red]",
             ),
         )
         raise typer.Exit(1)
