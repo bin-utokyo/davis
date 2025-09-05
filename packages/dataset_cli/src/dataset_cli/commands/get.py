@@ -4,10 +4,12 @@ import shutil
 import subprocess
 import tempfile
 import zipfile
+from importlib import resources
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, NamedTuple
 
 import httpx
+import jinja2
 import typer
 from rich import print as rprint
 from rich.progress import (
@@ -23,6 +25,12 @@ from dataset_cli.utils.api import get_latest_manifest
 from dataset_cli.utils.config import load_user_config
 from dataset_cli.utils.dvc import DVCClient, DVCError
 from dataset_cli.utils.i18n import _
+
+
+class DvcCredentials(NamedTuple):
+    folder_id: str
+    client_id: str
+    client_secret: str
 
 
 def get_dataset(
@@ -71,9 +79,7 @@ def get_dataset(
     _download_with_dvc(
         dvc_files_to_pull,
         manifest,
-        folder_id,
-        client_id,
-        client_secret,
+        DvcCredentials(folder_id, client_id, client_secret),
         output_dir,
     )
     _download_pdfs(pdf_urls_to_download)
@@ -151,12 +157,10 @@ def _collect_targets(
     return dvc_files_to_pull, pdf_urls_to_download
 
 
-def _download_with_dvc(  # noqa: PLR0913, PLR0915
+def _download_with_dvc(
     dvc_files: list[str],
     manifest: Manifest,
-    folder_id: str,
-    client_id: str,
-    client_secret: str,
+    dvc_credentials: DvcCredentials,
     output_dir: Path,
 ) -> None:
     """DVC を使ってデータをダウンロード。"""
@@ -165,129 +169,159 @@ def _download_with_dvc(  # noqa: PLR0913, PLR0915
 
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp_path = Path(tmpdir)
-        bootstrap_url = str(manifest.bootstrap_package_url)
-        bootstrap_zip_path = tmp_path / "bootstrap.zip"
+        _extract_bootstrap_package(manifest, tmp_path)
+        _write_dvc_config(
+            tmp_path,
+            dvc_credentials.folder_id,
+            dvc_credentials.client_id,
+            dvc_credentials.client_secret,
+        )
+        _run_dvc_pull_and_copy(
+            tmp_path,
+            dvc_files,
+            output_dir,
+        )
 
-        try:
-            with httpx.stream(
-                "GET",
-                bootstrap_url,
-                follow_redirects=True,
-                timeout=30,
-            ) as response:
-                response.raise_for_status()
-                with bootstrap_zip_path.open("wb") as f:
-                    f.writelines(response.iter_bytes())
 
+def _extract_bootstrap_package(manifest: Manifest, tmp_path: Path) -> None:
+    """ブートストラップパッケージをダウンロード・展開する。"""
+    bootstrap_url = str(manifest.bootstrap_package_url)
+    bootstrap_zip_path = tmp_path / "bootstrap.zip"
+
+    try:
+        with httpx.stream(
+            "GET",
+            bootstrap_url,
+            follow_redirects=True,
+            timeout=30,
+        ) as response:
+            response.raise_for_status()
+            with bootstrap_zip_path.open("wb") as f:
+                f.writelines(response.iter_bytes())
+
+        with zipfile.ZipFile(bootstrap_zip_path, "r") as zip_ref:
+            zip_ref.extractall(tmp_path)
+    except httpx.HTTPStatusError as e:
+        rprint(
+            _(
+                "[bold red]HTTPエラー: ブートストラップパッケージのダウンロードに失敗しました (HTTP {status_code})[/bold red]",
+            ).format(status_code=e.response.status_code),
+        )
+        local_bootstrap = Path("dist/dvc-bootstrap.zip")
+        if local_bootstrap.exists():
+            rprint(
+                _(
+                    "[yellow]ローカルの '{local_bootstrap}' を使用します。[/yellow]",
+                ).format(local_bootstrap=local_bootstrap),
+            )
+            shutil.copy(local_bootstrap, bootstrap_zip_path)
             with zipfile.ZipFile(bootstrap_zip_path, "r") as zip_ref:
                 zip_ref.extractall(tmp_path)
-        except httpx.HTTPStatusError as e:
-            rprint(
-                _(
-                    "[bold red]HTTPエラー: ブートストラップパッケージのダウンロードに失敗しました (HTTP {status_code})[/bold red]",
-                ).format(status_code=e.response.status_code),
-            )
-            local_bootstrap = Path("dist/dvc-bootstrap.zip")
-            if local_bootstrap.exists():
+        else:
+            raise typer.Exit(code=1) from e
+    except Exception as e:
+        rprint(
+            _(
+                "[bold red]ブートストラップパッケージの処理中にエラーが発生しました: {e}[/bold red]",
+            ).format(e=e),
+        )
+        raise typer.Exit(code=1) from e
+
+
+def _write_dvc_config(
+    tmp_path: Path,
+    folder_id: str,
+    client_id: str,
+    client_secret: str,
+) -> None:
+    """DVC config を書き込む。"""
+    dvc_config_path = tmp_path / ".dvc" / "config"
+    dvc_config_path.parent.mkdir(exist_ok=True)
+    dvc_template_path = resources.files("dataset_cli.templates").joinpath(
+        "dvc_config",
+    )
+    dvc_template_content = dvc_template_path.read_text(encoding="utf-8")
+    template = jinja2.Template(dvc_template_content)
+    dvc_config_content: str = template.render(
+        folder_id=folder_id,
+        client_id=client_id,
+        client_secret=client_secret,
+    )
+    dvc_config_path.write_text(dvc_config_content, encoding="utf-8")
+
+
+def _run_dvc_pull_and_copy(
+    tmp_path: Path,
+    dvc_files: list[str],
+    output_dir: Path,
+) -> None:
+    """DVC pull を実行し、ファイルをコピーする。"""
+    rprint(_("  - DVCコマンドを実行し、データをダウンロードします..."))
+    config = load_user_config()
+    git_path_fallback = shutil.which("git") or "git"
+    git_executable_path = config.get("git_executable_path", git_path_fallback)
+    try:
+        # Gitリポジトリを初期化
+        subprocess.run(  # noqa: S603
+            [git_executable_path, "init"],
+            cwd=tmp_path,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+
+        # DVCClientを初期化し、dvc pullを実行
+        dvc_client = DVCClient(repo_path=tmp_path)
+        dvc_client.pull(targets=dvc_files, force=True)
+
+        # ダウンロードしたファイルを個別にコピー
+        rprint(_("  - ファイルを最終的な出力先にコピーしています..."))
+        for dvc_file_rel_path_str in dvc_files:
+            data_file_rel_path = Path(dvc_file_rel_path_str.removesuffix(".dvc"))
+
+            src_path = tmp_path / data_file_rel_path
+            dest_path = output_dir / data_file_rel_path
+
+            if src_path.exists():
+                dest_path.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy(src_path, dest_path)
+            else:
                 rprint(
                     _(
-                        "[yellow]ローカルの '{local_bootstrap}' を使用します。[/yellow]",
-                    ).format(local_bootstrap=local_bootstrap),
+                        "[yellow]警告: dvc pull後にファイルが見つかりませんでした: {src_path}[/yellow]",
+                    ).format(src_path=src_path),
                 )
-                shutil.copy(local_bootstrap, bootstrap_zip_path)
-                with zipfile.ZipFile(bootstrap_zip_path, "r") as zip_ref:
-                    zip_ref.extractall(tmp_path)
-            else:
-                raise typer.Exit(code=1) from e
-        except Exception as e:
-            rprint(
-                _(
-                    "[bold red]ブートストラップパッケージの処理中にエラーが発生しました: {e}[/bold red]",
-                ).format(e=e),
-            )
-            raise typer.Exit(code=1) from e
 
-        # DVC config を書き込み
-        dvc_config_path = tmp_path / ".dvc" / "config"
-        dvc_config_path.parent.mkdir(exist_ok=True)
-        dvc_config_content = f"""
-[core]
-    remote = gdrive
-['remote "gdrive"']
-    url = gdrive://{folder_id}
-    gdrive_client_id = {client_id}
-    gdrive_client_secret = {client_secret}
-"""
-        dvc_config_path.write_text(dvc_config_content, encoding="utf-8")
-
-        rprint(_("  - DVCコマンドを実行し、データをダウンロードします..."))
-        config = load_user_config()
-        git_path_fallback = shutil.which("git") or "git"
-        git_executable_path = config.get("git_executable_path", git_path_fallback)
-        try:
-            # Gitリポジトリを初期化
-            subprocess.run(  # noqa: S603
-                [git_executable_path, "init"],
-                cwd=tmp_path,
-                check=True,
-                capture_output=True,
-                text=True,
-            )
-
-            # DVCClientを初期化し、dvc pullを実行
-            dvc_client = DVCClient(repo_path=tmp_path)
-            dvc_client.pull(targets=dvc_files, force=True)
-
-            # ダウンロードしたファイルを個別にコピー
-            rprint(_("  - ファイルを最終的な出力先にコピーしています..."))
-            for dvc_file_rel_path_str in dvc_files:
-                data_file_rel_path = Path(dvc_file_rel_path_str.removesuffix(".dvc"))
-
-                src_path = tmp_path / data_file_rel_path
-                dest_path = output_dir / data_file_rel_path
-
-                if src_path.exists():
-                    dest_path.parent.mkdir(parents=True, exist_ok=True)
-                    shutil.copy(src_path, dest_path)
-                else:
-                    rprint(
-                        _(
-                            "[yellow]警告: dvc pull後にファイルが見つかりませんでした: {src_path}[/yellow]",
-                        ).format(src_path=src_path),
-                    )
-
-        except FileNotFoundError as e:
-            # git initが失敗した場合
-            rprint(
-                _(
-                    "[bold red]エラー: 'git' コマンドが見つかりませんでした。[/bold red]",
-                ),
-            )
-            rprint(
-                _(
-                    "[dim]Gitがインストールされ、PATHが通っていることを確認してください。[/dim]",
-                ),
-            )
-            raise typer.Exit(code=1) from e
-        except DVCError as e:
-            rprint(_("[bold red]DVC pull の実行中にエラーが発生しました。[/bold red]"))
-            rprint(f"[dim]{e}[/dim]")
-            rprint(
-                _(
-                    "[dim]Google Driveの認証に失敗したか、ファイルにアクセス権がない可能性があります。[/dim]",
-                ),
-            )
-            rprint(
-                _(
-                    "[dim]ブラウザが開いて認証を求められた場合は、許可してください。[/dim]",
-                ),
-            )
-            raise typer.Exit(code=1) from e
-        except subprocess.CalledProcessError as e:
-            # git initが失敗した場合
-            rprint(_("[bold red]Gitの初期化中にエラーが発生しました。[/bold red]"))
-            rprint(f"[dim]{e.stderr}[/dim]")
-            raise typer.Exit(code=1) from e
+    except FileNotFoundError as e:
+        rprint(
+            _(
+                "[bold red]エラー: 'git' コマンドが見つかりませんでした。[/bold red]",
+            ),
+        )
+        rprint(
+            _(
+                "[dim]Gitがインストールされ、PATHが通っていることを確認してください。[/dim]",
+            ),
+        )
+        raise typer.Exit(code=1) from e
+    except DVCError as e:
+        rprint(_("[bold red]DVC pull の実行中にエラーが発生しました。[/bold red]"))
+        rprint(f"[dim]{e}[/dim]")
+        rprint(
+            _(
+                "[dim]Google Driveの認証に失敗したか、ファイルにアクセス権がない可能性があります。[/dim]",
+            ),
+        )
+        rprint(
+            _(
+                "[dim]ブラウザが開いて認証を求められた場合は、許可してください。[/dim]",
+            ),
+        )
+        raise typer.Exit(code=1) from e
+    except subprocess.CalledProcessError as e:
+        rprint(_("[bold red]Gitの初期化中にエラーが発生しました。[/bold red]"))
+        rprint(f"[dim]{e.stderr}[/dim]")
+        raise typer.Exit(code=1) from e
 
     rprint(
         _("\n[bold green]✅ ダウンロード完了:[/bold green] {output_dir}").format(
@@ -313,7 +347,7 @@ def _download_pdfs(pdf_urls_to_download: list[tuple[str, Path]]) -> None:
         ) as progress,
     ):
         task = progress.add_task(
-            "[cyan]Downloading PDFs...",
+            _("PDFをダウンロード中..."),
             total=len(pdf_urls_to_download),
         )
         for url, dest_path in pdf_urls_to_download:
