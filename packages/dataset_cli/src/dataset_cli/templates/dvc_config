@@ -1,0 +1,6 @@
+[core]
+    remote = gdrive
+['remote "gdrive"']
+    url = gdrive://{{folder_id}}
+    gdrive_client_id = {{client_id}}
+    gdrive_client_secret = {{client_secret}}

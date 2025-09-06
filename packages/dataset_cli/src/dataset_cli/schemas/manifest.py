@@ -39,4 +39,5 @@ class Manifest(BaseModel):
     cli_version: str
     generated_at: datetime
     bootstrap_package_url: HttpUrl
+    bootstrap_package_hash: str
     datasets: dict[str, DatasetInfo]
