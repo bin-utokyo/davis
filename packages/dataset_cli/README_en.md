@@ -125,7 +125,7 @@ Note that some of the screen text may differ.
 3. If prompted to “Configure consent screen”, set it up using the following steps. Your email address will not be publicly displayed.
     - **App name**: Enter a descriptive name, such as `davis-cli`.
     - **User support email**: Select your own email address.
-    - **Target**: Select “External”.
+    - **User type**: Select “External”.
     - **Contact Information**: Enter your email address.
     - Agree to the policy, click “Next”, then click “Create”.
 4. Return to the “Credentials” screen, select “Create credentials” > “OAuth client ID”.
