@@ -94,6 +94,7 @@ def generate_manifest_data(
     bootstrap_url: str,
     repo_url: str,
     branch: str,
+    bootstrap_package_hash: str,
 ) -> Manifest:
     """
     リポジリ内の全データセット情報をスキャンし、Manifestオブジェクトを生成します。
@@ -165,4 +166,5 @@ def generate_manifest_data(
         generated_at=datetime.datetime.now(datetime.UTC),
         bootstrap_package_url=HttpUrl(bootstrap_url),
         datasets=datasets,
+        bootstrap_package_hash=bootstrap_package_hash,
     )

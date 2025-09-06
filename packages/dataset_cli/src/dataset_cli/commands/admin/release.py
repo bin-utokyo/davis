@@ -8,7 +8,8 @@ import typer
 from rich import print as rprint
 
 from dataset_cli.utils.api import get_repo_url
-from dataset_cli.utils.io import generate_manifest_data
+from dataset_cli.utils.i18n import _
+from dataset_cli.utils.io import generate_file_hash, generate_manifest_data
 
 
 def generate_manifest(
@@ -47,11 +48,15 @@ def generate_manifest(
     bootstrap_url = f"{repo_url}/releases/download/{tag}/{bootstrap_filename}"
 
     try:
+        bootstrap_hash = create_bootstrap(
+            Path("dist/dvc-bootstrap.zip"),
+        )
         manifest = generate_manifest_data(
             cli_version=tag,
             bootstrap_url=bootstrap_url,
             repo_url=repo_url,
             branch=branch,
+            bootstrap_package_hash=bootstrap_hash,
         )
         output_path.write_text(
             manifest.model_dump_json(indent=2, by_alias=True),
@@ -69,18 +74,22 @@ def create_bootstrap(
         typer.Option(
             "--output",
             "-o",
-            help="出力ファイルパス",
+            help=_("出力ファイルパス"),
             writable=True,
             dir_okay=False,
             resolve_path=True,
         ),
     ] = Path("dist/dvc-bootstrap.zip"),
-) -> None:
+) -> str:
     """
     dvc-bootstrap.zip を作成します。
     """
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    rprint(f"[bold]'{output_path}' を作成します...[/bold]")
+    rprint(
+        _("[bold]'{output_path}' を作成します...[/bold]").format(
+            output_path=output_path,
+        ),
+    )
     try:
         with zipfile.ZipFile(output_path, "w", zipfile.ZIP_DEFLATED) as zipf:
             # .dvc/config をzipに追加
@@ -89,7 +98,9 @@ def create_bootstrap(
                 zipf.write(config_path, arcname=".dvc/config")
             else:
                 rprint(
-                    f"  - [yellow]W[/yellow] '{config_path}' が見つかりません。スキップします。",
+                    _(
+                        "  - [yellow]W[/yellow] '{config_path}' が見つかりません。スキップします。",
+                    ).format(config_path=config_path),
                 )
 
             # dataディレクトリ以下の.dvcファイルをzipに追加
@@ -97,12 +108,31 @@ def create_bootstrap(
             dvc_files = list(data_dir.rglob("*.dvc"))
             if not dvc_files:
                 rprint(
-                    f"  - [yellow]W[/yellow] '{data_dir}' 内に.dvcファイルが見つかりません。",
+                    _(
+                        "  - [yellow]W[/yellow] '{data_dir}' 内に.dvcファイルが見つかりません。",
+                    ).format(data_dir=data_dir),
                 )
                 # bootstrapファイルとしては不完全だが、処理は継続
             for dvc_file in dvc_files:
                 zipf.write(dvc_file, arcname=dvc_file.as_posix())
-        rprint(f"  - [green]✓[/green] '{output_path}' を作成しました。")
+        rprint(
+            _("  - [green]✓[/green] '{output_path}' を作成しました。").format(
+                output_path=output_path,
+            ),
+        )
+
+        # Calculate hash after creation
+        bootstrap_hash = generate_file_hash(output_path)
+        rprint(
+            _(
+                "  - [dim]生成されたブートストラップパッケージのハッシュ: {bootstrap_hash}[/dim]",
+            ).format(bootstrap_hash=bootstrap_hash),
+        )
     except Exception as e:
-        rprint(f"[bold red]dvc-bootstrap.zipの作成に失敗しました: {e}[/bold red]")
+        rprint(
+            _("[bold red]dvc-bootstrap.zipの作成に失敗しました: {e}[/bold red]").format(
+                e=e,
+            ),
+        )
         raise typer.Exit(1) from e
+    return bootstrap_hash

@@ -25,6 +25,7 @@ from dataset_cli.utils.api import get_latest_manifest
 from dataset_cli.utils.config import load_user_config
 from dataset_cli.utils.dvc import DVCClient, DVCError
 from dataset_cli.utils.i18n import _
+from dataset_cli.utils.io import generate_file_hash
 
 
 class DvcCredentials(NamedTuple):
@@ -198,6 +199,25 @@ def _extract_bootstrap_package(manifest: Manifest, tmp_path: Path) -> None:
             response.raise_for_status()
             with bootstrap_zip_path.open("wb") as f:
                 f.writelines(response.iter_bytes())
+
+        bootstrap_package_hash = generate_file_hash(bootstrap_zip_path)
+        if bootstrap_package_hash != manifest.bootstrap_package_hash:
+            rprint(
+                _(
+                    "[bold red]エラー: ブートストラップパッケージのハッシュが一致しません。ダウンロードが破損している可能性があります。[/bold red]",
+                ),
+            )
+            rprint(
+                _(
+                    "[dim]期待されるハッシュ: {expected}[/dim]",
+                ).format(expected=manifest.bootstrap_package_hash),
+            )
+            rprint(
+                _(
+                    "[dim]実際のハッシュ: {actual}[/dim]",
+                ).format(actual=bootstrap_package_hash),
+            )
+            raise typer.Exit(code=1)  # noqa: TRY301
 
         with zipfile.ZipFile(bootstrap_zip_path, "r") as zip_ref:
             zip_ref.extractall(tmp_path)
