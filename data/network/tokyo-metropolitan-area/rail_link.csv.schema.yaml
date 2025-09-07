@@ -2,126 +2,510 @@ city:
   en: Tokyo
   ja: 東京
 columns:
-- description: null
-  name: ID
+- description:
+    en: 'Link Number
+
+      the 10000000s:Walking Link (DRM)
+
+      the 20000000s:Railroad Link
+
+      the 30000000s:Bus Link
+
+      the 40000000s:Railroad Station Walking NW Connector
+
+      the 50000000s:Bus Stop Walking NW Connector
+
+      the 100000000s:Walking Link (Toyosu Detailed Network)
+
+      '
+    ja: 'リンク番号
+
+      10000000番台:徒歩リンク (DRM)
+
+      20000000番台:鉄道リンク
+
+      30000000番台:バスリンク
+
+      40000000番台:鉄道駅徒歩NWコネクター
+
+      50000000番台:バス停徒歩NWコネクター
+
+      100000000番台:徒歩リンク (豊洲詳細ネット)
+
+      '
+  name: LinkID
   type_:
     name: Int64
-- description: null
+- description:
+    en: Route number
+    ja: 路線の系統ID
   name: route ID
   type_:
     name: Int64
-- description: null
+- description:
+    en: 'For bus links, enter the bus operator''s name.
+
+      For rail links, enter the rail operator''s name.
+
+      For walking links, enter expressway, national highway, prefectural road, city
+      road, or other.
+
+      For car links, enter the road type in the first digit and the road administrator
+      in the tenth digit.
+
+      '
+    ja: 'バスリンクの場合、 バス事業者名
+
+      鉄道リンクの場合、 鉄道事業者名
+
+      徒歩リンクの場合、 高速、 国道、 都道府県道、 市道、 その他の別
+
+      自動車リンクの場合、1の位道路種別 10の位道路管理者
+
+      '
   name: operator name
   type_:
     name: String
-- description: null
+- description:
+    en: 'For buses, route number
+
+      For trains, railway line name
+
+      For roads, road line name
+
+      For car links, route number
+
+      '
+    ja: 'バスの場合、 系統番号
+
+      鉄道の場合、 鉄道の路線名
+
+      道路の場合、 道路の路線名
+
+      自動車リンクの場合、 路線番号
+
+      '
   name: route name
   type_:
     name: String
-- description: null
+- description:
+    en: '1:Walking Link (W) DRM Walking DRM links within the Toyosu area are set to
+      0 with directional restrictions.
+
+      2:Railroad Link (R)
+
+      3:Bus Link (B)
+
+      10:Toyosu Pedestrian Link (WD)
+
+      11:Walking Link Mesh Connector Link (WW) Set between DRM boundary nodes
+
+      13:Walking Link Toyosu Detailed Net and DRM Connector Link (WDW)
+
+      14:Toyosu Station Link (WT)
+
+      21:Walking to Railroad Station Connector Link (RC_ON) Basic fee charged, waiting
+      time required
+
+      22:Railroad Station to Walking Connector Link (RC_OFF) No basic fee charged,
+      no waiting time
+
+      23:Station to Railroad Transfer Link (TS_ON) No basic fee charged, waiting time
+      required
+
+      31:Walking to Bus Stop Connector Link (BC_ON) Basic fee charged, waiting time
+      required
+
+      32:Bus Stop to Walking Connector Link (BC_OFF) No basic fee charged, no waiting
+      time
+
+      '
+    ja: '1:徒歩リンク (W) DRM 豊洲エリア内の徒歩DRMリンクは方向規制で通行不可0 を設定
+
+      2:鉄道リンク (R)
+
+      3:バスリンク (B)
+
+      10:豊洲歩道リンク (WD)
+
+      11:徒歩リンクメッシュコネクタリンク (WW)DRM境界ノード間に設定
+
+      13:徒歩リンク豊洲詳細ネットとDRMのコネクタリンク (WDW)
+
+      14:豊洲駅構内リンク (WT)
+
+      21:徒歩⇒鉄道駅コネクタリンク (RC_ON) 基本料金課金あり、 待ち時間あり
+
+      22:鉄道駅 徒歩コネクタリンク (RC_OFF) 基本料金課金なし、 待ち時間なし
+
+      23:駅構内鉄道乗り換えリンク (TS_ON) 基本料金課金なし、 待ち時間あり
+
+      31:徒歩⇒バス停コネクタリンク (BC_ON) 基本料金課金あり、 待ち時間あり
+
+      32:バス停徒歩コネクタリンク (BC_OFF) 基本料金課金なし、 待ち時間なし
+
+      '
   name: link type code
   type_:
     name: Int64
-- description: null
+- description:
+    en: 'Name corresponding to link type code
+
+      Example) If the link type code is 1...W
+
+      '
+    ja: 'リンク種別コードに対応した名称
+
+      例) リンク種別コードが1の場合…W
+
+      '
   name: link type
   type_:
     name: String
-- description: null
+- description:
+    en: Enter the interval in minutes
+    ja: 運行間隔を分で入力
   name: morning service interval (min)
   type_:
     name: Int64
-- description: null
+- description:
+    en: Enter the interval in minutes
+    ja: 運行間隔を分で入力
   name: daytime service interval (min)
   type_:
     name: Int64
-- description: null
+- description:
+    en: Enter the interval in minutes
+    ja: 運行間隔を分で入力
   name: holiday service interval (min)
   type_:
     name: Int64
-- description: null
+- description:
+    en: Link's movement speed
+    ja: リンクの移動速度
   name: speed (km/h)
   type_:
     name: Int64
-- description: null
+- description:
+    en: Link length
+    ja: リンクの長さ
   name: length (km)
   type_:
     name: Float64
-- description: null
+- description:
+    en: 'One-way link or two-way link
+
+      0:No access
+
+      1:Two-way link
+
+      2:One-way link (from source node to destination node)
+
+      3:One-way link (from destination node to source node)
+
+      '
+    ja: '一方通行リンク、 両方向リンクの別
+
+      0:通行不可
+
+      1:両方向リンク
+
+      2:一方通行リンク (起点側ノード⇒終点側ノード)
+
+      3:一方通行リンク (終点側ノード⇒起点側ノード)
+
+      '
   name: direction restrictions
   type_:
     name: String
-- description: null
+- description:
+    en: If the direction link for link A is link B, and the product of the turn restriction
+      values for link A and link B is 4, then the turn restriction
+    ja: リンクAに対する進行方向リンクをBとした場合、 リンクAとリンクBのターン規制値を掛算値が4となる場合ターン規制
   name: turn restrictions
   type_:
     name: Int64
-- description: null
+- description:
+    en: '0:No charge link
+
+      1:1 or more charge link
+
+      See price code table
+
+      '
+    ja: '0:課金なしリンク
+
+      1:1以上課金リンク
+
+      料金コード表を参照
+
+      '
   name: fare code
   type_:
     name: Int64
-- description: null
+- description:
+    en: See the fee code table
+    ja: 料金コード表を参照
   name: Fare System
   type_:
     name: Int64
-- description: null
+- description:
+    en: See the fee code table
+    ja: 料金コード表を参照
   name: Base Fare
   type_:
     name: Int64
-- description: null
+- description:
+    en: See the fee code table
+    ja: 料金コード表を参照
   name: Distance-Based Fare
   type_:
     name: Int64
-- description: null
+- description:
+    en: '0:Unknown... Designated outside Toyosu
+
+      1:Crosswalk
+
+      2:Crossing link without crosswalk
+
+      3:Pedestrian bridge
+
+      4:Inside station
+
+      5:Underground walkway
+
+      6:At-grade walkway
+
+      7:Walkway over bridge
+
+      8:Promenade in park
+
+      9:Public open space
+
+      -94:Corner of intersection (set width code based on the main direction of the
+      intersecting road)
+
+      -96:Stairs
+
+      -97:No shoulder (road without sidewalk or shoulder)
+
+      -1:Unknown (set for construction areas around Harumi)
+
+      '
+    ja: '0: 不明･･･ 豊洲以外に指定
+
+      1:横断歩道
+
+      2:横断歩道なし横断リンク
+
+      3:歩道橋
+
+      4:駅構内
+
+      5:地下歩道
+
+      6:平面部歩道
+
+      7:橋梁部歩道
+
+      8:遊歩道公園内
+
+      9:公開空地
+
+      -94:交差点のすみきり (幅員コードは交差道路の主方向のものを設定)
+
+      -96:階段
+
+      -97:路側帯なし (歩道も路側帯もない道路)
+
+      -1:不明 (晴美周辺の工事中箇所に設定)
+
+      '
   name: Pavement Structure Code
   type_:
     name: Int64
-- description: null
+- description:
+    en: '0:Unknown (not surveyed)
+
+      1:No sidewalk
+
+      2:Less than 2m
+
+      3:2m-3.5m
+
+      4:3.5m-4.5m
+
+      5:4.5m or more
+
+      '
+    ja: '0:不明 (未調査)
+
+      1:歩道なし
+
+      2:2m未満
+
+      3:2m~3.5m
+
+      4:3.5m~4.5m
+
+      5:4.5m以上
+
+      '
   name: Pavement Width Code
   type_:
     name: Int64
-- description: null
+- description:
+    en: '0:Links outside the station
+
+      1:Stairs
+
+      2:Escalators
+
+      3:Elevators
+
+      4:Ticket gates
+
+      5:Passageways
+
+      6:Dummy
+
+      '
+    ja: '0:駅構内以外のリンク
+
+      1:階段
+
+      2:エスカレーター
+
+      3:エレベーター
+
+      4:改札
+
+      5:通路
+
+      6:ダミー
+
+      '
   name: Station Structure Code
   type_:
     name: Int64
-- description: null
+- description:
+    en: '-3:3rd basement floor
+
+      -2:2nd basement floor
+
+      -1:1st basement floor
+
+      0:Above ground
+
+      1:1st above ground
+
+      99:Unknown (uninvestigated)
+
+      '
+    ja: '-3:地下3F
+
+      -2:地下2F
+
+      -1:地下1F
+
+      0:地上
+
+      1:地上1F
+
+      99:不明 (未調査)
+
+      '
   name: 3D Structure
   type_:
     name: Int64
-- description: null
-  name: ONodeNo
+- description:
+    en: 'Starting node number
+
+      Under 2000:Toyosu pedestrian node
+
+      the 10000000s:Pedestrian node
+
+      the 20000000s:Railroad node
+
+      the 30000000s:Bus node
+
+      '
+    ja: '起点側ノード番号
+
+      2000番未満:豊洲歩道ノード
+
+      10000000番台:徒歩ノード
+
+      20000000番台:鉄道ノード
+
+      30000000番台:バスノード
+
+      '
+  name: ONodeID
   type_:
     name: Int64
-- description: null
+- description:
+    en: 'Starting node name
+
+      ONode Type 1 (for walking):DRM mesh + node number
+
+      ONode Type 2 (for trains):Train station name
+
+      ONode Type 3 (for buses):Bus stop name
+
+      '
+    ja: '起点側ノード名称
+
+      ONode Type が 1 (徒歩の場合):DRMメッシュ+ノード番号
+
+      ONodeType が 2 (鉄道の場合):鉄道駅名
+
+      ONode Type が 3 (バスの場合):バス停名
+
+      '
   name: ONodeName
   type_:
     name: String
-- description: null
-  name: ONodeX
+- description:
+    en: Origin coordinates World Geodetic System Longitude
+    ja: 起点側座標 世界測地系 経度
+  name: ONodeLat
   type_:
     name: Float64
-- description: null
-  name: ONodeY
+- description:
+    en: Origin coordinates World Geodetic System Latitude
+    ja: 起点側座標 世界測地系 緯度
+  name: ONodeLon
   type_:
     name: Float64
-- description: null
-  name: DNodeNo
+- description:
+    en: End node number
+    ja: 終点側ノード番号
+  name: DNodeID
   type_:
     name: Int64
-- description: null
+- description:
+    en: End point node name
+    ja: 終点側ノード名称
   name: DNodeName
   type_:
     name: String
-- description: null
-  name: DNodeX
+- description:
+    en: End point coordinates World Geodetic System Longitude
+    ja: 終点側座標 世界測地系 経度
+  name: DNodeLat
   type_:
     name: Float64
-- description: null
-  name: DNodeY
+- description:
+    en: End point coordinates World Geodetic System Latitude
+    ja: 終点側座標 世界測地系 緯度
+  name: DNodeLon
   type_:
     name: Float64
 description:
   en: Link data of Tokyo train network.
   ja: 東京の鉄道ネットワークのlinkデータです。
-hash_: d706edac0d4840244b930fc5d598648abe1db8092639c9c2185aa1baccaa96cf
+hash_: 055b7fe05fbebda13879223d0374f57e15bfe01d71ef1434bed813402a1eeb9a
 license_:
   en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
     Networks.

@@ -2,46 +2,64 @@ city:
   en: Yokohama
   ja: 横浜
 columns:
-- description: null
+- description:
+    en: Identification ID for each link
+    ja: 各リンクの識別ID
   name: LinkID
   type_:
     name: Int64
-- description: null
-  name: O
+- description:
+    en: Link start node ID
+    ja: リンク起点のノードID
+  name: ONodeID
   type_:
     name: Int64
-- description: null
-  name: D
+- description:
+    en: Node ID of the link end point
+    ja: リンク終点のノードID
+  name: DNodeID
   type_:
     name: Int64
-- description: null
+- description:
+    en: Link path distance
+    ja: リンク経路の距離
   name: length
   type_:
     name: Float64
-- description: null
+- description:
+    en: Number of lanes
+    ja: レーンの数
   name: lanes
   type_:
     name: Int64
-- description: null
+- description:
+    en: Road type
+    ja: 道路の種類
   name: value
   type_:
     name: String
-- description: null
+- description:
+    en: speed limit
+    ja: 制限速度
   name: maxspeed
   type_:
     name: Int64
-- description: null
+- description:
+    en: Is it passable by car?
+    ja: 自動車が通行可能か
   name: motorcar
   type_:
     name: String
-- description: null
+- description:
+    en: Is pedestrian access possible?
+    ja: 歩行者が通行可能か
   name: foot
   type_:
     name: String
 description:
   en: Link data of Yokohama city road network.
   ja: 横浜市内道路ネットワークのlinkデータです。
-hash_: 0c5fb96c1be25c02fb3ffc4e15c23c2ac3664dac7c24e8f67cd3a2471cf40152
+hash_: bd07a6d4dbe92c4f5d2113c5d7ca01cf161d16b2fd464064a5b433f0e2cc1caa
 license_:
   en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
     Networks.

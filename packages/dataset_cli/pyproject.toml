@@ -25,4 +25,8 @@ package = true
 dev = ["types-pyyaml>=6.0.12.20250822"]
 
 [tool.setuptools.package-data]
-dataset_cli = ["locales/**/LC_MESSAGES/*.mo", "locales/**/LC_MESSAGES/*.po"]
+dataset_cli = [
+    "locales/**/LC_MESSAGES/*.mo",
+    "locales/**/LC_MESSAGES/*.po",
+    "templates/*",
+]

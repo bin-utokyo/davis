@@ -2,126 +2,12 @@ city:
   en: Tokyo
   ja: 東京
 columns:
-- description: null
-  name: ID
-  type_:
-    name: Int64
-- description: null
-  name: node1
-  type_:
-    name: String
-- description: null
-  name: node2
-  type_:
-    name: String
-- description: null
-  name: NodeNo1
-  type_:
-    name: Int64
-- description: null
-  name: NodeNo2
-  type_:
-    name: Int64
-- description: null
-  name: Administrative Area
-  type_:
-    name: Int64
-- description: null
-  name: Major_Route_Manager
-  type_:
-    name: Int64
-- description: null
-  name: Major_Route_Road_Type
-  type_:
-    name: Int64
-- description: null
-  name: Lane_Number_Code
-  type_:
-    name: Int64
-- description: null
-  name: Toll_Road
-  type_:
-    name: Int64
-- description: null
-  name: Distance_Toll_Code
-  type_:
-    name: Int64
-- description: null
-  name: Fixed_Toll_Code
-  type_:
-    name: Int64
-- description: null
-  name: Link_Length_Calculated_Value
-  type_:
-    name: Float64
-- description: null
-  name: Link_Type
-  type_:
-    name: Int64
-- description: null
-  name: Motorway
-  type_:
-    name: Int64
-- description: null
-  name: Link_Passable
-  type_:
-    name: Int64
-- description: null
-  name: Traffic_Restriction_Type
-  type_:
-    name: String
-- description: null
-  name: Traffic_Restriction_Condition_Type
-  type_:
-    name: Int64
-- description: null
-  name: Restricted_Speed
-  type_:
-    name: Int64
-- description: null
-  name: Travel Speed
-  type_:
-    name: Float64
 - description:
-    en: Probably longitude in World Geodetic System
-    ja: おそらく世界測地系の経度
-  name: LongitudeW_Origin
+    en: Sequential Number
+    ja: シーケンシャル番号
+  name: LinkID
   type_:
-    name: Float64
-- description:
-    en: Probably latitude in World Geodetic System
-    ja: おそらく世界測地系の緯度
-  name: LatitudeW_Origin
-  type_:
-    name: Float64
-- description:
-    en: Probably longitude in World Geodetic System
-    ja: おそらく世界測地系の経度
-  name: LongitudeW_Dest
-  type_:
-    name: Float64
-- description:
-    en: Probably latitude in World Geodetic System
-    ja: おそらく世界測地系の緯度
-  name: LatitudeW_Dest
-  type_:
-    name: Float64
-- description: null
-  name: LongitudeUTM_Origin
-  type_:
-    name: Float64
-- description: null
-  name: LatitudeUTM_Origin
-  type_:
-    name: Float64
-- description: null
-  name: LongitudeUTM_Dest
-  type_:
-    name: Float64
-- description: null
-  name: LatitudeUTM_Dest
-  type_:
-    name: Float64
+    name: Int64
 - description:
     en: Standard regional mesh (tertiary regional division) . See https://www.stat.go.jp/data/mesh/pdf/gaiyo1.pdf
     ja: 基準地域メッシュ（第3次地域区画）。https://www.stat.go.jp/data/mesh/pdf/gaiyo1.pdf
@@ -134,10 +20,477 @@ columns:
   name: mesh_code_dest
   type_:
     name: Int64
+- description:
+    en: Starting node number
+    ja: 起点側ノード番号
+  name: ONode
+  type_:
+    name: String
+- description:
+    en: End node number
+    ja: 終点側ノード番号
+  name: DNode
+  type_:
+    name: String
+- description:
+    en: Node data reference number
+    ja: ノードデータ参照用No
+  name: ONodeID
+  type_:
+    name: Int64
+- description:
+    en: Node data reference number
+    ja: ノードデータ参照用No
+  name: DNodeID
+  type_:
+    name: Int64
+- description:
+    en: Administrative area code
+    ja: 行政区域コード
+  name: Administrative Area
+  type_:
+    name: Int64
+- description:
+    en: 'Road Administrator
+
+      0: Not Surveyed
+
+      1: NEXCO
+
+      2: Metropolitan Expressway Co., Ltd.
+
+      3: Roadside Exit
+
+      4: National Government
+
+      5: Prefectural Government
+
+      6: Designated City
+
+      7: Other Municipalities (including the 23 Wards)
+
+      8: Other Administrators
+
+      '
+    ja: '道路管理者
+
+      0:未調査
+
+      1:ネクスコ
+
+      2:首都高速道路株式会社
+
+      3:道路降車
+
+      4:国
+
+      5:都道府県
+
+      6:指定市
+
+      7:その他市町村 (23区含む)
+
+      8:その他管理者
+
+      '
+  name: Major_Route_Manager
+  type_:
+    name: Int64
+- description:
+    en: '0:Not surveyed
+
+      1:National Expressway
+
+      2:Urban Expressway (including designated urban expressways)
+
+      3:National Highway
+
+      4:Major Regional Road (Prefectural Road)
+
+      5:Major Regional Road (Designated City Road)
+
+      6:General Prefectural Road
+
+      7:General City Road in Designated City
+
+      8:Other Roads
+
+      '
+    ja: '0:未調査
+
+      1:高速自動車国道
+
+      2:都市高速道路 (含指定都市高速道路)
+
+      3:一般国道
+
+      4:主要地方道 (都道府県道)
+
+      5:主要地方道 (指定市道)
+
+      6:一般都道府県道
+
+      7:指定市の一般市道
+
+      8:その他の道路
+
+      '
+  name: Major_Route_Road_Type
+  type_:
+    name: Int64
+- description:
+    en: '0: Not surveyed
+
+      1: 1 lane
+
+      2: 2 lane
+
+      3: 3 lane
+
+      4: 4 lane
+
+      5: 5 lane
+
+      6: 6 or more lanes
+
+      '
+    ja: '0: 未調査
+
+      1: 1車線
+
+      2: 2車線
+
+      3: 3車線
+
+      4: 4車線
+
+      5: 5車線
+
+      6: 6車線以上
+
+      '
+  name: Lane_Number_Code
+  type_:
+    name: Int64
+- description:
+    en: '0: Not applicable
+
+      1: Applicable
+
+      '
+    ja: '0: 非該当
+
+      1: 該当
+
+      '
+  name: Toll_Road
+  type_:
+    name: Int64
+- description:
+    en: See the fee code table
+    ja: 料金コード表を参照
+  name: Distance_Toll_Code
+  type_:
+    name: Int64
+- description:
+    en: See the fee code table
+    ja: 料金コード表を参照
+  name: Fixed_Toll_Code
+  type_:
+    name: Int64
+- description:
+    en: m
+    ja: m
+  name: Link_Length_Calculated_Value
+  type_:
+    name: Float64
+- description:
+    en: '1:Main line (unseparated) link
+
+      2:Main line (separated) link
+
+      3:Connecting road (crossover between main lines) link
+
+      4:Intersection link
+
+      5:Connecting road (ramp) link
+
+      6:Side road link on the same route as the main line
+
+      7:Side road link (SA, etc.)
+
+      8:Bicycle path link, etc.
+
+      9:Main line side road connection link
+
+      10:DRM mesh boundary link
+
+      0:Unsurveyed
+
+      '
+    ja: '1:本線 (上下非分離) リンク
+
+      2:本線 (上下分離) リンク
+
+      3:連結路 (本線間の渡り線) リンク
+
+      4:交差点内リンク
+
+      5:連結路 (ランプ) リンク
+
+      6:本線と同一路線の側道リンク
+
+      7:SA等側線リンク
+
+      8:自転車道等リンク
+
+      9:本線側道接続リンク
+
+      10:DRM メッシュ境界リンク
+
+      0:未調査
+
+      '
+  name: Link_Type
+  type_:
+    name: Int64
+- description:
+    en: '0: Not applicable
+
+      1: Applicable
+
+      '
+    ja: '0: 非該当
+
+      1: 該当
+
+      '
+  name: Motorway
+  type_:
+    name: Int64
+- description:
+    en: '0:Not surveyed
+
+      1:Vehicle access permitted
+
+      2:Vehicle access prohibited
+
+      3:Not in service (including under construction)
+
+      4:Plan approved
+
+      '
+    ja: '0:未調査
+
+      1:自動車通行可
+
+      2:自動車通行不可
+
+      3:未供用 (含む工事中)
+
+      4:計画決定
+
+      '
+  name: Link_Passable
+  type_:
+    name: Int64
+- description:
+    en: '0:Not surveyed
+
+      1:No restrictions
+
+      2:No entry (unconditional)
+
+      3:No entry (conditional)
+
+      4:One-way (forward, unconditional)
+
+      5:One-way (reverse, unconditional)
+
+      6:One-way (forward, conditional)
+
+      7:One-way (reverse, conditional)
+
+      8:One-way (forward/reverse switchable)
+
+      '
+    ja: '0:未調査
+
+      1:規制なし
+
+      2:通行禁止 (条件無)
+
+      3:通行禁止 (条件付)
+
+      4:一方通行 (正方向、 条件無)
+
+      5:一方通行 (逆方向、 条件無)
+
+      6:一方通行 (正方向、 条件付)
+
+      7:一方通行 (逆方向、 条件付)
+
+      8:一方通行 (正逆切り替えあり)
+
+      '
+  name: Traffic_Restriction_Type
+  type_:
+    name: String
+- description:
+    en: '0:Not investigated
+
+      1:Vehicle type only
+
+      2:Time only
+
+      3:Day of week only
+
+      4:Vehicle type and time
+
+      5:Vehicle type and day of week
+
+      6:Day of week and time
+
+      7:Vehicle type, time, and day of week
+
+      8:Other conditions
+
+      '
+    ja: '0:未調査
+
+      1:車種のみ
+
+      2:時刻のみ
+
+      3:曜日のみ
+
+      4:車種および時刻
+
+      5:車種および曜日
+
+      6:曜日および時刻
+
+      7:車種、 時刻および曜日
+
+      8:その他の条件
+
+      '
+  name: Traffic_Restriction_Condition_Type
+  type_:
+    name: Int64
+- description:
+    en: '0:Not surveyed
+
+      1:Under 30km/h
+
+      2:40km/h
+
+      3:50km/h
+
+      4:60km/h
+
+      5:70km/h
+
+      6:80km/h
+
+      7:100km/h
+
+      '
+    ja: '0:未調査
+
+      1:30km/h未満
+
+      2:40km/h
+
+      3:50km/h
+
+      4:60km/h
+
+      5:70km/h
+
+      6:80km/h
+
+      7:100km/h
+
+      '
+  name: Restricted_Speed
+  type_:
+    name: Int64
+- description:
+    en: 'km/h x 10
+
+      For census-covered sections, use the 2015 census travel speed.
+
+      For non-census-covered sections, use the speed calculated by the 2015 census,
+      broken down by road type and lane.
+
+      *See the travel speed setting sheet for non-census sections.
+
+      '
+    ja: 'km/h × 10倍
+
+      センサス対象区間の場合、 H27センサス旅行速度
+
+      センサス対象区間以外の場合、 H27 センサスを道路種別 車線別に集計した速度値を設定
+
+      ※センサス区間以外の旅行速度設定値シートを参照
+
+      '
+  name: Travel Speed
+  type_:
+    name: Float64
+- description:
+    en: Origin coordinates World Geodetic System WGS84 Longitude
+    ja: 起点側座標 世界測地系 WGS84 経度
+  name: LongitudeW_Origin
+  type_:
+    name: Float64
+- description:
+    en: Origin coordinates World Geodetic System WGS84 Latitude
+    ja: 起点側座標 世界測地系 WGS84 緯度
+  name: LatitudeW_Origin
+  type_:
+    name: Float64
+- description:
+    en: End point coordinates World Geodetic System WGS84 Longitude
+    ja: 終点側座標 世界測地系 WGS84 経度
+  name: LongitudeW_Dest
+  type_:
+    name: Float64
+- description:
+    en: End point coordinates World Geodetic System WGS84 Latitude
+    ja: 終点側座標 世界測地系 WGS84 緯度
+  name: LatitudeW_Dest
+  type_:
+    name: Float64
+- description:
+    en: End point coordinate UTM54 system plane X
+    ja: 起点側座標 UTM54系 平面X
+  name: LongitudeUTM_Origin
+  type_:
+    name: Float64
+- description:
+    en: End point coordinate UTM54 system plane Y
+    ja: 起点側座標 UTM54系 平面Y
+  name: LatitudeUTM_Origin
+  type_:
+    name: Float64
+- description:
+    en: End point coordinate UTM54 system plane X
+    ja: 終点側座標 UTM54系 平面X
+  name: LongitudeUTM_Dest
+  type_:
+    name: Float64
+- description:
+    en: End point coordinate UTM54 system plane Y
+    ja: 終点側座標 UTM54系 平面Y
+  name: LatitudeUTM_Dest
+  type_:
+    name: Float64
 description:
   en: Link data of Tokyo car road network. Node1 and node2 are not used.
   ja: 東京の自動車道路ネットワークのlinkデータです。node1、node2は使いません。
-hash_: 6d9c13aa303c03c0ecf382088e75500c93495067ac85281e929371e39162850c
+hash_: ad7252000cb88cf90cefd3c6680d6f7d7a711c5e992d97ddb318b58f74813229
 license_:
   en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
     Networks.
