@@ -2,26 +2,34 @@ city:
   en: Yokohama
   ja: 横浜
 columns:
-- description: null
-  name: nodeID
+- description:
+    en: Identification ID of each node
+    ja: 各ノードの識別ID
+  name: NodeID
   type_:
     name: Int64
-- description: null
-  name: lat
+- description:
+    en: Node latitude (north, World Geodetic System)
+    ja: ノードの緯度（北緯、世界測地系）
+  name: Lat
   type_:
     name: Float64
-- description: null
-  name: lon
+- description:
+    en: Node longitude (east, World Geodetic System)
+    ja: ノードの経度（東経、世界測地系）
+  name: Lon
   type_:
     name: Float64
-- description: null
+- description:
+    en: It has no particular meaning
+    ja: 特に意味は持たない
   name: signal
   type_:
     name: Int64
 description:
   en: Node data of Yokohama city road network.
   ja: 横浜市内道路ネットワークのnodeデータです。
-hash_: fb792e33a8a07a42d35ed73ff81743dbf19b36d85f590d34ce992e5720db7e45
+hash_: 3be67b971e6e4eec9bc68e127b8b71cd603c35c798b6110541bbbd31c832fe2e
 license_:
   en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
     Networks.

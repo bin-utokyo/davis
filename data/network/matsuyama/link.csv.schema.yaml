@@ -2,30 +2,40 @@ city:
   en: Matsuyama
   ja: 松山
 columns:
-- description: null
+- description:
+    en: Identification ID for each link
+    ja: 各リンクの識別ID
   name: LinkID
   type_:
     name: Int64
-- description: null
-  name: StartNodeID
+- description:
+    en: Link start node ID
+    ja: リンク起点のノードID
+  name: ONodeID
   type_:
     name: Int64
-- description: null
-  name: EndNodeID
+- description:
+    en: Node ID of the link end point
+    ja: リンク終点のノードID
+  name: DNodeID
   type_:
     name: Int64
-- description: null
+- description:
+    en: Link path distance
+    ja: リンク経路の距離
   name: Length
   type_:
     name: Int64
-- description: null
+- description:
+    en: movement speed
+    ja: 旅行速度
   name: Speed
   type_:
     name: Int64
 description:
   en: Link data of Matsuyama city road network.
   ja: 松山市内道路ネットワークのlinkデータです。
-hash_: d27ada8848299f56fe85956d81d73098fe0f61cc267df1a58f74dd9d70057132
+hash_: b26ffceb61ad2f28f863fc209261fe228e729f09a393104835a79640f487ef1d
 license_:
   en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
     Networks.

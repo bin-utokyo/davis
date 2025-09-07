@@ -2,26 +2,28 @@ city:
   en: Matsuyama
   ja: 松山
 columns:
-- description: null
-  name: nodeID
+- description:
+    en: Identification ID of each node
+    ja: 各ノードの識別ID
+  name: NodeID
   type_:
     name: Int64
 - description:
     en: World Geodetic System
     ja: 世界測地系
-  name: latitude
+  name: Lat
   type_:
     name: Float64
 - description:
     en: World Geodetic System
     ja: 世界測地系
-  name: longitude
+  name: Lon
   type_:
     name: Float64
 description:
   en: Node data of Matsuyama city road network.
   ja: 松山市内道路ネットワークのnodeデータです。
-hash_: a8e61811ce939f3f9ef0361dc9af567801b8642cd164ebca5f83a433fb09efa5
+hash_: 22d3474e21dc5ce7d605bf8d61099ae5f612e6be638606f524f276574f854040
 license_:
   en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
     Networks.

@@ -2,24 +2,94 @@ city:
   en: Tokyo
   ja: 東京
 columns:
-- description: null
-  name: NodeNo
+- description:
+    en: 'Identification ID of each node
+
+      the 10000000s:Walking Node
+
+      the 20000000s:Railroad Node
+
+      the 30000000s:Bus Node
+
+      '
+    ja: '各ノードの識別ID
+
+      10000000番台:徒歩ノード
+
+      20000000番台:鉄道ノード
+
+      30000000番台:バスノード
+
+      '
+  name: NodeID
   type_:
     name: Int64
-- description: null
+- description:
+    en: 'Node Name
+
+      NodeType 1 (For Walking):DRM Mesh + Node Number
+
+      NodeType 2 (For Trains):Train Station Name
+
+      NodeType 3 (For Buses):Bus Stop Name
+
+      NodeType 4 (Bus NW Branch):Dummy
+
+      NodeType 5 (For Cars):DRM Mesh + Node Number
+
+      '
+    ja: 'ノード名称
+
+      NodeTypeが1 (徒歩の場合):DRMメッシュ+ノード番号
+
+      NodeTypeが2 (鉄道の場合):鉄道駅名
+
+      NodeTypeが3 (バスの場合):バス停名
+
+      NodeTypeが4 (バスNW分岐):Dummy
+
+      NodeTypeが5 (自動車の場合):DRMメッシュ+ノード番号
+
+      '
   name: NodeName
   type_:
     name: String
-- description: null
+- description:
+    en: '1:Pedestrian network node
+
+      2:Railroad network node (station)
+
+      3:Bus network node (bus stop)
+
+      4:Bus network branch node
+
+      5:Automobile network node
+
+      '
+    ja: '1:徒歩NWノード
+
+      2:鉄道NWノード(駅)
+
+      3:バスNWノード(バス停)
+
+      4:バスNW分岐ノード
+
+      5:自動車NWノード
+
+      '
   name: NodeType
   type_:
     name: Int64
-- description: null
-  name: NodeX
+- description:
+    en: Origin coordinates World Geodetic System WGS84 Longitude
+    ja: 起点側座標 世界測地系 WGS84 経度
+  name: Lat
   type_:
     name: Float64
-- description: null
-  name: NodeY
+- description:
+    en: Origin coordinates World Geodetic System WGS84 Longitude
+    ja: 起点側座標 世界測地系 WGS84 経度
+  name: Lon
   type_:
     name: Float64
 - description:
@@ -31,7 +101,7 @@ columns:
 description:
   en: Node data of Tokyo train network.
   ja: 東京の鉄道ネットワークのnodeデータです。
-hash_: 89da41eb7c00f9e9ddafd6e13a9626ddd61a6af3be250816db0ffe9fa35853df
+hash_: bb508fc64dc13062d0fd7c180c533ed701289ffff5496444884ffb0e3c762dce
 license_:
   en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
     Networks.
