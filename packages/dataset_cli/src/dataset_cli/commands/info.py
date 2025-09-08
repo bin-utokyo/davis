@@ -147,6 +147,15 @@ def show_info(  # noqa: C901, PLR0912, PLR0915
                     DatasetConfig,
                 )
             except httpx.HTTPStatusError as e:
+                if e.response.status_code == httpx.codes.NOT_FOUND:
+                    rprint(
+                        _(
+                            "[yellow]警告: スキーマファイルが見つかりません。"
+                            "表形式のファイルではないか、スキーマが提供されていない可能性があります。"
+                            "[/yellow]",
+                        ).format(schema_file_path=schema_file_path),
+                    )
+                    continue
                 rprint(
                     _(
                         "[bold red]エラー: スキーマファイルへのアクセスに失敗しました (HTTP {status_code})[/bold red]",

@@ -12,6 +12,7 @@ from rich import print as rprint
 from rich.progress import track
 
 from dataset_cli.schemas import DatasetConfig, Manifest
+from dataset_cli.schemas.dataset_config import LocalizedStr
 from dataset_cli.schemas.manifest import DatasetInfo, PdfUrls
 from dataset_cli.utils.i18n import _
 
@@ -119,28 +120,32 @@ def generate_manifest_data(
     for dvc_file in track(dvc_files, description=_("スキーマとURLを処理中...")):
         original_file = dvc_file.with_suffix("")
         schema_file = dvc_file.with_suffix(".schema.yaml")
-
-        if not schema_file.exists():
-            rprint(
-                _(
-                    "[yellow]警告: スキーマファイルが見つかりません: {schema_file}。スキップします。[/yellow]",
-                ).format(schema_file=schema_file),
-            )
-            continue
-
-        try:
-            schema_config = parse_yaml_and_validate(schema_file, DatasetConfig)
-        except (FileNotFoundError, ValueError, RuntimeError, ValidationError):
-            continue
-
-        # データセットIDは 'data/' を除いたファイルパス
         dataset_id = original_file.relative_to(data_root).as_posix()
+
+        name = None
+        description = None
+        year = None
+
+        if schema_file.exists():
+            try:
+                schema_config = parse_yaml_and_validate(schema_file, DatasetConfig)
+                name = schema_config.name
+                description = schema_config.description
+                year = schema_config.year
+            except (FileNotFoundError, ValueError, RuntimeError, ValidationError):
+                rprint(
+                    f"[yellow]警告: スキーマファイル {schema_file} の処理に失敗しました。スキップします。[/yellow]",
+                )
+                continue
+        else:
+            # スキーマファイルがない場合、ファイル名から名前を推測
+            name = LocalizedStr(ja=original_file.name, en=original_file.name)
 
         if dataset_id not in datasets:
             datasets[dataset_id] = DatasetInfo(
-                name=schema_config.name,
-                description=schema_config.description,
-                year=schema_config.year,
+                name=name,
+                description=description,
+                year=year,
                 dvc_files=[],
             )
 
