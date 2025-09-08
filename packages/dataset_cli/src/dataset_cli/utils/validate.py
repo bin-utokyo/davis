@@ -219,6 +219,7 @@ def detect_encoding(file_path: str, nbytes: int = 4096) -> str:
     with Path(file_path).open("rb") as f:
         raw = f.read(nbytes)
     result = charset_normalizer.from_bytes(raw).best()
-    if result is not None:
+    if result is not None and result.encoding.lower() != "ascii":
         return result.encoding
+    # ASCII でも UTF-8 として読み込む
     return "utf-8"
