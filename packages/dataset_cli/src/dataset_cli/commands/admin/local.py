@@ -94,7 +94,7 @@ def _detect_changes(repo: Repo, repo_path: Path, dvc_client: DVCClient) -> list[
     return all_data_files
 
 
-def _dvc_add_and_validate(
+def _dvc_add_and_validate(  # noqa: C901
     repo_path: Path,
     files: list[Path],
     dvc_client: DVCClient,
@@ -131,16 +131,18 @@ def _dvc_add_and_validate(
         return
 
     rprint(f"  [cyan]検証ターゲット:[/cyan] {[str(p) for p in validation_targets]}")
-    has_error = False
+    error_occurred: list[Path] = []
     for target_path in validation_targets:
         try:
             validate((repo_path / target_path).as_posix())
         except typer.Exit:
-            has_error = True
-    if has_error:
+            error_occurred.append(target_path)
+    if error_occurred:
         rprint(
             "\n[bold red]エラー: 1つ以上のファイルが検証に失敗しました。同期を中断します。[/bold red]",
         )
+        for p in error_occurred:
+            rprint(f"  [red]✗ 検証失敗:[/red] {p}")
         raise typer.Exit(code=1)
     rprint("[green]✅ 検証対象はすべて検証を通過しました。[/green]")
 
