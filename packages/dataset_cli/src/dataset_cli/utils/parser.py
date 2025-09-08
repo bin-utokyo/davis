@@ -1,14 +1,15 @@
 import mimetypes
 from pathlib import Path
 
+import httpx
 import yaml
-from pydantic import BaseModel
+from pydantic import BaseModel, HttpUrl
 
 from dataset_cli.utils.i18n import _
 
 
 def parse_yaml_and_validate[T: BaseModel](
-    yaml_path: str | Path,
+    yaml_path: str | Path | HttpUrl,
     pydantic_model_class: type[T],
 ) -> T:
     """
@@ -16,8 +17,8 @@ def parse_yaml_and_validate[T: BaseModel](
 
     Args
     ----
-    yaml_path: str | Path
-        検証するYAMLファイルのパス。
+    yaml_path: str | Path | HttpUrl
+        検証するYAMLファイルのパスまたはURL。
     pydantic_model_class: type[T]
         検証に使用するPydanticモデルのクラス。TはBaseModelを継承した型でなければならない。
 
@@ -31,7 +32,13 @@ def parse_yaml_and_validate[T: BaseModel](
     ValueError: 指定されたパスがYAMLファイルではない場合。
     RuntimeError: YAMLの読み込みに失敗した場合。
     """
-    path: Path = Path(yaml_path) if isinstance(yaml_path, str) else yaml_path
+    if isinstance(yaml_path, HttpUrl):
+        response = httpx.get(str(yaml_path), follow_redirects=True)
+        response.raise_for_status()
+        data = yaml.safe_load(response.text)
+        return pydantic_model_class(**data)
+
+    path = Path(yaml_path)
 
     if not path.exists():
         msg = _("YAMLファイルが見つかりません: {yaml_path}").format(yaml_path=yaml_path)

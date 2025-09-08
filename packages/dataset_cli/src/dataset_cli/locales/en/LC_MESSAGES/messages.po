@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2025-09-06 13:56+0900\n"
+"POT-Creation-Date: 2025-09-08 17:06+0900\n"
 "PO-Revision-Date: 2025-09-04 17:55+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -274,22 +274,22 @@ msgstr "[red]Schema inference failed: {e}[/red]"
 msgid "READMEを生成するデータセットファイルのパス"
 msgstr "Path to the dataset file for which to generate a README"
 
-#: packages/dataset_cli/build/lib/dataset_cli/commands/get.py:32
+#: packages/dataset_cli/build/lib/dataset_cli/commands/get.py:41
 #: packages/dataset_cli/src/dataset_cli/commands/get.py:41
 msgid "`davis list`で表示されるデータセットID (ディレクトリも指定可)"
 msgstr "Dataset ID displayed by `davis list` (directory can also be specified)"
 
-#: packages/dataset_cli/build/lib/dataset_cli/commands/get.py:41
+#: packages/dataset_cli/build/lib/dataset_cli/commands/get.py:50
 #: packages/dataset_cli/src/dataset_cli/commands/get.py:50
 msgid "保存先のディレクトリ"
 msgstr "Destination directory"
 
-#: packages/dataset_cli/build/lib/dataset_cli/commands/get.py:45
+#: packages/dataset_cli/build/lib/dataset_cli/commands/get.py:54
 #: packages/dataset_cli/src/dataset_cli/commands/get.py:54
 msgid "現在のディレクトリ"
 msgstr "Current directory"
 
-#: packages/dataset_cli/build/lib/dataset_cli/commands/get.py:62
+#: packages/dataset_cli/build/lib/dataset_cli/commands/get.py:71
 #: packages/dataset_cli/src/dataset_cli/commands/get.py:71
 #, python-brace-format
 msgid ""
@@ -299,7 +299,7 @@ msgstr ""
 "🚚 Downloading dataset [bold cyan]{dataset_id}[/bold cyan] ({num_dvc} data"
 " files, {num_docs} documents)..."
 
-#: packages/dataset_cli/build/lib/dataset_cli/commands/get.py:83
+#: packages/dataset_cli/build/lib/dataset_cli/commands/get.py:90
 #: packages/dataset_cli/src/dataset_cli/commands/get.py:90
 #, python-brace-format
 msgid ""
@@ -309,30 +309,49 @@ msgstr ""
 "\n"
 "[bold green]✅ All operations completed:[/bold green] {output_dir}"
 
-#: packages/dataset_cli/build/lib/dataset_cli/commands/get.py:95
+#: packages/dataset_cli/build/lib/dataset_cli/commands/get.py:102
 #: packages/dataset_cli/src/dataset_cli/commands/get.py:102
 msgid "[bold red]エラー: CLIの設定が不完全です。[/bold red]"
 msgstr "[bold red]Error: CLI configuration is incomplete.[/bold red]"
 
-#: packages/dataset_cli/build/lib/dataset_cli/commands/get.py:98
+#: packages/dataset_cli/build/lib/dataset_cli/commands/get.py:105
 #: packages/dataset_cli/src/dataset_cli/commands/get.py:105
 msgid "[dim]'davis setup' を実行して、初回セットアップを完了してください。[/dim]"
 msgstr "[dim]Please run 'davis setup' to complete the initial setup.[/dim]"
 
-#: packages/dataset_cli/build/lib/dataset_cli/commands/get.py:113
+#: packages/dataset_cli/build/lib/dataset_cli/commands/get.py:120
 #: packages/dataset_cli/src/dataset_cli/commands/get.py:120
 msgid "[bold red]エラー: データセットの目録(manifest)の取得に失敗しました。[/bold red]"
 msgstr "[bold red]Error: Failed to fetch the dataset manifest.[/bold red]"
 
-#: packages/dataset_cli/build/lib/dataset_cli/commands/get.py:146
+#: packages/dataset_cli/build/lib/dataset_cli/commands/get.py:153
 #: packages/dataset_cli/build/lib/dataset_cli/commands/info.py:104
 #: packages/dataset_cli/src/dataset_cli/commands/get.py:153
-#: packages/dataset_cli/src/dataset_cli/commands/info.py:104
+#: packages/dataset_cli/src/dataset_cli/commands/info.py:109
 #, python-brace-format
 msgid "[bold red]エラー: データセット '{dataset_id}' は見つかりません。[/bold red]"
 msgstr "[bold red]Error: Dataset '{dataset_id}' not found.[/bold red]"
 
-#: packages/dataset_cli/build/lib/dataset_cli/commands/get.py:187
+#: packages/dataset_cli/build/lib/dataset_cli/commands/get.py:207
+#: packages/dataset_cli/src/dataset_cli/commands/get.py:207
+msgid "[bold red]エラー: ブートストラップパッケージのハッシュが一致しません。ダウンロードが破損している可能性があります。[/bold red]"
+msgstr ""
+"[bold red]Error: Bootstrap package hash does not match. The download may "
+"be corrupted.[/bold red]"
+
+#: packages/dataset_cli/build/lib/dataset_cli/commands/get.py:212
+#: packages/dataset_cli/src/dataset_cli/commands/get.py:212
+#, python-brace-format
+msgid "[dim]期待されるハッシュ: {expected}[/dim]"
+msgstr "[dim]Expected hash: {expected}[/dim]"
+
+#: packages/dataset_cli/build/lib/dataset_cli/commands/get.py:217
+#: packages/dataset_cli/src/dataset_cli/commands/get.py:217
+#, python-brace-format
+msgid "[dim]実際のハッシュ: {actual}[/dim]"
+msgstr "[dim]Actual hash: {actual}[/dim]"
+
+#: packages/dataset_cli/build/lib/dataset_cli/commands/get.py:227
 #: packages/dataset_cli/src/dataset_cli/commands/get.py:227
 #, python-brace-format
 msgid ""
@@ -342,13 +361,13 @@ msgstr ""
 "[bold red]HTTP Error: Failed to download bootstrap package (HTTP "
 "{status_code})[/bold red]"
 
-#: packages/dataset_cli/build/lib/dataset_cli/commands/get.py:194
+#: packages/dataset_cli/build/lib/dataset_cli/commands/get.py:234
 #: packages/dataset_cli/src/dataset_cli/commands/get.py:234
 #, python-brace-format
 msgid "[yellow]ローカルの '{local_bootstrap}' を使用します。[/yellow]"
 msgstr "[yellow]Using local '{local_bootstrap}'.[/yellow]"
 
-#: packages/dataset_cli/build/lib/dataset_cli/commands/get.py:205
+#: packages/dataset_cli/build/lib/dataset_cli/commands/get.py:245
 #: packages/dataset_cli/src/dataset_cli/commands/get.py:245
 #, python-brace-format
 msgid "[bold red]ブートストラップパッケージの処理中にエラーが発生しました: {e}[/bold red]"
@@ -356,57 +375,57 @@ msgstr ""
 "[bold red]An error occurred while processing the bootstrap package: "
 "{e}[/bold red]"
 
-#: packages/dataset_cli/build/lib/dataset_cli/commands/get.py:223
+#: packages/dataset_cli/build/lib/dataset_cli/commands/get.py:279
 #: packages/dataset_cli/src/dataset_cli/commands/get.py:279
 msgid "  - DVCコマンドを実行し、データをダウンロードします..."
 msgstr "  - Executing DVC command to download data..."
 
-#: packages/dataset_cli/build/lib/dataset_cli/commands/get.py:242
+#: packages/dataset_cli/build/lib/dataset_cli/commands/get.py:298
 #: packages/dataset_cli/src/dataset_cli/commands/get.py:298
 msgid "  - ファイルを最終的な出力先にコピーしています..."
 msgstr "  - Copying files to the final destination..."
 
-#: packages/dataset_cli/build/lib/dataset_cli/commands/get.py:255
+#: packages/dataset_cli/build/lib/dataset_cli/commands/get.py:311
 #: packages/dataset_cli/src/dataset_cli/commands/get.py:311
 #, python-brace-format
 msgid "[yellow]警告: dvc pull後にファイルが見つかりませんでした: {src_path}[/yellow]"
 msgstr "[yellow]Warning: File not found after dvc pull: {src_path}[/yellow]"
 
-#: packages/dataset_cli/build/lib/dataset_cli/commands/get.py:263
+#: packages/dataset_cli/build/lib/dataset_cli/commands/get.py:318
 #: packages/dataset_cli/src/dataset_cli/commands/get.py:318
 msgid "[bold red]エラー: 'git' コマンドが見つかりませんでした。[/bold red]"
 msgstr "[bold red]Error: 'git' command not found.[/bold red]"
 
-#: packages/dataset_cli/build/lib/dataset_cli/commands/get.py:268
+#: packages/dataset_cli/build/lib/dataset_cli/commands/get.py:323
 #: packages/dataset_cli/src/dataset_cli/commands/get.py:323
 msgid "[dim]Gitがインストールされ、PATHが通っていることを確認してください。[/dim]"
 msgstr "[dim]Please ensure Git is installed and in your PATH.[/dim]"
 
-#: packages/dataset_cli/build/lib/dataset_cli/commands/get.py:273
+#: packages/dataset_cli/build/lib/dataset_cli/commands/get.py:328
 #: packages/dataset_cli/src/dataset_cli/commands/get.py:328
 msgid "[bold red]DVC pull の実行中にエラーが発生しました。[/bold red]"
 msgstr "[bold red]An error occurred while running DVC pull.[/bold red]"
 
-#: packages/dataset_cli/build/lib/dataset_cli/commands/get.py:277
+#: packages/dataset_cli/build/lib/dataset_cli/commands/get.py:332
 #: packages/dataset_cli/src/dataset_cli/commands/get.py:332
 msgid "[dim]Google Driveの認証に失敗したか、ファイルにアクセス権がない可能性があります。[/dim]"
 msgstr ""
 "[dim]You may have failed to authenticate with Google Drive, or you may "
 "not have access to the file.[/dim]"
 
-#: packages/dataset_cli/build/lib/dataset_cli/commands/get.py:282
+#: packages/dataset_cli/build/lib/dataset_cli/commands/get.py:337
 #: packages/dataset_cli/src/dataset_cli/commands/get.py:337
 msgid "[dim]ブラウザが開いて認証を求められた場合は、許可してください。[/dim]"
 msgstr ""
 "[dim]If a browser window opens for authentication, please grant "
 "permission.[/dim]"
 
-#: packages/dataset_cli/build/lib/dataset_cli/commands/get.py:288
+#: packages/dataset_cli/build/lib/dataset_cli/commands/get.py:342
 #: packages/dataset_cli/src/dataset_cli/commands/get.py:342
 msgid "[bold red]Gitの初期化中にエラーが発生しました。[/bold red]"
 msgstr "[bold red]An error occurred during Git initialization.[/bold red]"
 
-#: packages/dataset_cli/build/lib/dataset_cli/commands/get.py:293
+#: packages/dataset_cli/build/lib/dataset_cli/commands/get.py:347
 #: packages/dataset_cli/src/dataset_cli/commands/get.py:347
 #, python-brace-format
 msgid ""
@@ -416,18 +435,23 @@ msgstr ""
 "\n"
 "[bold green]✅ Download complete:[/bold green] {output_dir}"
 
-#: packages/dataset_cli/build/lib/dataset_cli/commands/get.py:304
+#: packages/dataset_cli/build/lib/dataset_cli/commands/get.py:358
 #: packages/dataset_cli/src/dataset_cli/commands/get.py:358
 msgid "  - ドキュメント(PDF)をダウンロード中..."
 msgstr "  - Downloading documents (PDF)..."
 
-#: packages/dataset_cli/build/lib/dataset_cli/commands/get.py:330
+#: packages/dataset_cli/build/lib/dataset_cli/commands/get.py:370
+#: packages/dataset_cli/src/dataset_cli/commands/get.py:370
+msgid "PDFをダウンロード中..."
+msgstr "Downloading PDF..."
+
+#: packages/dataset_cli/build/lib/dataset_cli/commands/get.py:384
 #: packages/dataset_cli/src/dataset_cli/commands/get.py:384
 #, python-brace-format
 msgid "[yellow]警告: PDFのダウンロードに失敗しました: {url}[/yellow]"
 msgstr "[yellow]Warning: Failed to download PDF: {url}[/yellow]"
 
-#: packages/dataset_cli/build/lib/dataset_cli/commands/get.py:336
+#: packages/dataset_cli/build/lib/dataset_cli/commands/get.py:390
 #: packages/dataset_cli/src/dataset_cli/commands/get.py:390
 #, python-brace-format
 msgid ""
@@ -439,8 +463,8 @@ msgstr ""
 
 #: packages/dataset_cli/build/lib/dataset_cli/commands/info.py:27
 #: packages/dataset_cli/build/lib/dataset_cli/commands/info.py:92
-#: packages/dataset_cli/src/dataset_cli/commands/info.py:27
-#: packages/dataset_cli/src/dataset_cli/commands/info.py:92
+#: packages/dataset_cli/src/dataset_cli/commands/info.py:32
+#: packages/dataset_cli/src/dataset_cli/commands/info.py:97
 #, python-brace-format
 msgid "[bold red]エラー: GitHubリリースへのアクセスに失敗しました (HTTP {status_code})[/bold red]"
 msgstr ""
@@ -449,40 +473,40 @@ msgstr ""
 
 #: packages/dataset_cli/build/lib/dataset_cli/commands/info.py:32
 #: packages/dataset_cli/build/lib/dataset_cli/commands/info.py:97
-#: packages/dataset_cli/src/dataset_cli/commands/info.py:32
-#: packages/dataset_cli/src/dataset_cli/commands/info.py:97
+#: packages/dataset_cli/src/dataset_cli/commands/info.py:37
+#: packages/dataset_cli/src/dataset_cli/commands/info.py:102
 #, python-brace-format
 msgid "[bold red]エラー: {e}[/bold red]"
 msgstr "[bold red]Error: {e}[/bold red]"
 
 #: packages/dataset_cli/build/lib/dataset_cli/commands/info.py:36
-#: packages/dataset_cli/src/dataset_cli/commands/info.py:36
+#: packages/dataset_cli/src/dataset_cli/commands/info.py:41
 #, python-brace-format
 msgid "利用可能なデータセット (v{cli_version})"
 msgstr "Available datasets (v{cli_version})"
 
 #: packages/dataset_cli/build/lib/dataset_cli/commands/info.py:41
-#: packages/dataset_cli/src/dataset_cli/commands/info.py:41
+#: packages/dataset_cli/src/dataset_cli/commands/info.py:46
 msgid "ID"
 msgstr "ID"
 
 #: packages/dataset_cli/build/lib/dataset_cli/commands/info.py:42
-#: packages/dataset_cli/src/dataset_cli/commands/info.py:42
+#: packages/dataset_cli/src/dataset_cli/commands/info.py:47
 msgid "名前 (ja)"
 msgstr "Name (ja)"
 
 #: packages/dataset_cli/build/lib/dataset_cli/commands/info.py:43
-#: packages/dataset_cli/src/dataset_cli/commands/info.py:43
+#: packages/dataset_cli/src/dataset_cli/commands/info.py:48
 msgid "名前 (en)"
 msgstr "Name (en)"
 
 #: packages/dataset_cli/build/lib/dataset_cli/commands/info.py:44
-#: packages/dataset_cli/src/dataset_cli/commands/info.py:44
+#: packages/dataset_cli/src/dataset_cli/commands/info.py:49
 msgid "年"
 msgstr "Year"
 
 #: packages/dataset_cli/build/lib/dataset_cli/commands/info.py:61
-#: packages/dataset_cli/src/dataset_cli/commands/info.py:61
+#: packages/dataset_cli/src/dataset_cli/commands/info.py:66
 #, python-brace-format
 msgid "[bold]ターミナルの幅が狭いため、表が見づらい可能性があります。幅を広げることをお勧めします (現在の幅: {width}文字）。[/bold]"
 msgstr ""
@@ -490,22 +514,22 @@ msgstr ""
 " We recommend widening it (current width: {width} characters).[/bold]"
 
 #: packages/dataset_cli/build/lib/dataset_cli/commands/info.py:63
-#: packages/dataset_cli/src/dataset_cli/commands/info.py:63
+#: packages/dataset_cli/src/dataset_cli/commands/info.py:68
 msgid "注意"
 msgstr "Note"
 
 #: packages/dataset_cli/build/lib/dataset_cli/commands/info.py:72
-#: packages/dataset_cli/src/dataset_cli/commands/info.py:72
+#: packages/dataset_cli/src/dataset_cli/commands/info.py:77
 msgid "`davis list`で表示されるデータセットID"
 msgstr "Dataset ID displayed by `davis list`"
 
 #: packages/dataset_cli/build/lib/dataset_cli/commands/info.py:82
-#: packages/dataset_cli/src/dataset_cli/commands/info.py:82
+#: packages/dataset_cli/src/dataset_cli/commands/info.py:87
 msgid "関連ドキュメントのPDFリンクをブラウザで開く"
 msgstr "Open PDF links of related documents in a browser"
 
 #: packages/dataset_cli/build/lib/dataset_cli/commands/info.py:112
-#: packages/dataset_cli/src/dataset_cli/commands/info.py:112
+#: packages/dataset_cli/src/dataset_cli/commands/info.py:117
 #, python-brace-format
 msgid ""
 "[bold cyan]{name_ja}[/bold cyan]\n"
@@ -515,13 +539,13 @@ msgstr ""
 "[dim]{name_en}[/dim]"
 
 #: packages/dataset_cli/build/lib/dataset_cli/commands/info.py:114
-#: packages/dataset_cli/src/dataset_cli/commands/info.py:114
+#: packages/dataset_cli/src/dataset_cli/commands/info.py:119
 #, python-brace-format
 msgid "データセット情報: {dataset_id}"
 msgstr "Dataset Information: {dataset_id}"
 
 #: packages/dataset_cli/build/lib/dataset_cli/commands/info.py:120
-#: packages/dataset_cli/src/dataset_cli/commands/info.py:120
+#: packages/dataset_cli/src/dataset_cli/commands/info.py:124
 msgid ""
 "\n"
 "[bold]概要[/bold]"
@@ -530,32 +554,32 @@ msgstr ""
 "[bold]Overview[/bold]"
 
 #: packages/dataset_cli/build/lib/dataset_cli/commands/info.py:125
-#: packages/dataset_cli/src/dataset_cli/commands/info.py:125
+#: packages/dataset_cli/src/dataset_cli/commands/info.py:130
 msgid "含まれるファイル"
 msgstr "Included Files"
 
 #: packages/dataset_cli/build/lib/dataset_cli/commands/info.py:126
-#: packages/dataset_cli/src/dataset_cli/commands/info.py:126
+#: packages/dataset_cli/src/dataset_cli/commands/info.py:131
 msgid "ファイルパス"
 msgstr "File Path"
 
 #: packages/dataset_cli/build/lib/dataset_cli/commands/info.py:133
-#: packages/dataset_cli/src/dataset_cli/commands/info.py:133
+#: packages/dataset_cli/src/dataset_cli/commands/info.py:185
 msgid "関連ドキュメント (PDF)"
 msgstr "Related Documents (PDF)"
 
 #: packages/dataset_cli/build/lib/dataset_cli/commands/info.py:134
-#: packages/dataset_cli/src/dataset_cli/commands/info.py:134
+#: packages/dataset_cli/src/dataset_cli/commands/info.py:186
 msgid "ファイル名"
 msgstr "File Name"
 
 #: packages/dataset_cli/build/lib/dataset_cli/commands/info.py:135
-#: packages/dataset_cli/src/dataset_cli/commands/info.py:135
+#: packages/dataset_cli/src/dataset_cli/commands/info.py:187
 msgid "リンク"
 msgstr "Link"
 
 #: packages/dataset_cli/build/lib/dataset_cli/commands/info.py:146
-#: packages/dataset_cli/src/dataset_cli/commands/info.py:146
+#: packages/dataset_cli/src/dataset_cli/commands/info.py:198
 msgid "ブラウザでPDFリンクを開きます..."
 msgstr "Opening PDF link in browser..."
 
@@ -749,6 +773,47 @@ msgstr ""
 msgid "これで `davis get <DATASET_ID>` コマンドが使用できます。"
 msgstr "You can now use the `davis get <DATASET_ID>` command."
 
+#: packages/dataset_cli/build/lib/dataset_cli/commands/admin/release.py:77
+#: packages/dataset_cli/src/dataset_cli/commands/admin/release.py:77
+msgid "出力ファイルパス"
+msgstr "Output file path"
+
+#: packages/dataset_cli/build/lib/dataset_cli/commands/admin/release.py:89
+#: packages/dataset_cli/src/dataset_cli/commands/admin/release.py:89
+#, python-brace-format
+msgid "[bold]'{output_path}' を作成します...[/bold]"
+msgstr "[bold]Creating '{output_path}'...[/bold]"
+
+#: packages/dataset_cli/build/lib/dataset_cli/commands/admin/release.py:102
+#: packages/dataset_cli/src/dataset_cli/commands/admin/release.py:102
+#, python-brace-format
+msgid "  - [yellow]W[/yellow] '{config_path}' が見つかりません。スキップします。"
+msgstr "  - [yellow]W[/yellow] '{config_path}' not found. Skipping."
+
+#: packages/dataset_cli/build/lib/dataset_cli/commands/admin/release.py:112
+#: packages/dataset_cli/src/dataset_cli/commands/admin/release.py:112
+#, python-brace-format
+msgid "  - [yellow]W[/yellow] '{data_dir}' 内に.dvcファイルが見つかりません。"
+msgstr "  - [yellow]W[/yellow] No .dvc files found in '{data_dir}'."
+
+#: packages/dataset_cli/build/lib/dataset_cli/commands/admin/release.py:119
+#: packages/dataset_cli/src/dataset_cli/commands/admin/release.py:119
+#, python-brace-format
+msgid "  - [green]✓[/green] '{output_path}' を作成しました。"
+msgstr "  - [green]✓[/green] Created '{output_path}'."
+
+#: packages/dataset_cli/build/lib/dataset_cli/commands/admin/release.py:128
+#: packages/dataset_cli/src/dataset_cli/commands/admin/release.py:128
+#, python-brace-format
+msgid "  - [dim]生成されたブートストラップパッケージのハッシュ: {bootstrap_hash}[/dim]"
+msgstr "  - [dim]Hash of the generated bootstrap package: {bootstrap_hash}[/dim]"
+
+#: packages/dataset_cli/build/lib/dataset_cli/commands/admin/release.py:133
+#: packages/dataset_cli/src/dataset_cli/commands/admin/release.py:133
+#, python-brace-format
+msgid "[bold red]dvc-bootstrap.zipの作成に失敗しました: {e}[/bold red]"
+msgstr "[bold red]Failed to create dvc-bootstrap.zip: {e}[/bold red]"
+
 #: packages/dataset_cli/build/lib/dataset_cli/utils/api.py:17
 #: packages/dataset_cli/build/lib/dataset_cli/utils/api.py:62
 #: packages/dataset_cli/src/dataset_cli/utils/api.py:17
@@ -803,18 +868,24 @@ msgstr "Do you want to run `dvc init` in this directory?"
 msgid "[green]DVCリポジトリを初期化しました。[/green]"
 msgstr "[green]Initialized DVC repository.[/green]"
 
-#: packages/dataset_cli/build/lib/dataset_cli/utils/dvc.py:132
+#: packages/dataset_cli/build/lib/dataset_cli/utils/dvc.py:90
+#: packages/dataset_cli/src/dataset_cli/utils/dvc.py:90
+#, python-brace-format
+msgid "[cyan]実行中: {full_command}[/cyan]"
+msgstr "[cyan]Running: {full_command}[/cyan]"
+
+#: packages/dataset_cli/build/lib/dataset_cli/utils/dvc.py:136
 #: packages/dataset_cli/src/dataset_cli/utils/dvc.py:136
 #, python-brace-format
 msgid "DVCコマンド '{full_command}' の実行に失敗しました。"
 msgstr "Failed to run DVC command '{full_command}'."
 
-#: packages/dataset_cli/build/lib/dataset_cli/utils/dvc.py:144
+#: packages/dataset_cli/build/lib/dataset_cli/utils/dvc.py:148
 #: packages/dataset_cli/src/dataset_cli/utils/dvc.py:148
 msgid "[red]エラー: 'dvc'コマンドが見つかりませんでした。DVCはインストールされていますか？[/red]"
 msgstr "[red]Error: 'dvc' command not found. Is DVC installed?[/red]"
 
-#: packages/dataset_cli/build/lib/dataset_cli/utils/dvc.py:150
+#: packages/dataset_cli/build/lib/dataset_cli/utils/dvc.py:154
 #: packages/dataset_cli/src/dataset_cli/utils/dvc.py:154
 #, python-brace-format
 msgid "DVCコマンドの実行に失敗しました: {e}"
@@ -827,86 +898,89 @@ msgstr "This directory is not a Git repository."
 
 #: packages/dataset_cli/build/lib/dataset_cli/utils/io.py:27
 #: packages/dataset_cli/build/lib/dataset_cli/utils/parser.py:37
-#: packages/dataset_cli/src/dataset_cli/utils/io.py:27
-#: packages/dataset_cli/src/dataset_cli/utils/parser.py:37
+#: packages/dataset_cli/src/dataset_cli/utils/io.py:28
+#: packages/dataset_cli/src/dataset_cli/utils/parser.py:44
 #, python-brace-format
 msgid "YAMLファイルが見つかりません: {yaml_path}"
 msgstr "YAML file not found: {yaml_path}"
 
 #: packages/dataset_cli/build/lib/dataset_cli/utils/io.py:30
 #: packages/dataset_cli/build/lib/dataset_cli/utils/parser.py:46
-#: packages/dataset_cli/src/dataset_cli/utils/io.py:30
-#: packages/dataset_cli/src/dataset_cli/utils/parser.py:46
+#: packages/dataset_cli/src/dataset_cli/utils/io.py:31
+#: packages/dataset_cli/src/dataset_cli/utils/parser.py:53
 #, python-brace-format
 msgid "指定されたパスはYAMLファイルではありません: {yaml_path}"
 msgstr "The specified path is not a YAML file: {yaml_path}"
 
 #: packages/dataset_cli/build/lib/dataset_cli/utils/io.py:40
-#: packages/dataset_cli/src/dataset_cli/utils/io.py:40
+#: packages/dataset_cli/src/dataset_cli/utils/io.py:41
 #, python-brace-format
 msgid "YAMLの読み込みに失敗しました: {yaml_path}"
 msgstr "Failed to load YAML: {yaml_path}"
 
 #: packages/dataset_cli/build/lib/dataset_cli/utils/io.py:44
-#: packages/dataset_cli/src/dataset_cli/utils/io.py:44
+#: packages/dataset_cli/src/dataset_cli/utils/io.py:45
 #, python-brace-format
 msgid "[bold red]スキーマ検証エラー in {yaml_path}:[/bold red]"
 msgstr "[bold red]Schema validation error in {yaml_path}:[/bold red]"
 
-#: packages/dataset_cli/build/lib/dataset_cli/utils/io.py:101
-#: packages/dataset_cli/src/dataset_cli/utils/io.py:102
+#: packages/dataset_cli/build/lib/dataset_cli/utils/io.py:102
+#: packages/dataset_cli/src/dataset_cli/utils/io.py:103
 msgid "🔎 [bold]データファイルをスキャンしています...[/bold]"
 msgstr "🔎 [bold]Scanning data files...[/bold]"
 
-#: packages/dataset_cli/build/lib/dataset_cli/utils/io.py:105
-#: packages/dataset_cli/src/dataset_cli/utils/io.py:106
+#: packages/dataset_cli/build/lib/dataset_cli/utils/io.py:106
+#: packages/dataset_cli/src/dataset_cli/utils/io.py:107
 msgid "'data' ディレクトリが見つかりません。リポジトリのルートで実行してください。"
 msgstr ""
 "'data' directory not found. Please run this command from the repository "
 "root."
 
-#: packages/dataset_cli/build/lib/dataset_cli/utils/io.py:111
-#: packages/dataset_cli/src/dataset_cli/utils/io.py:112
+#: packages/dataset_cli/build/lib/dataset_cli/utils/io.py:112
+#: packages/dataset_cli/src/dataset_cli/utils/io.py:113
 #, python-brace-format
 msgid "  - {num_dvc} 個の .dvc ファイルを発見しました。"
 msgstr "  - Found {num_dvc} .dvc files."
 
-#: packages/dataset_cli/build/lib/dataset_cli/utils/io.py:118
-#: packages/dataset_cli/src/dataset_cli/utils/io.py:119
+#: packages/dataset_cli/build/lib/dataset_cli/utils/io.py:119
+#: packages/dataset_cli/src/dataset_cli/utils/io.py:120
 msgid "スキーマとURLを処理中..."
 msgstr "Processing schemas and URLs..."
 
-#: packages/dataset_cli/build/lib/dataset_cli/utils/io.py:125
-#: packages/dataset_cli/src/dataset_cli/utils/io.py:126
+#: packages/dataset_cli/build/lib/dataset_cli/utils/io.py:126
 #, python-brace-format
 msgid "[yellow]警告: スキーマファイルが見つかりません: {schema_file}。スキップします。[/yellow]"
 msgstr "[yellow]Warning: Schema file not found: {schema_file}. Skipping.[/yellow]"
 
 #: packages/dataset_cli/build/lib/dataset_cli/utils/parser.py:41
-#: packages/dataset_cli/src/dataset_cli/utils/parser.py:41
+#: packages/dataset_cli/src/dataset_cli/utils/parser.py:48
 #, python-brace-format
 msgid "指定されたパスはファイルではありません: {yaml_path}"
 msgstr "The specified path is not a file: {yaml_path}"
 
 #: packages/dataset_cli/build/lib/dataset_cli/utils/parser.py:55
-#: packages/dataset_cli/src/dataset_cli/utils/parser.py:55
+#: packages/dataset_cli/src/dataset_cli/utils/parser.py:62
 #, python-brace-format
 msgid "YAMLの読み込みに失敗しました: {e}"
 msgstr "Failed to load YAML: {e}"
 
 #: packages/dataset_cli/build/lib/dataset_cli/utils/pdf.py:31
+#: packages/dataset_cli/src/dataset_cli/utils/pdf.py:31
 msgid ""
-"[red]スキーマファイルにハッシュが設定されていません。先に `davis data validate-file` "
+"[red]スキーマファイルにハッシュが設定されていません。先に `davis manage local validate` "
 "を実行してください。[/red]"
 msgstr ""
-"[red]Hash not set in the schema file. Please run `davis data validate-"
-"file` first.[/red]"
+"[red]Hash not set in the schema file. Please run `davis manage local "
+"validate` first.[/red]"
 
 #: packages/dataset_cli/build/lib/dataset_cli/utils/pdf.py:42
-msgid "[red]ファイルのハッシュがスキーマと一致しません。先に `davis data validate-file` を実行してください。[/red]"
+#: packages/dataset_cli/src/dataset_cli/utils/pdf.py:42
+msgid ""
+"[red]ファイルのハッシュがスキーマと一致しません。先に `davis manage local validate` "
+"を実行してください。[/red]"
 msgstr ""
-"[red]File hash does not match the schema. Please run `davis data "
-"validate-file` first.[/red]"
+"[red]File hash does not match the schema. Please run `davis manage local "
+"validate` first.[/red]"
 
 #: packages/dataset_cli/build/lib/dataset_cli/utils/pdf.py:81
 #: packages/dataset_cli/src/dataset_cli/utils/pdf.py:81
@@ -978,78 +1052,46 @@ msgstr ""
 "Expected: {expected_hash}\n"
 "Actual:   {actual_hash}[/red]"
 
-#: packages/dataset_cli/src/dataset_cli/commands/get.py:207
+#: packages/dataset_cli/src/dataset_cli/commands/info.py:153
+#, fuzzy, python-brace-format
+msgid "[yellow]警告: スキーマファイルが見つかりません。表形式のファイルではないか、スキーマが提供されていない可能性があります。[/yellow]"
+msgstr "[yellow]Warning: Schema file not found. The file may not be tabular or no schema is provided.[/yellow]"
+
+#: packages/dataset_cli/src/dataset_cli/commands/info.py:161
 #, python-brace-format
-msgid "[bold red]エラー: ブートストラップパッケージのハッシュが一致しません。ダウンロードが破損している可能性があります。[/bold red]"
+msgid "[bold red]エラー: スキーマファイルへのアクセスに失敗しました (HTTP {status_code})[/bold red]"
 msgstr ""
-"[bold red]Error: Bootstrap package hash does not match. The download may be "
-"corrupted.[/bold red]"
+"[bold red]Error: Failed to access schema file (HTTP "
+"\"\"{status_code})[/bold red]"
 
-#: packages/dataset_cli/src/dataset_cli/commands/get.py:212
-#, python-brace-format
-msgid "[dim]期待されるハッシュ: {expected}[/dim]"
-msgstr ""
+#: packages/dataset_cli/src/dataset_cli/commands/info.py:167
+msgid "スキーマ"
+msgstr "Schema"
 
-#: packages/dataset_cli/src/dataset_cli/commands/get.py:217
-#, python-brace-format
-msgid "[dim]実際のハッシュ: {actual}[/dim]"
-msgstr "[dim]Actual hash: {actual}[/dim]"
+#: packages/dataset_cli/src/dataset_cli/commands/info.py:170
+msgid "列名"
+msgstr "Column Name"
 
-#: packages/dataset_cli/src/dataset_cli/commands/get.py:370
-msgid "PDFをダウンロード中..."
-msgstr "Downloading PDF..."
+#: packages/dataset_cli/src/dataset_cli/commands/info.py:171
+msgid "データ型"
+msgstr "Data Type"
 
-#: packages/dataset_cli/src/dataset_cli/commands/admin/release.py:77
-msgid "出力ファイルパス"
-msgstr "Output file path"
+#: packages/dataset_cli/src/dataset_cli/commands/info.py:172
+msgid "説明"
+msgstr "Description"
 
-#: packages/dataset_cli/src/dataset_cli/commands/admin/release.py:89
-#, python-brace-format
-msgid "[bold]'{output_path}' を作成します...[/bold]"
-msgstr "[bold]Creating '{output_path}'...[/bold]"
+#~ msgid ""
+#~ "[red]スキーマファイルにハッシュが設定されていません。先に `davis data "
+#~ "validate-file` を実行してください。[/red]"
+#~ msgstr ""
+#~ "[red]Hash not set in the schema "
+#~ "file. Please run `davis data "
+#~ "validate-file` first.[/red]"
 
-#: packages/dataset_cli/src/dataset_cli/commands/admin/release.py:102
-#, python-brace-format
-msgid "  - [yellow]W[/yellow] '{config_path}' が見つかりません。スキップします。"
-msgstr "  - [yellow]W[/yellow] '{config_path}' not found. Skipping."
-
-#: packages/dataset_cli/src/dataset_cli/commands/admin/release.py:112
-#, python-brace-format
-msgid "  - [yellow]W[/yellow] '{data_dir}' 内に.dvcファイルが見つかりません。"
-msgstr "  - [yellow]W[/yellow] No .dvc files found in '{data_dir}'."
-
-#: packages/dataset_cli/src/dataset_cli/commands/admin/release.py:119
-#, python-brace-format
-msgid "  - [green]✓[/green] '{output_path}' を作成しました。"
-msgstr "  - [green]✓[/green] Created '{output_path}'."
-
-#: packages/dataset_cli/src/dataset_cli/commands/admin/release.py:128
-#, python-brace-format
-msgid "  - [dim]生成されたブートストラップパッケージのハッシュ: {bootstrap_hash}[/dim]"
-msgstr "  - [dim]Hash of the generated bootstrap package: {bootstrap_hash}[/dim]"
-
-#: packages/dataset_cli/src/dataset_cli/commands/admin/release.py:133
-#, python-brace-format
-msgid "[bold red]dvc-bootstrap.zipの作成に失敗しました: {e}[/bold red]"
-msgstr "[bold red]Failed to create dvc-bootstrap.zip: {e}[/bold red]"
-
-#: packages/dataset_cli/src/dataset_cli/utils/dvc.py:90
-#, python-brace-format
-msgid "[cyan]実行中: {full_command}[/cyan]"
-msgstr "[cyan]Running: {full_command}[/cyan]"
-
-#: packages/dataset_cli/src/dataset_cli/utils/pdf.py:31
-msgid ""
-"[red]スキーマファイルにハッシュが設定されていません。先に `davis manage local validate` "
-"を実行してください。[/red]"
-msgstr ""
-"[red]Hash not set in the schema file. Please run `davis manage local "
-"validate` first.[/red]"
-
-#: packages/dataset_cli/src/dataset_cli/utils/pdf.py:42
-msgid ""
-"[red]ファイルのハッシュがスキーマと一致しません。先に `davis manage local validate` "
-"を実行してください。[/red]"
-msgstr ""
-"[red]File hash does not match the schema. Please run `davis manage local "
-"validate` first.[/red]"
+#~ msgid ""
+#~ "[red]ファイルのハッシュがスキーマと一致しません。先に `davis data "
+#~ "validate-file` を実行してください。[/red]"
+#~ msgstr ""
+#~ "[red]File hash does not match the "
+#~ "schema. Please run `davis data "
+#~ "validate-file` first.[/red]"
