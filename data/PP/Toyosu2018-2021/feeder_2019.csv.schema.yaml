@@ -1,0 +1,52 @@
+city:
+  en: Toyosu2019
+  ja: 豊洲2019
+columns:
+- description: null
+  name: ID
+  type_:
+    name: Int64
+- description: null
+  name: TripID
+  type_:
+    name: Int64
+- description: null
+  name: UserID
+  type_:
+    name: Int64
+- description: null
+  name: DepartureTime
+  type_:
+    name: Datetime
+- description: null
+  name: ChangeCode
+  type_:
+    name: Int64
+- description: null
+  name: ArrivalTime
+  type_:
+    name: Datetime
+- description: null
+  name: efficiency
+  type_:
+    name: Int64
+- description: null
+  name: TransportationCode
+  type_:
+    name: Int64
+- description: null
+  name: RegisterTime
+  type_:
+    name: Datetime
+description:
+  en: This is personal information of Toyosu2019
+  ja: 豊洲2019PPの個人情報です
+hash_: 97b986c33fe9a308732e981e6f32b721bcd159115a16b2baeb2d1547bc58a7a9
+license_:
+  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+    Networks.
+  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+name:
+  en: Toyosu2019
+  ja: 豊洲2019
+year: 2019

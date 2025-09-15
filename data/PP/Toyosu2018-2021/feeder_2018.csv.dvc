@@ -1,0 +1,5 @@
+outs:
+- md5: 5a4ce648fde7246f61e28fe7276ddaea
+  size: 3703708
+  hash: md5
+  path: feeder_2018.csv

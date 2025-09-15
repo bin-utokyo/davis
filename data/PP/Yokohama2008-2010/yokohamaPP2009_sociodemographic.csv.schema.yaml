@@ -1,0 +1,36 @@
+city:
+  en: Yokohama
+  ja: 横浜
+columns:
+- description: null
+  name: monitorID
+  type_:
+    name: String
+- description: null
+  name: survey type
+  type_:
+    name: String
+- description: null
+  name: address
+  type_:
+    name: String
+- description: null
+  name: sex (1:male, 2:female)
+  type_:
+    name: Int64
+- description: null
+  name: age
+  type_:
+    name: String
+description:
+  en: This is personal information of Yokohama2009
+  ja: 横浜2009PPの個人情報です
+hash_: ca73da087f57a384e1f7b759053d34a9e353dbbea9f84b65e237f083619d6173
+license_:
+  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+    Networks.
+  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+name:
+  en: Yokohama2009
+  ja: 横浜2009
+year: 2009

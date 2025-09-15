@@ -1,0 +1,52 @@
+city:
+  en: Toyosu2021
+  ja: 豊洲
+columns:
+- description: null
+  name: ID
+  type_:
+    name: Int64
+- description: null
+  name: TripID
+  type_:
+    name: Int64
+- description: null
+  name: UserID
+  type_:
+    name: Int64
+- description: null
+  name: DepartureTime
+  type_:
+    name: Datetime
+- description: null
+  name: ChangeCode
+  type_:
+    name: Int64
+- description: null
+  name: ArrivalTime
+  type_:
+    name: Datetime
+- description: null
+  name: efficiency
+  type_:
+    name: Int64
+- description: null
+  name: TransportationCode
+  type_:
+    name: Int64
+- description: null
+  name: RegisterTime
+  type_:
+    name: Datetime
+description:
+  en: This is personal information of Toyosu 2021
+  ja: 豊洲2021PPの個人情報です
+hash_: a80a7aaa66bad5301e5a219f56a4a401aee6fc54f149b27eade097134a22fd07
+license_:
+  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+    Networks.
+  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+name:
+  en: Toyosu2021
+  ja: 豊洲2021
+year: 2021
