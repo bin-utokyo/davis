@@ -1,0 +1,5 @@
+outs:
+- md5: 38b00a84f791029d8ef2938b52adfdcd
+  size: 156205
+  hash: md5
+  path: bus_result.csv

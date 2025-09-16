@@ -1,0 +1,5 @@
+outs:
+- md5: b60d1197597908e02052ceac2f6452d0
+  size: 1405161
+  hash: md5
+  path: walk_result.csv

@@ -1,0 +1,56 @@
+city:
+  en: Toyosu
+  ja: 豊洲
+columns:
+- description: null
+  name: MonitorID
+  type_:
+    name: Int64
+- description: null
+  name: DiaryID
+  type_:
+    name: String
+- description: null
+  name: TripID
+  type_:
+    name: Int64
+- description: null
+  name: Mode
+  type_:
+    name: Int64
+- description: null
+  name: Purpose
+  type_:
+    name: Int64
+- description: null
+  name: Path_Origin_nodeID
+  type_:
+    name: Int64
+- description: null
+  name: Path_Destination_nodeID
+  type_:
+    name: Int64
+- description: null
+  name: Path_Length(m)
+  type_:
+    name: Float64
+- description: null
+  name: Travel_Time(s)
+  type_:
+    name: Float64
+- description: null
+  name: Speed(km/h)
+  type_:
+    name: Float64
+description:
+  en: Path data for unlinked trip.
+  ja: アンリンクトトリップごとのパスデータです。
+hash_: b78fae9e9706f8111e90f2ab4644cdd1dd80b4faf9e5274d611abc67e92716bc
+license_:
+  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+    Networks.
+  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+name:
+  en: Toyosu_2019_car_path
+  ja: Toyosu_2019_car_path
+year: 2019

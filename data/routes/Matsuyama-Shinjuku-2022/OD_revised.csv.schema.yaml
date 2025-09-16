@@ -1,0 +1,60 @@
+city:
+  en: Matsuyama-Shinjuku
+  ja: 松山ー新宿
+columns:
+- description: null
+  name: UserID
+  type_:
+    name: Int64
+- description: null
+  name: TripID
+  type_:
+    name: Int64
+- description: null
+  name: Dep_Time
+  type_:
+    name: Datetime
+- description: null
+  name: Arr_Time
+  type_:
+    name: Datetime
+- description: null
+  name: Oname
+  type_:
+    name: Int64
+- description: null
+  name: OLon
+  type_:
+    name: Float64
+- description: null
+  name: OLat
+  type_:
+    name: Float64
+- description: null
+  name: Dname
+  type_:
+    name: Int64
+- description: null
+  name: DLon
+  type_:
+    name: Float64
+- description: null
+  name: DLat
+  type_:
+    name: Float64
+- description: null
+  name: Purpose_Code(active)
+  type_:
+    name: Int64
+description:
+  en: Origin-destination trips made by 111 participants between 2 Aug and 7 Sep 2022.
+  ja: 2022年8月2日〜9月7日にかのODトリップデータです。
+hash_: 0aded1a3b5e64aa4c87a808ec063262e5b91cf23b39aeb2e37db4341de9eecad
+license_:
+  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+    Networks.
+  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+name:
+  en: Matsuyama_Shinjuku_OD_revised
+  ja: Matsuyama_Shinjuku_OD_revised
+year: 2022

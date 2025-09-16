@@ -1,0 +1,44 @@
+city:
+  en: Matsuyama-Shinjuku
+  ja: 松山ー新宿
+columns:
+- description: null
+  name: seq
+  type_:
+    name: Int64
+- description: null
+  name: Oname
+  type_:
+    name: Int64
+- description: null
+  name: OLon
+  type_:
+    name: Float64
+- description: null
+  name: OLat
+  type_:
+    name: Float64
+- description: null
+  name: Dname
+  type_:
+    name: Int64
+- description: null
+  name: DLon
+  type_:
+    name: Float64
+- description: null
+  name: DLat
+  type_:
+    name: Float64
+description:
+  en: Origin-destination dataset.
+  ja: ODデータセットです。
+hash_: a6a57120758b83c8291db7ff9fa81d0d4db02412cc85c81c4d55b0a161b9adaa
+license_:
+  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+    Networks.
+  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+name:
+  en: OD
+  ja: OD
+year: 2022

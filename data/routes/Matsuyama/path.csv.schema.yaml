@@ -1,0 +1,48 @@
+city:
+  en: Matsuyama
+  ja: 松山
+columns:
+- description: null
+  name: MonitorID
+  type_:
+    name: String
+- description: null
+  name: DiaryID
+  type_:
+    name: String
+- description: null
+  name: Mode
+  type_:
+    name: Int64
+- description: null
+  name: Path_Origin_nodeID
+  type_:
+    name: Int64
+- description: null
+  name: Path_Destination_nodeID
+  type_:
+    name: Int64
+- description: null
+  name: Path_Length（m）
+  type_:
+    name: Int64
+- description: null
+  name: Travel_Time(s)
+  type_:
+    name: Int64
+- description: null
+  name: Speed(km/h)
+  type_:
+    name: Float64
+description:
+  en: Path data for unlinked trip.
+  ja: アンリンクトトリップごとのパスデータです。
+hash_: a95e42e4f04394ff1d31602a136e817ddb309c6fb4fea65ec8f06b713baeec24
+license_:
+  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+    Networks.
+  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します
+name:
+  en: Matsuyama_Path
+  ja: Matsuyama_Path
+year: 2007

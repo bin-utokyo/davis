@@ -1,0 +1,5 @@
+outs:
+- md5: 2f3a931c7f802e75934ef187f9f9f5c1
+  size: 2310683
+  hash: md5
+  path: bike_result.csv
