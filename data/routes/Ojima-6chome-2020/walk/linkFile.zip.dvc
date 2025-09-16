@@ -1,0 +1,5 @@
+outs:
+- md5: 9ddd40e4b5faf62458c3b8a46f2bd023
+  size: 4755828
+  hash: md5
+  path: linkFile.zip

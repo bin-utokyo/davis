@@ -1,0 +1,33 @@
+city:
+  en: Toyosu
+  ja: 豊洲
+columns:
+- description: null
+  name: ID
+  type_:
+    name: Int64
+- description: null
+  name: k
+  type_:
+    name: Int64
+- description: null
+  name: a
+  type_:
+    name: Int64
+- description: null
+  name: b
+  type_:
+    name: Int64
+description:
+  en: Generated during the process of identifying the origin-destination (OD) for
+    each trip.
+  ja: 各トリップのODを特定する処理の過程で生成されるファイルです。
+hash_: 0f4852a784dce7cda9dd9f363f2d27f846cde75d554eb73500353dc2d0fc860b
+license_:
+  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+    Networks.
+  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+name:
+  en: Toyosu_2018_bus_result
+  ja: Toyosu_2018_bus_result
+year: 2018

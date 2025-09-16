@@ -1,0 +1,33 @@
+city:
+  en: Matsuyama-Shinjuku
+  ja: 松山ー新宿
+columns:
+- description: null
+  name: ID
+  type_:
+    name: Int64
+- description: null
+  name: k
+  type_:
+    name: Int64
+- description: null
+  name: a
+  type_:
+    name: Int64
+- description: null
+  name: b
+  type_:
+    name: Int64
+description:
+  en: Generated during the process of identifying the origin-destination (OD) for
+    each trip.
+  ja: 各トリップのODを特定する処理の過程で生成されるファイルです。
+hash_: ae4dbf3934aa722243732911eb099837976cc4c4cfd82cea307a9237afcb4d6e
+license_:
+  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+    Networks.
+  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+name:
+  en: Matsuyama_Shinjuku_car_result
+  ja: Matsuyama_Shinjuku_car_result
+year: 2022

@@ -1,0 +1,5 @@
+outs:
+- md5: 699891d2eb66ff44e686c2e91b3c3116
+  size: 10080
+  hash: md5
+  path: README.docx

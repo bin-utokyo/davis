@@ -1,0 +1,52 @@
+city:
+  en: Matsuyama
+  ja: 松山
+columns:
+- description: null
+  name: MonitorID
+  type_:
+    name: String
+- description: null
+  name: DiaryID
+  type_:
+    name: Int64
+- description: null
+  name: Mode
+  type_:
+    name: Int64
+- description: null
+  name: LinkID
+  type_:
+    name: Int64
+- description: null
+  name: Link_Dep_Time
+  type_:
+    name: String
+- description: null
+  name: Travel_Time(s)
+  type_:
+    name: Float64
+- description: null
+  name: Speed(km/h)
+  type_:
+    name: Float64
+- description: null
+  name: Link_Cost
+  type_:
+    name: Int64
+- description: null
+  name: Link_Length(m)
+  type_:
+    name: Float64
+description:
+  en: Data listing the links passed.
+  ja: 通過リンクを列挙したデータです。
+hash_: 8bd99ae1ce96c3e384bdbebd02ee91da957036e7fd463b3f6d3025e4b370d700
+license_:
+  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+    Networks.
+  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+name:
+  en: Matsuyama_Link
+  ja: Matsuyama_Link
+year: 2007
