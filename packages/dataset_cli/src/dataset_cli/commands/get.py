@@ -11,6 +11,7 @@ from typing import Annotated, NamedTuple
 import httpx
 import jinja2
 import typer
+import yaml
 from rich import print as rprint
 from rich.progress import (
     BarColumn,
@@ -297,7 +298,26 @@ def _run_dvc_pull_and_copy(
         # ダウンロードしたファイルを個別にコピー
         rprint(_("  - ファイルを最終的な出力先にコピーしています..."))
         for dvc_file_rel_path_str in dvc_files:
-            data_file_rel_path = Path(dvc_file_rel_path_str.removesuffix(".dvc"))
+            dvc_file_path = tmp_path / dvc_file_rel_path_str
+            data_file_rel_path = None
+
+            try:
+                with dvc_file_path.open("r", encoding="utf-8") as f:
+                    dvc_data = yaml.safe_load(f)
+                    if dvc_data.get("outs"):
+                        data_file_rel_path = Path(dvc_data["outs"][0]["path"])
+            except (OSError, yaml.YAMLError) as e:
+                rprint(
+                    _(
+                        "[yellow]警告: .dvcファイルの読み込みまたは解析に失敗しました: {dvc_file_path} ({error})[/yellow]",
+                    ).format(dvc_file_path=dvc_file_path, error=e),
+                )
+                # Fallback
+                data_file_rel_path = Path(dvc_file_rel_path_str.removesuffix(".dvc"))
+
+            if not data_file_rel_path:
+                # Fallback to old behavior if path not found in .dvc file
+                data_file_rel_path = Path(dvc_file_rel_path_str.removesuffix(".dvc"))
 
             src_path = tmp_path / data_file_rel_path
             dest_path = output_dir / data_file_rel_path
