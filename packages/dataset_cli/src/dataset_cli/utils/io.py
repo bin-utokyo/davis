@@ -118,7 +118,21 @@ def generate_manifest_data(
     datasets: dict[str, DatasetInfo] = {}
 
     for dvc_file in track(dvc_files, description=_("スキーマとURLを処理中...")):
-        original_file = dvc_file.with_suffix("")
+        # .dvcファイルを読んで、DVC管理下のファイル名を取得する
+        try:
+            with dvc_file.open("r", encoding="utf-8") as f:
+                dvc_data = yaml.safe_load(f)
+            if dvc_data and "outs" in dvc_data and dvc_data["outs"]:
+                # DVCファイル内のpathは、.dvcファイルからの相対パス
+                out_path = Path(dvc_data["outs"][0]["path"])
+                original_file = dvc_file.parent / out_path
+            else:
+                # outsセクションがない場合は、ファイル名から推測（フォールバック）
+                original_file = dvc_file.with_suffix("")
+        except (OSError, yaml.YAMLError):
+            # .dvcファイルが読めない場合も、ファイル名から推測（フォールバック）
+            original_file = dvc_file.with_suffix("")
+
         schema_file = dvc_file.with_suffix(".schema.yaml")
         dataset_id = original_file.relative_to(data_root).as_posix()
 

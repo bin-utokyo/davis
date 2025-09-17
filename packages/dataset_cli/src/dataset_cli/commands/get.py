@@ -135,8 +135,12 @@ def _collect_targets(
     pdf_urls_to_download: list[tuple[str, Path]] = []
     found = False
 
+    dataset_id_lower = dataset_id.lower()
     for ds_id, ds_info in manifest.datasets.items():
-        if ds_id == dataset_id or ds_id.startswith(f"{dataset_id}/"):
+        ds_id_lower = ds_id.lower()
+        if ds_id_lower == dataset_id_lower or ds_id_lower.startswith(
+            f"{dataset_id_lower}/"
+        ):
             dvc_files_to_pull.extend(ds_info.dvc_files)
             for filename, urls in ds_info.pdf_urls.items():
                 pdf_base = Path(ds_info.dvc_files[0]).parent / Path(filename).stem
@@ -304,16 +308,17 @@ def _run_dvc_pull_and_copy(
             try:
                 with dvc_file_path.open("r", encoding="utf-8") as f:
                     dvc_data = yaml.safe_load(f)
-                    if dvc_data.get("outs"):
-                        data_file_rel_path = Path(dvc_data["outs"][0]["path"])
+                    if dvc_data and "outs" in dvc_data and dvc_data["outs"]:
+                        out_path = Path(dvc_data["outs"][0]["path"])
+                        data_file_rel_path = (
+                            Path(dvc_file_rel_path_str).parent / out_path
+                        )
             except (OSError, yaml.YAMLError) as e:
                 rprint(
                     _(
                         "[yellow]警告: .dvcファイルの読み込みまたは解析に失敗しました: {dvc_file_path} ({error})[/yellow]",
                     ).format(dvc_file_path=dvc_file_path, error=e),
                 )
-                # Fallback
-                data_file_rel_path = Path(dvc_file_rel_path_str.removesuffix(".dvc"))
 
             if not data_file_rel_path:
                 # Fallback to old behavior if path not found in .dvc file
