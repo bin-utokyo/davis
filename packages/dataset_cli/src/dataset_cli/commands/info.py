@@ -172,12 +172,13 @@ def show_info(  # noqa: C901, PLR0912, PLR0915
             col_table.add_column(_("説明"))
             lang = load_user_config().get("lang", "ja")
             for col in schema_content.columns:
-                if not col.description:
-                    continue
+                description = col.description and (
+                    col.description.ja if lang == "ja" else col.description.en
+                )
                 col_table.add_row(
                     col.name,
                     col.type_.name,
-                    col.description.ja if lang == "ja" else col.description.en,
+                    description or "-",
                 )
             rprint(col_table)
 
