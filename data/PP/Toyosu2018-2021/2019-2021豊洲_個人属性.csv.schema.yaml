@@ -1,0 +1,148 @@
+city:
+  en: Toyosu
+  ja: 豊洲
+columns:
+- description: null
+  name: ID
+  type_:
+    name: String
+- description: null
+  name: Gender
+  type_:
+    name: Int8
+- description: null
+  name: Age
+  type_:
+    name: Int8
+- description: null
+  name: Mode of Transport
+  type_:
+    name: Int8
+- description: null
+  name: Occupation
+  type_:
+    name: Int8
+- description: null
+  name: Nearest Station to Workplace
+  type_:
+    name: String
+- description: null
+  name: Income
+  type_:
+    name: Int8
+- description: null
+  name: Nearest Station to Home
+  type_:
+    name: String
+- description: null
+  name: Type of Residence
+  type_:
+    name: Int8
+- description: null
+  name: Owned Housing Floor
+  type_:
+    name: Int8
+- description: null
+  name: Rented Housing Floor
+  type_:
+    name: Int8
+- description: null
+  name: Housing Cost
+  type_:
+    name: Int8
+- description: null
+  name: Years of Residence
+  type_:
+    name: Int8
+- description: null
+  name: Months of Residence
+  type_:
+    name: Int8
+- description: null
+  name: Floor Plan (Home)
+  type_:
+    name: Int8
+- description: null
+  name: Floor Plan (Other)
+  type_:
+    name: String
+- description: null
+  name: Living Alone
+  type_:
+    name: Int8
+- description: null
+  name: Spouse (Husband/Wife)
+  type_:
+    name: Int8
+- description: null
+  name: Parents (Self/Spouse)
+  type_:
+    name: Int8
+- description: null
+  name: Siblings (Self/Spouse)
+  type_:
+    name: Int8
+- description: null
+  name: Own Children
+  type_:
+    name: Int8
+- description: null
+  name: Others
+  type_:
+    name: Int8
+- description: null
+  name: Number of Parents (Self/Spouse)
+  type_:
+    name: Int8
+- description: null
+  name: Number of Siblings (Self/Spouse)
+  type_:
+    name: Int8
+- description: null
+  name: Number of Children
+  type_:
+    name: Int8
+- description: null
+  name: Number of Others
+  type_:
+    name: Int8
+- description: null
+  name: Others (Specify)
+  type_:
+    name: String
+- description: null
+  name: Car Ownership
+  type_:
+    name: Int8
+- description: null
+  name: Motorcycle/Scooter Ownership
+  type_:
+    name: Int8
+- description: null
+  name: Bicycle Ownership
+  type_:
+    name: Int8
+- description: null
+  name: None Owned
+  type_:
+    name: Int8
+- description: null
+  name: Vaccination
+  type_:
+    name: Int8
+- description: null
+  name: Vaccination Intention
+  type_:
+    name: Int8
+description:
+  en: This is a personal data of Toyosu PPwhile 2019-2021
+  ja: 豊洲2019-2021の個人情報データです
+hash_: 3114f581423d2d4a9c58d2eb257f9c5e5cc765db426ae5c29ac79f8f0a98652d
+license_:
+  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+    Networks.
+  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+name:
+  en: Toyosu2019-2021
+  ja: 豊洲2019-2021
+year: 2019
