@@ -216,6 +216,7 @@ class DVCClient:
         self,
         targets: str | Sequence[str] | None = None,
         remote: str | None = None,
+        jobs: int | None = None,
         *,
         force: bool = False,
     ) -> None:
@@ -225,6 +226,7 @@ class DVCClient:
         Args:
             targets (Optional[str | Sequence[str]], optional): プル対象。指定しない場合は全て。
             remote (Optional[str], optional): 使用するリモートストレージの名前。
+            jobs (Optional[int], optional): 並列ダウンロードの数。
             force (bool, optional): Trueの場合、`--force`フラグを付与します。
         """
         cmd = ["pull"]
@@ -232,6 +234,8 @@ class DVCClient:
             cmd.append("--force")
         if remote:
             cmd.extend(["-r", remote])
+        if jobs is not None and jobs > 1:
+            cmd.extend(["-j", str(jobs)])
         if targets:
             target_list = [targets] if isinstance(targets, str) else list(targets)
             cmd.extend(target_list)

@@ -139,7 +139,7 @@ def _collect_targets(
     for ds_id, ds_info in manifest.datasets.items():
         ds_id_lower = ds_id.lower()
         if ds_id_lower == dataset_id_lower or ds_id_lower.startswith(
-            f"{dataset_id_lower}/"
+            f"{dataset_id_lower}/",
         ):
             dvc_files_to_pull.extend(ds_info.dvc_files)
             for filename, urls in ds_info.pdf_urls.items():
@@ -297,7 +297,7 @@ def _run_dvc_pull_and_copy(
 
         # DVCClientを初期化し、dvc pullを実行
         dvc_client = DVCClient(repo_path=tmp_path)
-        dvc_client.pull(targets=dvc_files, force=True)
+        dvc_client.pull(targets=dvc_files, jobs=1, force=True)
 
         # ダウンロードしたファイルを個別にコピー
         rprint(_("  - ファイルを最終的な出力先にコピーしています..."))
