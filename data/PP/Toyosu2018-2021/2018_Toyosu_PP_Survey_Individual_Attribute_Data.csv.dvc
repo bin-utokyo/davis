@@ -2,4 +2,4 @@ outs:
 - md5: f511c729a49e31359b04fc8d0d769678
   size: 24154
   hash: md5
-  path: 2018豊洲PP調査_個人属性データ.csv
+  path: 2018_Toyosu_PP_Survey_Individual_Attribute_Data.csv

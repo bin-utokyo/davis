@@ -1,0 +1,6 @@
+outs:
+- md5: 12b82f935b85edbfa393dafc00e4096c
+  size: 2261599
+  isexec: true
+  hash: md5
+  path: network-data-creation-work-report.docx
