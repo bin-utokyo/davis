@@ -1,0 +1,64 @@
+city:
+  en: Toyosu
+  ja: 豊洲
+columns:
+- description:
+    en: User ID linked to trip data
+    ja: トリップデータに紐づくユーザーID
+  name: TF System ID
+  type_:
+    name: String
+- description: null
+  name: Monitor ID
+  type_:
+    name: String
+- description:
+    en: '1: Male, 2: Female'
+    ja: '1: 男性, 2: 女性'
+  name: Sex
+  type_:
+    name: Int8
+- description: null
+  name: Date of Birth
+  type_:
+    name: Datetime
+- description: null
+  name: Age
+  type_:
+    name: String
+- description: null
+  name: Registration Date
+  type_:
+    name: Datetime
+- description: null
+  name: Withdrawal Date
+  type_:
+    name: Datetime
+- description:
+    en: '0: Invalid, 1: Valid, 2: Valid (withdrawn midway)'
+    ja: '0: 無効, 1: 有効, 2: 有効（途中辞退）'
+  name: Valid Flag
+  type_:
+    name: Int8
+- description:
+    en: '0: No response, 1: Responded'
+    ja: '0: 回答なし, 1: 回答あり'
+  name: Survey Response
+  type_:
+    name: Int8
+- description: null
+  name: Remarks
+  type_:
+    name: String
+description:
+  en: This is a personal data of Toyosu PP data in 2018
+  ja: 2018間の豊洲PPデータにおける個人属性情報です
+hash_: 0e84e4c6d74ad4f965acfab015a221f5a6d890a8094f5a80366dcfa6b8cf60d3
+license_:
+  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+    Networks.
+  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+name:
+  en: Toyosu personal Information 2018
+  ja: 豊洲個人属性2018
+year: 2018
