@@ -1,0 +1,9 @@
+/**
+!/**/
+!/**/*.dvc
+!/**/*.schema.yaml
+
+!**/*.ja.pdf
+!**/*.en.pdf
+
+!.gitignore
