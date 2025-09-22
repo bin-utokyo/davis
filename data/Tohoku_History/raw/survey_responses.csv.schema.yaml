@@ -1,0 +1,2833 @@
+city:
+  en: Tohoku Region
+  ja: 東北地方
+columns:
+- description: null
+  name: 'no'
+  type_:
+    name: Int64
+- description: null
+  name: group1
+  type_:
+    name: Int64
+- description: null
+  name: group2
+  type_:
+    name: Int64
+- description: null
+  name: sc1
+  type_:
+    name: Int64
+- description: null
+  name: sc2_1
+  type_:
+    name: Int64
+- description: null
+  name: sc3
+  type_:
+    name: Int64
+- description: null
+  name: sc4
+  type_:
+    name: Int64
+- description: null
+  name: sc5
+  type_:
+    name: Int64
+- description: null
+  name: sc6-1
+  type_:
+    name: Int64
+- description: null
+  name: sc6-2
+  type_:
+    name: Int64
+- description: null
+  name: sc6-3
+  type_:
+    name: Int64
+- description: null
+  name: sc6-4
+  type_:
+    name: Int64
+- description: null
+  name: sc7
+  type_:
+    name: Int64
+- description: null
+  name: q1
+  type_:
+    name: Int64
+- description: null
+  name: q2_1
+  type_:
+    name: Int64
+- description: null
+  name: q2_2
+  type_:
+    name: Int64
+- description: null
+  name: q3_1
+  type_:
+    name: Int64
+- description: null
+  name: q3_2
+  type_:
+    name: Int64
+- description: null
+  name: q4
+  type_:
+    name: Int64
+- description: null
+  name: q5_1-1
+  type_:
+    name: Int64
+- description: null
+  name: q5_1-2
+  type_:
+    name: Int64
+- description: null
+  name: q5_1-3
+  type_:
+    name: Int64
+- description: null
+  name: q5_2-1
+  type_:
+    name: Int64
+- description: null
+  name: q5_2-2
+  type_:
+    name: Int64
+- description: null
+  name: q5_2-3
+  type_:
+    name: Int64
+- description: null
+  name: q5_3-1
+  type_:
+    name: Int64
+- description: null
+  name: q5_3-2
+  type_:
+    name: Int64
+- description: null
+  name: q5_3-3
+  type_:
+    name: Int64
+- description: null
+  name: q5_4-1
+  type_:
+    name: Int64
+- description: null
+  name: q5_4-2
+  type_:
+    name: Int64
+- description: null
+  name: q5_4-3
+  type_:
+    name: Int64
+- description: null
+  name: q5_5-1
+  type_:
+    name: Int64
+- description: null
+  name: q5_5-2
+  type_:
+    name: Int64
+- description: null
+  name: q5_5-3
+  type_:
+    name: Int64
+- description: null
+  name: q5_6-1
+  type_:
+    name: Int64
+- description: null
+  name: q5_6-2
+  type_:
+    name: Int64
+- description: null
+  name: q5_6-3
+  type_:
+    name: Int64
+- description: null
+  name: q5_7-1
+  type_:
+    name: Int64
+- description: null
+  name: q5_7-2
+  type_:
+    name: Int64
+- description: null
+  name: q5_7-3
+  type_:
+    name: Int64
+- description: null
+  name: q5_8-1
+  type_:
+    name: Int64
+- description: null
+  name: q5_8-2
+  type_:
+    name: Int64
+- description: null
+  name: q5_8-3
+  type_:
+    name: Int64
+- description: null
+  name: q5_9-1
+  type_:
+    name: Int64
+- description: null
+  name: q5_9-2
+  type_:
+    name: Int64
+- description: null
+  name: q5_9-3
+  type_:
+    name: Int64
+- description: null
+  name: q5_10-1
+  type_:
+    name: Int64
+- description: null
+  name: q5_10-2
+  type_:
+    name: Int64
+- description: null
+  name: q5_10-3
+  type_:
+    name: Int64
+- description: null
+  name: q5_11-1
+  type_:
+    name: Int64
+- description: null
+  name: q5_11-2
+  type_:
+    name: Int64
+- description: null
+  name: q5_11-3
+  type_:
+    name: Int64
+- description: null
+  name: q5_12-1
+  type_:
+    name: Int64
+- description: null
+  name: q5_12-2
+  type_:
+    name: Int64
+- description: null
+  name: q5_12-3
+  type_:
+    name: Int64
+- description: null
+  name: q5_13-1
+  type_:
+    name: Int64
+- description: null
+  name: q5_13-2
+  type_:
+    name: Int64
+- description: null
+  name: q5_13-3
+  type_:
+    name: Int64
+- description: null
+  name: q5_14-1
+  type_:
+    name: Int64
+- description: null
+  name: q5_14-2
+  type_:
+    name: Int64
+- description: null
+  name: q5_14-3
+  type_:
+    name: Int64
+- description: null
+  name: q5_15-1
+  type_:
+    name: Int64
+- description: null
+  name: q5_15-2
+  type_:
+    name: Int64
+- description: null
+  name: q5_15-3
+  type_:
+    name: Int64
+- description: null
+  name: q5_16-1
+  type_:
+    name: Int64
+- description: null
+  name: q5_16-2
+  type_:
+    name: Int64
+- description: null
+  name: q5_16-3
+  type_:
+    name: Int64
+- description: null
+  name: q5_17-1
+  type_:
+    name: Int64
+- description: null
+  name: q5_17-2
+  type_:
+    name: Int64
+- description: null
+  name: q5_17-3
+  type_:
+    name: Int64
+- description: null
+  name: q5_18-1
+  type_:
+    name: Int64
+- description: null
+  name: q5_18-2
+  type_:
+    name: Int64
+- description: null
+  name: q5_18-3
+  type_:
+    name: Int64
+- description: null
+  name: q5_19-1
+  type_:
+    name: Int64
+- description: null
+  name: q5_19-2
+  type_:
+    name: Int64
+- description: null
+  name: q5_19-3
+  type_:
+    name: Int64
+- description: null
+  name: q5_20-1
+  type_:
+    name: Int64
+- description: null
+  name: q5_20-2
+  type_:
+    name: Int64
+- description: null
+  name: q5_20-3
+  type_:
+    name: Int64
+- description: null
+  name: q6_1
+  type_:
+    name: Int64
+- description: null
+  name: q6_2
+  type_:
+    name: Int64
+- description: null
+  name: q7_1-1
+  type_:
+    name: Int64
+- description: null
+  name: q7_1-2
+  type_:
+    name: Int64
+- description: null
+  name: q7_1-3
+  type_:
+    name: Int64
+- description: null
+  name: q7_2-1
+  type_:
+    name: Int64
+- description: null
+  name: q7_2-2
+  type_:
+    name: Int64
+- description: null
+  name: q7_2-3
+  type_:
+    name: Int64
+- description: null
+  name: q7_3-1
+  type_:
+    name: Int64
+- description: null
+  name: q7_3-2
+  type_:
+    name: Int64
+- description: null
+  name: q7_3-3
+  type_:
+    name: Int64
+- description: null
+  name: q7_4-1
+  type_:
+    name: Int64
+- description: null
+  name: q7_4-2
+  type_:
+    name: Int64
+- description: null
+  name: q7_4-3
+  type_:
+    name: Int64
+- description: null
+  name: q7_5-1
+  type_:
+    name: Int64
+- description: null
+  name: q7_5-2
+  type_:
+    name: Int64
+- description: null
+  name: q7_5-3
+  type_:
+    name: Int64
+- description: null
+  name: q7_6-1
+  type_:
+    name: Int64
+- description: null
+  name: q7_6-2
+  type_:
+    name: Int64
+- description: null
+  name: q7_6-3
+  type_:
+    name: Int64
+- description: null
+  name: q7_7-1
+  type_:
+    name: Int64
+- description: null
+  name: q7_7-2
+  type_:
+    name: Int64
+- description: null
+  name: q7_7-3
+  type_:
+    name: Int64
+- description: null
+  name: q7_8-1
+  type_:
+    name: Int64
+- description: null
+  name: q7_8-2
+  type_:
+    name: Int64
+- description: null
+  name: q7_8-3
+  type_:
+    name: Int64
+- description: null
+  name: q7_9-1
+  type_:
+    name: Int64
+- description: null
+  name: q7_9-2
+  type_:
+    name: Int64
+- description: null
+  name: q7_9-3
+  type_:
+    name: Int64
+- description: null
+  name: q7_10-1
+  type_:
+    name: Int64
+- description: null
+  name: q7_10-2
+  type_:
+    name: Int64
+- description: null
+  name: q7_10-3
+  type_:
+    name: Int64
+- description: null
+  name: q7_11-1
+  type_:
+    name: Int64
+- description: null
+  name: q7_11-2
+  type_:
+    name: Int64
+- description: null
+  name: q7_11-3
+  type_:
+    name: Int64
+- description: null
+  name: q7_12-1
+  type_:
+    name: Int64
+- description: null
+  name: q7_12-2
+  type_:
+    name: Int64
+- description: null
+  name: q7_12-3
+  type_:
+    name: Int64
+- description: null
+  name: q7_13-1
+  type_:
+    name: Int64
+- description: null
+  name: q7_13-2
+  type_:
+    name: Int64
+- description: null
+  name: q7_13-3
+  type_:
+    name: Int64
+- description: null
+  name: q7_14-1
+  type_:
+    name: Int64
+- description: null
+  name: q7_14-2
+  type_:
+    name: Int64
+- description: null
+  name: q7_14-3
+  type_:
+    name: Int64
+- description: null
+  name: q7_15-1
+  type_:
+    name: Int64
+- description: null
+  name: q7_15-2
+  type_:
+    name: Int64
+- description: null
+  name: q7_15-3
+  type_:
+    name: Int64
+- description: null
+  name: q7_16-1
+  type_:
+    name: Int64
+- description: null
+  name: q7_16-2
+  type_:
+    name: Int64
+- description: null
+  name: q7_16-3
+  type_:
+    name: Int64
+- description: null
+  name: q7_17-1
+  type_:
+    name: Int64
+- description: null
+  name: q7_17-2
+  type_:
+    name: Int64
+- description: null
+  name: q7_17-3
+  type_:
+    name: Int64
+- description: null
+  name: q7_18-1
+  type_:
+    name: Int64
+- description: null
+  name: q7_18-2
+  type_:
+    name: Int64
+- description: null
+  name: q7_18-3
+  type_:
+    name: Int64
+- description: null
+  name: q7_19-1
+  type_:
+    name: Int64
+- description: null
+  name: q7_19-2
+  type_:
+    name: Int64
+- description: null
+  name: q7_19-3
+  type_:
+    name: Int64
+- description: null
+  name: q7_20-1
+  type_:
+    name: Int64
+- description: null
+  name: q7_20-2
+  type_:
+    name: Int64
+- description: null
+  name: q7_20-3
+  type_:
+    name: Int64
+- description: null
+  name: q8_1
+  type_:
+    name: Int64
+- description: null
+  name: q8_2
+  type_:
+    name: Int64
+- description: null
+  name: q8_3
+  type_:
+    name: Int64
+- description: null
+  name: q8_4
+  type_:
+    name: Int64
+- description: null
+  name: q9_1
+  type_:
+    name: Int64
+- description: null
+  name: q9_2
+  type_:
+    name: Int64
+- description: null
+  name: q10_1-1
+  type_:
+    name: Int64
+- description: null
+  name: q10_1-2
+  type_:
+    name: Int64
+- description: null
+  name: q10_1-3
+  type_:
+    name: Int64
+- description: null
+  name: q10_1-4
+  type_:
+    name: Int64
+- description: null
+  name: q10_2-1
+  type_:
+    name: Int64
+- description: null
+  name: q10_2-2
+  type_:
+    name: Int64
+- description: null
+  name: q10_2-3
+  type_:
+    name: Int64
+- description: null
+  name: q10_2-4
+  type_:
+    name: Int64
+- description: null
+  name: q10_3-1
+  type_:
+    name: Int64
+- description: null
+  name: q10_3-2
+  type_:
+    name: Int64
+- description: null
+  name: q10_3-3
+  type_:
+    name: Int64
+- description: null
+  name: q10_3-4
+  type_:
+    name: Int64
+- description: null
+  name: q10_4-1
+  type_:
+    name: Int64
+- description: null
+  name: q10_4-2
+  type_:
+    name: Int64
+- description: null
+  name: q10_4-3
+  type_:
+    name: Int64
+- description: null
+  name: q10_4-4
+  type_:
+    name: Int64
+- description: null
+  name: q10_5-1
+  type_:
+    name: Int64
+- description: null
+  name: q10_5-2
+  type_:
+    name: Int64
+- description: null
+  name: q10_5-3
+  type_:
+    name: Int64
+- description: null
+  name: q10_5-4
+  type_:
+    name: Int64
+- description: null
+  name: q10_6-1
+  type_:
+    name: Int64
+- description: null
+  name: q10_6-2
+  type_:
+    name: Int64
+- description: null
+  name: q10_6-3
+  type_:
+    name: Int64
+- description: null
+  name: q10_6-4
+  type_:
+    name: Int64
+- description: null
+  name: q10_7-1
+  type_:
+    name: Int64
+- description: null
+  name: q10_7-2
+  type_:
+    name: Int64
+- description: null
+  name: q10_7-3
+  type_:
+    name: Int64
+- description: null
+  name: q10_7-4
+  type_:
+    name: Int64
+- description: null
+  name: q10_8-1
+  type_:
+    name: Int64
+- description: null
+  name: q10_8-2
+  type_:
+    name: Int64
+- description: null
+  name: q10_8-3
+  type_:
+    name: Int64
+- description: null
+  name: q10_8-4
+  type_:
+    name: Int64
+- description: null
+  name: q10_9-1
+  type_:
+    name: Int64
+- description: null
+  name: q10_9-2
+  type_:
+    name: Int64
+- description: null
+  name: q10_9-3
+  type_:
+    name: Int64
+- description: null
+  name: q10_9-4
+  type_:
+    name: Int64
+- description: null
+  name: q10_10-1
+  type_:
+    name: Int64
+- description: null
+  name: q10_10-2
+  type_:
+    name: Int64
+- description: null
+  name: q10_10-3
+  type_:
+    name: Int64
+- description: null
+  name: q10_10-4
+  type_:
+    name: Int64
+- description: null
+  name: q10_11-1
+  type_:
+    name: Int64
+- description: null
+  name: q10_11-2
+  type_:
+    name: Int64
+- description: null
+  name: q10_11-3
+  type_:
+    name: Int64
+- description: null
+  name: q10_11-4
+  type_:
+    name: Int64
+- description: null
+  name: q10_12-1
+  type_:
+    name: Int64
+- description: null
+  name: q10_12-2
+  type_:
+    name: Int64
+- description: null
+  name: q10_12-3
+  type_:
+    name: Int64
+- description: null
+  name: q10_12-4
+  type_:
+    name: Int64
+- description: null
+  name: q10_13-1
+  type_:
+    name: Int64
+- description: null
+  name: q10_13-2
+  type_:
+    name: Int64
+- description: null
+  name: q10_13-3
+  type_:
+    name: Int64
+- description: null
+  name: q10_13-4
+  type_:
+    name: Int64
+- description: null
+  name: q10_14-1
+  type_:
+    name: Int64
+- description: null
+  name: q10_14-2
+  type_:
+    name: Int64
+- description: null
+  name: q10_14-3
+  type_:
+    name: Int64
+- description: null
+  name: q10_14-4
+  type_:
+    name: Int64
+- description: null
+  name: q10_15-1
+  type_:
+    name: Int64
+- description: null
+  name: q10_15-2
+  type_:
+    name: Int64
+- description: null
+  name: q10_15-3
+  type_:
+    name: Int64
+- description: null
+  name: q10_15-4
+  type_:
+    name: Int64
+- description: null
+  name: q10_16-1
+  type_:
+    name: Int64
+- description: null
+  name: q10_16-2
+  type_:
+    name: Int64
+- description: null
+  name: q10_16-3
+  type_:
+    name: Int64
+- description: null
+  name: q10_16-4
+  type_:
+    name: Int64
+- description: null
+  name: q10_17-1
+  type_:
+    name: Int64
+- description: null
+  name: q10_17-2
+  type_:
+    name: Int64
+- description: null
+  name: q10_17-3
+  type_:
+    name: Int64
+- description: null
+  name: q10_17-4
+  type_:
+    name: Int64
+- description: null
+  name: q10_18-1
+  type_:
+    name: Int64
+- description: null
+  name: q10_18-2
+  type_:
+    name: Int64
+- description: null
+  name: q10_18-3
+  type_:
+    name: Int64
+- description: null
+  name: q10_18-4
+  type_:
+    name: Int64
+- description: null
+  name: q10_19-1
+  type_:
+    name: Int64
+- description: null
+  name: q10_19-2
+  type_:
+    name: Int64
+- description: null
+  name: q10_19-3
+  type_:
+    name: Int64
+- description: null
+  name: q10_19-4
+  type_:
+    name: Int64
+- description: null
+  name: q10_20-1
+  type_:
+    name: Int64
+- description: null
+  name: q10_20-2
+  type_:
+    name: Int64
+- description: null
+  name: q10_20-3
+  type_:
+    name: Int64
+- description: null
+  name: q10_20-4
+  type_:
+    name: Int64
+- description: null
+  name: q11_1
+  type_:
+    name: Int64
+- description: null
+  name: q11_2
+  type_:
+    name: Int64
+- description: null
+  name: q11_3
+  type_:
+    name: Int64
+- description: null
+  name: q11_4
+  type_:
+    name: Int64
+- description: null
+  name: q11_5
+  type_:
+    name: Int64
+- description: null
+  name: q11_6
+  type_:
+    name: Int64
+- description: null
+  name: q11_7
+  type_:
+    name: Int64
+- description: null
+  name: q11_8
+  type_:
+    name: Int64
+- description: null
+  name: q11_9
+  type_:
+    name: Int64
+- description: null
+  name: q11_10
+  type_:
+    name: Int64
+- description: null
+  name: q11_11
+  type_:
+    name: Int64
+- description: null
+  name: q11_12
+  type_:
+    name: Int64
+- description: null
+  name: q11_13
+  type_:
+    name: Int64
+- description: null
+  name: q11_14
+  type_:
+    name: Int64
+- description: null
+  name: q11_15
+  type_:
+    name: Int64
+- description: null
+  name: q11_16
+  type_:
+    name: Int64
+- description: null
+  name: q11_17
+  type_:
+    name: Int64
+- description: null
+  name: q11_18
+  type_:
+    name: Int64
+- description: null
+  name: q11_19
+  type_:
+    name: Int64
+- description: null
+  name: q11_20
+  type_:
+    name: Int64
+- description: null
+  name: q12_1
+  type_:
+    name: Int64
+- description: null
+  name: q12_2
+  type_:
+    name: Int64
+- description: null
+  name: q12_3
+  type_:
+    name: Int64
+- description: null
+  name: q12_4
+  type_:
+    name: Int64
+- description: null
+  name: q12_5
+  type_:
+    name: Int64
+- description: null
+  name: q12_6
+  type_:
+    name: Int64
+- description: null
+  name: q12_7
+  type_:
+    name: Int64
+- description: null
+  name: q12_8
+  type_:
+    name: Int64
+- description: null
+  name: q12_9
+  type_:
+    name: Int64
+- description: null
+  name: q12_10
+  type_:
+    name: Int64
+- description: null
+  name: q12_11
+  type_:
+    name: Int64
+- description: null
+  name: q12_12
+  type_:
+    name: Int64
+- description: null
+  name: q12_13
+  type_:
+    name: Int64
+- description: null
+  name: q12_14
+  type_:
+    name: Int64
+- description: null
+  name: q12_15
+  type_:
+    name: Int64
+- description: null
+  name: q12_16
+  type_:
+    name: Int64
+- description: null
+  name: q12_17
+  type_:
+    name: Int64
+- description: null
+  name: q12_18
+  type_:
+    name: Int64
+- description: null
+  name: q12_19
+  type_:
+    name: Int64
+- description: null
+  name: q12_20
+  type_:
+    name: Int64
+- description: null
+  name: q13_1
+  type_:
+    name: Int64
+- description: null
+  name: q13_2
+  type_:
+    name: Int64
+- description: null
+  name: q13_3
+  type_:
+    name: Int64
+- description: null
+  name: q13_4
+  type_:
+    name: Int64
+- description: null
+  name: q13_5
+  type_:
+    name: Int64
+- description: null
+  name: q13_6
+  type_:
+    name: Int64
+- description: null
+  name: q13_7
+  type_:
+    name: Int64
+- description: null
+  name: q13_8
+  type_:
+    name: Int64
+- description: null
+  name: q13_9
+  type_:
+    name: Int64
+- description: null
+  name: q13_10
+  type_:
+    name: Int64
+- description: null
+  name: q13_11
+  type_:
+    name: Int64
+- description: null
+  name: q13_12
+  type_:
+    name: Int64
+- description: null
+  name: q13_13
+  type_:
+    name: Int64
+- description: null
+  name: q13_14
+  type_:
+    name: Int64
+- description: null
+  name: q13_15
+  type_:
+    name: Int64
+- description: null
+  name: q13_16
+  type_:
+    name: Int64
+- description: null
+  name: q13_17
+  type_:
+    name: Int64
+- description: null
+  name: q13_18
+  type_:
+    name: Int64
+- description: null
+  name: q13_19
+  type_:
+    name: Int64
+- description: null
+  name: q13_20
+  type_:
+    name: Int64
+- description: null
+  name: q14_1-1
+  type_:
+    name: Int64
+- description: null
+  name: q14_1-2
+  type_:
+    name: Int64
+- description: null
+  name: q14_1-3
+  type_:
+    name: Int64
+- description: null
+  name: q14_1-4
+  type_:
+    name: Int64
+- description: null
+  name: q14_1-5
+  type_:
+    name: Int64
+- description: null
+  name: q14_2-1
+  type_:
+    name: Int64
+- description: null
+  name: q14_2-2
+  type_:
+    name: Int64
+- description: null
+  name: q14_2-3
+  type_:
+    name: Int64
+- description: null
+  name: q14_2-4
+  type_:
+    name: Int64
+- description: null
+  name: q14_2-5
+  type_:
+    name: Int64
+- description: null
+  name: q14_3-1
+  type_:
+    name: Int64
+- description: null
+  name: q14_3-2
+  type_:
+    name: Int64
+- description: null
+  name: q14_3-3
+  type_:
+    name: Int64
+- description: null
+  name: q14_3-4
+  type_:
+    name: Int64
+- description: null
+  name: q14_3-5
+  type_:
+    name: Int64
+- description: null
+  name: q14_4-1
+  type_:
+    name: Int64
+- description: null
+  name: q14_4-2
+  type_:
+    name: Int64
+- description: null
+  name: q14_4-3
+  type_:
+    name: Int64
+- description: null
+  name: q14_4-4
+  type_:
+    name: Int64
+- description: null
+  name: q14_4-5
+  type_:
+    name: Int64
+- description: null
+  name: q14_5-1
+  type_:
+    name: Int64
+- description: null
+  name: q14_5-2
+  type_:
+    name: Int64
+- description: null
+  name: q14_5-3
+  type_:
+    name: Int64
+- description: null
+  name: q14_5-4
+  type_:
+    name: Int64
+- description: null
+  name: q14_5-5
+  type_:
+    name: Int64
+- description: null
+  name: q14_6-1
+  type_:
+    name: Int64
+- description: null
+  name: q14_6-2
+  type_:
+    name: Int64
+- description: null
+  name: q14_6-3
+  type_:
+    name: Int64
+- description: null
+  name: q14_6-4
+  type_:
+    name: Int64
+- description: null
+  name: q14_6-5
+  type_:
+    name: Int64
+- description: null
+  name: q14_7-1
+  type_:
+    name: Int64
+- description: null
+  name: q14_7-2
+  type_:
+    name: Int64
+- description: null
+  name: q14_7-3
+  type_:
+    name: Int64
+- description: null
+  name: q14_7-4
+  type_:
+    name: Int64
+- description: null
+  name: q14_7-5
+  type_:
+    name: Int64
+- description: null
+  name: q14_8-1
+  type_:
+    name: Int64
+- description: null
+  name: q14_8-2
+  type_:
+    name: Int64
+- description: null
+  name: q14_8-3
+  type_:
+    name: Int64
+- description: null
+  name: q14_8-4
+  type_:
+    name: Int64
+- description: null
+  name: q14_8-5
+  type_:
+    name: Int64
+- description: null
+  name: q14_9-1
+  type_:
+    name: Int64
+- description: null
+  name: q14_9-2
+  type_:
+    name: Int64
+- description: null
+  name: q14_9-3
+  type_:
+    name: Int64
+- description: null
+  name: q14_9-4
+  type_:
+    name: Int64
+- description: null
+  name: q14_9-5
+  type_:
+    name: Int64
+- description: null
+  name: q14_10-1
+  type_:
+    name: Int64
+- description: null
+  name: q14_10-2
+  type_:
+    name: Int64
+- description: null
+  name: q14_10-3
+  type_:
+    name: Int64
+- description: null
+  name: q14_10-4
+  type_:
+    name: Int64
+- description: null
+  name: q14_10-5
+  type_:
+    name: Int64
+- description: null
+  name: q14_11-1
+  type_:
+    name: Int64
+- description: null
+  name: q14_11-2
+  type_:
+    name: Int64
+- description: null
+  name: q14_11-3
+  type_:
+    name: Int64
+- description: null
+  name: q14_11-4
+  type_:
+    name: Int64
+- description: null
+  name: q14_11-5
+  type_:
+    name: Int64
+- description: null
+  name: q14_12-1
+  type_:
+    name: Int64
+- description: null
+  name: q14_12-2
+  type_:
+    name: Int64
+- description: null
+  name: q14_12-3
+  type_:
+    name: Int64
+- description: null
+  name: q14_12-4
+  type_:
+    name: Int64
+- description: null
+  name: q14_12-5
+  type_:
+    name: Int64
+- description: null
+  name: q14_13-1
+  type_:
+    name: Int64
+- description: null
+  name: q14_13-2
+  type_:
+    name: Int64
+- description: null
+  name: q14_13-3
+  type_:
+    name: Int64
+- description: null
+  name: q14_13-4
+  type_:
+    name: Int64
+- description: null
+  name: q14_13-5
+  type_:
+    name: Int64
+- description: null
+  name: q14_14-1
+  type_:
+    name: Int64
+- description: null
+  name: q14_14-2
+  type_:
+    name: Int64
+- description: null
+  name: q14_14-3
+  type_:
+    name: Int64
+- description: null
+  name: q14_14-4
+  type_:
+    name: Int64
+- description: null
+  name: q14_14-5
+  type_:
+    name: Int64
+- description: null
+  name: q14_15-1
+  type_:
+    name: Int64
+- description: null
+  name: q14_15-2
+  type_:
+    name: Int64
+- description: null
+  name: q14_15-3
+  type_:
+    name: Int64
+- description: null
+  name: q14_15-4
+  type_:
+    name: Int64
+- description: null
+  name: q14_15-5
+  type_:
+    name: Int64
+- description: null
+  name: q14_16-1
+  type_:
+    name: Int64
+- description: null
+  name: q14_16-2
+  type_:
+    name: Int64
+- description: null
+  name: q14_16-3
+  type_:
+    name: Int64
+- description: null
+  name: q14_16-4
+  type_:
+    name: Int64
+- description: null
+  name: q14_16-5
+  type_:
+    name: Int64
+- description: null
+  name: q14_17-1
+  type_:
+    name: Int64
+- description: null
+  name: q14_17-2
+  type_:
+    name: Int64
+- description: null
+  name: q14_17-3
+  type_:
+    name: Int64
+- description: null
+  name: q14_17-4
+  type_:
+    name: Int64
+- description: null
+  name: q14_17-5
+  type_:
+    name: Int64
+- description: null
+  name: q14_18-1
+  type_:
+    name: Int64
+- description: null
+  name: q14_18-2
+  type_:
+    name: Int64
+- description: null
+  name: q14_18-3
+  type_:
+    name: Int64
+- description: null
+  name: q14_18-4
+  type_:
+    name: Int64
+- description: null
+  name: q14_18-5
+  type_:
+    name: Int64
+- description: null
+  name: q14_19-1
+  type_:
+    name: Int64
+- description: null
+  name: q14_19-2
+  type_:
+    name: Int64
+- description: null
+  name: q14_19-3
+  type_:
+    name: Int64
+- description: null
+  name: q14_19-4
+  type_:
+    name: Int64
+- description: null
+  name: q14_19-5
+  type_:
+    name: Int64
+- description: null
+  name: q14_20-1
+  type_:
+    name: Int64
+- description: null
+  name: q14_20-2
+  type_:
+    name: Int64
+- description: null
+  name: q14_20-3
+  type_:
+    name: Int64
+- description: null
+  name: q14_20-4
+  type_:
+    name: Int64
+- description: null
+  name: q14_20-5
+  type_:
+    name: Int64
+- description: null
+  name: q15_1
+  type_:
+    name: Int64
+- description: null
+  name: q15_2
+  type_:
+    name: Int64
+- description: null
+  name: q15_3
+  type_:
+    name: Int64
+- description: null
+  name: q15_4
+  type_:
+    name: Int64
+- description: null
+  name: q15_5
+  type_:
+    name: Int64
+- description: null
+  name: q15_6
+  type_:
+    name: Int64
+- description: null
+  name: q15_7
+  type_:
+    name: Int64
+- description: null
+  name: q15_8
+  type_:
+    name: Int64
+- description: null
+  name: q15_9
+  type_:
+    name: Int64
+- description: null
+  name: q15_10
+  type_:
+    name: Int64
+- description: null
+  name: q15_11
+  type_:
+    name: Int64
+- description: null
+  name: q15_12
+  type_:
+    name: Int64
+- description: null
+  name: q15_13
+  type_:
+    name: Int64
+- description: null
+  name: q15_14
+  type_:
+    name: Int64
+- description: null
+  name: q15_15
+  type_:
+    name: Int64
+- description: null
+  name: q15_16
+  type_:
+    name: Int64
+- description: null
+  name: q15_17
+  type_:
+    name: Int64
+- description: null
+  name: q15_18
+  type_:
+    name: Int64
+- description: null
+  name: q15_19
+  type_:
+    name: Int64
+- description: null
+  name: q15_20
+  type_:
+    name: Int64
+- description: null
+  name: q16_1
+  type_:
+    name: String
+- description: null
+  name: q16_2
+  type_:
+    name: String
+- description: null
+  name: q16_3
+  type_:
+    name: String
+- description: null
+  name: q16_4
+  type_:
+    name: Int64
+- description: null
+  name: q16_5
+  type_:
+    name: String
+- description: null
+  name: q16_6
+  type_:
+    name: Int64
+- description: null
+  name: q16_7
+  type_:
+    name: Int64
+- description: null
+  name: q16_8
+  type_:
+    name: String
+- description: null
+  name: q16_9
+  type_:
+    name: String
+- description: null
+  name: q16_10
+  type_:
+    name: Int64
+- description: null
+  name: q16_11
+  type_:
+    name: String
+- description: null
+  name: q16_12
+  type_:
+    name: String
+- description: null
+  name: q16_13
+  type_:
+    name: String
+- description: null
+  name: q16_14
+  type_:
+    name: String
+- description: null
+  name: q16_15
+  type_:
+    name: String
+- description: null
+  name: q16_16
+  type_:
+    name: Int64
+- description: null
+  name: q16_17
+  type_:
+    name: Int64
+- description: null
+  name: q16_18
+  type_:
+    name: String
+- description: null
+  name: q16_19
+  type_:
+    name: Int64
+- description: null
+  name: q16_20
+  type_:
+    name: String
+- description: null
+  name: q17_1
+  type_:
+    name: Int64
+- description: null
+  name: q17_2
+  type_:
+    name: Int64
+- description: null
+  name: q17_3
+  type_:
+    name: Int64
+- description: null
+  name: q17_4
+  type_:
+    name: Int64
+- description: null
+  name: q17_5
+  type_:
+    name: Int64
+- description: null
+  name: q17_6
+  type_:
+    name: Int64
+- description: null
+  name: q17_7
+  type_:
+    name: Int64
+- description: null
+  name: q17_8
+  type_:
+    name: Int64
+- description: null
+  name: q17_9
+  type_:
+    name: Int64
+- description: null
+  name: q17_10
+  type_:
+    name: Int64
+- description: null
+  name: q17_11
+  type_:
+    name: Int64
+- description: null
+  name: q17_12
+  type_:
+    name: Int64
+- description: null
+  name: q17_13
+  type_:
+    name: Int64
+- description: null
+  name: q17_14
+  type_:
+    name: Int64
+- description: null
+  name: q17_15
+  type_:
+    name: Int64
+- description: null
+  name: q17_16
+  type_:
+    name: Int64
+- description: null
+  name: q17_17
+  type_:
+    name: Int64
+- description: null
+  name: q17_18
+  type_:
+    name: Int64
+- description: null
+  name: q17_19
+  type_:
+    name: Int64
+- description: null
+  name: q17_20
+  type_:
+    name: Int64
+- description: null
+  name: q18_1
+  type_:
+    name: Int64
+- description: null
+  name: q18_2
+  type_:
+    name: Int64
+- description: null
+  name: q18_3
+  type_:
+    name: Int64
+- description: null
+  name: q18_4
+  type_:
+    name: Int64
+- description: null
+  name: q18_5
+  type_:
+    name: Int64
+- description: null
+  name: q18_6
+  type_:
+    name: Int64
+- description: null
+  name: q19
+  type_:
+    name: Int64
+- description: null
+  name: q26
+  type_:
+    name: Int64
+- description: null
+  name: q27_1
+  type_:
+    name: String
+- description: null
+  name: q28
+  type_:
+    name: Int64
+- description: null
+  name: q21sq1
+  type_:
+    name: Int64
+- description: null
+  name: q21sq2_1
+  type_:
+    name: String
+- description: null
+  name: q20
+  type_:
+    name: Int64
+- description: null
+  name: q21_1
+  type_:
+    name: String
+- description: null
+  name: q21_2
+  type_:
+    name: Int64
+- description: null
+  name: q22
+  type_:
+    name: Int64
+- description: null
+  name: q22sq_1
+  type_:
+    name: String
+- description: null
+  name: q22sq_2
+  type_:
+    name: Int64
+- description: null
+  name: q23
+  type_:
+    name: Int64
+- description: null
+  name: q23sq_1
+  type_:
+    name: String
+- description: null
+  name: q23sq_2
+  type_:
+    name: Int64
+- description: null
+  name: q24_1_1
+  type_:
+    name: Int64
+- description: null
+  name: q24_1_2
+  type_:
+    name: Int64
+- description: null
+  name: q24_2_1
+  type_:
+    name: Int64
+- description: null
+  name: q24_2_2
+  type_:
+    name: Int64
+- description: null
+  name: q24_3_1
+  type_:
+    name: Int64
+- description: null
+  name: q24_3_2
+  type_:
+    name: Int64
+- description: null
+  name: q25_1-1
+  type_:
+    name: Int64
+- description: null
+  name: q25_1-2
+  type_:
+    name: Int64
+- description: null
+  name: q25_1-3
+  type_:
+    name: Int64
+- description: null
+  name: q25_1-4
+  type_:
+    name: Int64
+- description: null
+  name: q25_1-5
+  type_:
+    name: Int64
+- description: null
+  name: q25_1-6
+  type_:
+    name: Int64
+- description: null
+  name: q25_1-7
+  type_:
+    name: Int64
+- description: null
+  name: q25_1-8
+  type_:
+    name: Int64
+- description: null
+  name: q25_1-9
+  type_:
+    name: Int64
+- description: null
+  name: q25_1-10
+  type_:
+    name: Int64
+- description: null
+  name: q25_1-11
+  type_:
+    name: Int64
+- description: null
+  name: q25_1-12
+  type_:
+    name: Int64
+- description: null
+  name: q25_2-1
+  type_:
+    name: Int64
+- description: null
+  name: q25_2-2
+  type_:
+    name: Int64
+- description: null
+  name: q25_2-3
+  type_:
+    name: Int64
+- description: null
+  name: q25_2-4
+  type_:
+    name: Int64
+- description: null
+  name: q25_2-5
+  type_:
+    name: Int64
+- description: null
+  name: q25_2-6
+  type_:
+    name: Int64
+- description: null
+  name: q25_2-7
+  type_:
+    name: Int64
+- description: null
+  name: q25_2-8
+  type_:
+    name: Int64
+- description: null
+  name: q25_2-9
+  type_:
+    name: Int64
+- description: null
+  name: q25_2-10
+  type_:
+    name: Int64
+- description: null
+  name: q25_2-11
+  type_:
+    name: Int64
+- description: null
+  name: q25_2-12
+  type_:
+    name: Int64
+- description: null
+  name: q25_3-1
+  type_:
+    name: Int64
+- description: null
+  name: q25_3-2
+  type_:
+    name: Int64
+- description: null
+  name: q25_3-3
+  type_:
+    name: Int64
+- description: null
+  name: q25_3-4
+  type_:
+    name: Int64
+- description: null
+  name: q25_3-5
+  type_:
+    name: Int64
+- description: null
+  name: q25_3-6
+  type_:
+    name: Int64
+- description: null
+  name: q25_3-7
+  type_:
+    name: Int64
+- description: null
+  name: q25_3-8
+  type_:
+    name: Int64
+- description: null
+  name: q25_3-9
+  type_:
+    name: Int64
+- description: null
+  name: q25_3-10
+  type_:
+    name: Int64
+- description: null
+  name: q25_3-11
+  type_:
+    name: Int64
+- description: null
+  name: q25_3-12
+  type_:
+    name: Int64
+- description: null
+  name: q29_1
+  type_:
+    name: Int64
+- description: null
+  name: q29_2
+  type_:
+    name: Int64
+- description: null
+  name: q30-1
+  type_:
+    name: Int64
+- description: null
+  name: q30-2
+  type_:
+    name: Int64
+- description: null
+  name: q30-3
+  type_:
+    name: Int64
+- description: null
+  name: q30-4
+  type_:
+    name: Int64
+- description: null
+  name: q30-5
+  type_:
+    name: Int64
+- description: null
+  name: q30-6
+  type_:
+    name: Int64
+- description: null
+  name: q30-7
+  type_:
+    name: Int64
+- description: null
+  name: q30-8
+  type_:
+    name: Int64
+- description: null
+  name: q30-9
+  type_:
+    name: Int64
+- description: null
+  name: q30-10
+  type_:
+    name: Int64
+- description: null
+  name: q30-11
+  type_:
+    name: Int64
+- description: null
+  name: q30-12
+  type_:
+    name: Int64
+- description: null
+  name: q30-13
+  type_:
+    name: Int64
+- description: null
+  name: q31
+  type_:
+    name: Int64
+- description: null
+  name: q32
+  type_:
+    name: Int64
+- description: null
+  name: q33
+  type_:
+    name: Int64
+- description: null
+  name: q34
+  type_:
+    name: Int64
+- description: null
+  name: q35_1
+  type_:
+    name: Int64
+- description: null
+  name: q35_2
+  type_:
+    name: Int64
+- description: null
+  name: q35_3
+  type_:
+    name: Int64
+- description: null
+  name: q35_4
+  type_:
+    name: Int64
+- description: null
+  name: q36_1
+  type_:
+    name: Int64
+- description: null
+  name: q37
+  type_:
+    name: Int64
+- description: null
+  name: q38-1
+  type_:
+    name: Int64
+- description: null
+  name: q38-2
+  type_:
+    name: Int64
+- description: null
+  name: q38-3
+  type_:
+    name: Int64
+- description: null
+  name: q38-4
+  type_:
+    name: Int64
+- description: null
+  name: q38-5
+  type_:
+    name: Int64
+- description: null
+  name: q38-6
+  type_:
+    name: Int64
+- description: null
+  name: q38-7
+  type_:
+    name: Int64
+- description: null
+  name: q38-8
+  type_:
+    name: Int64
+- description: null
+  name: q38-9
+  type_:
+    name: Int64
+- description: null
+  name: q38-10
+  type_:
+    name: Int64
+- description: null
+  name: q38-11
+  type_:
+    name: Int64
+- description: null
+  name: q38-12
+  type_:
+    name: Int64
+- description: null
+  name: q38-13
+  type_:
+    name: Int64
+- description: null
+  name: q38-14
+  type_:
+    name: Int64
+- description: null
+  name: q39
+  type_:
+    name: Int64
+- description: null
+  name: q40
+  type_:
+    name: Int64
+- description: null
+  name: q41_1
+  type_:
+    name: Int64
+- description: null
+  name: q41_2
+  type_:
+    name: Int64
+- description: null
+  name: q42_1
+  type_:
+    name: Int64
+- description: null
+  name: q42_2
+  type_:
+    name: Int64
+- description: null
+  name: q43_1
+  type_:
+    name: Int64
+- description: null
+  name: q43_2
+  type_:
+    name: Int64
+- description: null
+  name: q43_3
+  type_:
+    name: Int64
+- description: null
+  name: q43_4
+  type_:
+    name: Int64
+- description: null
+  name: q43_5
+  type_:
+    name: Int64
+- description: null
+  name: q43_6
+  type_:
+    name: Int64
+- description: null
+  name: q44
+  type_:
+    name: Int64
+- description: null
+  name: q45_1-1
+  type_:
+    name: Int64
+- description: null
+  name: q45_1-2
+  type_:
+    name: Int64
+- description: null
+  name: q45_1-3
+  type_:
+    name: Int64
+- description: null
+  name: q45_1-4
+  type_:
+    name: Int64
+- description: null
+  name: q45_1-5
+  type_:
+    name: Int64
+- description: null
+  name: q45_1-6
+  type_:
+    name: Int64
+- description: null
+  name: q45_2-1
+  type_:
+    name: Int64
+- description: null
+  name: q45_2-2
+  type_:
+    name: Int64
+- description: null
+  name: q45_2-3
+  type_:
+    name: Int64
+- description: null
+  name: q45_2-4
+  type_:
+    name: Int64
+- description: null
+  name: q45_2-5
+  type_:
+    name: Int64
+- description: null
+  name: q45_2-6
+  type_:
+    name: Int64
+- description: null
+  name: q46_1
+  type_:
+    name: Int64
+- description: null
+  name: q46_2
+  type_:
+    name: Int64
+- description: null
+  name: q46_3
+  type_:
+    name: Int64
+- description: null
+  name: q47_1
+  type_:
+    name: Int64
+- description: null
+  name: q47_2
+  type_:
+    name: Int64
+- description: null
+  name: q47_3
+  type_:
+    name: Int64
+- description: null
+  name: q47_4
+  type_:
+    name: Int64
+- description: null
+  name: q47_5
+  type_:
+    name: Int64
+- description: null
+  name: q47_6
+  type_:
+    name: Int64
+- description: null
+  name: q47_7
+  type_:
+    name: Int64
+- description: null
+  name: q47_8
+  type_:
+    name: Int64
+- description: null
+  name: q47_9
+  type_:
+    name: Int64
+- description: null
+  name: q47_10
+  type_:
+    name: Int64
+- description: null
+  name: q48_1
+  type_:
+    name: Int64
+- description: null
+  name: q48_2
+  type_:
+    name: Int64
+- description: null
+  name: q48_3
+  type_:
+    name: Int64
+- description: null
+  name: q48_4
+  type_:
+    name: Int64
+- description: null
+  name: q48_5
+  type_:
+    name: Int64
+- description: null
+  name: q48_6
+  type_:
+    name: Int64
+- description: null
+  name: q49_1
+  type_:
+    name: Int64
+- description: null
+  name: q49_2
+  type_:
+    name: Int64
+- description: null
+  name: q49_3
+  type_:
+    name: Int64
+- description: null
+  name: q49_4
+  type_:
+    name: Int64
+- description: null
+  name: q49_5
+  type_:
+    name: Int64
+- description: null
+  name: q50_1
+  type_:
+    name: Int64
+- description: null
+  name: q50_2
+  type_:
+    name: Int64
+- description: null
+  name: q51-1
+  type_:
+    name: Int64
+- description: null
+  name: q51-2
+  type_:
+    name: Int64
+- description: null
+  name: q51-3
+  type_:
+    name: Int64
+- description: null
+  name: q51-4
+  type_:
+    name: Int64
+- description: null
+  name: q51-5
+  type_:
+    name: Int64
+- description: null
+  name: q51-6
+  type_:
+    name: Int64
+- description: null
+  name: q51-7
+  type_:
+    name: Int64
+- description: null
+  name: q51-8
+  type_:
+    name: Int64
+- description: null
+  name: q51-9
+  type_:
+    name: Int64
+- description: null
+  name: q51-10
+  type_:
+    name: Int64
+- description: null
+  name: q51-11
+  type_:
+    name: Int64
+- description: null
+  name: q51-12
+  type_:
+    name: Int64
+- description: null
+  name: q51-13
+  type_:
+    name: Int64
+- description: null
+  name: q52
+  type_:
+    name: Int64
+- description: null
+  name: q53
+  type_:
+    name: Int64
+- description: null
+  name: q54
+  type_:
+    name: Int64
+- description: null
+  name: q55
+  type_:
+    name: Int64
+- description: null
+  name: q56_1
+  type_:
+    name: Int64
+- description: null
+  name: q56_2
+  type_:
+    name: Int64
+- description: null
+  name: q56_3
+  type_:
+    name: Int64
+- description: null
+  name: q56_4
+  type_:
+    name: Int64
+- description: null
+  name: q57_1
+  type_:
+    name: Int64
+- description: null
+  name: q58
+  type_:
+    name: Int64
+- description: null
+  name: q59-1
+  type_:
+    name: Int64
+- description: null
+  name: q59-2
+  type_:
+    name: Int64
+- description: null
+  name: q59-3
+  type_:
+    name: Int64
+- description: null
+  name: q59-4
+  type_:
+    name: Int64
+- description: null
+  name: q59-5
+  type_:
+    name: Int64
+- description: null
+  name: q59-6
+  type_:
+    name: Int64
+- description: null
+  name: q59-7
+  type_:
+    name: Int64
+- description: null
+  name: q59-8
+  type_:
+    name: Int64
+- description: null
+  name: q59-9
+  type_:
+    name: Int64
+- description: null
+  name: q59-10
+  type_:
+    name: Int64
+- description: null
+  name: q59-11
+  type_:
+    name: Int64
+- description: null
+  name: q59-12
+  type_:
+    name: Int64
+- description: null
+  name: q59-13
+  type_:
+    name: Int64
+- description: null
+  name: q59-14
+  type_:
+    name: Int64
+- description: null
+  name: q60
+  type_:
+    name: Int64
+- description: null
+  name: q61
+  type_:
+    name: Int64
+- description: null
+  name: q62_1
+  type_:
+    name: Int64
+- description: null
+  name: q62_2
+  type_:
+    name: Int64
+- description: null
+  name: q63_1
+  type_:
+    name: Int64
+- description: null
+  name: q63_2
+  type_:
+    name: Int64
+- description: null
+  name: q64_1
+  type_:
+    name: Int64
+- description: null
+  name: q64_2
+  type_:
+    name: Int64
+- description: null
+  name: q64_3
+  type_:
+    name: Int64
+- description: null
+  name: q64_4
+  type_:
+    name: Int64
+- description: null
+  name: q64_5
+  type_:
+    name: Int64
+- description: null
+  name: q64_6
+  type_:
+    name: Int64
+- description: null
+  name: q65
+  type_:
+    name: Int64
+- description: null
+  name: q66_1-1
+  type_:
+    name: Int64
+- description: null
+  name: q66_1-2
+  type_:
+    name: Int64
+- description: null
+  name: q66_1-3
+  type_:
+    name: Int64
+- description: null
+  name: q66_1-4
+  type_:
+    name: Int64
+- description: null
+  name: q66_1-5
+  type_:
+    name: Int64
+- description: null
+  name: q66_1-6
+  type_:
+    name: Int64
+- description: null
+  name: q66_2-1
+  type_:
+    name: Int64
+- description: null
+  name: q66_2-2
+  type_:
+    name: Int64
+- description: null
+  name: q66_2-3
+  type_:
+    name: Int64
+- description: null
+  name: q66_2-4
+  type_:
+    name: Int64
+- description: null
+  name: q66_2-5
+  type_:
+    name: Int64
+- description: null
+  name: q66_2-6
+  type_:
+    name: Int64
+- description: null
+  name: q67_1
+  type_:
+    name: Int64
+- description: null
+  name: q67_2
+  type_:
+    name: Int64
+- description: null
+  name: q67_3
+  type_:
+    name: Int64
+- description: null
+  name: q68_1
+  type_:
+    name: Int64
+- description: null
+  name: q68_2
+  type_:
+    name: Int64
+- description: null
+  name: q68_3
+  type_:
+    name: Int64
+- description: null
+  name: q68_4
+  type_:
+    name: Int64
+- description: null
+  name: q68_5
+  type_:
+    name: Int64
+- description: null
+  name: q68_6
+  type_:
+    name: Int64
+- description: null
+  name: q68_7
+  type_:
+    name: Int64
+- description: null
+  name: q68_8
+  type_:
+    name: Int64
+- description: null
+  name: q68_9
+  type_:
+    name: Int64
+- description: null
+  name: q68_10
+  type_:
+    name: Int64
+- description: null
+  name: q69_1
+  type_:
+    name: Int64
+- description: null
+  name: q69_2
+  type_:
+    name: Int64
+- description: null
+  name: q69_3
+  type_:
+    name: Int64
+- description: null
+  name: q69_4
+  type_:
+    name: Int64
+- description: null
+  name: q69_5
+  type_:
+    name: Int64
+- description: null
+  name: q69_6
+  type_:
+    name: Int64
+- description: null
+  name: q70_1
+  type_:
+    name: Int64
+- description: null
+  name: q70_2
+  type_:
+    name: Int64
+- description: null
+  name: q70_3
+  type_:
+    name: Int64
+- description: null
+  name: q70_4
+  type_:
+    name: Int64
+- description: null
+  name: q70_5
+  type_:
+    name: Int64
+- description: null
+  name: q71_1
+  type_:
+    name: Int64
+- description: null
+  name: q71_2
+  type_:
+    name: Int64
+- description: null
+  name: q72-1
+  type_:
+    name: Int64
+- description: null
+  name: q72-2
+  type_:
+    name: Int64
+- description: null
+  name: q72-3
+  type_:
+    name: Int64
+- description: null
+  name: q72-4
+  type_:
+    name: Int64
+- description: null
+  name: q72-5
+  type_:
+    name: Int64
+- description: null
+  name: q72-6
+  type_:
+    name: Int64
+- description: null
+  name: q72-7
+  type_:
+    name: Int64
+- description: null
+  name: q72-8
+  type_:
+    name: Int64
+- description: null
+  name: q72-9
+  type_:
+    name: Int64
+- description: null
+  name: q72-10
+  type_:
+    name: Int64
+- description: null
+  name: q72-11
+  type_:
+    name: Int64
+- description: null
+  name: q72-12
+  type_:
+    name: Int64
+- description: null
+  name: q72-13
+  type_:
+    name: Int64
+- description: null
+  name: q73
+  type_:
+    name: Int64
+- description: null
+  name: q74
+  type_:
+    name: Int64
+- description: null
+  name: q75
+  type_:
+    name: Int64
+description:
+  en: This dataset contains responses from the Tohoku Region Residence History Web
+    Survey. For details on each column, please refer to the accompanying `survey_questions.csv`.
+  ja: 東北地方の居住地履歴Web調査の回答データです。各列の詳細は別添の `survey_questions.csv` を参照してください。
+hash_: eb860bce5700b39613971668a55128292875945ddb6d50c3b103922a7b31dbff
+license_:
+  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+    Networks.
+  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+name:
+  en: Tohoku Residence History Web Survey - Response
+  ja: 東北 居住地履歴Web調査 回答
+year: 2024

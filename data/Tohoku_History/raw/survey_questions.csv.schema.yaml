@@ -1,0 +1,63 @@
+city:
+  en: Tohoku Region
+  ja: 東北地方
+columns:
+- description:
+    en: The corresponding response column in `survey_responses.csv`. Excel column
+      name (e.g., A, B, ..., Z, AA, AB, ...).
+    ja: '`survey_responses.csv`の該当する回答列。Excelの列名（例: A, B, ..., Z, AA, AB, ...）。'
+  name: response_column
+  type_:
+    name: String
+- description:
+    en: The index of the corresponding response column in `survey_responses.csv` (starting
+      from 1).
+    ja: '`survey_responses.csv`の該当する回答列のインデックス（1から始まる）。'
+  name: response_column_index
+  type_:
+    name: Int16
+- description: null
+  name: label
+  type_:
+    name: String
+- description: null
+  name: question_code
+  type_:
+    name: String
+- description: null
+  name: question
+  type_:
+    name: String
+- description: null
+  name: question_type
+  type_:
+    name: String
+- description:
+    en: The number of options.
+    ja: 選択肢の数
+  name: option_count
+  type_:
+    name: Int16
+- description:
+    en: The index of the option within the question (starting from 1).
+    ja: 質問内の選択肢のインデックス（1から始まる）。
+  name: option_index
+  type_:
+    name: Int16
+- description: null
+  name: option
+  type_:
+    name: String
+description:
+  en: This dataset contains the questions from the Tohoku Residence History Web Survey.
+    The original data has been normalized to the first normal form.
+  ja: 東北地方の居住地履歴Web調査の質問データです。元データを一次正規化しています。
+hash_: d5a7ff7aae19be2c3e0cc6ea9c55cd79f18923022f6f94f003d90dcd6bc6dc01
+license_:
+  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+    Networks.
+  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+name:
+  en: Tohoku Residence History Web Survey - Question
+  ja: 東北 居住地履歴Web調査 質問
+year: 2024

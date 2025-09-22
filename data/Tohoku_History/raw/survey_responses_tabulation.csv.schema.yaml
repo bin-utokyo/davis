@@ -1,0 +1,41 @@
+city:
+  en: Tohoku Region
+  ja: 東北地方
+columns:
+- description: null
+  name: question_code
+  type_:
+    name: String
+- description: null
+  name: question_text
+  type_:
+    name: String
+- description: null
+  name: option_index
+  type_:
+    name: Int16
+- description: null
+  name: option_text
+  type_:
+    name: String
+- description: null
+  name: count
+  type_:
+    name: Int16
+- description: null
+  name: percentage
+  type_:
+    name: Float64
+description:
+  en: This dataset contains the tabulated responses from the Tohoku Residence History
+    Web Survey.
+  ja: 東北地方の居住地履歴Web調査の質問回答データを集計したものです。
+hash_: b2f2e307bcb0156af8b4bd9dffc4c9a7b81490c3eb7417673aeaeb547bf56c3d
+license_:
+  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+    Networks.
+  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+name:
+  en: Tohoku Residence History Web Survey - Tabulation
+  ja: 東北 居住地履歴Web調査 基礎集計
+year: 2024
