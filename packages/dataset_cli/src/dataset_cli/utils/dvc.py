@@ -234,7 +234,7 @@ class DVCClient:
             cmd.append("--force")
         if remote:
             cmd.extend(["-r", remote])
-        if jobs is not None and jobs > 1:
+        if jobs is not None:
             cmd.extend(["-j", str(jobs)])
         if targets:
             target_list = [targets] if isinstance(targets, str) else list(targets)
