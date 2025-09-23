@@ -149,7 +149,7 @@ def _dvc_add_and_validate(  # noqa: C901
 
 def _generate_pdfs_and_stage(repo: Repo, repo_path: Path) -> None:
     rprint("\n[bold]Step 3: PDF生成と最終ステージングを行います...[/bold]")
-    generate_pdf(repo_path.as_posix())
+    generate_pdf()
     repo.git.add(all=True)
     rprint("  [green]✓[/green] 全ての変更をGitにステージングしました。")
 
@@ -418,28 +418,49 @@ def infer_schema(
 # --- generate-pdf command --- #
 @app.command(
     name="generate-pdf",
-    help="データセット内の全ての対象ファイルからPDFを生成します。",
+    help="指定されたファイル/ディレクトリ、またはデータセット内の全対象ファイルからPDFを生成します。",
 )
 def generate_pdf(
-    root_path: Annotated[
-        str,
-        typer.Argument(help="リポジトリのルートパス"),
-    ] = ".",
+    paths: Annotated[
+        list[Path],
+        typer.Argument(
+            help="PDFを生成するファイルまたはディレクトリのパス。省略した場合は 'data' ディレクトリ内の全対象ファイル。",
+            exists=True,
+            file_okay=True,
+            dir_okay=True,
+            readable=True,
+        ),
+    ] = None,
 ) -> None:
     from dataset_cli.utils.pdf import create_readme_pdf  # noqa: PLC0415
 
-    repo_path = Path(root_path)
-    data_dir = repo_path / "data"
+    target_files: list[Path] = []
+    if not paths:
+        data_dir = Path("data")
+        if not data_dir.is_dir():
+            rprint("[yellow]警告: 'data' ディレクトリが見つかりません。[/yellow]")
+            raise typer.Exit(0)
+        target_files = [
+            p
+            for p in data_dir.rglob("*")
+            if p.is_file() and p.suffix in PDF_TARGET_EXTENSIONS
+        ]
+    else:
+        for path in paths:
+            if path.is_file():
+                if path.suffix in PDF_TARGET_EXTENSIONS:
+                    target_files.append(path)
+                else:
+                    rprint(f"[yellow]警告: サポートされていないファイルタイプです: {path}[/yellow]")
+            elif path.is_dir():
+                target_files.extend(
+                    p
+                    for p in path.rglob("*")
+                    if p.is_file() and p.suffix in PDF_TARGET_EXTENSIONS
+                )
 
-    if not data_dir.is_dir():
-        rprint("[yellow]警告: 'data' ディレクトリが見つかりません。[/yellow]")
-        raise typer.Exit(0)
-
-    files_for_pdf = [
-        p
-        for p in data_dir.rglob("*")
-        if p.is_file() and p.suffix in PDF_TARGET_EXTENSIONS
-    ]
+    # 重複を除去し、ソートする
+    files_for_pdf = sorted(list(set(target_files)))
 
     if not files_for_pdf:
         rprint("  [dim]PDF生成対象のファイルが見つかりませんでした。[/dim]")
@@ -449,15 +470,27 @@ def generate_pdf(
     success_count = 0
     failure_count = 0
 
+    # Use Path.cwd() to make relative paths in output consistent
+    cwd = Path.cwd()
+
     for file_path in files_for_pdf:
         try:
             for lang in ("ja", "en"):
                 create_readme_pdf(file_path=file_path, lang=lang)
-            rprint(f"  [green]✓[/green] 生成完了: {file_path.relative_to(repo_path)}")
+            # Use try-except block for robust relative path calculation
+            try:
+                display_path = file_path.relative_to(cwd)
+            except ValueError:
+                display_path = file_path
+            rprint(f"  [green]✓[/green] 生成完了: {display_path}")
             success_count += 1
         except (typer.Exit, FileNotFoundError, ValidationError) as e:
+            try:
+                display_path = file_path.relative_to(cwd)
+            except ValueError:
+                display_path = file_path
             rprint(
-                f"[bold red]  ✗[/bold red] 生成失敗: {file_path.relative_to(repo_path)}",
+                f"[bold red]  ✗[/bold red] 生成失敗: {display_path}",
             )
             rprint(f"    [dim]エラー詳細: {e}[/dim]")
             failure_count += 1
