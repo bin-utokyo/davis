@@ -1,0 +1,60 @@
+city:
+  en: Shibuya
+  ja: 渋谷
+columns:
+- description: null
+  name: ID
+  type_:
+    name: Int64
+- description: null
+  name: UserID
+  type_:
+    name: Int64
+- description: null
+  name: Timestamp
+  type_:
+    name: Datetime
+- description: null
+  name: Latitude
+  type_:
+    name: Float64
+- description: null
+  name: Longitude
+  type_:
+    name: Float64
+- description: null
+  name: Altitude
+  type_:
+    name: Int64
+- description: null
+  name: Accuracy
+  type_:
+    name: Float64
+- description: null
+  name: Bearing
+  type_:
+    name: Float64
+- description: null
+  name: Speed
+  type_:
+    name: Float64
+- description: null
+  name: CreatedAt
+  type_:
+    name: Datetime
+- description: null
+  name: mesh
+  type_:
+    name: Int64
+description:
+  en: This is location data of Shibuya PP at 2023/01
+  ja: 渋谷PP 2023/01のlocationデータです
+hash_: dde9a10a50a1481e7a9f083474b72f43c04824506b1b4083a496121c87effd52
+license_:
+  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+    Networks.
+  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+name:
+  en: Shibuya2023/01
+  ja: 渋谷2023/01
+year: 2023

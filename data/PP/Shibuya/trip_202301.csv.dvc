@@ -1,0 +1,5 @@
+outs:
+- md5: c9ae359d30c35334289c2b763a41f410
+  size: 915929
+  hash: md5
+  path: trip_202301.csv

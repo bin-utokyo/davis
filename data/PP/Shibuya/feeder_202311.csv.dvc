@@ -1,0 +1,5 @@
+outs:
+- md5: b016e402c46c1addfc7c9aace74c4f11
+  size: 1822914
+  hash: md5
+  path: feeder_202311.csv
