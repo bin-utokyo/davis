@@ -1,0 +1,52 @@
+city:
+  en: SHibuya
+  ja: 渋谷
+columns:
+- description: null
+  name: ID
+  type_:
+    name: Int64
+- description: null
+  name: UserID
+  type_:
+    name: Int64
+- description: null
+  name: RecordedAt
+  type_:
+    name: Datetime
+- description: null
+  name: ModeCode
+  type_:
+    name: Int64
+- description: null
+  name: TripID
+  type_:
+    name: Int64
+- description: null
+  name: OperationType
+  type_:
+    name: Int64
+- description: null
+  name: CreatedAt
+  type_:
+    name: Datetime
+- description: null
+  name: UpdatedAt
+  type_:
+    name: Datetime
+- description: null
+  name: IsValid
+  type_:
+    name: Int64
+description:
+  en: This is feeder data of Shibuya PP at 2023/01
+  ja: 渋谷PP 2023/01のfeederデータです
+hash_: 22e926c1a9c2885d402d7cf69fab9ebe150c999b76675bf86aedc05a75c4c116
+license_:
+  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+    Networks.
+  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+name:
+  en: Shibuya2023/01
+  ja: 渋谷2023/01
+year: 2023

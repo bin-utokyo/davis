@@ -1,6 +1,6 @@
 city:
-  en: Shibuya2023
-  ja: 渋谷2023
+  en: Shibuya
+  ja: 渋谷
 columns:
 - description: null
   name: ID
@@ -11,19 +11,15 @@ columns:
   type_:
     name: Int64
 - description: null
-  name: RecordedAt
+  name: DepartureTime
   type_:
     name: Datetime
 - description: null
-  name: ModeCode
+  name: ArrivalTime
   type_:
-    name: Int64
+    name: Datetime
 - description: null
-  name: TripID
-  type_:
-    name: Int64
-- description: null
-  name: OperationType
+  name: PurposeCode
   type_:
     name: Int64
 - description: null
@@ -35,18 +31,18 @@ columns:
   type_:
     name: Datetime
 - description: null
-  name: IsValid
+  name: Validity
   type_:
     name: Int64
 description:
-  en: This is personal information of Shibuya2023
-  ja: 渋谷2023PPの個人情報です
-hash_: 5b5de33022fa7f4604ec42350c9343a8bcefc1b55929ad7a468d0ae1bd34f4e5
+  en: This is trip data of Shibuya PP at 2023/11
+  ja: 渋谷PP11のtripデータです
+hash_: 8ea690437710d79d91cd4446882e1426e4007ac7fa85a6989c946d535364b2be
 license_:
   en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
     Networks.
   ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
 name:
-  en: Shibuya2023
-  ja: 渋谷2023
+  en: Shibuya2023/11
+  ja: 渋谷2023/11
 year: 2023
