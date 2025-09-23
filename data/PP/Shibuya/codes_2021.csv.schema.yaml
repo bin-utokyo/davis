@@ -1,0 +1,33 @@
+city:
+  en: Shibuya
+  ja: 渋谷
+columns:
+- description: null
+  name: type
+  type_:
+    name: String
+- description: null
+  name: code
+  type_:
+    name: Int64
+- description: null
+  name: name
+  type_:
+    name: String
+- description: null
+  name: description
+  type_:
+    name: String
+description:
+  en: This document provides a summary of the code system for transportation modes
+    and purposes at Shibuya PP. This code system is different from that of 2023.
+  ja: 渋谷PPの交通手段と目的のコード体系をまとめています。2023年とは異なるコード体系です。
+hash_: d62999af688d0303709d45b0d681432161ab9209724e9c406c2971aae89eb046
+license_:
+  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+    Networks.
+  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+name:
+  en: Shibuya PP Code System Table
+  ja: 渋谷PP コード体系表
+year: 2021
