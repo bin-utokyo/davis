@@ -1,6 +1,12 @@
+matplotlib
 numpy
 pandas
+geopandas
 scipy
 scikit-learn
 joblib
+pyarrow
 pyproj
+osmnx
+tqdm
+ipykernel
