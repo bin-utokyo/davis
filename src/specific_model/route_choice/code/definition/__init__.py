@@ -1,7 +1,7 @@
-import os
 import sys
-
-sys.path.append(os.path.join(os.path.dirname(__file__)))
+from pathlib import Path
+sys.path.append(str(Path(__file__).resolve().parent))
 
 from network import *
 from link_transition import *
+from pp import *

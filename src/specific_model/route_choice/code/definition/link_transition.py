@@ -1,14 +1,10 @@
-import os
 import sys
+import pathlib
 from dataclasses import dataclass
 
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 import numpy as np
 import datetime
-
-sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
-
-from network import Network
 
 __all__ = ["LinkTransition"]
 
@@ -54,7 +50,7 @@ class LinkTransition:
             raise ValueError("Invalid model parameters.")
 
         return self.model.choose_transition(self, params)
-    
+
 
     @staticmethod
     def from_dict(data: dict, network: "Network", model: "RouteChoiceModel") -> Optional["LinkTransition"]:
@@ -70,7 +66,7 @@ class LinkTransition:
         """
         if data["LinkID"] not in network.link_id2idx or data["DestinationNodeID"] not in network.node_id2idx:
             return None
-        
+
         row_idx = network.link_id2idx[data["LinkID"]]
         row = network.link_adj_matrix.getrow(row_idx)
         down_link_idxs = row.indices  # 非ゼロ要素の列インデックス
@@ -88,9 +84,13 @@ class LinkTransition:
             next_link_id=data.get("NextLinkID"),
             destination_node_id=data["DestinationNodeID"],
             down_link_ids=down_link_ids,
-            model=model
+            model=model,
         )
 
 
 # 遅延インポート
-from abc_rc import RouteChoiceModel
+if TYPE_CHECKING:
+    from abc_rc import RouteChoiceModel
+
+    sys.path.append(str(pathlib.Path(__file__).resolve().parent.parent))
+    from network import Network

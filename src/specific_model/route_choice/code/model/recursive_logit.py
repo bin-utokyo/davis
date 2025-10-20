@@ -79,6 +79,26 @@ class RL(RouteChoiceModel):
         probs = probs / probs.sum()
         return {lid: prob for lid, prob in zip(link_transition.down_link_ids, probs)}
 
+    def calculate_transition_probabilities(self, link_transition: "LinkTransition", params: np.ndarray) -> np.ndarray:
+        """Calculate the transition probabilities for the destination of a link transition.
+
+        Args:
+            link_transition (LinkTransition): The link transition object.
+            params (np.ndarray): Model parameters.
+
+        Returns:
+            np.ndarray: A dense array representing transition probabilities.
+        """
+        exp_u = self.exp_util_array(params)[:-1]  # exclude dummy link
+        exp_v = self.value_array(params, link_transition.destination_node_id)[:-1]
+        beta = self.get_beta(params)
+
+        exp_q = self.network.link_adj_matrix.toarray() * exp_u[np.newaxis, :] / exp_v[:, np.newaxis] * np.power(exp_u[np.newaxis, :], beta)  # (n_link, n_link)
+
+        sum_exp_q = np.sum(exp_q, axis=1, keepdims=True)  # (n_link, 1)
+        sum_exp_q[sum_exp_q == 0] = 1  # avoid division by zero
+        return exp_q / sum_exp_q  # (n_link, n_link)
+
     def exp_util_array(self, params: np.ndarray, mu: float = 1) -> np.ndarray:
         """
         Compute the expected utility array for the model.

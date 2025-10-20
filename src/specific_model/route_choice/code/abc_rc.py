@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
 
-import numpy as np
+from typing import TYPE_CHECKING
 
+import numpy as np
 
 class RouteChoiceModel(ABC):
     @abstractmethod
@@ -14,6 +15,19 @@ class RouteChoiceModel(ABC):
 
         Returns:
             dict[int, float]: A dictionary mapping link IDs to their transition probabilities.
+        """
+        pass
+
+    @abstractmethod
+    def calculate_transition_probabilities(self, link_transition: "LinkTransition", params: np.ndarray) -> np.ndarray:
+        """Calculate the transition probabilities for the destination of a link transition.
+
+        Args:
+            link_transition (LinkTransition): The link transition object.
+            params (np.ndarray): Model parameters.
+
+        Returns:
+            np.ndarray: A dense array representing transition probabilities.
         """
         pass
     
@@ -57,6 +71,20 @@ class RouteChoiceModel(ABC):
             if rnd < cumulative_prob:
                 return link_id
         raise ValueError("No valid transition found.")
+    
+    def get_beta(self, params: np.ndarray) -> float:
+        """Get the discount factor beta from the model parameters.
+
+        Args:
+            params (np.ndarray): Model parameters.
+
+        Returns:
+            float: The discount factor beta.
+        """
+        print("Using default beta=1.0")
+        return 1.0  # Default implementation, override in subclasses if needed
 
 
-from definition import LinkTransition
+if TYPE_CHECKING:
+    # Import for type checking only to avoid circular imports at runtime.
+    from definition import LinkTransition
