@@ -5,7 +5,7 @@ services:
       dockerfile: DockerFile
     image: routechoice:latest
     container_name: routechoice
-    command: ["python", "code/main_rl.py", "${ESTIMATE_MODE}", "${INPUT}", "${OUTPUT}"]
+    command: ["python", "code/main_rl.py", "${TRANSPORTATION_MODE}", "${POLYGON_COORD}", "${NETWORK_FROM_OSM}", "${MAPMATCHING}", "${ESTIMATE}", "${SIMULATE}", "${INPUT}", "${OUTPUT}", "${MODEL_NAME}"]
     working_dir: /app
     env_file:
       - .env

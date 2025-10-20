@@ -4,6 +4,11 @@ FROM python:3
 # 作業ディレクトリの作成
 WORKDIR /app
 
+# 必要なシステムパッケージのインストール
+RUN apt-get update && apt-get install -y tzdata \
+    libgdal-dev
+RUN pip install GDAL==$(gdal-config --version) --global-option=build_ext --global-option="-I/usr/include/gdal"
+
 # 必要なファイルをコピー（requirements.txtがあれば先にコピー）
 COPY requirements.txt ./
 
