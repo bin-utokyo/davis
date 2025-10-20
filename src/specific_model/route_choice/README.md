@@ -19,10 +19,19 @@ docker-compose.yml
 2. Python依存パッケージは`requirements.txt`で管理しています。
 
 ## .envファイル例
-```
-ESTIMATE_MODE=walk
-INPUT=input/test
-OUTPUT=output/test
+```ini
+NETWORK_FROM_OSM=true
+MAPMATCHING=true
+ESTIMATE=true
+SIMULATE=true
+ASSIGNMENT=true
+
+INPUT=./input
+OUTPUT=./output
+MODEL_NAME=RL
+TRANSPORTATION_MODE=300
+
+POLYGON_COORD='[[139.698544, 35.660225], [139.698544, 35.656913], [139.705410, 35.656913], [139.705410, 35.660225]]'
 ```
 
 ## ビルドと実行
@@ -35,8 +44,9 @@ $ docker-compose up
 ```
 
 ## コマンド・モード切替
-- `.env`の`ESTIMATE_MODE`を0，1に変更することで、実行内容を切り替えられます。
+- `.env`の`NETWORK_FROM_OSM`, `MAPMATCHING`, `ESTIMATE`, `SIMULATE`を`true`/その他の単語に変更することで、実行内容を切り替えられます。
 - 必要に応じて`INPUT`や`OUTPUT`のパスも変更してください。
+- `TRANSPORTATION_MODE`はPPデータのFeederデータに合わせてください。
 
 ## 注意事項
 - データや出力の永続化のため、`volumes`でローカルディレクトリとコンテナ内ディレクトリをバインドしています。
