@@ -73,7 +73,10 @@ class RL(RouteChoiceModel):
         down_link_idxs = np.array([self.network.link_id2idx[lid] for lid in link_transition.down_link_ids])
         link_idx = self.network.link_id2idx[link_transition.link_id]
 
-        probs = exp_u[down_link_idxs] * (exp_v[down_link_idxs] ** beta) / exp_v[link_idx]
+        probs = exp_u[down_link_idxs] * (exp_v[down_link_idxs] ** beta) / (exp_v[link_idx] + (exp_v[link_idx] == 0))
+
+        if probs.sum() == 0:
+            probs[:] = 1 / len(probs)
 
         # normalize
         probs = probs / probs.sum()
@@ -93,7 +96,7 @@ class RL(RouteChoiceModel):
         exp_v = self.value_array(params, link_transition.destination_node_id)[:-1]
         beta = self.get_beta(params)
 
-        exp_q = self.network.link_adj_matrix.toarray() * exp_u[np.newaxis, :] / exp_v[:, np.newaxis] * np.power(exp_u[np.newaxis, :], beta)  # (n_link, n_link)
+        exp_q = self.network.link_adj_matrix.toarray() * exp_u[np.newaxis, :] / (exp_v[:, np.newaxis] * np.power(exp_u[np.newaxis, :], beta) + (exp_v[:, np.newaxis] == 0))  # (n_link, n_link)
 
         sum_exp_q = np.sum(exp_q, axis=1, keepdims=True)  # (n_link, 1)
         sum_exp_q[sum_exp_q == 0] = 1  # avoid division by zero
@@ -118,6 +121,7 @@ class RL(RouteChoiceModel):
             params = params[:-1]  # last parameter is discount factor
 
         utils = np.einsum('ij,j->i', self.X, params)  # (n_link + 1,)
+        utils = np.clip(utils, -30, 30)  # Avoid overflow
         result = np.exp(utils)
         self.U_cache[cache_key] = result
         return result
