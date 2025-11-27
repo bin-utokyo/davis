@@ -204,20 +204,31 @@ class RL(RouteChoiceModel):
 
         beta = self.get_beta(params)
 
-        # 価値反復による価値関数の更新
-        tms = 1
-        dl_z = 100.
-        while dl_z > 0.1 or tms <= (np.sqrt(self.network.n_link) * 2):
-            V_pre = V.copy()
-            V_new = M_d @ (csr_array(V ** beta)) + b
-            V = V_new.toarray()
-            dl_z = np.linalg.norm(V_new - V_pre, axis=0)
-            tms += 1
-            if tms > 100000:
-                logger.warning("Value iteration did not converge within 100000 iterations.")
-                break
+        if beta == 1.0:
+            # 行列計算による価値関数の更新
+            # (I - M_d)V = b
+            I = csr_array(csr_matrix(np.eye(self.network.n_link + 1, dtype=np.float32)))
+            A = I - M_d
+            V = csr_array(np.linalg.solve(A.toarray(), b.toarray())).toarray()
+
             if np.isnan(V).any():
                 raise ValueError("NaN encountered in value iteration. Check model parameters.")
+
+        else:
+            # 価値反復による価値関数の更新
+            tms = 1
+            dl_z = 100.
+            while dl_z > 0.1 or tms <= (np.sqrt(self.network.n_link) * 2):
+                V_pre = V.copy()
+                V_new = M_d @ (csr_array(V ** beta)) + b
+                V = V_new.toarray()
+                dl_z = np.linalg.norm(V_new - V_pre, axis=0)
+                tms += 1
+                if tms > 100000:
+                    logger.warning("Value iteration did not converge within 100000 iterations.")
+                    break
+                if np.isnan(V).any():
+                    raise ValueError("NaN encountered in value iteration. Check model parameters.")
 
         self.V_cache[cache_key] = V.flatten()
         return self.V_cache[cache_key]

@@ -234,8 +234,9 @@ class BLERecord:
             self.unique_macs = []
 
         # Clean unique_macs observed by only one BLE logger
-        unique_bleid_counts = [self.table[self.table["MAC"] == mac]["ID"].nunique().compute() for mac in self.unique_macs]
-        self.unique_macs = [mac for mac, count in zip(self.unique_macs, unique_bleid_counts) if count > 1]
+        counts = self.table.groupby("MAC")["ID"].nunique().compute()
+ 
+        self.unique_macs = [mac for mac in self.unique_macs if counts.get(mac, 0) > 1]
 
 
     def __len__(self) -> int:
