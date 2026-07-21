@@ -672,10 +672,8 @@ msgstr "Please install DVC and add it to your system's PATH."
 
 #: packages/dataset_cli/build/lib/dataset_cli/commands/setup.py:98
 #: packages/dataset_cli/src/dataset_cli/commands/setup.py:98
-msgid "`uv tool install dvc[gdrive]` または `pip install dvc[gdrive]` でインストールできます。"
-msgstr ""
-"You can install it with `uv tool install dvc[gdrive]` or `pip install "
-"dvc[gdrive]`."
+msgid "`uv tool install --with 'pydrive2>=1.21.3' 'dvc[gdrive]'` または `pip install 'dvc[gdrive]' 'pydrive2>=1.21.3'` でインストールできます。"
+msgstr "You can install it with `uv tool install --with 'pydrive2>=1.21.3' 'dvc[gdrive]'` or `pip install 'dvc[gdrive]' 'pydrive2>=1.21.3'`."
 
 #: packages/dataset_cli/build/lib/dataset_cli/commands/setup.py:105
 #: packages/dataset_cli/src/dataset_cli/commands/setup.py:105

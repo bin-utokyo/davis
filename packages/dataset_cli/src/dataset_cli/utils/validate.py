@@ -73,7 +73,7 @@ def read_data_with_schema(
     try:
         match file_type:
             case "text/csv":
-                enc = encoding if encoding else detect_encoding(file_path)
+                enc = encoding or detect_encoding(file_path)
                 loaded_dataframe = pl.read_csv(
                     file_path,
                     schema=schema_dict,

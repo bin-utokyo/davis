@@ -5,7 +5,7 @@ from pathlib import Path
 import jinja2
 import typer
 from rich import print as pprint
-from weasyprint import CSS, HTML
+from weasyprint import CSS, HTML  # type: ignore[import-untyped]
 
 from dataset_cli.schemas.dataset_config import DatasetConfig
 from dataset_cli.utils.i18n import _

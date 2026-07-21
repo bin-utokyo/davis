@@ -54,7 +54,7 @@ Additionally, depending on your environment, you may need to manually install [D
 If you encounter an error message stating DVC cannot be found when running the `davis get` command after completing the “Installation Steps” and “Initial Setup” below, please install DVC.
 
 - **Installing DVC**: Install following the instructions on the [DVC official website](https://dvc.org/doc/install).
-    - You can install it using `uv tool install dvc[gdrive]`.
+    - Install it with `uv tool install --with 'pydrive2>=1.21.3' 'dvc[gdrive]'`. The explicit PyDrive2 requirement keeps the Google Drive backend compatible with its cryptography dependencies.
 
 ### 2.2. Installation Procedure
 

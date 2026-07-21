@@ -2,14 +2,26 @@
 name = "davis"
 version = "0.1.0"
 requires-python = ">=3.13"
-dependencies = ["davis-cli"]
+dependencies = [
+    "charset-normalizer>=3.4.9",
+    "davis-cli",
+    "dvc>=3.67.1",
+    "polars>=1.43.0",
+    "pydantic>=2.13.4",
+    "pyyaml>=6.0.3",
+    "rich>=15.0.0",
+    "typer>=0.27.0",
+    "types-pyyaml>=6.0.12.20260518",
+    "weasyprint>=69.0",
+]
 
 [dependency-groups]
 dev = [
-    "mypy>=1.17.1",
-    "ruff>=0.12.10",
-    "types-pyyaml>=6.0.12.20250822",
-    "babel>=2.17.0",
+    "mypy>=2.3.0",
+    "pytest>=9.1.1",
+    "ruff>=0.15.22",
+    "types-pyyaml>=6.0.12.20260518",
+    "babel>=2.18.0",
 ]
 
 [tool.uv.workspace]
@@ -18,7 +30,7 @@ members = ["packages/*"]
 [tool.uv.sources]
 davis-cli = { workspace = true }
 
-[tool.ruff]
+[tool.ruff.lint]
 select = ["ALL"]
 ignore = ["D", "E501", "S101", "RUF001", "RUF003"]
 

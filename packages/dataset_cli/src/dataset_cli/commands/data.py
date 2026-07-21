@@ -193,7 +193,7 @@ def infer_schema(
         rprint(_("[red]ファイルタイプを推測できませんでした。[/red]"))
         raise typer.Exit(code=1)
 
-    enc = encoding if encoding else detect_encoding(file_path)
+    enc = encoding or detect_encoding(file_path)
 
     try:
         match file_type:

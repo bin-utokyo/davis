@@ -10,6 +10,7 @@ import polars as pl
 import typer
 import yaml
 from git import GitCommandError, InvalidGitRepositoryError, Repo
+from polars.exceptions import PolarsError
 from pydantic import ValidationError
 from rich import print as rprint
 from rich.progress import track
@@ -147,7 +148,7 @@ def _dvc_add_and_validate(  # noqa: C901
     rprint("[green]✅ 検証対象はすべて検証を通過しました。[/green]")
 
 
-def _generate_pdfs_and_stage(repo: Repo, repo_path: Path) -> None:
+def _generate_pdfs_and_stage(repo: Repo) -> None:
     rprint("\n[bold]Step 3: PDF生成と最終ステージングを行います...[/bold]")
     generate_pdf()
     repo.git.add(all=True)
@@ -156,7 +157,6 @@ def _generate_pdfs_and_stage(repo: Repo, repo_path: Path) -> None:
 
 def _commit_and_push(
     repo: Repo,
-    repo_path: Path,
     message: str,
     dvc_client: DVCClient,
 ) -> None:
@@ -205,8 +205,8 @@ def sync_dataset(
     try:
         changed_files = _detect_changes(repo, repo_path, dvc_client)
         _dvc_add_and_validate(repo_path, changed_files, dvc_client)
-        _generate_pdfs_and_stage(repo, repo_path)
-        _commit_and_push(repo, repo_path, commit_message, dvc_client)
+        _generate_pdfs_and_stage(repo)
+        _commit_and_push(repo, commit_message, dvc_client)
     except (
         GitCommandError,
         subprocess.CalledProcessError,
@@ -330,7 +330,7 @@ def infer_schema(
         rprint("[red]ファイルタイプを推測できませんでした。[/red]")
         raise typer.Exit(code=1)
 
-    enc = encoding if encoding else detect_encoding(file_path)
+    enc = encoding or detect_encoding(file_path)
 
     try:
         if file_type == "text/csv":
@@ -410,7 +410,7 @@ def infer_schema(
 
         rprint(f"[green]スキーマを {schema_path} に保存しました。[/green]")
 
-    except (ValueError, pl.PolarsError) as e:
+    except (ValueError, PolarsError) as e:
         rprint(f"[red]スキーマの推測に失敗しました: {e}[/red]")
         raise typer.Exit(code=1) from e
 
@@ -420,9 +420,9 @@ def infer_schema(
     name="generate-pdf",
     help="指定されたファイル/ディレクトリ、またはデータセット内の全対象ファイルからPDFを生成します。",
 )
-def generate_pdf(
+def generate_pdf(  # noqa: C901, PLR0912
     paths: Annotated[
-        list[Path],
+        list[Path] | None,
         typer.Argument(
             help="PDFを生成するファイルまたはディレクトリのパス。省略した場合は 'data' ディレクトリ内の全対象ファイル。",
             exists=True,
@@ -460,7 +460,7 @@ def generate_pdf(
                 )
 
     # 重複を除去し、ソートする
-    files_for_pdf = sorted(list(set(target_files)))
+    files_for_pdf = sorted(set(target_files))
 
     if not files_for_pdf:
         rprint("  [dim]PDF生成対象のファイルが見つかりませんでした。[/dim]")

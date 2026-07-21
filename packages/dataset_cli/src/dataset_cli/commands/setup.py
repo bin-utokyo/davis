@@ -2,6 +2,7 @@
 
 import os
 import platform
+import shlex
 import shutil
 import subprocess
 import sys
@@ -69,7 +70,15 @@ def setup_davis() -> None:  # noqa: C901, PLR0912, PLR0915
         )
         # if uv is installed, suggest using uv
         if shutil.which("uv"):
-            install_cmd = "uv tool install dvc[gdrive]"
+            install_args = [
+                "uv",
+                "tool",
+                "install",
+                "--with",
+                "pydrive2>=1.21.3",
+                "dvc[gdrive]",
+            ]
+            install_cmd = shlex.join(install_args)
             execute_auto_install = typer.confirm(
                 _(
                     "uvが見つかりました。`{install_cmd}` を実行してdvcをインストールしますか？",
@@ -82,9 +91,8 @@ def setup_davis() -> None:  # noqa: C901, PLR0912, PLR0915
                         install_cmd=install_cmd,
                     ),
                 )
-                subprocess.run(  # noqa: S602
-                    install_cmd,
-                    shell=True,
+                subprocess.run(  # noqa: S603
+                    install_args,
                     check=False,
                 )
                 dvc_path = shutil.which("dvc")
@@ -95,7 +103,7 @@ def setup_davis() -> None:  # noqa: C901, PLR0912, PLR0915
             # Recommend installing via pip if uv is not available
             rprint(
                 _(
-                    "`uv tool install dvc[gdrive]` または `pip install dvc[gdrive]` でインストールできます。",
+                    "`uv tool install --with 'pydrive2>=1.21.3' 'dvc[gdrive]'` または `pip install 'dvc[gdrive]' 'pydrive2>=1.21.3'` でインストールできます。",
                 ),
             )
             # Provide platform-specific installation hints
