@@ -143,7 +143,7 @@ def _collect_targets(
         ):
             dvc_files_to_pull.extend(ds_info.dvc_files)
             for filename, urls in ds_info.pdf_urls.items():
-                pdf_base = Path(ds_info.dvc_files[0]).parent / Path(filename).stem
+                pdf_base = Path(ds_info.dvc_files[0]).parent / filename
                 pdf_urls_to_download.append(
                     (str(urls.ja), output_dir / f"{pdf_base}.ja.pdf"),
                 )
