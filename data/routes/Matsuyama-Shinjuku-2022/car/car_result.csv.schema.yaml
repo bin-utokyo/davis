@@ -24,9 +24,9 @@ description:
   ja: 各トリップのODを特定する処理の過程で生成されるファイルです。
 hash_: ae4dbf3934aa722243732911eb099837976cc4c4cfd82cea307a9237afcb4d6e
 license_:
-  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+  en: Use is permitted only for the 2026 Summer Course on Behavior Modeling in Transportation
     Networks.
-  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+  ja: 2026年度の行動モデル夏の学校のための利用のみ許可します。
 name:
   en: Matsuyama_Shinjuku_car_result
   ja: Matsuyama_Shinjuku_car_result

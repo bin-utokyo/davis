@@ -10,11 +10,15 @@ columns:
   name: Oname
   type_:
     name: Int64
-- description: null
+- description:
+    en: Origin longitude in WGS 84 (EPSG:4326), in decimal degrees.
+    ja: 出発地の経度（WGS 84、EPSG:4326、単位：十進度）。
   name: OLon
   type_:
     name: Float64
-- description: null
+- description:
+    en: Origin latitude in WGS 84 (EPSG:4326), in decimal degrees.
+    ja: 出発地の緯度（WGS 84、EPSG:4326、単位：十進度）。
   name: OLat
   type_:
     name: Float64
@@ -22,11 +26,15 @@ columns:
   name: Dname
   type_:
     name: Int64
-- description: null
+- description:
+    en: Destination longitude in WGS 84 (EPSG:4326), in decimal degrees.
+    ja: 到着地の経度（WGS 84、EPSG:4326、単位：十進度）。
   name: DLon
   type_:
     name: Float64
-- description: null
+- description:
+    en: Destination latitude in WGS 84 (EPSG:4326), in decimal degrees.
+    ja: 到着地の緯度（WGS 84、EPSG:4326、単位：十進度）。
   name: DLat
   type_:
     name: Float64
@@ -35,9 +43,9 @@ description:
   ja: ODデータセットです。
 hash_: a6a57120758b83c8291db7ff9fa81d0d4db02412cc85c81c4d55b0a161b9adaa
 license_:
-  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+  en: Use is permitted only for the 2026 Summer Course on Behavior Modeling in Transportation
     Networks.
-  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+  ja: 2026年度の行動モデル夏の学校のための利用のみ許可します。
 name:
   en: OD
   ja: OD

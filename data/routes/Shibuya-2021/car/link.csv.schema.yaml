@@ -26,7 +26,9 @@ columns:
   name: LinkID
   type_:
     name: Int64
-- description: null
+- description:
+    en: Link departure time in Japan Standard Time (JST, UTC+09:00).
+    ja: リンク出発時刻（日本標準時、JST、UTC+09:00）。
   name: Link_Dep_Time
   type_:
     name: String
@@ -49,11 +51,11 @@ columns:
 description:
   en: Data listing the links passed.
   ja: 通過リンクを列挙したデータです。
-hash_: 43980a898eb5c5a9f8339e4ba4bbf62bd96a41dfb4e2e6c1edb569459eb0b1fe
+hash_: 079b6f7718793433f36dd30f63f4e67bc913d5c28afebba11271c843c54d8614
 license_:
-  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+  en: Use is permitted only for the 2026 Summer Course on Behavior Modeling in Transportation
     Networks.
-  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+  ja: 2026年度の行動モデル夏の学校のための利用のみ許可します。
 name:
   en: Shibuya_2021_car_link
   ja: Shibuya_2021_car_link

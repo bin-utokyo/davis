@@ -26,7 +26,9 @@ columns:
   name: LinkID
   type_:
     name: Int64
-- description: null
+- description:
+    en: Link departure time in Japan Standard Time (JST, UTC+09:00).
+    ja: リンク出発時刻（日本標準時、JST、UTC+09:00）。
   name: Link_Dep_Time
   type_:
     name: String
@@ -51,9 +53,9 @@ description:
   ja: 通過リンクを列挙したデータです。
 hash_: 2bd67b2c5d5426f3da1a701e723c7659c20f4f6508a21abeb148f39fb0c795af
 license_:
-  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+  en: Use is permitted only for the 2026 Summer Course on Behavior Modeling in Transportation
     Networks.
-  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+  ja: 2026年度の行動モデル夏の学校のための利用のみ許可します。
 name:
   en: Matsuyama_Shinjuku_bike_link
   ja: Matsuyama_Shinjuku_bike_link

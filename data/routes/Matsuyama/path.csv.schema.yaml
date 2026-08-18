@@ -23,7 +23,7 @@ columns:
   type_:
     name: Int64
 - description: null
-  name: Path_Length（m）
+  name: Path_Length(m)
   type_:
     name: Int64
 - description: null
@@ -37,11 +37,11 @@ columns:
 description:
   en: Path data for unlinked trip.
   ja: アンリンクトトリップごとのパスデータです。
-hash_: a95e42e4f04394ff1d31602a136e817ddb309c6fb4fea65ec8f06b713baeec24
+hash_: bc52a0bc5fd144f3924efd848ffd9b88706ae6d47a6b3c45810b098b099d2b7f
 license_:
-  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+  en: Use is permitted only for the 2026 Summer Course on Behavior Modeling in Transportation
     Networks.
-  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します
+  ja: 2026年度の行動モデル夏の学校のための利用のみ許可します
 name:
   en: Matsuyama_Path
   ja: Matsuyama_Path
