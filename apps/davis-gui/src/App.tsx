@@ -2,8 +2,9 @@ import {
   CheckCircle2,
   Command,
   LoaderCircle,
+  Moon,
   Play,
-  Sparkles,
+  Sun,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { CommandPalette, type CommandId } from "./features/command-palette/CommandPalette";
@@ -41,6 +42,13 @@ const scrollToResults = () => {
   });
 };
 
+type Theme = "light" | "dark";
+
+const getInitialTheme = (): Theme => {
+  const savedTheme = window.localStorage.getItem("davis-theme");
+  return savedTheme === "light" || savedTheme === "dark" ? savedTheme : "dark";
+};
+
 export default function App() {
   const [datasets, setDatasets] = useState<Dataset[]>([]);
   const [selectedDataset, setSelectedDataset] = useState<Dataset>();
@@ -57,7 +65,16 @@ export default function App() {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [datasetOpen, setDatasetOpen] = useState(false);
   const [compareOpen, setCompareOpen] = useState(false);
+  const [theme, setTheme] = useState<Theme>(getInitialTheme);
   const [announcement, setAnnouncement] = useState("DAVIS GUI loaded");
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    window.localStorage.setItem("davis-theme", theme);
+    document
+      .querySelector('meta[name="theme-color"]')
+      ?.setAttribute("content", theme === "dark" ? "#0d0c12" : "#f6f5fa");
+  }, [theme]);
 
   useEffect(() => {
     let active = true;
@@ -287,12 +304,20 @@ export default function App() {
     scrollToResults();
   };
 
+  const handleThemeToggle = () => {
+    const nextTheme = theme === "dark" ? "light" : "dark";
+    setTheme(nextTheme);
+    setAnnouncement(`${nextTheme === "light" ? "Light" : "Dark"} theme enabled`);
+  };
+
   return (
     <div className="app-shell">
       <header className="topbar">
         <div className="brand-block" aria-label="DAVIS GUI">
-          <span className="brand-mark"><Sparkles aria-hidden="true" size={16} /></span>
-          <span><strong>DAVIS</strong><small>Choice Lab</small></span>
+          <span className="brand-mark">
+            <img src="/bin-mark.svg" alt="" />
+          </span>
+          <span><strong>DAVIS</strong><small>BIN · Choice Lab</small></span>
         </div>
         <DatasetSelector
           datasets={datasets}
@@ -311,6 +336,19 @@ export default function App() {
           <small>{modelStatus}</small>
         </div>
         <div className="run-area">
+          <button
+            className="theme-toggle"
+            type="button"
+            onClick={handleThemeToggle}
+            aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+            title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+          >
+            {theme === "dark" ? (
+              <Sun aria-hidden="true" size={17} />
+            ) : (
+              <Moon aria-hidden="true" size={17} />
+            )}
+          </button>
           {estimationState === "converged" && (
             <span className="top-status"><CheckCircle2 aria-hidden="true" size={14} />Converged</span>
           )}

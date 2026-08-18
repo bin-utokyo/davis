@@ -1,7 +1,7 @@
 import type { Dataset } from "../types";
 
 const alternatives = [
-  { id: "car", label: "CAR", color: "#a78bfa" },
+  { id: "car", label: "CAR", color: "#756bc3" },
   { id: "rail", label: "RAIL", color: "#60a5fa" },
   { id: "bus", label: "BUS", color: "#34d399" },
   { id: "walk", label: "WALK", color: "#fbbf24" },

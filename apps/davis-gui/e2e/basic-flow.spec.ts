@@ -131,3 +131,30 @@ test("selects alternatives and explanatory variables from the active schema", as
   await expect(page.getByRole("combobox", { name: "car variable beta_cost" })).toHaveValue("drive_fare");
   await expect(page.locator('option[value="car_time"]')).toHaveCount(0);
 });
+
+test("uses the BIN mark and persists the selected color theme", async ({ page }) => {
+  await page.goto("/");
+
+  await expect(page.locator('.brand-mark img[src="/bin-mark.svg"]')).toBeVisible();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+
+  await page.getByRole("button", { name: "Switch to light mode" }).click();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+  await expect(page.getByRole("button", { name: "Switch to dark mode" })).toBeVisible();
+
+  const fontSizes = await page.evaluate(() => ({
+    body: Number.parseFloat(getComputedStyle(document.body).fontSize),
+    dataset: Number.parseFloat(
+      getComputedStyle(document.querySelector(".dataset-trigger-copy strong")!).fontSize,
+    ),
+    term: Number.parseFloat(
+      getComputedStyle(document.querySelector(".term-row input")!).fontSize,
+    ),
+  }));
+  expect(fontSizes.body).toBeGreaterThanOrEqual(14);
+  expect(fontSizes.dataset).toBeGreaterThanOrEqual(14);
+  expect(fontSizes.term).toBeGreaterThanOrEqual(11);
+
+  await page.reload();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+});

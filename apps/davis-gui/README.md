@@ -3,6 +3,11 @@
 An interactive, desktop-first UX prototype for exploring how DAVIS could support
 discrete-choice model specification, review, estimation, and comparison.
 
+The interface uses the BIN (Behavior in Networks Studies Unit) violet
+`#4D4397` as its reference brand color. The compact vector mark in
+`public/bin-mark.svg` is derived from the supplied `bin_logo.ai` artwork; the
+original Illustrator file is intentionally not copied into this app.
+
 > **Mock data only.** This app does not connect to DAVIS Python code, `dataset_cli`,
 > a backend, an API, or a real estimator. All datasets, suggestions, experiments,
 > and results are deterministic frontend fixtures.
@@ -43,6 +48,8 @@ Playwright starts the Vite development server automatically for the E2E suite.
 ## Prototype interactions
 
 - Open the global command palette with <kbd>Cmd</kbd>/<kbd>Ctrl</kbd> + <kbd>K</kbd>.
+- Switch between the accessible light and dark themes from the top bar; the
+  preference is stored on the current device.
 - Switch between three mock datasets; each has its own explicit column schema.
 - Select or remove Car, Rail, Bus, and Walk alternatives (with a two-alternative minimum).
 - Add, replace, or remove explanatory-variable terms from schema-backed selectors.
@@ -79,7 +86,8 @@ experiment also restores its associated dataset.
 
 ## Known limitations
 
-- State resets on reload; experiments cannot be persisted or renamed.
+- Model state resets on reload; experiments cannot be persisted or renamed.
+  The light/dark theme preference is persisted locally.
 - Estimation, diagnostics, and suggestions are UX fixtures, not scientific output.
 - The structured editor does not parse arbitrary utility expressions or create
   transformed columns; explanatory variables must already exist in the mock schema.
