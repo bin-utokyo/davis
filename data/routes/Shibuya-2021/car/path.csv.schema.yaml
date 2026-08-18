@@ -31,7 +31,7 @@ columns:
   type_:
     name: Float64
 - description: null
-  name: Path_Length（m）
+  name: Path_Length(m)
   type_:
     name: Float64
 - description: null
@@ -45,11 +45,11 @@ columns:
 description:
   en: Path data for unlinked trip.
   ja: アンリンクトトリップごとのパスデータです。
-hash_: 00045417ce02a9aee0984bcd4de6bb3fdffe6e385d1d8fccb4dd6e33275f6285
+hash_: 900256983ff1d51cf385c1579429e9c02edcd073b96d0d801dbb050d4ca57c31
 license_:
-  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+  en: Use is permitted only for the 2026 Summer Course on Behavior Modeling in Transportation
     Networks.
-  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+  ja: 2026年度の行動モデル夏の学校のための利用のみ許可します。
 name:
   en: Shibuya_2021_car_path
   ja: Shibuya_2021_car_path
