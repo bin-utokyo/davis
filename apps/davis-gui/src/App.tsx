@@ -13,7 +13,12 @@ import { ExperimentSidebar } from "./features/experiments/ExperimentSidebar";
 import { UtilityEditor } from "./features/model-editor/UtilityEditor";
 import { ResultsPanel } from "./features/results/ResultsPanel";
 import { SuggestionsPanel } from "./features/suggestions/SuggestionsPanel";
-import { cloneSpecification, initialSpecification } from "./mock/specifications";
+import {
+  cloneSpecification,
+  createDefaultAlternative,
+  createInitialSpecification,
+  initialSpecification,
+} from "./mock/specifications";
 import { getDatasets } from "./services/datasetService";
 import { runEstimation } from "./services/estimationService";
 import { getExperiments } from "./services/experimentService";
@@ -59,14 +64,21 @@ export default function App() {
     Promise.all([getDatasets(), getExperiments()]).then(([nextDatasets, nextExperiments]) => {
       if (!active) return;
       setDatasets(nextDatasets);
-      setSelectedDataset(nextDatasets[0]);
       setExperiments(nextExperiments);
       if (nextExperiments[0]) {
+        setSelectedDataset(
+          nextDatasets.find((dataset) => dataset.id === nextExperiments[0].datasetId) ?? nextDatasets[0],
+        );
         setActiveExperimentId(nextExperiments[0].id);
         setSpecification(cloneSpecification(nextExperiments[0].specification));
         setResult(nextExperiments[0].result);
         setEstimationState("converged");
         setModelStatus("Saved");
+      } else {
+        setSelectedDataset(nextDatasets[0]);
+        if (nextDatasets[0]) {
+          setSpecification(createInitialSpecification(nextDatasets[0]));
+        }
       }
     });
     return () => {
@@ -75,14 +87,15 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    if (!selectedDataset) return;
     let active = true;
-    getSuggestions(specification).then((nextSuggestions) => {
+    getSuggestions(specification, selectedDataset).then((nextSuggestions) => {
       if (active) setSuggestions(nextSuggestions);
     });
     return () => {
       active = false;
     };
-  }, [specification]);
+  }, [selectedDataset, specification]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -109,16 +122,22 @@ export default function App() {
   }, []);
 
   const createNewModel = useCallback(() => {
-    setSpecification(cloneSpecification(initialSpecification));
+    setSpecification(
+      selectedDataset
+        ? createInitialSpecification(selectedDataset)
+        : cloneSpecification(initialSpecification),
+    );
     setActiveExperimentId(undefined);
     setResult(undefined);
     setResultTab("table");
     setEstimationState("idle");
     setModelStatus("Draft");
     setAnnouncement("New MNL model created");
-  }, []);
+  }, [selectedDataset]);
 
   const openExperiment = useCallback((experiment: Experiment) => {
+    const experimentDataset = datasets.find((dataset) => dataset.id === experiment.datasetId);
+    if (experimentDataset) setSelectedDataset(experimentDataset);
     setSpecification(cloneSpecification(experiment.specification));
     setActiveExperimentId(experiment.id);
     setResult(structuredClone(experiment.result));
@@ -126,6 +145,17 @@ export default function App() {
     setEstimationState("converged");
     setModelStatus("Saved");
     setAnnouncement(`${experiment.name} restored`);
+  }, [datasets]);
+
+  const selectDataset = useCallback((dataset: Dataset) => {
+    setSelectedDataset(dataset);
+    setSpecification(createInitialSpecification(dataset));
+    setActiveExperimentId(undefined);
+    setResult(undefined);
+    setResultTab("table");
+    setEstimationState("idle");
+    setModelStatus("Draft");
+    setAnnouncement(`${dataset.name} selected; specification reset to its schema`);
   }, []);
 
   const handleCommand = useCallback((command: CommandId) => {
@@ -155,6 +185,12 @@ export default function App() {
     field: "coefficient" | "variable",
     value: string,
   ) => {
+    if (
+      field === "variable" &&
+      !selectedDataset?.columns.some(
+        (column) => column.role === "explanatory" && column.name === value,
+      )
+    ) return;
     const next = cloneSpecification(specification);
     const term = next.alternatives
       .find((alternative) => alternative.id === alternativeId)
@@ -164,18 +200,63 @@ export default function App() {
     markModified(next);
   };
 
-  const addTerm = (alternativeId: AlternativeId) => {
+  const addTerm = (alternativeId: AlternativeId, variable: string) => {
+    if (!selectedDataset?.columns.some(
+      (column) => column.role === "explanatory" && column.name === variable,
+    )) return;
     const next = cloneSpecification(specification);
     const alternative = next.alternatives.find((item) => item.id === alternativeId);
     if (!alternative) return;
-    const suffix = alternative.terms.length + 1;
+    if (alternative.terms.some((term) => term.variable === variable)) return;
+    const coefficientSuffix = variable.replace(/[^a-zA-Z0-9_]/g, "_").toLowerCase();
     alternative.terms.push({
       id: `${alternativeId}-custom-${Date.now()}`,
-      coefficient: `beta_new_${suffix}`,
-      variable: `${alternativeId}_variable`,
+      coefficient: `beta_${coefficientSuffix}`,
+      variable,
       kind: "variable",
     });
     markModified(next);
+  };
+
+  const toggleAlternative = (alternativeId: AlternativeId) => {
+    if (!selectedDataset) return;
+    const isActive = specification.alternatives.some((item) => item.id === alternativeId);
+    if (isActive && specification.alternatives.length <= 2) return;
+
+    if (isActive) {
+      const nextAlternatives = cloneSpecification(specification).alternatives.filter(
+        (item) => item.id !== alternativeId,
+      );
+      if (specification.alternatives.at(-1)?.id === alternativeId) {
+        const nextReference = nextAlternatives.at(-1);
+        if (nextReference) {
+          nextReference.terms = nextReference.terms.filter(
+            (term) => term.coefficient !== `ASC_${nextReference.id}`,
+          );
+        }
+      }
+      markModified({
+        alternatives: nextAlternatives,
+      });
+      const label = selectedDataset.alternatives.find((item) => item.id === alternativeId)?.label;
+      setAnnouncement(`${label ?? alternativeId} removed from the choice set`);
+      return;
+    }
+
+    const existingById = new Map(
+      specification.alternatives.map((alternative) => [alternative.id, alternative]),
+    );
+    existingById.set(
+      alternativeId,
+      createDefaultAlternative(selectedDataset, alternativeId),
+    );
+    markModified({
+      alternatives: selectedDataset.alternatives
+        .map((item) => existingById.get(item.id))
+        .filter((item): item is NonNullable<typeof item> => Boolean(item)),
+    });
+    const label = selectedDataset.alternatives.find((item) => item.id === alternativeId)?.label;
+    setAnnouncement(`${label ?? alternativeId} added to the choice set`);
   };
 
   const removeTerm = (alternativeId: AlternativeId, termId: string) => {
@@ -187,7 +268,8 @@ export default function App() {
   };
 
   const handleSuggestion = (suggestionId: SuggestionId) => {
-    markModified(applySuggestion(specification, suggestionId));
+    if (!selectedDataset) return;
+    markModified(applySuggestion(specification, suggestionId, selectedDataset));
     const suggestion = suggestions.find((item) => item.id === suggestionId);
     setAnnouncement(`${suggestion?.title ?? "Suggestion"} applied`);
   };
@@ -217,10 +299,7 @@ export default function App() {
           selected={selectedDataset}
           open={datasetOpen}
           onOpenChange={setDatasetOpen}
-          onSelect={(dataset) => {
-            setSelectedDataset(dataset);
-            setAnnouncement(`${dataset.name} selected`);
-          }}
+          onSelect={selectDataset}
         />
         <button className="command-trigger" onClick={() => setPaletteOpen(true)}>
           <Command aria-hidden="true" size={15} />
@@ -258,11 +337,13 @@ export default function App() {
           onCompare={() => setCompareOpen(true)}
         />
         <UtilityEditor
+          dataset={selectedDataset}
           specification={specification}
           status={modelStatus}
           onTermChange={updateTerm}
           onAddTerm={addTerm}
           onRemoveTerm={removeTerm}
+          onAlternativeToggle={toggleAlternative}
         />
         <SuggestionsPanel suggestions={suggestions} onApply={handleSuggestion} />
         <ResultsPanel result={result} activeTab={resultTab} onTabChange={setResultTab} />

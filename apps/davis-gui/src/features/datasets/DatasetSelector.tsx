@@ -28,7 +28,7 @@ export function DatasetSelector({
             <strong>{selected?.name ?? "Choose dataset"}</strong>
             <small>
               {selected
-                ? `${formatNumber(selected.observations)} observations · ${selected.alternatives} alternatives`
+                ? `${formatNumber(selected.observations)} observations · ${selected.alternatives.length} alternatives`
                 : "Mock datasets"}
             </small>
           </span>
@@ -50,7 +50,7 @@ export function DatasetSelector({
               <span>
                 <strong>{dataset.name}</strong>
                 <small>
-                  {formatNumber(dataset.observations)} observations · {dataset.alternatives} alternatives
+                  {formatNumber(dataset.observations)} observations · {dataset.alternatives.length} alternatives
                 </small>
                 <em>{dataset.description}</em>
               </span>
