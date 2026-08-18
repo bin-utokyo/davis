@@ -1,10 +1,26 @@
 export type AlternativeId = "car" | "rail" | "bus" | "walk";
 
+export interface DatasetAlternative {
+  id: AlternativeId;
+  label: string;
+  color: string;
+}
+
+export interface DatasetColumn {
+  name: string;
+  label: string;
+  type: "number" | "category" | "id";
+  role: "explanatory" | "choice" | "id";
+  alternativeId?: AlternativeId;
+  concept?: "time" | "cost" | "income";
+}
+
 export interface Dataset {
   id: string;
   name: string;
   observations: number;
-  alternatives: number;
+  alternatives: DatasetAlternative[];
+  columns: DatasetColumn[];
   description: string;
 }
 
@@ -64,6 +80,7 @@ export interface EstimationResult {
 
 export interface Experiment {
   id: string;
+  datasetId: string;
   name: string;
   summary: string;
   createdAt: string;

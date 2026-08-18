@@ -43,8 +43,10 @@ Playwright starts the Vite development server automatically for the E2E suite.
 ## Prototype interactions
 
 - Open the global command palette with <kbd>Cmd</kbd>/<kbd>Ctrl</kbd> + <kbd>K</kbd>.
-- Switch between three mock datasets.
-- Edit coefficient and variable terms for Car, Rail, Bus, and Walk utilities.
+- Switch between three mock datasets; each has its own explicit column schema.
+- Select or remove Car, Rail, Bus, and Walk alternatives (with a two-alternative minimum).
+- Add, replace, or remove explanatory-variable terms from schema-backed selectors.
+- Use only exact numeric column names from the active dataset—free-text variable names are not accepted.
 - Apply model suggestions and see the specification change immediately.
 - Run a short simulated estimation whose output depends on the specification.
 - Restore the utility, suggestions, metrics, and coefficient table for MNL-01–03.
@@ -68,9 +70,17 @@ implementations import local fixtures only. A future integration can provide
 HTTP-backed adapters behind those functions without changing the feature
 components. These modules intentionally do **not** define a backend contract.
 
+Dataset fixtures declare alternatives and columns separately. Utility
+coefficients remain editable model parameters, while every explanatory variable
+is selected from the active dataset's numeric `role: "explanatory"` columns.
+Changing datasets creates a compatible draft specification, so column names
+from the previous schema cannot remain in the model. Restoring a saved mock
+experiment also restores its associated dataset.
+
 ## Known limitations
 
 - State resets on reload; experiments cannot be persisted or renamed.
 - Estimation, diagnostics, and suggestions are UX fixtures, not scientific output.
-- The structured editor does not parse arbitrary utility expressions.
+- The structured editor does not parse arbitrary utility expressions or create
+  transformed columns; explanatory variables must already exist in the mock schema.
 - The prototype is optimized for desktop and compact laptop viewports, not phones.

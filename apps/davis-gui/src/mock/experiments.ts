@@ -10,6 +10,7 @@ import {
 export const experiments: Experiment[] = [
   {
     id: "mnl-03",
+    datasetId: "tokyo-pt-2018",
     name: "MNL-03",
     summary: "Time + Cost + ASC",
     createdAt: "18 minutes ago",
@@ -18,6 +19,7 @@ export const experiments: Experiment[] = [
   },
   {
     id: "mnl-02",
+    datasetId: "tokyo-pt-2018",
     name: "MNL-02",
     summary: "Time + Cost",
     createdAt: "Yesterday",
@@ -26,6 +28,7 @@ export const experiments: Experiment[] = [
   },
   {
     id: "mnl-01",
+    datasetId: "tokyo-pt-2018",
     name: "MNL-01",
     summary: "Time only",
     createdAt: "3 days ago",
