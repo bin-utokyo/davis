@@ -24,9 +24,9 @@ description:
   ja: 各トリップのODを特定する処理の過程で生成されるファイルです。
 hash_: 04815c4b5d33d946a785657ba38bb7d58281e412199ae346f3aede1c4c159dd4
 license_:
-  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+  en: Use is permitted only for the 2026 Summer Course on Behavior Modeling in Transportation
     Networks.
-  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+  ja: 2026年度の行動モデル夏の学校のための利用のみ許可します。
 name:
   en: Shibuya_2021_walk_result
   ja: Shibuya_2021_walk_result

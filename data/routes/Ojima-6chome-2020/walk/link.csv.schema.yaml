@@ -26,7 +26,9 @@ columns:
   name: LinkID
   type_:
     name: Int64
-- description: null
+- description:
+    en: Link departure time in Japan Standard Time (JST, UTC+09:00).
+    ja: リンク出発時刻（日本標準時、JST、UTC+09:00）。
   name: Link_Dep_Time
   type_:
     name: String
@@ -51,9 +53,9 @@ description:
   ja: 通過リンクを列挙したデータです。
 hash_: f633c9680724cf3ace5180cfcbc4d09b2ac704c152b4c546a3146291deb894dc
 license_:
-  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+  en: Use is permitted only for the 2026 Summer Course on Behavior Modeling in Transportation
     Networks.
-  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+  ja: 2026年度の行動モデル夏の学校のための利用のみ許可します。
 name:
   en: Ojima_6chome_walk_link
   ja: Ojima_6chome_walk_link

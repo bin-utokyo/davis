@@ -18,15 +18,21 @@ columns:
   name: purpose
   type_:
     name: String
-- description: null
+- description:
+    en: Date and time in Japan Standard Time (JST, UTC+09:00).
+    ja: 日本標準時（JST、UTC+09:00）による日時。
   name: DepartureTime
   type_:
     name: Datetime
-- description: null
+- description:
+    en: Date and time in Japan Standard Time (JST, UTC+09:00).
+    ja: 日本標準時（JST、UTC+09:00）による日時。
   name: ArrivalTime
   type_:
     name: Datetime
-- description: null
+- description:
+    en: Trip duration in seconds.
+    ja: トリップ所要時間（秒）。
   name: time(second)
   type_:
     name: Int64
@@ -39,9 +45,9 @@ description:
   ja: 131人の11/10~11/25の移動(トリップ)データ
 hash_: 900be76aa3a70e9703ccbbaa10197ba2e0aa33dfa6ce6d86137a2416856b054b
 license_:
-  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+  en: Use is permitted only for the 2026 Summer Course on Behavior Modeling in Transportation
     Networks.
-  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+  ja: 2026年度の行動モデル夏の学校のための利用のみ許可します。
 name:
   en: Yokohama_Trip
   ja: 横浜_トリップデータ

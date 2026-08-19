@@ -24,9 +24,9 @@ description:
   ja: 各トリップのODを特定する処理の過程で生成されるファイルです。
 hash_: 72ac2dbf72a8783c59d210f1cf49e6dc9152e059ab4905a8277c4bae053bbb7e
 license_:
-  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+  en: Use is permitted only for the 2026 Summer Course on Behavior Modeling in Transportation
     Networks.
-  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+  ja: 2026年度の行動モデル夏の学校のための利用のみ許可します。
 name:
   en: Ojima_6chome_bus_result
   ja: Ojima_6chome_bus_result

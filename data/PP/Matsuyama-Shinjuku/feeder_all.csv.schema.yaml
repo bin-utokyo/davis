@@ -6,38 +6,50 @@ columns:
   name: ID
   type_:
     name: Int64
-- description: null
+- description:
+    en: User ID
+    ja: ユーザーID
   name: ユーザーID
   type_:
     name: Int64
-- description: null
+- description:
+    en: Trip ID
+    ja: トリップID
   name: トリップID
   type_:
     name: Int64
-- description: null
+- description:
+    en: Departure time (JST)
+    ja: 出発時刻（JST）
   name: 出発時刻
   type_:
     name: Datetime
-- description: null
+- description:
+    en: Arrival time (JST)
+    ja: 到着時刻（JST）
   name: 到着時刻
   type_:
     name: Datetime
-- description: null
+- description:
+    en: Transportation mode code
+    ja: 移動手段コード
   name: 移動手段コード
   type_:
     name: Int64
-- description: null
+- description:
+    en: Transfer code
+    ja: 乗り換えコード
   name: 乗り換えコード
   type_:
     name: Int64
 description:
   en: This is personal information of Matuyama-Shinjyuku PPdata
   ja: 松山-PPの個人情報です
-hash_: f0762730ee6608b998b2ee7e17a7be06817cfe11880c747dd4b23aa37f9bb413
+hash_: fea2acd29533d4adfe0ab2727e25188407ba865300e2167fa2ffc27423f32124
 license_:
-  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+  en: Use is permitted only for the 2026 Summer Course on Behavior Modeling in Transportation
     Networks.
-  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+  ja: 2026年度の行動モデル夏の学校のための利用のみ許可します。
 name:
   en: Matuyama-Shinjyuku personal information
   ja: 松山-新宿

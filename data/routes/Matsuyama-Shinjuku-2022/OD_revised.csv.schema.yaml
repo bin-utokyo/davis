@@ -3,18 +3,22 @@ city:
   ja: 松山ー新宿
 columns:
 - description: null
-  name: UserID
+  name: MonitorID
   type_:
     name: Int64
 - description: null
   name: TripID
   type_:
     name: Int64
-- description: null
+- description:
+    en: Trip departure time in Japan Standard Time (JST, UTC+09:00).
+    ja: トリップ出発時刻（日本標準時、JST、UTC+09:00）。
   name: Dep_Time
   type_:
     name: Datetime
-- description: null
+- description:
+    en: Trip arrival time in Japan Standard Time (JST, UTC+09:00).
+    ja: トリップ到着時刻（日本標準時、JST、UTC+09:00）。
   name: Arr_Time
   type_:
     name: Datetime
@@ -22,11 +26,15 @@ columns:
   name: Oname
   type_:
     name: Int64
-- description: null
+- description:
+    en: Origin longitude in WGS 84 (EPSG:4326), in decimal degrees.
+    ja: 出発地の経度（WGS 84、EPSG:4326、単位：十進度）。
   name: OLon
   type_:
     name: Float64
-- description: null
+- description:
+    en: Origin latitude in WGS 84 (EPSG:4326), in decimal degrees.
+    ja: 出発地の緯度（WGS 84、EPSG:4326、単位：十進度）。
   name: OLat
   type_:
     name: Float64
@@ -34,11 +42,15 @@ columns:
   name: Dname
   type_:
     name: Int64
-- description: null
+- description:
+    en: Destination longitude in WGS 84 (EPSG:4326), in decimal degrees.
+    ja: 到着地の経度（WGS 84、EPSG:4326、単位：十進度）。
   name: DLon
   type_:
     name: Float64
-- description: null
+- description:
+    en: Destination latitude in WGS 84 (EPSG:4326), in decimal degrees.
+    ja: 到着地の緯度（WGS 84、EPSG:4326、単位：十進度）。
   name: DLat
   type_:
     name: Float64
@@ -49,11 +61,11 @@ columns:
 description:
   en: Origin-destination trips made by 111 participants between 2 Aug and 7 Sep 2022.
   ja: 2022年8月2日〜9月7日にかのODトリップデータです。
-hash_: 0aded1a3b5e64aa4c87a808ec063262e5b91cf23b39aeb2e37db4341de9eecad
+hash_: 34556f99c094dd3f528914bf67287f158ff6b46262a8e1d6cedc80892d3a6e8f
 license_:
-  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+  en: Use is permitted only for the 2026 Summer Course on Behavior Modeling in Transportation
     Networks.
-  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+  ja: 2026年度の行動モデル夏の学校のための利用のみ許可します。
 name:
   en: Matsuyama_Shinjuku_OD_revised
   ja: Matsuyama_Shinjuku_OD_revised

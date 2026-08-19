@@ -18,15 +18,21 @@ columns:
   name: Purpose
   type_:
     name: String
-- description: null
+- description:
+    en: Date and time in Japan Standard Time (JST, UTC+09:00).
+    ja: 日本標準時（JST、UTC+09:00）による日時。
   name: DepartureTime
   type_:
     name: Datetime
-- description: null
+- description:
+    en: Date and time in Japan Standard Time (JST, UTC+09:00).
+    ja: 日本標準時（JST、UTC+09:00）による日時。
   name: ArrivalTime
   type_:
     name: Datetime
-- description: null
+- description:
+    en: Trip duration in seconds.
+    ja: トリップ所要時間（秒）。
   name: TripTime
   type_:
     name: Int64
@@ -38,15 +44,21 @@ columns:
   name: MainTransportationName
   type_:
     name: String
-- description: null
+- description:
+    en: Straight-line distance between origin and destination in metres.
+    ja: 出発地と到着地の直線距離（メートル）。
   name: ODDirectDistance
   type_:
     name: Float64
-- description: null
+- description:
+    en: Longitude in decimal degrees using the World Geodetic System (WGS 84).
+    ja: 世界測地系（WGS 84）による経度（10進度）。
   name: LonO
   type_:
     name: Float64
-- description: null
+- description:
+    en: Latitude in decimal degrees using the World Geodetic System (WGS 84).
+    ja: 世界測地系（WGS 84）による緯度（10進度）。
   name: LatO
   type_:
     name: Float64
@@ -54,11 +66,15 @@ columns:
   name: Node_nameO
   type_:
     name: Int64
-- description: null
+- description:
+    en: Longitude in decimal degrees using the World Geodetic System (WGS 84).
+    ja: 世界測地系（WGS 84）による経度（10進度）。
   name: LonD
   type_:
     name: Float64
-- description: null
+- description:
+    en: Latitude in decimal degrees using the World Geodetic System (WGS 84).
+    ja: 世界測地系（WGS 84）による緯度（10進度）。
   name: LatD
   type_:
     name: Float64
@@ -70,11 +86,15 @@ columns:
   name: Whether_alternatives_can_be_generated_Car
   type_:
     name: Float64
-- description: null
+- description:
+    en: Route distance for the indicated mode in kilometres.
+    ja: 該当交通手段の経路距離（キロメートル）。
   name: Distance_Car
   type_:
     name: Float64
-- description: null
+- description:
+    en: Travel time for the indicated mode in hours.
+    ja: 該当交通手段の所要時間（時間）。
   name: Time_Car
   type_:
     name: Float64
@@ -82,11 +102,15 @@ columns:
   name: Whether_alternatives_can_be_generated_Train
   type_:
     name: Float64
-- description: null
+- description:
+    en: Route distance for the indicated mode in kilometres.
+    ja: 該当交通手段の経路距離（キロメートル）。
   name: Distance_Train
   type_:
     name: Float64
-- description: null
+- description:
+    en: Travel time for the indicated mode in hours.
+    ja: 該当交通手段の所要時間（時間）。
   name: Time_Train
   type_:
     name: Float64
@@ -98,23 +122,33 @@ columns:
   name: Number_of_Change_Transportation_Train
   type_:
     name: Float64
-- description: null
+- description:
+    en: Route distance for the indicated mode in kilometres.
+    ja: 該当交通手段の経路距離（キロメートル）。
   name: Access_Distance_Train
   type_:
     name: Float64
-- description: null
+- description:
+    en: Travel time for the indicated mode in hours.
+    ja: 該当交通手段の所要時間（時間）。
   name: Access_Time_Train
   type_:
     name: Float64
-- description: null
+- description:
+    en: Route distance for the indicated mode in kilometres.
+    ja: 該当交通手段の経路距離（キロメートル）。
   name: Egress_Distance_Train
   type_:
     name: Float64
-- description: null
+- description:
+    en: Travel time for the indicated mode in hours.
+    ja: 該当交通手段の所要時間（時間）。
   name: Egress_Time_Train
   type_:
     name: Float64
-- description: null
+- description:
+    en: Travel time for the indicated mode in hours.
+    ja: 該当交通手段の所要時間（時間）。
   name: Total_Time_Train
   type_:
     name: Float64
@@ -122,11 +156,15 @@ columns:
   name: Whether_alternatives_can_be_generated_Walk
   type_:
     name: Float64
-- description: null
+- description:
+    en: Route distance for the indicated mode in kilometres.
+    ja: 該当交通手段の経路距離（キロメートル）。
   name: Distance_Walk
   type_:
     name: Float64
-- description: null
+- description:
+    en: Travel time for the indicated mode in hours.
+    ja: 該当交通手段の所要時間（時間）。
   name: Time_Walk
   type_:
     name: Float64
@@ -134,11 +172,15 @@ columns:
   name: Whether_alternatives_can_be_generated_Bus
   type_:
     name: Float64
-- description: null
+- description:
+    en: Route distance for the indicated mode in kilometres.
+    ja: 該当交通手段の経路距離（キロメートル）。
   name: Distance_Bus
   type_:
     name: Float64
-- description: null
+- description:
+    en: Travel time for the indicated mode in hours.
+    ja: 該当交通手段の所要時間（時間）。
   name: Time_Bus
   type_:
     name: Float64
@@ -150,23 +192,33 @@ columns:
   name: Number_of_Change_Transportation_Bus
   type_:
     name: Float64
-- description: null
+- description:
+    en: Route distance for the indicated mode in kilometres.
+    ja: 該当交通手段の経路距離（キロメートル）。
   name: Access_Distance_Bus
   type_:
     name: Float64
-- description: null
+- description:
+    en: Travel time for the indicated mode in hours.
+    ja: 該当交通手段の所要時間（時間）。
   name: Access_Time_Bus
   type_:
     name: Float64
-- description: null
+- description:
+    en: Route distance for the indicated mode in kilometres.
+    ja: 該当交通手段の経路距離（キロメートル）。
   name: Egress_Distance_Bus
   type_:
     name: Float64
-- description: null
+- description:
+    en: Travel time for the indicated mode in hours.
+    ja: 該当交通手段の所要時間（時間）。
   name: Egress_Time_Bus
   type_:
     name: Float64
-- description: null
+- description:
+    en: Travel time for the indicated mode in hours.
+    ja: 該当交通手段の所要時間（時間）。
   name: Total_Time_Bus
   type_:
     name: Float64
@@ -183,9 +235,9 @@ description:
   ja: 331人の07/18~07/16の移動(トリップ)データ
 hash_: f55a0c7161c7a6eb96d244bc6447160d54b122d7778bc99650d6a9f3c83951ad
 license_:
-  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+  en: Use is permitted only for the 2026 Summer Course on Behavior Modeling in Transportation
     Networks.
-  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+  ja: 2026年度の行動モデル夏の学校のための利用のみ許可します。
 name:
   en: Toyosu2021_Trip
   ja: 豊洲2021_トリップ

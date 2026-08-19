@@ -10,7 +10,9 @@ columns:
   name: ID
   type_:
     name: String
-- description: null
+- description:
+    en: Age in years.
+    ja: 年齢（歳）。
   name: Age
   type_:
     name: String
@@ -31,9 +33,9 @@ description:
   ja: 松山PPの個人情報です
 hash_: ec7d778bc835e4fa710029c97186c1763d91bebfbd05e9d9b6090b5e9496ce3c
 license_:
-  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+  en: Use is permitted only for the 2026 Summer Course on Behavior Modeling in Transportation
     Networks.
-  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+  ja: 2026年度の行動モデル夏の学校のための利用のみ許可します。
 name:
   en: Matuyama_Personal_info
   ja: 松山個人情報
