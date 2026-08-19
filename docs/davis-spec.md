@@ -2107,7 +2107,7 @@ V_ni = ASC_i + Σ beta_k x_nik
 
 Formの構造化設定は標準MNL component固有の`config_schema`に従い，Davis全体の中央contractには加えません．Formと生成codeを同時に別々の正本として管理せず，Form互換modeでは構造化設定を正本としてcodeを生成します．
 
-利用者は画面切替から生成codeを確認し，高度な編集modeへ移行できます．最初の手動code編集時に，そのmodel revisionを`code` modeへ一方向に切り替えます．非線形効用，独自尤度，独自class等を含む任意codeをFormへ逆変換しません．`code` modeではFormを編集不可にし，移行直前の構造化設定を参照用に保持します．Formへ戻したい場合は，元revisionから新しいForm互換modelを作成します．
+利用者は画面切替から生成codeを確認・編集できます．codeが線形和，parameter，列参照等の明示した対応構文だけで表現されている間は，構文検査を通してFormへ戻せます．数学的な同値性は推測しません．非線形効用，独自関数，独自尤度，独自class等の非対応構文を使う場合は確認後に，そのmodel revisionを高度な`code` modeへ一方向に切り替えます．`code` modeではFormを編集不可にし，移行直前の構造化設定を参照用に保持します．Formへ戻したい場合は，元revisionから新しいForm互換modelを作成します．
 
 GUI編集とcode編集のどちらで作成したmodelも，同じModelManifest，RunRequest，RunResultを使って実行します．したがって，GUIが表現できないmodelでも，データ解決，実行記録，成果物管理，比較機能は失いません．
 
@@ -2300,7 +2300,7 @@ P0〜P2が安定した後，次を優先度と需要に応じて追加します�
 19. CLIの互換性はcommand名ではなく利用可能な機能で判定し，取得commandは短い`get`を採用します．
 20. P0のCLIはWindows，macOS，Linuxを対象とし，既定の取得先をcurrent directoryとします．
 21. 標準MNLは共通の意味上の列roleとmodel固有の追加要件を組み合わせ，他modelへ同じ入力形式を強制しません．
-22. GUIは線形効用をForm編集でき，高度なcode編集へ一方向に移行できるようにします．任意codeをFormへ逆変換しません．
+22. GUIは線形効用をFormと対応構文のcodeから編集でき，非対応構文を使う場合は高度なcode modeへ一方向に移行します．任意codeをFormへ逆変換しません．
 23. Model出力は状態，来歴，成果物参照だけを共通必須とし，係数等は任意標準成果物とします．
 
 ## 60.2 要確認事項
