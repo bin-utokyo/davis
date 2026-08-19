@@ -18,7 +18,9 @@ columns:
   name: UserCode
   type_:
     name: String
-- description: null
+- description:
+    en: Date and time in Japan Standard Time (JST, UTC+09:00).
+    ja: 日本標準時（JST、UTC+09:00）による日時。
   name: DateTime
   type_:
     name: Datetime
@@ -65,9 +67,9 @@ description:
   ja: 131人の11/10~11/25の移動のGPS軌跡
 hash_: 9ce505827f70b4ed67bad5bbb239070ff09a9900b4c4f55e4dfde0422a756717
 license_:
-  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+  en: Use is permitted only for the 2026 Summer Course on Behavior Modeling in Transportation
     Networks.
-  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+  ja: 2026年度の行動モデル夏の学校のための利用のみ許可します。
 name:
   en: locData.csv
   ja: locData.csv

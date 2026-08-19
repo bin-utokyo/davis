@@ -10,7 +10,9 @@ columns:
   name: userID
   type_:
     name: Int64
-- description: null
+- description:
+    en: Date and time in Japan Standard Time (JST, UTC+09:00).
+    ja: 日本標準時（JST、UTC+09:00）による日時。
   name: datetime
   type_:
     name: Datetime
@@ -38,9 +40,9 @@ description:
   ja: 115人の08/29~09/07 松山と新宿間のプローブパーソン(PP)のトリップと世界測地系（WGS）での座標を対応させたデータ
 hash_: a831414a629036f5c9d05bec131794b4bc98b3a23694f9d04fc5593923972029
 license_:
-  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+  en: Use is permitted only for the 2026 Summer Course on Behavior Modeling in Transportation
     Networks.
-  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+  ja: 2026年度の行動モデル夏の学校のための利用のみ許可します。
 name:
   en: Matsuyama-Shinjuku2022
   ja: 松山市-新宿 2022

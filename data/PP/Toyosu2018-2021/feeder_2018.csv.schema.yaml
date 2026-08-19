@@ -14,7 +14,9 @@ columns:
   name: UserID
   type_:
     name: Int64
-- description: null
+- description:
+    en: Date and time in Japan Standard Time (JST, UTC+09:00).
+    ja: 日本標準時（JST、UTC+09:00）による日時。
   name: DepartureTime
   type_:
     name: Datetime
@@ -22,7 +24,9 @@ columns:
   name: ChangeCode
   type_:
     name: Int64
-- description: null
+- description:
+    en: Date and time in Japan Standard Time (JST, UTC+09:00).
+    ja: 日本標準時（JST、UTC+09:00）による日時。
   name: ArrivalTime
   type_:
     name: Datetime
@@ -34,7 +38,9 @@ columns:
   name: TransportationCode
   type_:
     name: Int64
-- description: null
+- description:
+    en: Date and time in Japan Standard Time (JST, UTC+09:00).
+    ja: 日本標準時（JST、UTC+09:00）による日時。
   name: RegisterTime
   type_:
     name: Datetime
@@ -43,9 +49,9 @@ description:
   ja: 豊洲2018PPの個人情報です
 hash_: c401a96614761871ab0981b71a39d2e971ed659deec6001bdab57c75e3592111
 license_:
-  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+  en: Use is permitted only for the 2026 Summer Course on Behavior Modeling in Transportation
     Networks.
-  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+  ja: 2026年度の行動モデル夏の学校のための利用のみ許可します。
 name:
   en: Toyosu2018
   ja: 豊洲2018

@@ -10,19 +10,27 @@ columns:
   name: user_id
   type_:
     name: Int64
-- description: null
+- description:
+    en: Date and time in Japan Standard Time (JST, UTC+09:00).
+    ja: 日本標準時（JST、UTC+09:00）による日時。
   name: created_at
   type_:
     name: Datetime
-- description: null
+- description:
+    en: Date and time in Japan Standard Time (JST, UTC+09:00).
+    ja: 日本標準時（JST、UTC+09:00）による日時。
   name: departure_time
   type_:
     name: Datetime
-- description: null
+- description:
+    en: Date and time in Japan Standard Time (JST, UTC+09:00).
+    ja: 日本標準時（JST、UTC+09:00）による日時。
   name: arrival_time
   type_:
     name: Datetime
-- description: null
+- description:
+    en: Date and time in Japan Standard Time (JST, UTC+09:00).
+    ja: 日本標準時（JST、UTC+09:00）による日時。
   name: updated_at
   type_:
     name: Datetime
@@ -40,9 +48,9 @@ description:
   ja: 渋谷区のPPデータで、2021年11/01~30までのデータを格納しています
 hash_: 36436a34ce44e5a5716697eed99e0c0c78e27e5db4263b0405583f964a5d095b
 license_:
-  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+  en: Use is permitted only for the 2026 Summer Course on Behavior Modeling in Transportation
     Networks.
-  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+  ja: 2026年度の行動モデル夏の学校のための利用のみ許可します。
 name:
   en: Shibuya_trip_2021
   ja: Shibuya_trip_2021

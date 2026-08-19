@@ -18,15 +18,21 @@ columns:
   name: purpose
   type_:
     name: String
-- description: null
+- description:
+    en: Date and time in Japan Standard Time (JST, UTC+09:00).
+    ja: 日本標準時（JST、UTC+09:00）による日時。
   name: DepartureTime
   type_:
     name: Datetime
-- description: null
+- description:
+    en: Date and time in Japan Standard Time (JST, UTC+09:00).
+    ja: 日本標準時（JST、UTC+09:00）による日時。
   name: ArrivalTime
   type_:
     name: Datetime
-- description: null
+- description:
+    en: Trip duration in seconds.
+    ja: トリップ所要時間（秒）。
   name: time(second)
   type_:
     name: Int64
@@ -50,19 +56,29 @@ columns:
   name: DepartureAttribute
   type_:
     name: String
-- description: null
+- description:
+    en: Latitude in decimal degrees using the Japanese geodetic datum indicated by
+      the column name.
+    ja: 列名に示す日本測地系による緯度（10進度）。
   name: DepartureLat(JGS)
   type_:
     name: Float64
-- description: null
+- description:
+    en: Longitude in decimal degrees using the Japanese geodetic datum indicated by
+      the column name.
+    ja: 列名に示す日本測地系による経度（10進度）。
   name: DepartureLon(JGS)
   type_:
     name: Float64
-- description: null
+- description:
+    en: Latitude in decimal degrees using the World Geodetic System (WGS 84).
+    ja: 世界測地系（WGS 84）による緯度（10進度）。
   name: DepartureLat(WGS)
   type_:
     name: Float64
-- description: null
+- description:
+    en: Longitude in decimal degrees using the World Geodetic System (WGS 84).
+    ja: 世界測地系（WGS 84）による経度（10進度）。
   name: DepartureLon(WGS)
   type_:
     name: Float64
@@ -86,19 +102,29 @@ columns:
   name: GoalAttribute
   type_:
     name: String
-- description: null
+- description:
+    en: Latitude in decimal degrees using the Japanese geodetic datum indicated by
+      the column name.
+    ja: 列名に示す日本測地系による緯度（10進度）。
   name: GoalLat(JGS)
   type_:
     name: Float64
-- description: null
+- description:
+    en: Longitude in decimal degrees using the Japanese geodetic datum indicated by
+      the column name.
+    ja: 列名に示す日本測地系による経度（10進度）。
   name: GoalLon(JGS)
   type_:
     name: Float64
-- description: null
+- description:
+    en: Latitude in decimal degrees using the World Geodetic System (WGS 84).
+    ja: 世界測地系（WGS 84）による緯度（10進度）。
   name: GoalLat(WGS)
   type_:
     name: Float64
-- description: null
+- description:
+    en: Longitude in decimal degrees using the World Geodetic System (WGS 84).
+    ja: 世界測地系（WGS 84）による経度（10進度）。
   name: GoalLon(WGS)
   type_:
     name: Float64
@@ -122,19 +148,29 @@ columns:
   name: ArrivalAttribute
   type_:
     name: String
-- description: null
+- description:
+    en: Latitude in decimal degrees using the Japanese geodetic datum indicated by
+      the column name.
+    ja: 列名に示す日本測地系による緯度（10進度）。
   name: ArrivalLat(JGS)
   type_:
     name: Float64
-- description: null
+- description:
+    en: Longitude in decimal degrees using the Japanese geodetic datum indicated by
+      the column name.
+    ja: 列名に示す日本測地系による経度（10進度）。
   name: ArrivalLon(JGS)
   type_:
     name: Float64
-- description: null
+- description:
+    en: Latitude in decimal degrees using the World Geodetic System (WGS 84).
+    ja: 世界測地系（WGS 84）による緯度（10進度）。
   name: ArrivalLat(WGS)
   type_:
     name: Float64
-- description: null
+- description:
+    en: Longitude in decimal degrees using the World Geodetic System (WGS 84).
+    ja: 世界測地系（WGS 84）による経度（10進度）。
   name: ArrivalLon(WGS)
   type_:
     name: Float64
@@ -170,7 +206,9 @@ columns:
   name: TransportationChange1_Name
   type_:
     name: String
-- description: null
+- description:
+    en: Date and time in Japan Standard Time (JST, UTC+09:00).
+    ja: 日本標準時（JST、UTC+09:00）による日時。
   name: TransportationChange1_Time
   type_:
     name: Datetime
@@ -182,7 +220,9 @@ columns:
   name: TransportationChange2_Name
   type_:
     name: String
-- description: null
+- description:
+    en: Date and time in Japan Standard Time (JST, UTC+09:00).
+    ja: 日本標準時（JST、UTC+09:00）による日時。
   name: TransportationChange2_Time
   type_:
     name: Datetime
@@ -194,7 +234,9 @@ columns:
   name: TransportationChange3_Name
   type_:
     name: String
-- description: null
+- description:
+    en: Date and time in Japan Standard Time (JST, UTC+09:00).
+    ja: 日本標準時（JST、UTC+09:00）による日時。
   name: TransportationChange3_Time
   type_:
     name: Datetime
@@ -206,7 +248,9 @@ columns:
   name: TransportationChange4_Name
   type_:
     name: String
-- description: null
+- description:
+    en: Date and time in Japan Standard Time (JST, UTC+09:00).
+    ja: 日本標準時（JST、UTC+09:00）による日時。
   name: TransportationChange4_Time
   type_:
     name: String
@@ -218,7 +262,9 @@ columns:
   name: TransportationChange5_Name
   type_:
     name: String
-- description: null
+- description:
+    en: Date and time in Japan Standard Time (JST, UTC+09:00).
+    ja: 日本標準時（JST、UTC+09:00）による日時。
   name: TransportationChange5_Time
   type_:
     name: String
@@ -230,7 +276,9 @@ columns:
   name: TransportationChange6_Name
   type_:
     name: String
-- description: null
+- description:
+    en: Date and time in Japan Standard Time (JST, UTC+09:00).
+    ja: 日本標準時（JST、UTC+09:00）による日時。
   name: TransportationChange6_Time
   type_:
     name: String
@@ -242,7 +290,9 @@ columns:
   name: TransportationChange7_Name
   type_:
     name: String
-- description: null
+- description:
+    en: Date and time in Japan Standard Time (JST, UTC+09:00).
+    ja: 日本標準時（JST、UTC+09:00）による日時。
   name: TransportationChange7_Time
   type_:
     name: String
@@ -254,7 +304,9 @@ columns:
   name: TransportationChange8_Name
   type_:
     name: String
-- description: null
+- description:
+    en: Date and time in Japan Standard Time (JST, UTC+09:00).
+    ja: 日本標準時（JST、UTC+09:00）による日時。
   name: TransportationChange8_Time
   type_:
     name: String
@@ -266,7 +318,9 @@ columns:
   name: TransportationChange9_Name
   type_:
     name: String
-- description: null
+- description:
+    en: Date and time in Japan Standard Time (JST, UTC+09:00).
+    ja: 日本標準時（JST、UTC+09:00）による日時。
   name: TransportationChange9_Time
   type_:
     name: String
@@ -278,7 +332,9 @@ columns:
   name: TransportationChange10_Name
   type_:
     name: String
-- description: null
+- description:
+    en: Date and time in Japan Standard Time (JST, UTC+09:00).
+    ja: 日本標準時（JST、UTC+09:00）による日時。
   name: TransportationChange10_Time
   type_:
     name: String
@@ -290,7 +346,9 @@ columns:
   name: TransportationChange11_Name
   type_:
     name: String
-- description: null
+- description:
+    en: Date and time in Japan Standard Time (JST, UTC+09:00).
+    ja: 日本標準時（JST、UTC+09:00）による日時。
   name: TransportationChange11_Time
   type_:
     name: String
@@ -302,7 +360,9 @@ columns:
   name: TransportationChange12_Name
   type_:
     name: String
-- description: null
+- description:
+    en: Date and time in Japan Standard Time (JST, UTC+09:00).
+    ja: 日本標準時（JST、UTC+09:00）による日時。
   name: TransportationChange12_Time
   type_:
     name: String
@@ -314,7 +374,9 @@ columns:
   name: TransportationChange13_Name
   type_:
     name: String
-- description: null
+- description:
+    en: Date and time in Japan Standard Time (JST, UTC+09:00).
+    ja: 日本標準時（JST、UTC+09:00）による日時。
   name: TransportationChange13_Time
   type_:
     name: String
@@ -326,7 +388,9 @@ columns:
   name: TransportationChange14_Name
   type_:
     name: String
-- description: null
+- description:
+    en: Date and time in Japan Standard Time (JST, UTC+09:00).
+    ja: 日本標準時（JST、UTC+09:00）による日時。
   name: TransportationChange14_Time
   type_:
     name: String
@@ -346,11 +410,11 @@ description:
   en: This dataset contains PP (Probe Person) data collected in Matsuyama City in
     2007, comprising 7,810 trips gathered between February 19 and March 23, 2007.
   ja: 2007年に松山市で収集されたPP（プローブパーソン）データ 1,253,114件の位置情報レコード 2007年2月19日~3月23日
-hash_: c68fabe08121bb7db86019a88709b739e51af8cb0233676f494f3542920cdd70
+hash_: 479e819ee123dcb5ecfa13f793219c59070c340f2b826995b8c667b2e1d180f4
 license_:
-  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+  en: Use is permitted only for the 2026 Summer Course on Behavior Modeling in Transportation
     Networks.
-  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+  ja: 2026年度の行動モデル夏の学校のための利用のみ許可します。
 name:
   en: Matsuyama PP Trip Data
   ja: 松山市PP Tripデータ

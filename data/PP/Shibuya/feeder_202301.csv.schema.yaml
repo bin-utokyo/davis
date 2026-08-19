@@ -10,7 +10,9 @@ columns:
   name: UserID
   type_:
     name: Int64
-- description: null
+- description:
+    en: Date and time in Japan Standard Time (JST, UTC+09:00).
+    ja: 日本標準時（JST、UTC+09:00）による日時。
   name: RecordedAt
   type_:
     name: Datetime
@@ -26,11 +28,15 @@ columns:
   name: OperationType
   type_:
     name: Int64
-- description: null
+- description:
+    en: Date and time in Japan Standard Time (JST, UTC+09:00).
+    ja: 日本標準時（JST、UTC+09:00）による日時。
   name: CreatedAt
   type_:
     name: Datetime
-- description: null
+- description:
+    en: Date and time in Japan Standard Time (JST, UTC+09:00).
+    ja: 日本標準時（JST、UTC+09:00）による日時。
   name: UpdatedAt
   type_:
     name: Datetime
@@ -43,9 +49,9 @@ description:
   ja: 渋谷PP 2023/01のfeederデータです
 hash_: 22e926c1a9c2885d402d7cf69fab9ebe150c999b76675bf86aedc05a75c4c116
 license_:
-  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+  en: Use is permitted only for the 2026 Summer Course on Behavior Modeling in Transportation
     Networks.
-  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+  ja: 2026年度の行動モデル夏の学校のための利用のみ許可します。
 name:
   en: Shibuya2023/01
   ja: 渋谷2023/01
