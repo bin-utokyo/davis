@@ -1,8 +1,8 @@
 # Davis 仕様書
 
-> 状態: Draft 0.11
+> 状態: Draft 0.12
 >
-> 最終更新日: 2026-08-19
+> 最終更新日: 2026-08-20
 >
 > 1〜50節は受領したGit-nativeデータ基盤仕様を本文の土台とし，51節以降で交通行動モデル研究プラットフォームとしての拡張を定義します．
 >
@@ -1758,7 +1758,17 @@ davis-runtime ─X─▶ 特定モデルの内部実装
 
 現行CLIの`dist/manifest.json`は，CLI版，bootstrap package，データ群と`.dvc`ファイル一覧をまとめたリリース索引です．移行中は互換入力として読み，新仕様では`DatasetManifest`と`FileSchema`から`CatalogIndex`を生成します．
 
-## 52.2 既存FileSchemaの利用
+metadataの正本はGit上の`DatasetManifest`と`FileSchema`，実データの正本はR2等のObject Storageとします．`CatalogIndex`は正本から生成する派生物とし，直接編集しません．`.dvc`は移行期間中の互換入力として扱います．
+
+## 52.2 現行directoryとDataset境界
+
+現行の`data/`は，概ね`data/<category>/<dataset>/...`の構造を持つため，この物理階層を移行時にも維持します．例えば`PP/Matsuyama`，`routes/Shibuya-2021`，`network/yokohama`を1 Datasetの候補とします．一方，`PT_data`と`Tohoku_History`は直下に主要Fileを持つため，top-level directory自体を1 Datasetとして扱います．Dataset内の`raw`，`shapefile`，交通手段，年等の下位directoryは，原則としてDataset内の論理的なFile groupingです．
+
+現行Manifestは各DVC管理対象の相対pathを実質的なIDとし，CLIのprefix一致によってdirectory単位の取得を実現しています．新仕様ではpathの深さだけからDataset境界を恒久的に推測せず，`.davis/datasets/`内の`DatasetManifest`から各Dataset rootを明示します．P0移行toolは現行directoryからManifest候補を生成し，例外を運営が確認できるようにします．
+
+Dataset IDは人間が読めるglobalに一意な値とし，初回移行時は`<category>/<dataset>`を候補にします．IDはManifestへ保存し，以後categoryやpathを変更しても自動変更しません．`category`は別のgroup・facetとして保持します．File IDも初回登録時に保存し，pathを変更しても維持します．既存の相対pathはaliasとして残し，現行CLI相当のprefix指定も互換adapterで解決します．
+
+## 52.3 既存FileSchemaの利用
 
 2026-08-17時点の`data/`には，256個のDVC管理対象と177個の`*.schema.yaml`があります．Webでは実データファイルごとの`<filename>.schema.yaml`を表示・検索します．データセット単位のYAMLだけで列情報を代替しません．
 
@@ -1783,7 +1793,7 @@ davis-runtime ─X─▶ 特定モデルの内部実装
 | `schema-invalid` | ダウンロードを維持し，検証エラーを運営へ示します |
 | `file-missing` | 公開せず，移行エラーとして扱います |
 
-## 52.3 中央契約
+## 52.4 中央契約
 
 言語やクライアントをまたいで固定する契約は，次の6種類に限定します．
 
@@ -1804,9 +1814,9 @@ davis-runtime ─X─▶ 特定モデルの内部実装
 
 | コンポーネント | 責務 | 初期優先度 |
 | --- | --- | --- |
-| `davis-core` | Manifest・Object・storageの読取，検証，cache，download | 読取経路をP0，更新系をP3 |
+| `davis-core` | Manifest・Object・storageの読取，検証，cache，download，公開 | 読取経路をP0-A，最小R2公開をP0-B，高度な更新系をP3 |
 | `davis-catalog` | Dataset・FileSchema検証，list・search，CatalogIndex生成 | P0 |
-| `davis-cli` | list，show，downloadを提供する最初の参照client | P0 |
+| `davis-cli` | list，info，getと運営者向け公開操作を提供する最初の参照client | P0-A／P0-B |
 | `davis-server` | 参加者認証，CatalogIndex配信，download認可，署名付きURL | P1 |
 | `davis-web` | 検索，絞り込み，複数選択，download queue | P1 |
 | `davis-model-api` | ModelManifest，RunRequest，RunResultのschema | P2 |
@@ -2015,6 +2025,8 @@ MVPは`python`と`native`から始め，`wasm`と`container`を後から追加�
 
 標準MNLの推奨入力はlong形式のParquetとし，`case_id`，`alternative_id`，`chosen`，`available`に相当する列を設定で対応付けます．ただし，現行の`los.csv`と`trip.csv`を初期互換入力として維持するかは要確認です．他モデルにはlong形式を強制せず，複数表，network，GeoJSON，行列等を追加できます．
 
+入力contractは，共通部分とmodel固有部分を分けます．Runtimeが共通に扱うのは，入力slot名，media type，File参照，digest等です．標準MNLは`case_id`，`alternative_id`，`chosen`，`available`という意味上のroleを要求しますが，実データの列名そのものは固定せず設定から対応付けます．説明変数，weight，panel ID，network等の追加要件は各ModelManifestと`config_schema`が宣言します．これにより，標準MNLは共通の入力検証を利用しながら，他modelへlong形式や同一列構成を強制しません．
+
 モデル内部の効用関数，確率，尤度，gradient，optimizer，parameter共有方法は共通classへ固定しません．標準MNLを少し変更したモデルも，独立したModelManifestとprocessとして登録し，同じRunRequestから実行・比較できるようにします．
 
 基盤はRustを第一候補とし，研究モデルはPythonを第一経路とします．Python環境はcomponent単位の`uv.lock`で隔離し，Python executable，lockfile hash，package版を`run.json`へ記録します．Rustだけへ統一することも，Davis全体をPythonへ統一することも目標にしません．
@@ -2085,6 +2097,20 @@ Remote API─┘
 * Table，Coefficients，Diagnosticsの共通表示
 * Draft，Modified，Estimated，Saved等の画面状態
 
+## 58.4 Form編集とcode編集
+
+標準MNLのGUIは，まず次の線形効用をFormから作成できるようにします．列候補はFileSchemaから選択し，parameter名，共有関係，初期値，固定・推定，説明変数を編集します．
+
+```text
+V_ni = ASC_i + Σ beta_k x_nik
+```
+
+Formの構造化設定は標準MNL component固有の`config_schema`に従い，Davis全体の中央contractには加えません．Formと生成codeを同時に別々の正本として管理せず，Form互換modeでは構造化設定を正本としてcodeを生成します．
+
+利用者は画面切替から生成codeを確認し，高度な編集modeへ移行できます．最初の手動code編集時に，そのmodel revisionを`code` modeへ一方向に切り替えます．非線形効用，独自尤度，独自class等を含む任意codeをFormへ逆変換しません．`code` modeではFormを編集不可にし，移行直前の構造化設定を参照用に保持します．Formへ戻したい場合は，元revisionから新しいForm互換modelを作成します．
+
+GUI編集とcode編集のどちらで作成したmodelも，同じModelManifest，RunRequest，RunResultを使って実行します．したがって，GUIが表現できないmodelでも，データ解決，実行記録，成果物管理，比較機能は失いません．
+
 ---
 
 # 59. 実装順序
@@ -2094,7 +2120,9 @@ Remote API─┘
 実装順序は次の3段階を最優先とします．
 
 ```text
-P0  CLIでlist・詳細確認・download
+P0-A  CLIでlist・詳細確認・get
+        ↓
+P0-B  運営者CLIで差分確認・R2公開・検証
         ↓
 P1  Webでschema検索・複数選択・download
         ↓
@@ -2105,7 +2133,7 @@ P3  その他の拡張
 
 各段階は，後続componentが未実装でも単独でreleaseできる状態を完了条件とします．同時に，後続段階が既存処理を再実装せず接続できるcontractを残します．
 
-## 59.2 P0: CLIによるカタログ閲覧とdownload
+## 59.2 P0-A: CLIによるカタログ閲覧とget
 
 最初のreleaseでは，1〜50節のCore仕様全体を完成させません．既存DVC資産を読み取る互換adapterを利用し，読取専用の縦断経路を最短で安定させます．
 
@@ -2113,21 +2141,24 @@ P3  その他の拡張
 
 1. `davis-core`のManifest読取，Object参照解決，hash・size検証，cache，download
 2. 現行`manifest.json`，`.dvc`，`*.schema.yaml`の互換adapter
-3. `davis-catalog`のDataset・File一覧，詳細，基本filter，CatalogIndex生成
-4. 薄い`davis-cli`
-5. 全件互換testとLocal storageによる統合test
+3. 現行directoryからDatasetManifest候補を生成・確認する移行tool
+4. `davis-catalog`のDataset・File一覧，詳細，基本filter，CatalogIndex生成
+5. 薄い`davis-cli`
+6. Windows，macOS，Linux向けbinaryと全件互換test
 
 ### 初期command
 
 ```text
-davis dataset list
-davis dataset show <dataset-id>
-davis file list --dataset <dataset-id>
-davis download <dataset-id>
-davis download <dataset-id> --file <file-id>...
+davis list
+davis info <dataset-id>
+davis get <dataset-id>
+davis get <dataset-id> --file <file-id>...
+davis get <dataset-id> -o <directory>
 ```
 
-`davis download`は，対象Objectと期待digestを含む内部Download Planを作り，storage adapterが取得します．Command自身にManifest解析，remote選択，copy処理を書きません．
+短く，現行利用者にも馴染みがあるため，取得commandは`get`を維持します．既定ではcurrent directoryを出力rootとし，その下にDataset内の相対pathを保って配置します．`-o`または`--out`で出力rootを変更できるようにします．Command名は内部APIではなく，将来aliasを追加できます．
+
+`davis get`は，対象Objectと期待digestを含む内部Download Planを作り，storage adapterが取得します．Command自身にManifest解析，remote選択，copy処理を書きません．
 
 ### 完了条件
 
@@ -2137,10 +2168,40 @@ davis download <dataset-id> --file <file-id>...
 4. schema未整備のファイルも`schema-missing`として取得できます．
 5. CLI以外から同じuse caseを呼ぶunit testを用意します．
 6. Web，Runtime，MNLを導入しなくてもCLIだけで動作します．
+7. Windows，macOS，Linuxで同じDatasetを一覧・確認・取得できます．
 
-`init`，`add`，`push`，`checkout`，GC等の更新系は，この段階の必須条件にしません．データ基盤仕様から削除するのではなく，P3で追加します．
+機能互換性はcommand名や内部構造の一致ではなく，現行CLIで可能な一覧，詳細確認，File・directory単位の取得，関連文書の取得が欠落しないことで判定します．
 
-## 59.3 P1: Webによる検索とdownload
+## 59.3 P0-B: 運営者によるR2公開
+
+P1のWeb公開に先立ち，運営者がDavisだけでlocalの変更を確認し，R2へ不足Objectを安全に反映できる最小更新経路を実装します．
+
+```text
+davis status
+davis push --dry-run
+davis push
+davis verify --remote
+```
+
+`status`はlocalのManifest・FileSchema・実データと公開中revisionとの差分を表示します．`push`はcontent-addressed Objectの存在を確認し，不足Objectだけをuploadします．既存Objectの上書き，remote Objectの自動削除，GC，競合mergeは行いません．公開順序は次のとおりです．
+
+```text
+Manifest候補と差分を作成
+        ↓
+不足ObjectをR2へupload
+        ↓
+sizeとdigestを検証
+        ↓
+Git上のManifestとFileSchemaを確定
+        ↓
+CatalogIndexを生成・公開
+```
+
+途中で失敗した場合は新revisionをCatalogへ公開しません．R2 credentialと公開操作はoperatorだけが利用でき，participant向けCLIやWebへ渡しません．
+
+`init`，`add`の一般化，`checkout`，remote削除，GC等の高度な更新系は，この段階の必須条件にせずP3で追加します．
+
+## 59.4 P1: Webによる検索とdownload
 
 P0のDataset・File・Objectの意味をそのまま利用し，検索・認証・複数選択を追加します．Webのために別のcatalog生成処理やdownload処理を作りません．
 
@@ -2150,7 +2211,7 @@ P0のDataset・File・Objectの意味をそのまま利用し，検索・認証�
 2. Pages上の検索，filter，Dataset・File詳細，Raw YAML表示
 3. File単位とDataset単位のcheckbox，選択drawer，合計size表示
 4. 選択したFile ID集合を受け取るDownloadSelection API
-5. 参加者ごとの招待code，session cookie，operator・participant権限
+5. 年度単位の共通招待code，session cookie，operator・participant権限
 6. 短寿命の署名付きGET URLとdownload queue
 7. D1，Worker／Pages Functions，R2の接続
 
@@ -2166,7 +2227,11 @@ P0のDataset・File・Objectの意味をそのまま利用し，検索・認証�
 4. 100〜200人規模を想定した認証・download負荷testを通します．
 5. CLIとWebでDataset ID，File ID，size，digest，download対象が一致します．
 
-## 59.4 P2: 推定器
+Catalog metadataと検索indexは公開情報としてPagesから配信できます．実データのdownloadだけを共通招待codeとsession cookieで保護します．招待codeはclient側へ埋め込まずServer側で検証し，年度更新または流出時に差し替えられるようにします．code差替え時には旧codeで発行したsessionも失効できるよう，sessionを認証revisionへ紐付けます．
+
+Webは選択したFileを個別に順次downloadし，選択内容に対応する`davis get` commandのcopyも提供します．大量Fileや大容量DatasetにはCLIを案内します．Webの保存先はbrowser設定に従い，Davisから任意directoryを指定しません．
+
+## 59.5 P2: 推定器
 
 カタログ機能が安定した後，研究実行層を追加します．RuntimeはWebへ埋め込まず，まず利用者PC内で実行します．
 
@@ -2192,11 +2257,11 @@ Runtimeはlocal fileだけで実行でき，公式catalogを必須にしませ�
 4. 入力digest，model revision，環境，RunRequest，RunResult，成果物を`run.json`へ記録できます．
 5. CatalogとWebがなくてもlocal推定を実行できます．
 
-## 59.5 P3以降
+## 59.6 P3以降
 
 P0〜P2が安定した後，次を優先度と需要に応じて追加します．
 
-* `davis-core`の`init`，`add`，`status`，`push`，`checkout`，`verify`，local GC
+* `davis-core`の`init`，`add`一般化，`checkout`，remote削除，local・remote GC
 * `davis-fmt`の一般的なrecipe・外部変換component
 * `davis-viz`の係数表，係数図，diagnostics，共通HTML
 * GUI，Notebook SDK，実行履歴比較
@@ -2226,20 +2291,28 @@ P0〜P2が安定した後，次を優先度と需要に応じて追加します�
 10. MNLは固定機能ではなく，変更modelを作る参考componentです．
 11. CLIを中核APIにせず，GUI，Notebook，remote APIと同列にします．
 12. 利用者が記述する`project.yaml`はMVPに設けません．
-13. 実装順序は，CLIのlist・詳細確認・download，Webの検索・複数選択download，local推定器，その他の拡張とします．
+13. 実装順序は，CLIのlist・info・get，運営者CLIのR2公開，Webの検索・複数選択download，local推定器，その他の拡張とします．
 14. 各componentは単独利用を可能にし，中央contractとuse caseを通じて接続します．
 15. CLI，Web，GUIでdomain logicを複製せず，それぞれを共通use caseのadapterとして実装します．
+16. 現行の`data/<category>/<dataset>/...`を基本的に維持し，DatasetManifestでDataset境界と安定IDを明示します．
+17. metadataは公開可能とし，初期Webでは実データのdownloadだけを共通招待codeで保護します．
+18. 共通招待codeは年度ごとの更新と流出時の差替えを可能にし，必要に応じて既存sessionも失効させます．
+19. CLIの互換性はcommand名ではなく利用可能な機能で判定し，取得commandは短い`get`を採用します．
+20. P0のCLIはWindows，macOS，Linuxを対象とし，既定の取得先をcurrent directoryとします．
+21. 標準MNLは共通の意味上の列roleとmodel固有の追加要件を組み合わせ，他modelへ同じ入力形式を強制しません．
+22. GUIは線形効用をForm編集でき，高度なcode編集へ一方向に移行できるようにします．任意codeをFormへ逆変換しません．
+23. Model出力は状態，来歴，成果物参照だけを共通必須とし，係数等は任意標準成果物とします．
 
 ## 60.2 要確認事項
 
-1. 既存directoryから論理DatasetManifestを作るデータ群の区切りとID
+1. 各Datasetの確定ID，旧path alias，例外的なDataset境界の対応表
 2. 新規ObjectへBLAKE3を採用するか，既存DVC Objectをいつ再hashするか
-3. data単位のaccess区分をDatasetManifestとFileSchemaのどちらで管理するか
-4. Coreの初期更新操作を既存DVC remoteへの書込みまで対応させるか，R2移行後だけにするか
-5. 標準MNLの初期入力として現行`los.csv`と`trip.csv`を維持するか
-6. 最初の変更model例として何を採用するか
-7. Python SDKをNumPy・SciPy中心にするか，JAX等を採用するか
-8. 標準MNLのP2初版にweight，panel，robust standard errorを含めるか
-9. 既存FileSchemaへ将来の検索fieldをどこまで追加するか
-10. 同時利用者数，download量，R2費用上限
+3. 将来複数のaccess区分を設ける場合，DatasetManifestとFileSchemaのどちらで管理するか
+4. 標準MNLの初期入力として現行`los.csv`と`trip.csv`を維持するか
+5. 最初の変更model例として何を採用するか
+6. Python SDKをNumPy・SciPy中心にするか，JAX等を採用するか
+7. 標準MNLのP2初版にweight，panel，robust standard errorを含めるか
+8. 既存FileSchemaへ将来の検索fieldをどこまで追加するか
+9. Webで一度に個別downloadするFile数・合計sizeの上限
+10. session有効期間，同時利用者数，download量，R2費用上限
 11. Davis本体とmodel componentのlicense
