@@ -1,0 +1,2142 @@
+# Davis 仕様書
+
+> 状態: Draft 0.10
+>
+> 最終更新日: 2026-08-19
+>
+> 1〜50節は受領したGit-nativeデータ基盤仕様を本文の土台とし，51節以降で交通行動モデル研究プラットフォームとしての拡張を定義します．
+>
+> 未確定事項は推測で補わず，「要確認」と明示します．
+
+## 1. 概要
+
+### 1.1 プロジェクト名
+
+**Davis**
+
+Davis は，大容量データを Git とオブジェクトストレージを組み合わせて管理するための，Rust 製データバージョン管理・データカタログ基盤です．このデータ基盤を土台として，任意言語の交通行動モデルを実行・比較・再現する研究実行層を接続します．
+
+Git にはデータそのものを格納せず，データセットのメタデータ，manifest，およびバージョン履歴を格納する．大容量ファイルの実体は Cloudflare R2，Amazon S3，MinIO，ローカルストレージ等の外部ストレージに保存する．
+
+Davis は DVC の全面的な再実装を目的としません．Git，オブジェクトストレージ，ハッシュ計算，並列処理等の低レベル機能は成熟した Rust ライブラリを利用し，Davis 自身は「データセットの意味論」「Git 上のメタデータとストレージ上のデータ実体の対応関係」「同期・キャッシュ・カタログ機能」に責任を持ちます．研究実行層はこの責務を置き換えず，版付きデータ参照を通じて上位から利用します．
+
+---
+
+## 2. 設計思想
+
+### 2.1 基本原則
+
+Davis の中核となる考え方は以下である．
+
+```text
+Git
+= metadata / history の source of truth
+
+Object Storage
+= binary content の source of truth
+
+Davis
+= Git metadata と Object Storage の bridge
+```
+
+Git は以下を管理する．
+
+* データセット定義
+* ファイル一覧
+* 各ファイルの Content ID
+* サイズ
+* データセットメタデータ
+* Git commit / branch / tag による履歴
+
+外部ストレージは以下を管理する．
+
+* CSV
+* Parquet
+* GeoPackage
+* GeoJSON
+* Shapefile
+* 画像
+* 動画
+* モデルファイル
+* ZIP
+* その他大容量バイナリ
+
+---
+
+## 3. davis-core のスコープ
+
+### 3.1 davis-core が実装するもの
+
+`davis-core`は以下に責任を持つ．Davis全体の研究実行機能は51節以降で定義します．
+
+* Dataset の概念
+* Manifest 仕様
+* Content Object の識別
+* Working Tree と Manifest の対応
+* Git revision と dataset version の対応
+* Local Cache
+* Push / Pull のオーケストレーション
+* Checkout
+* Status
+* Garbage Collection
+* データカタログ向けメタデータ
+* Storage backend の設定
+* 将来的な DVC metadata import/export
+
+### 3.2 davis-core が実装しないもの
+
+以下は既存ライブラリへ委譲する．
+
+* Git object / tree / commit の内部処理
+* Git packfile
+* S3 API
+* HTTP 通信
+* retry
+* multipart upload
+* TLS
+* BLAKE3 の実装
+* YAML / TOML parser
+* CLI argument parser
+* async runtime
+
+また，以下については Git 本体を利用し，Davis 独自実装を原則行わない．
+
+* commit
+* branch
+* tag
+* merge
+* rebase
+* Git remote
+* Git authentication
+
+---
+
+# 4. エコシステム
+
+Davis は以下のコンポーネントから構成する．
+
+```text
+                    ┌─────────────────┐
+                    │    davis-web    │
+                    │  Data Catalog   │
+                    └────────┬────────┘
+                             │
+                    ┌────────▼────────┐
+                    │  davis-server   │
+                    │    optional     │
+                    └────────┬────────┘
+                             │
+              ┌──────────────▼──────────────┐
+              │         davis-core          │
+              │                             │
+              │ Dataset / Manifest / Cache  │
+              │ Sync / Checkout / GC        │
+              └──────────┬─────────┬────────┘
+                         │         │
+                         ▼         ▼
+                      Git       Storage
+                                R2 / S3
+```
+
+上図をデータ基盤の最小構成とします．交通行動モデル研究まで利用する場合は，`davis-runtime`，`davis-model-runner`，モデルコンポーネント，`davis-viz`を上位層として追加します．`davis-core`からこれら上位層への依存は禁止します．
+
+---
+
+## 5. davis-core
+
+### 5.1 役割
+
+`davis-core` は Davis の唯一の中核実装とする．
+
+CLI や Web UI に固有の処理は含めない．
+
+想定 API:
+
+```rust
+let repo = DavisRepository::open(".").await?;
+
+repo.add("data/trips.parquet", options).await?;
+
+repo.status().await?;
+
+repo.push().await?;
+
+repo.pull().await?;
+
+repo.checkout().await?;
+
+repo.gc().await?;
+```
+
+依存方向は必ず，
+
+```text
+davis-cli ──▶ davis-core
+
+davis-web ──▶ davis-server／CatalogIndex
+
+davis-server ──▶ davis-core
+
+catalog-indexer ──▶ davis-core
+```
+
+とし，
+
+```text
+davis-core ──▶ davis-cli
+```
+
+等の逆方向依存は禁止する．
+
+---
+
+# 6. davis-cli
+
+## 6.1 方針
+
+`davis-cli` は `davis-core` の薄いラッパーとする．
+
+CLI にビジネスロジックを実装してはならない．
+
+想定コマンド:
+
+```bash
+davis init
+
+davis add data/trips.parquet
+
+davis add datasets/tokyo/
+
+davis status
+
+davis push
+
+davis pull
+
+davis checkout
+
+davis gc
+```
+
+将来的に以下も検討する．
+
+```bash
+davis dataset list
+
+davis dataset show tokyo-pt
+
+davis dataset edit tokyo-pt
+
+davis remote add
+
+davis remote list
+
+davis import dvc
+
+davis export dvc
+```
+
+---
+
+# 7. davis-web
+
+## 7.1 目的
+
+`davis-web` は Git repository に格納された Davis metadata を読み取り，データカタログとして提供する．
+
+想定表示項目:
+
+* Dataset title
+* Description
+* Creator
+* Organization
+* License
+* Tags
+* Spatial extent
+* Temporal extent
+* Format
+* File list
+* File size
+* Dataset version
+* Git history
+* Download
+* Schema
+* Preview
+* Map preview
+
+Git repository 自体を **Data Catalog as Code** として利用する．
+
+---
+
+# 8. davis-server
+
+一般公開データまたはローカル利用だけのdeploymentでは，初期バージョンの必須要素としません．行動モデル夏の学校の公式環境は参加者限定データを扱うため，認証と署名付きURLを提供する最小ServerまたはCloudflare WorkerをP0から必須とします．
+
+以下が必要になった段階で導入する．
+
+* private dataset
+* authentication
+* organization management
+* signed URL
+* centralized search
+* access control
+* upload API
+* audit log
+
+初期構成では以下を許容する．
+
+```text
+GitHub / GitLab
+       │
+       │ metadata
+       ▼
+   davis-web
+
+Cloudflare R2
+       │
+       └── dataset contents
+```
+
+---
+
+# 9. 技術スタック
+
+## 9.1 言語
+
+データ基盤，実行ホスト，参照CLI等の主要基盤コンポーネントは **Rust** で実装します．研究者が編集するモデルコンポーネントはPythonを第一経路とし，Rust，R，Julia等も同じプロセス契約から利用できるようにします．
+
+理由:
+
+* 単一バイナリとして配布しやすい
+* データ基盤の実行に Python runtime が不要
+* CLI との相性がよい
+* 大容量ファイル処理に適する
+* async I/O が利用可能
+* WASM や FFI 等への展開余地がある
+
+---
+
+## 9.2 Rust ライブラリ
+
+基本候補:
+
+```text
+Git
+└── gix
+
+Storage
+└── Apache OpenDAL
+
+Hash
+└── blake3
+
+Serialization
+├── serde
+├── serde_yaml
+└── toml
+
+Async
+└── tokio
+
+CLI
+└── clap
+
+Error handling
+├── thiserror
+└── anyhow
+```
+
+### 9.2.1 Git
+
+Git 操作には原則 `gix` を利用する．
+
+Davis が Git 内部フォーマットを再実装してはならない．
+
+---
+
+## 9.2.2 Storage
+
+Storage abstraction には原則 Apache OpenDAL を利用する．
+
+Davis 自身が S3 client を直接実装しない．
+
+想定 backend:
+
+* Cloudflare R2
+* Amazon S3
+* MinIO
+* Backblaze B2
+* Local filesystem
+* Azure Blob Storage
+* Google Cloud Storage
+* WebDAV
+* SFTP
+
+Cloudflare R2 は S3-compatible backend として扱い，R2 固有の Davis backend は原則作成しない．
+
+---
+
+# 10. Repository Structure
+
+初期 workspace:
+
+```text
+davis/
+├── Cargo.toml
+├── crates/
+│   ├── davis-core/
+│   │   ├── Cargo.toml
+│   │   └── src/
+│   │       ├── lib.rs
+│   │       ├── repository.rs
+│   │       ├── dataset.rs
+│   │       ├── manifest.rs
+│   │       ├── object.rs
+│   │       ├── cache.rs
+│   │       ├── sync.rs
+│   │       ├── checkout.rs
+│   │       ├── status.rs
+│   │       └── gc.rs
+│   │
+│   └── davis-cli/
+│       ├── Cargo.toml
+│       └── src/
+│           └── main.rs
+│
+├── apps/
+│   └── davis-web/
+│
+└── docs/
+```
+
+初期段階では過度に crate を分割しない．
+
+必要になった場合のみ，
+
+```text
+davis-manifest
+davis-storage
+davis-git
+```
+
+等へ分離する．
+
+---
+
+# 11. Repository Layout
+
+Davis repository は通常の Git repository 内に存在する．
+
+```text
+project/
+├── .git/
+├── .gitignore
+│
+├── .davis/
+│   ├── config.toml
+│   ├── datasets/
+│   │   ├── tokyo-pt.yaml
+│   │   └── census.yaml
+│   │
+│   └── cache/
+│       └── objects/
+│
+├── data/
+│   ├── trips.parquet
+│   └── zones.gpkg
+│
+└── src/
+```
+
+Git 管理対象:
+
+```text
+.davis/config.toml
+
+.davis/datasets/**
+```
+
+Git 管理対象外:
+
+```text
+.davis/cache/**
+
+大容量データ本体
+```
+
+---
+
+# 12. Content Addressable Storage
+
+## 12.1 Object ID
+
+データ実体は content-addressed object として扱う．
+
+初期ハッシュアルゴリズムは BLAKE3 とする．
+
+Object ID:
+
+```text
+blake3:<digest>
+```
+
+例:
+
+```text
+blake3:72dc6e92e32...
+```
+
+ハッシュアルゴリズム名を Object ID に含める．
+
+これにより将来的な，
+
+```text
+sha256:
+blake3:
+```
+
+等の共存を可能とする．
+
+---
+
+## 12.2 Storage Key
+
+Storage 上では以下の形式を基本とする．
+
+```text
+objects/
+└── blake3/
+    └── 72/
+        └── dc6e92e32...
+```
+
+一般式:
+
+```text
+objects/{algorithm}/{digest[0..2]}/{digest[2..]}
+```
+
+Object ID から Storage Key への変換規則は Davis specification に属する．
+
+Storage backend ごとに異なる規則を持たせてはならない．
+
+---
+
+# 13. Dataset Model
+
+Object と Dataset を明確に分離する．
+
+```text
+Dataset
+   │
+   ├── metadata
+   │
+   └── files
+          │
+          ├── ObjectRef
+          ├── ObjectRef
+          └── ObjectRef
+```
+
+Dataset はユーザーが認識する論理単位である．
+
+Object は Storage 上の不変な binary object である．
+
+---
+
+# 14. Manifest
+
+## 14.1 基本形式
+
+Manifest は Git で管理する．
+
+初期形式は YAML とする．
+
+例:
+
+```yaml
+version: 1
+
+dataset:
+  id: tokyo-person-trip
+  title: Tokyo Person Trip Survey
+  description: Person-trip survey dataset.
+
+  creators:
+    - Tokyo Metropolitan Government
+
+  license: CC-BY-4.0
+
+  tags:
+    - mobility
+    - person-trip
+    - tokyo
+
+  spatial:
+    bbox:
+      - 139.0
+      - 35.2
+      - 140.2
+      - 36.1
+
+  temporal:
+    start: 2018-10-01
+    end: 2018-12-31
+
+files:
+  - path: trips.parquet
+    object:
+      oid: blake3:aaaaaaaa
+      size: 728193721
+
+  - path: zones.geojson
+    object:
+      oid: blake3:bbbbbbbb
+      size: 2819231
+```
+
+---
+
+# 15. Manifest Versioning
+
+Manifest には必ず schema version を含める．
+
+```yaml
+version: 1
+```
+
+将来的にフォーマット変更が必要になった場合も，既存 manifest を読み込めるようにする．
+
+例:
+
+```rust
+enum Manifest {
+    V1(ManifestV1),
+    V2(ManifestV2),
+}
+```
+
+---
+
+# 16. Metadata
+
+データカタログへの展開を考慮し，以下の metadata を扱えるようにする．
+
+必須候補:
+
+* id
+* title
+
+任意:
+
+* description
+* creators
+* publisher
+* organization
+* license
+* tags
+* homepage
+* source
+* citation
+* spatial extent
+* temporal extent
+
+将来的に以下との相互変換を検討する．
+
+* DCAT
+* schema.org Dataset
+* DataCite
+* Dublin Core
+
+内部 manifest を特定規格へ完全依存させない．
+
+---
+
+# 17. Add
+
+## 17.1 File
+
+```bash
+davis add data/trips.parquet
+```
+
+処理:
+
+```text
+file
+ ↓
+BLAKE3
+ ↓
+ObjectId
+ ↓
+local cache
+ ↓
+Dataset Manifest
+ ↓
+.gitignore update
+```
+
+`davis add` 時点では remote upload を必須としない．
+
+---
+
+## 17.2 Directory
+
+```bash
+davis add datasets/tokyo/
+```
+
+Directory は一つの Dataset として扱える．
+
+```text
+datasets/tokyo/
+├── trips.parquet
+├── zones.geojson
+└── metadata.json
+```
+
+から，
+
+```yaml
+dataset:
+  id: tokyo
+
+files:
+  - path: trips.parquet
+    ...
+
+  - path: zones.geojson
+    ...
+
+  - path: metadata.json
+    ...
+```
+
+を生成する．
+
+---
+
+# 18. Cache
+
+Local cache:
+
+```text
+.davis/cache/
+└── objects/
+    └── blake3/
+        └── ab/
+            └── ...
+```
+
+Cache の役割:
+
+* remote download の削減
+* checkout 高速化
+* upload 重複防止
+* working tree materialization
+
+Cache 内 object は content immutable とする．
+
+同一 Object ID の content が変更されてはならない．
+
+---
+
+# 19. Push
+
+```bash
+davis push
+```
+
+現在の Git tree / manifest により参照されている object を remote storage に同期する．
+
+処理:
+
+```text
+Manifest
+ ↓
+ObjectRefs
+ ↓
+remote existence check
+ ↓
+missing objects
+ ↓
+parallel upload
+```
+
+すでに remote に存在する Object ID は再アップロードしない．
+
+---
+
+# 20. Pull
+
+```bash
+davis pull
+```
+
+現在の manifest が参照する object のうち local cache に存在しない object を remote から取得する．
+
+```text
+Manifest
+ ↓
+ObjectRefs
+ ↓
+local cache check
+ ↓
+missing
+ ↓
+remote download
+```
+
+---
+
+# 21. Checkout
+
+```bash
+git switch experiment
+
+davis checkout
+```
+
+Davis 自身は branch を持たない．
+
+Git checkout 後の manifest を読み取り，その Git revision が要求するデータ状態を working tree に再現する．
+
+```text
+Git HEAD
+ ↓
+Manifest
+ ↓
+Object ID
+ ↓
+Local Cache
+ ├── exists
+ │     ↓
+ │ materialize
+ │
+ └── missing
+       ↓
+      remote
+       ↓
+      cache
+       ↓
+    materialize
+```
+
+---
+
+# 22. Git Integration
+
+Git が管理する概念:
+
+```text
+commit
+branch
+tag
+merge
+history
+```
+
+Davis が管理する概念:
+
+```text
+dataset
+object
+manifest
+cache
+sync
+checkout
+```
+
+そのため初期バージョンでは，
+
+```bash
+davis commit
+```
+
+を実装しない．
+
+ユーザーは通常通り，
+
+```bash
+git add .
+git commit -m "Update dataset"
+```
+
+を利用する．
+
+---
+
+# 23. Status
+
+```bash
+davis status
+```
+
+以下を検出する．
+
+* Working Tree のファイル変更
+* Manifest と実ファイルの hash mismatch
+* Cache に存在しない object
+* Remote に存在しない object
+* Manifest に存在するが working tree に存在しないファイル
+* Manifest に存在しない unmanaged large file
+
+想定表示:
+
+```text
+Dataset: tokyo-person-trip
+
+Modified:
+  trips.parquet
+
+Missing locally:
+  zones.geojson
+
+Not pushed:
+  blake3:abc123...
+
+Up to date:
+  metadata.json
+```
+
+---
+
+# 24. Garbage Collection
+
+```bash
+davis gc
+```
+
+初期段階では local cache GC を実装する．
+
+将来的に remote GC を追加する．
+
+Remote GC は Git history から reachable Object ID を計算する必要がある．
+
+```text
+Git revisions
+ ↓
+Manifest
+ ↓
+reachable Object IDs
+ ↓
+Storage objects
+ ↓
+unreachable candidates
+```
+
+Remote GC は破壊的操作であるため，慎重な仕様とする．
+
+初期実装では dry-run を必須とすることを推奨する．
+
+```bash
+davis gc --remote --dry-run
+```
+
+---
+
+# 25. Storage Configuration
+
+`.davis/config.toml`
+
+例:
+
+```toml
+version = 1
+
+[remote.default]
+type = "s3"
+bucket = "davis-data"
+endpoint = "https://ACCOUNT_ID.r2.cloudflarestorage.com"
+region = "auto"
+```
+
+Credential は原則 Git 管理される config に直接保存しない．
+
+以下から取得する．
+
+* environment variables
+* OS credential store
+* AWS-compatible credential chain
+* secret manager
+
+---
+
+# 26. Cloudflare R2
+
+Cloudflare R2 は S3-compatible backend として扱う．
+
+例:
+
+```text
+type = s3
+
+endpoint =
+https://<ACCOUNT_ID>.r2.cloudflarestorage.com
+
+region = auto
+```
+
+R2 固有ロジックは必要最小限に留める．
+
+OpenDAL が吸収できる場合，Davis 内部には R2-specific code を持たない．
+
+---
+
+# 27. Transfer
+
+大容量ファイルを対象とするため，以下を考慮する．
+
+* streaming
+* multipart upload
+* parallel transfer
+* retry
+* timeout
+* integrity verification
+
+これらの低レベル実装は Storage library に任せる．
+
+Davis は，
+
+```text
+which object should be uploaded?
+```
+
+のみ判断する．
+
+---
+
+# 28. Integrity
+
+Upload / Download 後は必要に応じて Content ID を再計算し，integrity を検証できるようにする．
+
+```bash
+davis verify
+```
+
+将来的な候補:
+
+```bash
+davis verify
+
+davis verify --remote
+
+davis verify tokyo-person-trip
+```
+
+---
+
+# 29. Large File Handling
+
+大容量ファイルを一括で memory に読み込んではならない．
+
+Hash 計算は streaming で実施する．
+
+Storage 転送も streaming を基本とする．
+
+---
+
+# 30. Chunking
+
+初期バージョンでは，
+
+```text
+1 file = 1 object
+```
+
+とする．
+
+例:
+
+```text
+trips.parquet
+       ↓
+blake3:abc
+```
+
+Content-defined chunking は初期スコープ外とする．
+
+将来的に，
+
+```text
+Large File
+   ↓
+Chunks
+├── object A
+├── object B
+├── object C
+└── object D
+```
+
+を導入できる設計余地は残す．
+
+ただし manifest の安定性を損なうような早期導入は避ける．
+
+---
+
+# 31. Concurrency
+
+以下は並列化可能とする．
+
+* hashing
+* remote existence checks
+* upload
+* download
+
+Tokio task を用いる．
+
+ただし同時実行数には制限を設ける．
+
+例:
+
+```text
+hash workers     4
+upload workers   8
+download workers 8
+```
+
+値は config で変更可能にする．
+
+---
+
+# 32. Locking
+
+同一 repository に対する，
+
+```text
+push
+pull
+checkout
+gc
+```
+
+の競合に備え，repository lock を導入する．
+
+例:
+
+```text
+.davis/lock
+```
+
+Crash 時に永久 lock とならない仕組みを設ける．
+
+---
+
+# 33. Error Model
+
+`davis-core` では型付き error を基本とする．
+
+例:
+
+```rust
+pub enum DavisError {
+    RepositoryNotFound,
+
+    InvalidManifest,
+
+    ObjectNotFound,
+
+    HashMismatch,
+
+    StorageError,
+
+    GitError,
+
+    IoError,
+}
+```
+
+CLI では人間向けメッセージへ変換する．
+
+---
+
+# 34. davis-core Public API
+
+初期 API イメージ:
+
+```rust
+pub struct DavisRepository {
+    // internal
+}
+
+impl DavisRepository {
+    pub async fn open(
+        path: impl AsRef<Path>
+    ) -> Result<Self>;
+
+    pub async fn init(
+        path: impl AsRef<Path>
+    ) -> Result<Self>;
+
+    pub async fn add(
+        &self,
+        path: impl AsRef<Path>,
+        options: AddOptions,
+    ) -> Result<DatasetManifest>;
+
+    pub async fn status(
+        &self
+    ) -> Result<RepositoryStatus>;
+
+    pub async fn push(
+        &self
+    ) -> Result<SyncReport>;
+
+    pub async fn pull(
+        &self
+    ) -> Result<SyncReport>;
+
+    pub async fn checkout(
+        &self
+    ) -> Result<CheckoutReport>;
+
+    pub async fn gc(
+        &self,
+        options: GcOptions,
+    ) -> Result<GcReport>;
+
+    pub async fn datasets(
+        &self
+    ) -> Result<Vec<Dataset>>;
+}
+```
+
+---
+
+# 35. API Design Principles
+
+Public API では以下を守る．
+
+* CLI 特有の型を含めない
+* `println!` を core で利用しない
+* process termination を core で行わない
+* environment variables を深い domain layer で直接読まない
+* UI message を返さない
+* structured result を返す
+* side effects を明示する
+
+例:
+
+```rust
+pub struct SyncReport {
+    pub uploaded: Vec<ObjectId>,
+    pub skipped: Vec<ObjectId>,
+    pub failed: Vec<SyncFailure>,
+}
+```
+
+CLI はこれを，
+
+```text
+Uploaded: 12 objects
+Skipped:  83 objects
+Failed:    0 objects
+```
+
+と表示する．
+
+---
+
+# 36. davis-web と Core の境界
+
+Core は以下を提供できる．
+
+```rust
+repo.datasets()
+
+repo.dataset(id)
+
+repo.dataset_versions(id)
+
+repo.object_metadata(id)
+```
+
+Web 固有の以下は core に含めない．
+
+* HTML
+* pagination
+* HTTP routing
+* login session
+* UI state
+* CSS
+* search UI
+
+ブラウザ上の`davis-web`からRustのCoreを直接呼びません．`davis-server`または公開時に生成したCatalogIndexを介します．Core APIはServer，indexer，ローカルclient等が利用します．
+
+---
+
+# 37. Data Catalog Index
+
+Dataset 数が増えた場合，毎回 Git tree 全体を読むのではなく catalog index を生成できるようにする．
+
+例:
+
+```text
+Git manifests
+     ↓
+indexer
+     ↓
+SQLite / Tantivy / JSON index
+     ↓
+davis-web
+```
+
+ただし index は derived data とし，source of truth は Git metadata とする．
+
+---
+
+# 38. Search
+
+将来的な `davis-web` では以下の検索を想定する．
+
+* full text
+* tag
+* creator
+* organization
+* license
+* spatial
+* temporal
+* format
+
+Spatial metadata が存在する場合は地図検索も検討する．
+
+---
+
+# 39. Download
+
+公開 dataset では `davis-web` から直接 object storage へダウンロードさせる構成を許容する．
+
+Private dataset では presigned URL 等を利用する．
+
+```text
+Browser
+   │
+   │ request
+   ▼
+davis-server
+   │
+   │ signed URL
+   ▼
+Browser
+   │
+   ▼
+Object Storage
+```
+
+大容量ファイルを application server 経由でproxyしないことを基本とする．
+
+---
+
+# 40. DVC Compatibility
+
+Davis を DVC の fork または完全互換実装とはしない．
+
+ただし migration のため，将来的に以下を検討する．
+
+```bash
+davis import dvc
+
+davis export dvc
+```
+
+対応候補:
+
+* `.dvc`
+* `dvc.yaml`
+* `dvc.lock`
+
+初期段階では `.dvc` metadata import を優先する．
+
+DVC cache layout との完全互換は目標としない．
+
+---
+
+# 41. davis-core Non-goals
+
+少なくとも初期バージョンの`davis-core`では以下を実装しません．実験履歴やmetrics可視化はDavis全体から除外するのではなく，51節以降の`davis-runtime`と`davis-viz`へ分離します．
+
+* DVC pipeline DAG
+* reproducible pipeline execution
+* experiment tracking
+* hyperparameter management
+* metrics visualization
+* ML model registry
+* Git implementation
+* S3 implementation
+* custom HTTP protocol
+* custom object database
+* content-defined chunking
+* distributed locking server
+* centralized authentication server
+
+---
+
+# 42. Security
+
+Credential を manifest に含めてはならない．
+
+Secret を以下へ書き込んではならない．
+
+```text
+.davis/config.toml
+dataset manifest
+Git repository
+```
+
+対象:
+
+* access key
+* secret access key
+* API token
+* signed URL
+
+Private storage の認証は runtime に解決する．
+
+---
+
+# 43. Logging
+
+`davis-core` では structured tracing を利用可能な設計とする．
+
+推奨:
+
+```text
+tracing
+tracing-subscriber
+```
+
+CLI:
+
+```bash
+davis --verbose push
+```
+
+等で詳細ログを表示可能とする．
+
+Library 利用時は呼び出し側の subscriber を尊重する．
+
+---
+
+# 44. Testing
+
+## 44.1 Unit Test
+
+対象:
+
+* Object ID
+* Storage key
+* Manifest serialization
+* Manifest validation
+* Hashing
+* Reachability calculation
+* Status comparison
+
+---
+
+## 44.2 Integration Test
+
+Local filesystem backend を利用する．
+
+```text
+tempdir
+├── git repo
+├── davis repo
+└── fake remote
+```
+
+R2 を必須としない．
+
+---
+
+## 44.3 Backend Compatibility Test
+
+必要に応じて以下を CI / manual test する．
+
+* Cloudflare R2
+* AWS S3
+* MinIO
+
+---
+
+# 45. Performance Requirements
+
+初期目標:
+
+* TB 級 dataset を扱える設計
+* ファイル全体を memory に読み込まない
+* upload/download は streaming
+* remote object existence check を並列化可能
+* 数千〜数万ファイルの manifest に対応可能
+
+大量の小ファイルについては別途 benchmark を行う．
+
+---
+
+# 46. Version Model
+
+Davis は独自の version number を必須としない．
+
+Dataset version は原則 Git revision によって表現する．
+
+```text
+Git commit A
+    ↓
+dataset state A
+
+Git commit B
+    ↓
+dataset state B
+```
+
+Git tag を dataset release として利用できる．
+
+```text
+v1.0.0
+v1.1.0
+```
+
+Davis が Git history を重複管理しない．
+
+---
+
+# 47. Fundamental Invariants
+
+Davis 実装では以下を不変条件とする．
+
+### Object immutability
+
+同一 Object ID に異なる content が存在してはならない．
+
+### Manifest reproducibility
+
+同じ Git revision と同じ remote object set があれば，同じ dataset state を復元できる．
+
+### Metadata in Git
+
+Dataset の意味を決定する metadata は Git repository に存在する．
+
+### Content outside Git
+
+大容量 binary content は Git object database に保存しない．
+
+### Backend independence
+
+Object identity は storage backend に依存しない．
+
+---
+
+# 48. davis-core MVP
+
+## Phase 1
+
+最小機能:
+
+```text
+davis init
+davis add
+davis status
+davis push
+davis pull
+davis checkout
+```
+
+実装:
+
+* Rust workspace
+* davis-core
+* davis-cli
+* BLAKE3
+* manifest v1
+* local cache
+* OpenDAL
+* R2 / S3
+* local filesystem backend
+* Git integration
+* `.gitignore` management
+
+---
+
+## Phase 2
+
+```text
+davis gc
+davis verify
+directory dataset
+parallel transfer
+structured metadata
+```
+
+追加:
+
+* multi-file Dataset
+* GC
+* integrity checking
+* spatial metadata
+* temporal metadata
+* retries / progress reporting
+
+---
+
+## Phase 3
+
+`davis-web`
+
+機能:
+
+* catalog index
+* dataset detail
+* version history
+* download
+* metadata search
+* map preview
+* schema preview
+
+---
+
+## Phase 4
+
+一般公開またはローカルdeploymentでは，必要に応じて`davis-server`を追加します．参加者限定の夏の学校公式deploymentでは，Phase 3と同時に最小ServerまたはWorkerを導入します．
+
+機能候補:
+
+* authentication
+* organization
+* private datasets
+* signed URL
+* central catalog
+* access control
+
+---
+
+# 49. Architecture Summary
+
+最終的な構造は以下を基本とする．
+
+```text
+                        Davis Ecosystem
+
+          davis-cli    davis-server    catalog-indexer
+               \           |           /
+                \          |          /
+                 ┌──────────────────┐
+                 │    davis-core    │
+                 │ Dataset/Manifest │
+                 │ Cache/Sync/GC    │
+                 └──────┬─────┬─────┘
+                        │     │
+                       Git  OpenDAL
+                              │
+                       R2/S3/Local
+
+          davis-web ──▶ davis-server／CatalogIndex
+```
+
+Git integration:
+
+```text
+                 Git
+
+       branch / commit / tag
+                 │
+                 ▼
+          Davis Manifest
+                 │
+           ┌─────┴─────┐
+           ▼           ▼
+       Object A     Object B
+           │           │
+           └─────┬─────┘
+                 ▼
+          Object Storage
+```
+
+---
+
+# 50. プロジェクトの位置付け
+
+Davis は，
+
+> DVC を Rust で再実装したもの
+
+とは定義しない．
+
+より適切には，
+
+> **Git-native data versioning and cataloging system backed by object storage**
+
+と位置付ける．
+
+Davis の価値はストレージプロトコルそのものではなく，
+
+```text
+Git revision
+        +
+Dataset metadata
+        +
+Content-addressed objects
+        +
+Object storage
+```
+
+を一つの統一されたデータ管理モデルとして提供する点にある．
+
+最終的には，
+
+> **Data Catalog as Code**
+
+を実現する基盤として発展させる．
+
+Git repository にデータセットの意味，構造，履歴を保持し，大容量データ本体を任意の object storage に配置することで，CLI，Web catalog，研究データ管理，組織内データ基盤など複数のユースケースを同一の `davis-core` 上で実現する．
+
+---
+
+# 51. 交通行動モデル研究プラットフォームへの拡張
+
+## 51.1 位置付け
+
+1〜50節のデータ基盤仕様をDavisの根幹とします．`davis-core`はデータ管理だけでも単独利用できます．交通行動モデルの整形，実行，結果整理，再現は，Coreを書き換えず上位の`davis-runtime`から利用します．
+
+```text
+Git                         Object Storage
+metadata / history          binary content
+          \                    /
+           \                  /
+              davis-core
+   Dataset / Manifest / Cache / Sync
+                    │
+              FileSchema
+                    │
+             davis-runtime
+       Format / Run / Provenance
+                    │
+       MNL／研究者独自モデル
+```
+
+Davis全体の目標は，次のとおりです．
+
+> データの発見・取得から，整形，モデル実行，結果整理，再現までの共通作業をDavisが担い，利用者が「どのようなモデルを構築するか」に集中できる基盤を提供します．
+
+初期Webはデータカタログとダウンロードに集中します．整形，推定，可視化はローカル実行を基本としますが，入口をCLIへ固定しません．CLI，GUI，Notebook，ローカルAPI，遠隔APIは同じユースケースを呼ぶ交換可能なクライアントです．
+
+## 51.2 依存方向
+
+```text
+davis-web ──────────────▶ davis-server／CatalogIndex
+
+davis-cli ─┐
+davis-app ─┼────────────▶ davis-runtime ─▶ davis-model-runner
+Notebook ──┘                    │
+                               ▼
+                           davis-core
+```
+
+次の逆方向依存を禁止します．
+
+```text
+davis-core ─X─▶ davis-runtime
+davis-core ─X─▶ davis-cli
+davis-core ─X─▶ davis-web
+davis-runtime ─X─▶ 特定モデルの内部実装
+```
+
+---
+
+# 52. Metadata と中央契約
+
+## 52.1 DatasetManifest，FileSchema，CatalogIndex
+
+同じ`manifest`という名称で異なる責務を表さないよう，次を区別します．
+
+| 名称 | 原本／派生 | 単位 | 責務 |
+| --- | --- | --- | --- |
+| `DatasetManifest` | Git上の原本 | 論理データセット | metadata，版，構成ファイル，Object参照 |
+| `ObjectId` | Manifest内の不変参照 | 実データObject | content digestとalgorithm |
+| `FileSchema` | Git上の原本 | 実データファイル | 列名，型，説明，地域，年，利用条件 |
+| `CatalogIndex` | 公開時に生成する派生物 | カタログ全体 | Web検索，facet，ダウンロード参照 |
+
+現行CLIの`dist/manifest.json`は，CLI版，bootstrap package，データ群と`.dvc`ファイル一覧をまとめたリリース索引です．移行中は互換入力として読み，新仕様では`DatasetManifest`と`FileSchema`から`CatalogIndex`を生成します．
+
+## 52.2 既存FileSchemaの利用
+
+2026-08-17時点の`data/`には，256個のDVC管理対象と177個の`*.schema.yaml`があります．Webでは実データファイルごとの`<filename>.schema.yaml`を表示・検索します．データセット単位のYAMLだけで列情報を代替しません．
+
+初期索引は，主に次を扱います．
+
+* `name.ja`，`name.en`
+* `description.ja`，`description.en`
+* `city.ja`，`city.en`
+* `year`
+* `license_.ja`，`license_.en`
+* `hash_`
+* `columns[].name`
+* `columns[].type_.name`
+* `columns[].description.ja`，`columns[].description.en`
+
+スキーマがないファイルも，現行CLIから取得できる場合はカタログとダウンロード対象から除外しません．
+
+| 状態 | 処理 |
+| --- | --- |
+| `schema-ready` | ファイル説明と列情報を検索・表示します |
+| `schema-missing` | パス，形式，サイズ等を表示し，スキーマ未整備と示します |
+| `schema-invalid` | ダウンロードを維持し，検証エラーを運営へ示します |
+| `file-missing` | 公開せず，移行エラーとして扱います |
+
+## 52.3 中央契約
+
+言語やクライアントをまたいで固定する契約は，次の6種類に限定します．
+
+1. `DatasetManifest`
+2. `ObjectId`
+3. `FileSchema`
+4. `ModelManifest`
+5. `RunRequest`
+6. `RunResult`
+
+検索画面の状態，モデル内部の効用関数，尤度，勾配，最適化器，クラス構成は中央契約に含めません．
+
+利用者が記述する`project.yaml`はMVPに設けません．Davisが解決済み入力，整形，モデル，環境，出力を`run.json`へ自動記録します．一括実験の必要性が確認された場合だけ，将来`experiment.yaml`等を任意機能として検討します．
+
+---
+
+# 53. 研究実行コンポーネント
+
+| コンポーネント | 責務 | 初期優先度 |
+| --- | --- | --- |
+| `davis-core` | 1〜50節のデータ基盤 | P0は読取，P1で更新系を拡張 |
+| `davis-catalog` | FileSchema検証，ファイル・列・facet索引生成 | P0 |
+| `davis-server` | 認証，CatalogIndex配信，署名付きURL | 公式環境ではP0 |
+| `davis-web` | スキーマ検索，絞り込み，詳細，ダウンロード | P0 |
+| `davis-runtime` | 入力解決，整形，モデル実行，成果物整理，来歴記録 | P0 |
+| `davis-model-api` | ModelManifest，RunRequest，RunResultのschema | P0 |
+| `davis-model-runner` | モデルprocess起動，ログ，結果検証 | P0 |
+| `davis-mnl` | 標準MNLの参考コンポーネント | P0 |
+| `davis-model-sdk-python` | Pythonモデル向け補助関数と型 | P0 |
+| `davis-fmt` | 既知の変換recipeと外部変換process | 最小機能をP0 |
+| `davis-viz` | 共通結果とモデル固有表示の接続 | 最小機能をP0 |
+| `davis-cli` | CoreとRuntimeの最初の参照クライアント | P0 |
+| `davis-app` | 同じユースケースを使うGUIクライアント | P1以降 |
+| `davis-remote-runner` | 隔離されたサーバー実行 | P2以降 |
+
+`davis-core`をモデル実行の都合で肥大化させません．`davis-runtime`はCoreの版付きデータ参照を利用しますが，ローカルファイルや別組織のストレージもInput Resolverから利用できます．
+
+---
+
+# 54. 公式配布と任意入力元
+
+## 54.1 夏の学校公式環境
+
+行動モデル夏の学校の公式環境では，データの登録・更新・公開を運営に限定し，参加者は検索・閲覧・ダウンロードだけを行えるようにします．
+
+| 役割 | カタログ閲覧 | ダウンロード | 登録・更新・公開 | 署名付きPUT URL |
+| --- | --- | --- | --- | --- |
+| `participant` | 可 | 可 | 不可 | 発行しません |
+| `operator` | 可 | 可 | 可 | 運営経路だけで発行します |
+
+参加者には短寿命の署名付きGET URLだけを発行します．参加者用Webへupload endpointを公開せず，運営credentialを配布しません．運営は，staging upload，digest検証，ManifestとFileSchemaの検証，Git上のレビュー，CatalogIndex生成，本番公開の順に公開します．
+
+この制限は公式deploymentのpolicyです．`davis-core`の`add`や`push`能力を削除しません．別組織が独自repositoryとstorageを運営する場合は，その組織の権限規則で利用できます．
+
+## 54.2 Runtimeの入力元
+
+`davis-runtime`は公式カタログへの接続を必須としません．次の入力元を同じ検証済みローカル参照へ正規化します．
+
+| `kind` | 用途 | 導入時期 |
+| --- | --- | --- |
+| `catalog` | 公式または別組織のDavis repository | P0 |
+| `local` | PC上のファイルまたはディレクトリ | P0 |
+| `https` | 組織内外のHTTPS download先 | 認証なしをP0，profile認証をP1 |
+| `s3` | R2，S3，MinIO等 | P1 |
+| `custom` | 組織固有resolver | P2以降 |
+
+研究者や行政職員がローカルデータや庁内サーバーを利用しても，Davis公式環境へのuploadは発生しません．明示的な公開操作を行わない限り，Runtimeは入力データを外部送信しません．
+
+access key，token，署名付きURL等は`RunRequest`，`run.json`，モデルprocessへ保存・転送しません．Runtimeが環境変数，OS credential store，またはcredential profileから実行時に解決します．共有用の実行記録からは，ローカル絶対パス等の機微情報を除去または相対化します．
+
+---
+
+# 55. モデルコンポーネントAPI
+
+## 55.1 Processとファイルの境界
+
+Python，Rust，R，Julia等を同じDavisから起動できるよう，関数ABIや継承classではなく，processとJSON・Parquetファイルを境界にします．
+
+```text
+davis-model-runner
+  ├── 入力元をローカル参照へ解決します
+  ├── model向けrequest.jsonを作成します
+  ├── model processを起動します
+  └── output/run-result.jsonを検証します
+
+model component
+  ├── request.jsonを読みます
+  ├── 任意の方法で推定します
+  ├── 可能な標準成果物を出力します
+  └── 独自成果物をextensionsへ出力します
+```
+
+## 55.2 ModelManifest
+
+```yaml
+api_version: davis.model/v1alpha1
+id: example-lab/scale-mnl
+name: Scale-adjusted MNL
+version: 0.1.0
+
+runtime:
+  kind: python
+  command: ["uv", "run", "python", "-m", "scale_mnl"]
+  lockfile: uv.lock
+
+operations: [validate, estimate, predict]
+inputs:
+  - name: choice_data
+    media_types: [application/vnd.apache.parquet]
+    required: true
+config_schema: schemas/config.schema.json
+outputs:
+  standard: [parameters, covariance, metrics, predictions]
+  extensions: [estimated_scales]
+```
+
+MVPは`python`と`native`から始め，`wasm`と`container`を後から追加します．
+
+## 55.3 RunRequest
+
+```json
+{
+  "api_version": "davis.run/v1alpha1",
+  "run_id": "run_01...",
+  "operation": "estimate",
+  "component": {
+    "id": "example-lab/scale-mnl",
+    "version": "0.1.0",
+    "source_revision": "<git-commit>"
+  },
+  "inputs": {
+    "choice_data": {
+      "source": {
+        "kind": "catalog",
+        "dataset_id": "tokyo-person-trip",
+        "revision": "<git-commit>",
+        "file_id": "trips.parquet"
+      },
+      "resolved": {
+        "path": "/resolved/input/choice-data.parquet",
+        "object_id": "blake3:<digest>",
+        "size": 728193721
+      }
+    }
+  },
+  "config": {
+    "path": "/resolved/input/model.yaml",
+    "sha256": "<hash>"
+  },
+  "output_directory": "/resolved/output"
+}
+```
+
+クライアントは主に`source`を指定し，Runtimeが`resolved`を生成します．Davisの`run.json`には秘密情報を除いた両方を記録します．モデル向け`request.json`には原則として`resolved`だけを渡します．
+
+## 55.4 RunResult
+
+```json
+{
+  "api_version": "davis.result/v1alpha1",
+  "run_id": "run_01...",
+  "status": "succeeded",
+  "artifacts": {
+    "parameters": "parameters.parquet",
+    "covariance": "covariance.parquet",
+    "metrics": "metrics.json",
+    "predictions": "predictions.parquet"
+  },
+  "extensions": {
+    "example-lab/estimated-scales": "extensions/scales.parquet"
+  }
+}
+```
+
+すべてのモデルへ同じ成果物を強制しません．状態，来歴，成果物参照だけを必須とし，係数表，予測値等は出力可能なモデルの任意標準成果物とします．モデル固有結果は名前空間付き`extensions`へ保存します．
+
+---
+
+# 56. 標準MNLとモデル拡張
+
+`davis-mnl`はDavisに固定された唯一のモデルではありません．モデルコンポーネントAPIの参考実装であり，複製・変更して新しいモデルを作るためのひな型です．利用者は，データ取得，cache，入出力整理，hash，実行記録をモデルごとに書き直さず，主にモデルコードと設定を変更します．
+
+標準MNLの推奨入力はlong形式のParquetとし，`case_id`，`alternative_id`，`chosen`，`available`に相当する列を設定で対応付けます．ただし，現行の`los.csv`と`trip.csv`を初期互換入力として維持するかは要確認です．他モデルにはlong形式を強制せず，複数表，network，GeoJSON，行列等を追加できます．
+
+モデル内部の効用関数，確率，尤度，gradient，optimizer，parameter共有方法は共通classへ固定しません．標準MNLを少し変更したモデルも，独立したModelManifestとprocessとして登録し，同じRunRequestから実行・比較できるようにします．
+
+基盤はRustを第一候補とし，研究モデルはPythonを第一経路とします．Python環境はcomponent単位の`uv.lock`で隔離し，Python executable，lockfile hash，package版を`run.json`へ記録します．Rustだけへ統一することも，Davis全体をPythonへ統一することも目標にしません．
+
+---
+
+# 57. davis-fmt と davis-viz
+
+## 57.1 davis-fmt
+
+`davis-fmt`は全データを万能形式へ変換する機能ではありません．元データから，特定モデルが要求する入力を再現可能に作ります．
+
+1. 列名変更，型変換，値変換，join，wide・long変換は宣言的recipeで記述します．
+2. recipeで表現しにくい処理は，Python，Rust等の独立した版付き変換componentとして実装します．
+
+任意codeをYAMLへ埋め込みません．FileSchemaに存在する列と型は検証しますが，列名だけから意味を推測して選択肢や効用へ自動割当てしません．
+
+## 57.2 davis-viz
+
+可視化は次の3層へ分けます．
+
+1. すべてのRunResultに対する状態，来歴，log，成果物一覧
+2. parameters，metrics，predictions等の任意標準成果物
+3. extensionsを使うモデル固有表示
+
+`parameters.parquet`は`name`と`estimate`を必須列とし，`std_error`，`statistic`，`p_value`，`lower`，`upper`を任意列とします．対応モデルでは係数表，信頼区間図，diagnosticsを共通表示します．係数を持たないモデルには強制しません．
+
+共通HTML・JSON・CSVと，Vega-Lite specificationを第一経路とします．Matplotlib等はモデル固有の任意成果物として利用できます．
+
+---
+
+# 58. Web，CLI，GUI
+
+## 58.1 初期Web
+
+初期Webは，実データファイルごとのFileSchemaを用いたダウンロードカタログに限定します．
+
+* 日本語・英語の名称・説明の検索
+* 地域，年，形式，license，schema状態による絞り込み
+* 列名，列説明，列型，複数列の包含条件による検索
+* Datasetとファイル詳細
+* Raw YAML表示
+* 短寿命の署名付きGET URLによるdownload
+
+検索のたびに全YAMLを走査せず，公開時に`files.json`，`columns.json`，`facets.json`等を生成します．初期はCloudflare Pagesで静的索引を検索し，規模が増えた場合は同じ応答形式のAPIへ交換します．
+
+## 58.2 クライアントの同列性
+
+CLIは最初の参照クライアントですが，中核APIではありません．
+
+```text
+CLI       ─┐
+GUI       ─┼─▶ Run use case ─▶ RunRequest／RunResult
+Notebook  ─┤
+Remote API─┘
+```
+
+すべてのクライアントが同じ`run.json`，成果物，実行履歴を利用します．GUIがCLIをshell実行することを正式な接続方式にはしません．
+
+## 58.3 GUIプロトタイプから取り入れる要素
+
+`feature/davis-gui`の固定されたCar・Rail・Bus・Walk editorやmock推定は正式仕様にしません．次の概念はCoreまたは共通成果物へ取り入れます．
+
+* UIとservice adapterの分離
+* 選択中データのFileSchemaに基づく列候補と型検証
+* データ変更時のモデル設定再検証
+* 自動生成された実行履歴と比較
+* Table，Coefficients，Diagnosticsの共通表示
+* Draft，Modified，Estimated，Saved等の画面状態
+
+---
+
+# 59. 統合MVP
+
+## 59.1 成功条件
+
+1. 現行CLIで取得できる全データセットと関連文書を引き続き取得できます．
+2. 256個のDVC管理対象を欠落させず，177個のFileSchemaを検索できます．
+3. schema未整備のファイルもdownload対象から欠落しません．
+4. 公式環境ではoperatorだけが登録・更新でき，participantは閲覧・downloadだけを行えます．
+5. catalogとlocalの両入力を同じRun use caseから利用できます．
+6. 既存MNLを独立componentとして実行できます．
+7. 標準MNLを変更した別componentをDavis本体のforkなしに実行できます．
+8. RunRequest，RunResult，入力，model revision，環境，成果物を記録できます．
+9. 共通係数表を出力するモデルからHTML・CSV・JSONを生成できます．
+
+## 59.2 P0: 3〜5日の縦断prototype
+
+3〜5日で1〜50節の全Core機能を本番品質で完成させることは目標にしません．P0ではデータ基盤仕様を崩さず，現行DVC資産を読む互換adapterから縦断経路を作ります．
+
+### Day 0
+
+* 現行manifestの全取得対象，size，hashを棚卸しします．
+* データ利用条件と参加者向け再配布可否を確認します．
+* 平文credentialが存在する場合は失効・再発行します．
+
+### Day 1
+
+* 6つの中央契約の最小schemaを定義します．
+* 現行`manifest.json`，`.dvc`，`*.schema.yaml`の読取adapterを作ります．
+* file，column，facetのCatalogIndexを生成します．
+* `catalog`と`local`をローカル参照へ解決します．
+
+### Day 2
+
+* 現行Python MNLを独立componentへ接続します．
+* RunRequest，RunResult，`run.json`，log，標準成果物を通します．
+* 合成データと現行実装による回帰試験を作ります．
+
+### Day 3
+
+* Cloudflare Accessと署名付きGET URL発行経路を作ります．
+* FileSchema検索，詳細，Raw YAML，downloadをWebへ実装します．
+* participantの登録，更新，PUT URL発行を拒否します．
+
+### Day 4〜5
+
+* `list`，`info`，`get`相当の全件互換試験を行います．
+* 未移行Objectは既存DVCへ安全にfallbackします．
+* 変更MNL componentを1つ作り，標準MNLと比較します．
+* 係数表，係数図，diagnosticsの共通HTMLを生成します．
+
+## 59.3 P1
+
+1〜50節のCore仕様を段階的に実装します．
+
+* `init`，`add`，`status`，`push`，`pull`，`checkout`
+* local cache，repository lock，streaming transfer，並列数制限
+* `verify`とlocal GC
+* Local backendによる統合試験，R2・S3・MinIO互換試験
+* DVC metadata importと旧ObjectId移行
+* authenticated HTTPSとS3 Input Resolver
+* davis-fmt recipe，実行比較，GUIまたはNotebookの薄いclient
+
+## 59.4 P2
+
+* remote GCのdry-runと運用承認
+* OCI，WASI，remote runner
+* Nested Logit，Mixed Logit，Recursive Logit等の参考component
+* 組織・project・権限・利用規約同意
+* model registryと署名・信頼情報
+
+---
+
+# 60. 確認済み事項と要確認事項
+
+## 60.1 確認済み事項
+
+1. 1〜50節のGit-nativeデータ基盤仕様をDavisの土台とします．
+2. 現在の`data/`にある全データをカタログ対象にします．
+3. 現行CLIで取得可能な全データのdownload互換性をMVP条件にします．
+4. 初期WebはFileSchema検索とdownloadへ限定します．
+5. 公式環境のupload・更新・公開は運営に限定します．
+6. 参加者は公式データを閲覧・downloadできます．
+7. Runtimeはlocal dataや独自serverも入力にできます．
+8. 外部入力は明示的な公開操作なしに公式storageへuploadしません．
+9. 推定はlocal実行を基本とし，将来server実行を追加可能にします．
+10. MNLは固定機能ではなく，変更modelを作る参考componentです．
+11. CLIを中核APIにせず，GUI，Notebook，remote APIと同列にします．
+12. 利用者が記述する`project.yaml`はMVPに設けません．
+
+## 60.2 要確認事項
+
+1. 既存directoryから論理DatasetManifestを作るデータ群の区切りとID
+2. 新規ObjectへBLAKE3を採用するか，既存DVC Objectをいつ再hashするか
+3. data単位のaccess区分をDatasetManifestとFileSchemaのどちらで管理するか
+4. Coreの初期更新操作を既存DVC remoteへの書込みまで対応させるか，R2移行後だけにするか
+5. 標準MNLの初期入力として現行`los.csv`と`trip.csv`を維持するか
+6. 最初の変更model例として何を採用するか
+7. Python SDKをNumPy・SciPy中心にするか，JAX等を採用するか
+8. 標準MNLのP0にweight，panel，robust standard errorを含めるか
+9. 既存FileSchemaへ将来の検索fieldをどこまで追加するか
+10. 同時利用者数，download量，R2費用上限
+11. Davis本体とmodel componentのlicense
