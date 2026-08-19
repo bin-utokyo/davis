@@ -1,10 +1,10 @@
 # Davis 交通行動モデル研究プラットフォーム構想
 
-> 状態: Draft 0.5
+> 状態: Draft 0.6
 >
 > 作成日: 2026-08-17
 >
-> 最終更新日: 2026-08-18
+> 最終更新日: 2026-08-19
 >
 > 対象: Davisを，データ配布ツールから，交通行動モデルを実装・推定・比較・再現するための研究プラットフォームへ発展させる計画
 >
@@ -31,7 +31,7 @@ Davisの目標を，次の1文に定めます．
 - 現行`davis-cli`から取得できるすべてのデータを，引き続き取得できること
 - データの意味，出典，利用条件，版，ハッシュを機械可読にすること
 - Web上で各実データの`*.schema.yaml`を読み，ファイル属性と列情報を組み合わせて検索・絞り込みできること
-- `project.yaml`から，取得，整形，推定，結果整理を一括実行できること
+- 単一の`davis run`から，入力解決，既知の整形，推定，結果整理を一括実行できること
 - 標準MNLのコードを読んで変更できること
 - 変更したモデルを，Davis本体をフォークせず，新しいコンポーネントとして登録できること
 - 入力，設定，実装版，依存環境，結果を保存し，再実行できること
@@ -56,7 +56,7 @@ Davisの目標を，次の1文に定めます．
 2. 各実データファイルについて，対応する`*.schema.yaml`の名称，説明，地域，年，列名，列型，列説明，ハッシュ，利用条件を確認できる
 3. Webで`*.schema.yaml`のファイル属性と列情報による検索・絞り込みを行い，対象データをダウンロードできる
 4. WebとCLIが同じカタログを利用する
-5. `davis project run project.yaml`で，既知の整形，入力検証，モデル実行，成果物整理を一括実行できる
+5. `davis run <model>`で，既知の整形，入力検証，モデル実行，成果物整理を一括実行できる
 6. 既存MNLを独立した標準モデルコンポーネントとして実行できる
 7. 標準MNLから新しいコンポーネントを生成し，コードを変更してローカル実行できる
 8. 実行要求と結果を，版付きのファイル契約として保存できる
@@ -90,15 +90,14 @@ flowchart TB
     Request --> Wasm --> Result
 ```
 
-中央で共通化するのは，次の5点に限定します．
+中央で共通化するのは，次の4点に限定します．
 
 1. 既存`*.schema.yaml`を版付きで扱う`FileSchema`
 2. モデルコンポーネントを識別する`ModelManifest`
-3. 研究全体の構成を記述する`ProjectSpec`
-4. モデルへ入力成果物と設定を渡す`RunRequest`
-5. 状態，来歴，標準成果物の場所を返す`RunResult`
+3. モデルへ解決済み入力と設定を渡す`RunRequest`
+4. 状態，来歴，標準成果物の場所を返す`RunResult`
 
-`ProjectSpec`は利用者向け，`RunRequest`はモデルプロセス向けです．前者はデータ，整形，モデル，出力を参照し，後者は解決済みのローカル入力だけを渡します．同じ情報を重複して持たせず，Davisが`ProjectSpec`から`RunRequest`を生成します．
+利用者が記述する`project.yaml`はMVPに設けません．初回実行ではCLI引数を使い，Davisが解決済みの入力，整形，モデル，環境，出力を`run.json`へ自動記録します．再実行はこの記録を利用します．多数の条件を一括実行する必要が実際に生じた場合だけ，将来`experiment.yaml`等を任意機能として検討します．
 
 効用関数，選択確率，尤度，勾配，最適化器，内部クラス構成は共通契約に含めません．これらは各モデルコンポーネントが自由に実装します．
 
@@ -109,7 +108,6 @@ flowchart TB
 | ファイルID，データ群，版，ハッシュ | 共通化する | 取得と再現に不可欠 |
 | 実行ID，状態，時刻 | 共通化する | WebとCLIで扱うために必要 |
 | モデルID，版，実装ハッシュ | 共通化する | 比較と再現に不可欠 |
-| プロジェクト内の処理順と参照 | 共通化する | Davisがモデル以外の共通作業を担うために必要 |
 | 入出力ファイル参照 | 共通化する | 言語間接続に必要 |
 | 係数表の基本列 | 出力できるモデルだけ共通化する | 一般的な結果を可視化できる |
 | 効用・尤度のクラス設計 | 共通化しない | モデルの発想を制限する |
@@ -136,9 +134,7 @@ R2とローカルファイルの両方を使うため，ストレージ境界は
 ```text
 Webでデータを探す・`*.schema.yaml`を読む・ダウンロードする
   ↓
-project.yamlを作成する
-  ↓
-davis project run project.yaml
+davis run <model> --input <role>=<file> ...
   ├── データを取得またはキャッシュから解決
   ├── 既知の整形レシピを適用
   ├── モデル入力を検証
@@ -149,42 +145,20 @@ davis project run project.yaml
 研究者はモデルコードとモデル設定を変更して再実行する
 ```
 
-利用者が新しい研究モデルを考えるとき，データ取得処理，CSV読込，出力ディレクトリ管理，ハッシュ計算，結果ファイル生成をモデルごとに書き直さないことを目標にします．
+利用者が新しい研究モデルを考えるとき，データ取得処理，CSV読込，出力ディレクトリ管理，ハッシュ計算，結果ファイル生成をモデルごとに書き直さないことを目標にします．実行条件はDavisが`run.json`へ自動保存するため，再現性のためのプロジェクト設定ファイルを利用者に重ねて書かせません．
 
 ### 4.2. データを取得して標準MNLを実行する
 
 ```bash
 davis dataset list
 davis dataset get jp-pt-tokyo@2008-r1 --output ./data
-davis project run project.yaml
+davis run davis/mnl \
+  --input trips=./data/trip.csv \
+  --input los=./data/los.csv \
+  --config ./model.yaml
 ```
 
-`project.yaml`の例です．
-
-```yaml
-api_version: davis.project/v1alpha1
-name: tokyo-mode-choice
-
-data:
-  inputs:
-    trips:
-      path: ./data/trip.csv
-    los:
-      path: ./data/los.csv
-
-prepare:
-  recipe: davis/pt-to-choice-long@1
-
-model:
-  component: davis/mnl-python@0.1.0
-  config: model.yaml
-
-outputs:
-  directory: runs/tokyo-mode-choice
-  report: html
-```
-
-Webからダウンロードしたファイルは`path`で指定します．CLIから直接取得する場合は，将来`catalog://<file-id>@<hash>`形式の参照も利用できるようにします．Davisは参照をローカルファイルへ解決し，必要な処理を順に実行します．
+Webからダウンロードしたファイルは`--input <role>=<path>`で指定します．CLIから直接取得する場合は，将来`catalog://<file-id>@<hash>`形式の参照も利用できるようにします．Davisは参照をローカルファイルへ解決し，必要な処理を順に実行します．
 
 ### 4.3. MNLを変更して新しいモデルを作る
 
@@ -224,12 +198,19 @@ my-scale-mnl/
 ```bash
 davis model validate .
 davis model test .
-davis project run ../project.yaml \
-  --model-component . \
-  --model-config ./examples/model.yaml
+davis run . \
+  --input trips=../data/trip.csv \
+  --input los=../data/los.csv \
+  --config ./examples/model.yaml
 ```
 
 このとき，取得，整形，入力検証，結果整理は標準MNLを使った場合と同じです．研究者が変更するのは，モデルコンポーネントとモデル固有設定だけです．
+
+初回実行後は，生成された`run.json`から同じ条件を復元します．
+
+```bash
+davis rerun latest --model .
+```
 
 ### 4.4. モデルを共有する
 
@@ -500,7 +481,7 @@ Pythonの版問題は，全体から排除するのではなく，次の方法�
 
 - コンポーネントごとに`pyproject.toml`と`uv.lock`を持つ
 - Davis本体とモデルの依存環境を分ける
-- `davis model run`が必要な環境を構築・選択する
+- `davis run`が必要な環境を構築・選択する
 - 結果へPython版とロックファイルのハッシュを記録する
 - 長期保存や共有が必要な場合はOCIイメージも作成する
 
@@ -676,13 +657,14 @@ davis dataset info <id>@<version>
 davis dataset get <id>@<version>
 davis file search --column travel_time --city Tokyo
 davis file info <file-id>
-davis project init
-davis project run project.yaml
 davis model list
 davis model create <name> --from <template>
 davis model validate <component>
 davis model test <component>
-davis model run <component> --input <file> --config <file>
+davis model check <component> --input <role>=<file>
+davis run <component> --input <role>=<file> --config <file>
+davis rerun <run-id> --model <component>
+davis run list
 davis run inspect <run-directory>
 davis run compare <run-a> <run-b>
 ```
@@ -690,6 +672,72 @@ davis run compare <run-a> <run-b>
 ### 11.3. PCアプリ
 
 PCアプリは将来候補とします．CLIの操作をGUIから実行したい需要が確認できた場合に，Tauri等でローカルランナーと接続します．初期段階では，Webでデータを取得し，その後はCLIだけで研究を完結できることを優先します．
+
+### 11.4. `feature/davis-gui`から取り入れる要素
+
+`feature/davis-gui`には，Reactによるデスクトップ向け研究GUIのプロトタイプがあります．これはモックデータだけで動作し，現行CLI，Pythonモデル，実API，実推定器には接続されていません．そのため，アプリ全体をMVPへ取り込むことはしません．一方，次の設計要素はCLI中心の現構想にも有用です．
+
+#### UIとサービス呼び出しの分離
+
+プロトタイプは，データ取得，推定，実験，提案を小さなserviceモジュールの背後に置いています．将来GUIを再開するときも，画面からR2やPythonを直接呼ばず，次のようにDavisのユースケースへ接続します．
+
+```text
+GUI feature
+  ↓
+UI用service adapter
+  ↓
+davis_catalog／davis_core／davis_model_runner
+```
+
+serviceモジュール自体をバックエンド契約にはしません．正式な契約はOpenAPI，`RunRequest`，`RunResult`とし，UI側serviceはそれらを画面向けに変換するアダプターとします．
+
+#### スキーマに基づく候補制限
+
+後続のGUI案では，モデルに指定できる変数を，選択したデータのスキーマに存在する列へ限定しています．この原則はCLIにも取り入れます．
+
+- `davis run`は，指定変数が対応する`*.schema.yaml`に存在するか検証する
+- 数値変数が必要な場所では，列型も検証する
+- GUIを将来作る場合は，スキーマに存在する列だけを候補表示する
+- データを変更したときは，存在しない変数を黙って置換せず，モデル設定を再検証する
+
+ただし，既存`*.schema.yaml`には，説明変数，選択結果，選択肢固有変数等の意味上の役割が必ずしも記録されていません．列名と型から役割を推測して固定せず，既知の整形レシピまたは将来追加する任意の意味メタデータがある場合だけ，高度な候補制限を行います．
+
+#### 実験履歴と比較
+
+GUI案の`Experiment`一覧とモデル比較は，Davisが自動生成する実行履歴として取り入れます．利用者に`project.yaml`を書かせる代わりに，各実行の`run.json`を保存し，次を可能にします．
+
+```bash
+davis run list
+davis run show <run-id>
+davis rerun <run-id> --model ./my-model
+davis run compare <run-id-a> <run-id-b>
+```
+
+比較では，LL，ρ²，AIC，BICだけでなく，入力ハッシュ，モデルcommit，設定，実行環境，収束状態の違いも示します．単にAICが最小のモデルを自動的に「最良」と断定しません．
+
+#### 共通結果と診断
+
+GUI案の`Table`，`Coefficients`，`Diagnostics`という分け方は，`davis_viz`の標準表示へ取り入れます．初期CLIは同じ構造をHTMLへ出力し，将来GUIは同じ成果物を表示します．
+
+- `Table`: 係数，標準誤差，検定統計量，信頼区間
+- `Coefficients`: 係数と信頼区間の図
+- `Diagnostics`: 最適化器，反復回数，勾配ノルム，所要時間，警告
+
+#### モデル検査と提案
+
+GUI案のSuggestionsは，自動的にモデルを書き換える機能ではなく，`davis model check`の検査規則として段階的に取り入れます．
+
+```bash
+davis model check ./my-model --input ...
+```
+
+例えば，共有する意図の係数が一部選択肢にしかない，基準選択肢が不明，指定列が存在しない，識別できない可能性がある，という状態を指摘します．提案は統計的助言と事実上のエラーを区別し，利用者の確認なしにモデルコードや設定を変更しません．
+
+#### 将来GUIの操作体系
+
+コマンドパレット，`Draft`，`Modified`，`Estimated`，`Saved`という状態表示，キーボード操作，主要デスクトップ幅でのE2E試験は，将来GUIを再開する際の参考にします．GUIのコマンドは独自処理を持たず，`davis run`，`davis rerun`，`davis run compare`等の中核ユースケースへ対応付けます．
+
+一方，固定されたCar・Rail・Bus・Walkの効用エディタ，モック推定，固定ルールによる自動提案，Web内でのモデル実行は，初期Webへ取り込みません．これらはモデル種類とデータ意味が十分に定義された後の任意クライアントとして再検討します．
 
 ## 12. 推奨技術スタック
 
@@ -761,7 +809,7 @@ davis/
 
 #### Day 1: 最小契約とCLI骨格
 
-- 5つの中央契約だけを定義する
+- 4つの中央契約だけを定義する
 - JSON Schemaと正常・異常例を作る
 - Rust CLIからローカルのモデルプロセスを起動する
 - 既存DVCメタデータと177個の`*.schema.yaml`から，ファイル・列・facet索引を生成する
@@ -773,7 +821,8 @@ davis/
 - `RunRequest`を読み，共通結果とログを出力する
 - 合成データと現行実装による回帰試験を作る
 - `davis model create --from davis/mnl-python`を実装する
-- `project.yaml`から整形，モデル実行，成果物整理を一括実行する
+- 単一の`davis run`から整形，モデル実行，成果物整理を一括実行する
+- 実行条件を利用者入力ではなく`run.json`へ自動記録する
 
 #### Day 3: カタログWebと配布API
 
@@ -789,7 +838,8 @@ davis/
 - `list`，`info`，`get`相当の互換試験を実行する
 - 全`*.schema.yaml`の検証結果と，実データ・DVCファイルとの対応を確認する
 - 標準MNLを少し変更したサンプルコンポーネントを1つ作る
-- 標準MNLと変更モデルを同じ`project.yaml`から実行・比較する
+- 標準MNLと変更モデルを同じCLI引数から実行・比較する
+- GUI案を参考に，係数表，係数図，診断の共通HTMLを生成する
 - モデル開発者向けREADMEとデバッグ手順を作る
 
 短期間では，新しい数値計算エンジン，WASM，PCアプリ，多言語SDKを同時に完成させません．現行資産を利用し，データ取得とモデル追加の縦断経路を通すことを優先します．
@@ -804,6 +854,7 @@ davis/
 - Git URLからのモデルインストール
 - ロバスト標準誤差，重み，パネル等の標準MNL拡張
 - スキーマ検索のサーバーAPI化が必要かを利用規模から判断する
+- `davis model check`へ，スキーマ整合性とモデル構造の検査規則を追加する
 
 ### P2: 1〜3か月以降
 
@@ -849,7 +900,7 @@ davis/
 
 | リスク | 影響 | 対応 |
 | --- | --- | --- |
-| 接続契約を増やし過ぎる | 冗長になり，研究コードを書きにくい | 5つの中央契約に絞り，内部関数を標準化しない |
+| 接続契約を増やし過ぎる | 冗長になり，研究コードを書きにくい | 4つの中央契約に絞り，内部関数を標準化しない |
 | 契約が少な過ぎる | Web，CLI，可視化が分断される | 状態，来歴，成果物参照，任意の標準表を共通化する |
 | Python環境が壊れる | 再現・実行できない | コンポーネント単位の`uv.lock`と実行版記録 |
 | Rustだけに寄せる | 研究者がモデルを追加しにくい | Python SDKを第一経路とする |
@@ -861,10 +912,12 @@ davis/
 | R2移行でデータが欠落する | 現行CLIより機能が低下する | 全件取得監査をリリース条件にする |
 | スキーマがないファイルを非表示にする | 現行データを発見・取得できない | `schema-missing`として掲載し，ダウンロード互換性を維持する |
 | 列検索のためにYAMLを毎回全走査する | Webが遅くなり，実装が複雑になる | 公開時にファイル・列・facet索引を生成する |
+| GUI案をそのまま実装する | Webの範囲が広がり，モック仕様が正式仕様になる | 有用な概念だけをCLIと共通成果物へ移し，GUI本体は将来クライアントとする |
+| 列名と型から意味を推測する | 誤った変数・選択肢をモデルへ割り当てる | 存在と型だけを確実に検証し，意味は明示的なレシピ・メタデータがある場合だけ使う |
 
 ## 17. 先に作るADR
 
-1. ADR-0001: 中央契約を5種類に限定するか
+1. ADR-0001: 中央契約を4種類に限定するか
 2. ADR-0002: モデル拡張を動的ライブラリではなく，プロセス＋ファイル契約にするか
 3. ADR-0003: モデル開発をPython，基盤実装をRustから始めるか
 4. ADR-0004: Python環境をコンポーネント単位の`uv.lock`で隔離するか
@@ -874,6 +927,8 @@ davis/
 8. ADR-0008: 現行全データのダウンロード互換性をMVPの条件とするか
 9. ADR-0009: 任意モデルのブラウザ実行を必須とせず，能力をモデルごとに宣言するか
 10. ADR-0010: 既存`*.schema.yaml`をファイルカタログの原本とし，公開時に検索索引を生成するか
+11. ADR-0011: 実験設定ファイルをMVPに設けず，実行記録を`run.json`として自動生成するか
+12. ADR-0012: GUIプロトタイプの実験履歴，結果表示，スキーマ検証をCLIと共通成果物へ移すか
 
 ## 18. 確認済み事項と残る確認事項
 
@@ -889,6 +944,8 @@ davis/
 8. 接続は少数の安定した境界に限定し，モデル内部は共通化しない
 9. データ取得後の整形，推定，結果整理はCLIを正式経路とする
 10. 通常の研究では，共通処理をDavisへ任せ，主にモデルコンポーネントだけを変更できるようにする
+11. 利用者が記述する`project.yaml`はMVPに設けず，Davisが実行条件を`run.json`へ保存する
+12. `feature/davis-gui`はそのまま採用せず，サービス分離，実験比較，共通結果，スキーマ検証を取り入れる
 
 ### 18.2. 残る確認事項
 
@@ -902,14 +959,14 @@ davis/
 
 ## 19. 直近の着手順
 
-1. 5つの最小契約を作り，標準MNLと変更モデルの両方で不足がないか確認する
+1. 4つの最小契約を作り，標準MNLと変更モデルの両方で不足がないか確認する
 2. 現行データの全取得対象，サイズ，ハッシュを棚卸しする
 3. 全`*.schema.yaml`を検証し，実データ・DVCメタデータとの対応表と検索索引を作る
 4. Webへファイル・列検索，複合絞り込み，スキーマ詳細，Raw YAML，ダウンロードを実装する
 5. 現行MNLを，入出力を変えずにモデルプロセスとして起動する薄いアダプターを作る
-6. `project.yaml`から共通処理とモデル実行を一括で行う
-7. 標準MNLから複製した変更モデルを1つ作り，同じプロジェクトから実行する
-8. 両モデルの結果を共通`RunResult`として読み，CLIから係数表とレポートを生成する
+6. 単一の`davis run`から共通処理とモデル実行を一括で行い，`run.json`を生成する
+7. 標準MNLから複製した変更モデルを1つ作り，同じ入力条件から実行する
+8. 両モデルの結果を共通`RunResult`として読み，GUI案を参考に係数表，係数図，診断レポートを生成する
 9. Cloudflare AccessとR2署名付きダウンロードを接続する
 10. 全データのR2移行と取得監査を完了する
 
