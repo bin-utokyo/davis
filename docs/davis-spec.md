@@ -2204,6 +2204,9 @@ P0〜P2が安定した後，次を優先度と需要に応じて追加します�
 * Nested Logit，Mixed Logit，Recursive Logit等の参考component
 * OCI，WASI，remote runner
 * remote GC，組織・権限，model registry
+* 安定したFile IDとObject IDを比較し，過去に取得したFileの更新をWeb上で知らせる任意機能
+
+更新通知は初期要件としません．共通招待codeだけを使う場合，取得履歴は匿名IDを保存した端末・browser単位とします．端末をまたぐ利用者単位の履歴が必要になった場合に限り，個別code等の識別方法を追加します．
 
 ---
 
