@@ -1,6 +1,6 @@
 # Davis 統合仕様書
 
-> 状態: Draft 0.8
+> 状態: Draft 0.9
 >
 > 作成日: 2026-08-17
 >
@@ -44,6 +44,8 @@ metadata / history          binary content
 
 通常の研究で利用者が編集する場所は，原則としてモデルコンポーネントとその設定だけにします．データ取得，キャッシュ，既知の整形処理，入力検証，実行環境の準備，成果物整理，来歴記録はDavisが担います．
 
+行動モデル夏の学校の公式環境では，データの登録・更新・公開は運営に限定し，参加者は閲覧・検索・ダウンロードだけを行える運用を基本とします．一方，`davis_runtime`は公式カタログへの接続を必須とせず，研究者，学生，行政職員等が，手元のファイルや所属組織のストレージを入力として利用できるようにします．公式環境の権限モデルと，Runtimeが扱える入力元を分離します．
+
 ## 2. 優先順位
 
 ### 2.1. 優先するもの
@@ -83,6 +85,8 @@ metadata / history          binary content
 9. 入力データ，設定，モデル，依存環境の版を記録できる
 10. 標準係数表を出力するモデルについて，クライアントに依存しない共通のHTML・CSV・JSONを生成できる
 11. 現行の`davis list`，`davis info`，`davis get`相当の機能を維持する
+12. 公式環境では運営だけが登録・更新でき，参加者は閲覧・ダウンロードだけを行える
+13. 公式カタログのデータとローカルファイルの両方を，同じ`Run`ユースケースからモデルへ渡せる
 
 ブラウザ内MNL推定は有用ですが，研究モデルの拡張性を犠牲にしてまでMVPへ含めません．標準MNLのWASM版は，コンポーネント契約を変えずに後から追加します．
 
@@ -264,6 +268,24 @@ davis model install git+https://github.com/example-lab/my-scale-mnl
 
 再現時にはGit commit，パッケージ版，ロックファイルのハッシュを記録します．中央レジストリはMVPに含めず，ローカルパスとGit URLから始めます．
 
+### 4.5. 入力元ごとの利用例
+
+```text
+夏の学校参加者
+公式Webで検索 → 参加者認証 → ダウンロード → Runtimeでモデル実行
+
+研究者
+ローカルの調査データ → Runtimeがdigestを計算 → モデル実行
+
+行政職員
+庁内S3／HTTPS → 組織のcredential profileで取得 → ローカル実行
+
+別組織のDavis運営者
+独自Git metadata＋独自Object Storage → davis_core → Runtime
+```
+
+どの経路でも，モデルが受け取る入力形式は検証済みローカル参照に統一します．公式カタログ以外の入力を利用したことを理由に，共通の整形，実行記録，結果整理，可視化を利用できなくしてはなりません．
+
 ## 5. 全体アーキテクチャ
 
 ### 5.1. 配布系と研究実行系を分ける
@@ -284,13 +306,19 @@ flowchart LR
     subgraph Local["研究実行系・利用者PC"]
         Clients["CLI／GUI／Notebook"]
         Runtime["davis_runtime"]
+        Resolver["Input Resolver"]
         Core["davis_core<br/>Dataset／Manifest／Cache／Sync"]
+        LocalFiles["ローカルファイル"]
+        External["独自S3／HTTPSサーバー"]
         Runner["davis_model_runner"]
         ModelA["標準MNL"]
         ModelB["独自モデル"]
         Artifacts["実行成果物"]
-        Clients --> Runtime --> Runner
-        Runtime --> Core
+        Clients --> Runtime --> Resolver
+        Resolver --> Core
+        Resolver --> LocalFiles
+        Resolver --> External
+        Runtime --> Runner
         Runner --> ModelA --> Artifacts
         Runner --> ModelB --> Artifacts
     end
@@ -302,7 +330,7 @@ flowchart LR
     Artifacts -. "将来の共有・表示" .-> API
 ```
 
-`davis_core`は，Git metadataとオブジェクトストレージを結ぶ唯一のデータ基盤実装です．`davis_runtime`は，そのデータ参照を使って整形，モデル実行，成果物整理を調整します．CoreからRuntimeへの依存は禁止し，データ管理だけを単独利用できるようにします．
+`davis_core`は，Git metadataとオブジェクトストレージを結ぶ唯一のDavisデータ基盤実装です．`davis_runtime`は，公式Davisカタログ，別のDavis repository，ローカルファイル，独自ストレージ等の入力参照を解決し，整形，モデル実行，成果物整理を調整します．CoreからRuntimeへの依存は禁止し，データ管理だけを単独利用できるようにします．Input Resolverは当初Runtime内の小さな境界として実装し，独立利用の必要が生じるまでcrateを分けません．
 
 MVPでは，任意のモデルコードは利用者PCで実行します．最初の参照クライアントは実装速度を理由にCLIとしますが，`davis_core`，`davis_runtime`，`davis_model_runner`はCLIの表示・引数形式へ依存させません．Cloudflare Pages上のWebアプリは，RustライブラリやPythonプロセスを直接起動できないため，静的な`CatalogIndex`またはHTTP APIを利用します．将来のモデル実行は，WASM，ローカル実行サービス，PCアプリ，遠隔ランナーのいずれかを同じ`RunRequest`へ接続します．
 
@@ -311,7 +339,7 @@ MVPでは，任意のモデルコードは利用者PCで実行します．最初
 | コンポーネント | 責務 | MVP |
 | --- | --- | --- |
 | `davis_core` | Dataset，Manifest，ObjectId，Git revision，キャッシュ，ストレージ同期，checkout，status | 最小読取経路をP0，更新系をP1 |
-| `davis_runtime` | 入力解決，整形，モデル実行，成果物整理，来歴記録のユースケース | P0 |
+| `davis_runtime` | カタログ・ローカル・外部ストレージの入力解決，整形，モデル実行，成果物整理，来歴記録 | P0 |
 | `davis_catalog` | `*.schema.yaml`の検証，列単位の索引，検索，ファイル対応付け | P0 |
 | `davis_server` | 認証，カタログ配信，R2署名付きURL．Cloudflare Worker等の実装を許容 | P0 |
 | `davis_web` | ファイル・列スキーマの検索，絞り込み，詳細，ダウンロード | P0 |
@@ -488,8 +516,17 @@ outputs:
   },
   "inputs": {
     "choice_data": {
-      "path": "/resolved/input/choice-data.parquet",
-      "sha256": "<hash>"
+      "source": {
+        "kind": "catalog",
+        "dataset_id": "tokyo-person-trip",
+        "revision": "<git-commit>",
+        "file_id": "trips.parquet"
+      },
+      "resolved": {
+        "path": "/resolved/input/choice-data.parquet",
+        "object_id": "blake3:<digest>",
+        "size": 728193721
+      }
     }
   },
   "config": {
@@ -500,7 +537,19 @@ outputs:
 }
 ```
 
-R2 URLや資格情報はモデルへ渡しません．`davis_runtime`が`davis_core`を通じて入力を取得・検証し，変更不能なローカル参照として渡します．
+クライアントは主に`source`を指定し，`davis_runtime`が`resolved`を生成します．Davisが保存する`run.json`には秘密情報を除いた`source`と`resolved`を記録しますが，モデル向け`request.json`には原則として`resolved`だけを渡します．モデルプロセスへ渡す時点では，すべての入力を検証済みのローカルパスとdigestへ正規化します．`source`は次の種類から始めます．
+
+| `kind` | 用途 | P0 |
+| --- | --- | --- |
+| `catalog` | 夏の学校公式カタログまたは別のDavis repository | 対応する |
+| `local` | 利用者PC上のファイルまたはディレクトリ | 対応する |
+| `https` | 組織内外のHTTPSダウンロード先 | P0は認証なし，credential profileはP1 |
+| `s3` | R2，S3，MinIO等のS3互換ストレージ | P1．P0は必要最小限の実証に留める |
+| `custom` | 組織固有のresolver plugin | P2以降 |
+
+例えば，行政職員が庁内データを利用する場合，ローカルファイルを直接指定するか，庁内S3互換ストレージのcredential profile名とObject参照を指定します．Davis公式環境へのアップロードは発生しません．明示的な公開操作を行わない限り，Runtimeは入力データを外部へ送信しません．
+
+R2 URL，access key，token等の資格情報はモデル，`RunRequest`，`run.json`へ保存しません．Runtimeが環境変数，OS credential store，または利用者が指定したprofileから実行時に解決します．実行記録には，資格情報を除いた入力元の種類，安全に共有できる参照，digest，size，取得時刻を保存します．ローカル絶対パス等の機微情報は，共有用export時に除去または相対化します．
 
 ### 6.4. 入力データ
 
@@ -768,7 +817,18 @@ POST /api/v1/files/{file_id}/download-url
 
 本番配布はCloudflare R2を第一候補とし，WebとCLIは認証後の署名付きURLから取得します．保存先はS3互換ストレージまたはローカルファイルへ交換できる境界を持ちます．DVCは現行データの移行，管理者同期，既存研究の再現に残しますが，一般参加者の必須ランタイムにはしません．
 
-MVPのアクセス制御は，まず全体を参加者限定とします．この条件では，静的Pagesだけでダウンロード認可を完結できないため，Cloudflare Accessに加えて，認証済み利用者へ短寿命の署名付きURLを発行するWorkerまたは`davis_server`をP0に含めます．大容量ファイルをアプリケーションサーバーでproxyせず，ブラウザまたはローカルクライアントからR2へ直接取得します．
+MVPのアクセス制御は，行動モデル夏の学校を念頭に，次の2役割から始めます．
+
+| 役割 | 公式カタログ閲覧 | ダウンロード | 登録・更新・公開 | 署名付きPUT URL |
+| --- | --- | --- | --- | --- |
+| `participant` | 可 | 可 | 不可 | 発行しない |
+| `operator` | 可 | 可 | 可 | 運営用経路だけで発行可能 |
+
+静的Pagesだけでダウンロード認可を完結できないため，Cloudflare Accessに加えて，認証済み参加者へ短寿命の署名付きGET URLを発行するWorkerまたは`davis_server`をP0に含めます．参加者向けAPIにはupload endpointを公開せず，署名付きPUT URLも発行しません．大容量ファイルをアプリケーションサーバーでproxyせず，ブラウザまたはローカルクライアントからR2へ直接取得します．
+
+運営による公開は，データ実体のstaging upload，digest検証，`DatasetManifest`と`FileSchema`の検証，Git上のレビュー，`CatalogIndex`生成，本番公開の順に行います．運営credentialは参加者用Webへ配布せず，管理者CLIまたはCIのsecretとして保持します．公開取消しや版更新も，Git上のmetadataと公開索引を更新する運営操作として扱います．
+
+この権限制限は，夏の学校公式deploymentに対するpolicyです．`davis_core`の`add`や`push`能力そのものを削除しません．研究者や行政組織が自分のDavis repositoryとストレージを用意した場合は，その管理者が独自の権限規則で登録・同期できます．`davis_runtime`でローカルデータや独自サーバーを読むだけの場合，公式カタログのアカウントは不要です．
 
 将来ファイルごとの公開範囲が必要になった場合は，`DatasetManifest`または既存`*.schema.yaml`へ互換的な`access`情報を追加します．どちらを認可判断の原本にするかは要確認です．それまでは，存在しないアクセス区分を推測してYAMLへ書き込みません．
 
@@ -991,6 +1051,7 @@ davis/
 - JSON Schemaと正常・異常例を作る
 - 現行`manifest.json`，`.dvc`，`*.schema.yaml`を読む互換アダプターを作る
 - `DatasetManifest`と`CatalogIndex`を生成し，既存ファイル参照を解決できるようにする
+- `catalog`と`local`の`InputRef`を同じ検証済みローカル参照へ解決する
 - Rustの実行ホストからローカルのモデルプロセスを起動し，参照CLIから呼ぶ
 - 既存DVCメタデータと177個の`*.schema.yaml`から，ファイル・列・facet索引を生成する
 
@@ -1008,6 +1069,7 @@ davis/
 
 - Cloudflare Accessを設定する
 - ファイル一覧，列検索，facet，スキーマ詳細，短寿命の署名付きURLを発行するWorkerまたはServerを作る
+- `participant`にはGETだけを許可し，登録，更新，PUT URL発行を拒否する
 - Webへ検索，複合絞り込み，列一覧，Raw YAML，ダウンロード画面を作る
 - スキーマ未整備・不正・実ファイル不明の状態を表示する
 
@@ -1030,6 +1092,7 @@ davis/
 - 現行全ObjectをR2へ移行し，サイズとハッシュを照合する
 - local cache，repository lock，streaming transfer，並列数制限，`verify`，local `gc`を実装する
 - DVC metadata importと，旧Object IDを保持する移行手順を実装する
+- credential profileを使うHTTPS・S3 Input Resolverを実装する
 - 標準MNLの数値処理と診断の改善
 - `davis_fmt`の宣言的レシピとPython変換コンポーネント
 - 共通係数表，予測値，実行比較
@@ -1065,6 +1128,8 @@ davis/
 - ファイル属性と列属性を組み合わせた検索結果が正しい
 - スキーマがないファイルもダウンロード対象から欠落しない
 - 未認証者と権限のない参加者が取得できない
+- 参加者が公式カタログへ登録・更新できず，署名付きPUT URLを取得できない
+- 運営の公開経路だけが，検証済みManifestとObjectを公開できる
 - R2とローカルストレージが同じカタログ契約を満たす
 
 ### 15.2. データCore
@@ -1080,6 +1145,10 @@ davis/
 
 ### 15.3. モデル契約
 
+- 公式カタログ，ローカルファイル，HTTPSを同じ検証済み入力参照へ解決できる
+- 入力元にかかわらず，モデルへ資格情報や遠隔URLを渡さない
+- ローカル入力を明示的な公開操作なしに外部送信しない
+- 実行記録にdigestと来歴を残し，共有exportから機微なローカルパスを除去できる
 - Pythonとネイティブ実行ファイルが，同じ`RunRequest`を読める
 - 正常終了時に`RunResult`と宣言済み成果物が存在する
 - 不正な結果，欠落成果物，異なるハッシュを検出できる
@@ -1116,6 +1185,9 @@ davis/
 | データ管理とモデル実行を1つのCoreへ詰め込む | 単独利用しにくく，依存関係が循環する | `davis_core`をデータ基盤，`davis_runtime`を研究実行の上位層とする |
 | 新CASを先に完成させようとする | Webとモデルの縦断検証が遅れる | P0は既存DVCの読取互換，P1で更新・同期機能を実装する |
 | `Manifest`の意味が複数ある | 移行とAPIが曖昧になる | `DatasetManifest`，`FileSchema`，`CatalogIndex`へ名称と責務を分ける |
+| 公式環境の権限制限をCoreの機能制限にする | 独自repositoryでの研究利用ができない | upload policyをdeployment側に置き，Coreの汎用操作は維持する |
+| 外部入力を公式R2へ自動uploadする | 行政・研究データが意図せず外部送信される | Runtimeは既定で読取とローカルcacheだけを行い，公開を明示的な別操作にする |
+| credentialを実行記録へ保存する | 秘密情報が共有・漏えいする | profile名だけを要求し，秘密は実行時に安全な保存先から解決する |
 
 ## 17. 先に作るADR
 
@@ -1137,6 +1209,9 @@ davis/
 16. ADR-0016: 新規Object IDをBLAKE3とし，既存DVC hashを移行中も読み取るか
 17. ADR-0017: Storage abstractionにOpenDAL，Git接続に`gix`を採用するか
 18. ADR-0018: `DatasetManifest`，`FileSchema`，`CatalogIndex`の責務と生成関係をどう定めるか
+19. ADR-0019: 公式環境を`operator`のみ書込可，`participant`は閲覧・取得のみとするか
+20. ADR-0020: Runtime入力を`catalog`，`local`，`https`，`s3`へ拡張し，モデルにはローカル参照だけを渡すか
+21. ADR-0021: 外部入力を既定でuploadせず，公開を独立した明示操作とするか
 
 ## 18. 確認済み事項と残る確認事項
 
@@ -1158,6 +1233,9 @@ davis/
 14. Git-nativeなデータ管理・カタログ基盤をDavisの土台とし，研究実行層はその上へ接続する
 15. Gitはmetadataと履歴，大容量実体はオブジェクトストレージで管理する
 16. `davis_core`にはCLI，Web，モデル固有の処理を含めない
+17. 夏の学校公式環境では，データの登録・更新・公開を運営に限定し，参加者は閲覧・ダウンロードだけを行う
+18. Runtimeは公式カタログを必須とせず，ローカルデータや利用者組織のサーバーを入力にできる
+19. ローカル・外部入力は，明示的な公開操作なしに公式ストレージへuploadしない
 
 ### 18.2. 残る確認事項
 
