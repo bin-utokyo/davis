@@ -270,7 +270,7 @@ Git repository 自体を **Data Catalog as Code** として利用する．
 
 # 8. davis-server
 
-一般公開データまたはローカル利用だけのdeploymentでは，初期バージョンの必須要素としません．行動モデル夏の学校の公式環境は参加者限定データを扱うため，Webを公開するP1で，認証と署名付きURLを提供する最小ServerまたはCloudflare Workerを必須とします．
+一般公開データまたはローカル利用だけのdeploymentでは，初期バージョンの必須要素としません．行動モデル夏の学校の公式環境は参加者限定データを扱うため，R2をbootstrapするP0-0で，認証と署名付きURLを提供する最小ServerまたはCloudflare Workerを必須とします．P0-AのCLIとP1のWebが同じAPIを利用します．
 
 以下が必要になった段階で導入する．
 
@@ -1597,7 +1597,7 @@ structured metadata
 
 ## 機能群4
 
-一般公開またはローカルdeploymentでは，必要に応じて`davis-server`を追加します．参加者限定の夏の学校公式deploymentでは，機能群3と同時に最小ServerまたはWorkerを導入します．
+一般公開またはローカルdeploymentでは，必要に応じて`davis-server`を追加します．参加者限定の夏の学校公式deploymentでは，実際の優先順位を定める59節に従い，R2をbootstrapするP0-0で最小ServerまたはWorkerを導入します．
 
 機能候補:
 
@@ -1760,6 +1760,8 @@ davis-runtime ─X─▶ 特定モデルの内部実装
 
 metadataの正本はGit上の`DatasetManifest`と`FileSchema`，実データの正本はR2等のObject Storageとします．`CatalogIndex`は正本から生成する派生物とし，直接編集しません．`.dvc`は移行期間中の互換入力として扱います．
 
+新しいR2環境への取込みでは，運営者が用意する実データと対応する`schema.yaml`を入力とします．Davisが実データをstreamingで読みながらBLAKE3を計算し，content-addressed Object，DatasetManifest，CatalogIndexを生成します．実データObjectはR2，`schema.yaml`とDatasetManifestはGitへ保存します．新環境の正本として`.dvc`を作り直す必要はありません．既存`.dvc`は移行元Objectの取得にだけ利用し，将来必要になった場合は互換出力として生成します．
+
 ## 52.2 現行directoryとDataset境界
 
 現行の`data/`は，概ね`data/<category>/<dataset>/...`の構造を持つため，この物理階層を移行時にも維持します．例えば`PP/Matsuyama`，`routes/Shibuya-2021`，`network/yokohama`を1 Datasetの候補とします．一方，`PT_data`と`Tohoku_History`は直下に主要Fileを持つため，top-level directory自体を1 Datasetとして扱います．Dataset内の`raw`，`shapefile`，交通手段，年等の下位directoryは，原則としてDataset内の論理的なFile groupingです．
@@ -1772,7 +1774,7 @@ Dataset IDは人間が読めるglobalに一意な値とし，初回移行時は`
 
 ## 52.3 既存FileSchemaの利用
 
-2026-08-17時点の`data/`には，256個のDVC管理対象と177個の`*.schema.yaml`があります．Webでは実データファイルごとの`<filename>.schema.yaml`を表示・検索します．データセット単位のYAMLだけで列情報を代替しません．
+2026-08-20時点のcurrent revisionには，255個のDVC管理対象と176個の`*.schema.yaml`があります．Webでは実データファイルごとの`<filename>.schema.yaml`を表示・検索します．データセット単位のYAMLだけで列情報を代替しません．件数は固定値として実装へ埋め込まず，対象Git revisionから生成して全件性を試験します．
 
 初期索引は，主に次を扱います．
 
@@ -1816,10 +1818,10 @@ Dataset IDは人間が読めるglobalに一意な値とし，初回移行時は`
 
 | コンポーネント | 責務 | 初期優先度 |
 | --- | --- | --- |
-| `davis-core` | Manifest・Object・storageの読取，検証，cache，download，公開 | 読取経路をP0-A，最小R2公開をP0-B，高度な更新系をP3 |
+| `davis-core` | Manifest・Object・storageの読取，検証，cache，download，公開 | 初回取込みをP0-0，読取経路をP0-A，反復公開をP0-B，高度な更新系をP3 |
 | `davis-catalog` | Dataset・FileSchema検証，list・search，CatalogIndex生成 | P0 |
 | `davis-cli` | list，info，getと運営者向け公開操作を提供する最初の参照client | P0-A／P0-B |
-| `davis-server` | 参加者認証，CatalogIndex配信，download認可，署名付きURL | P1 |
+| `davis-server` | 参加者認証，CatalogIndex配信，download認可，署名付きURL | 最小DownloadGrantをP0-0，Web APIをP1 |
 | `davis-web` | 検索，絞り込み，複数選択，download queue | P1 |
 | `davis-model-api` | ModelManifest，RunRequest，RunResultのschema | P2 |
 | `davis-runtime` | 入力解決，モデル実行，成果物整理，来歴記録 | P2 |
@@ -1895,9 +1897,19 @@ CLIはRust use caseを同一process内で直接呼べます．WebはRust Coreを
 
 参加者には短寿命の署名付きGET URLだけを発行します．参加者用Webへupload endpointを公開せず，運営credentialを配布しません．運営は，staging upload，digest検証，ManifestとFileSchemaの検証，Git上のレビュー，CatalogIndex生成，本番公開の順に公開します．
 
+Cloudflare dashboardへ追加するのは，原則として少数の記名された運営者だけとします．MVPでは各運営者をCloudflare Account Memberとして招待し，`Cloudflare R2 Admin`等の必要最小roleを割り当てます．個人に紐付くUser API tokenはDavis専用R2 bucketの`Object Read & Write`へ限定します．tokenを共有せず，OS credential storeへ保存し，運営者をAccountから削除した場合はそのUser tokenも無効になる構成を使います．Super Administratorは引継ぎ可能な2名程度に限定し，参加者や通常のデータ利用者をCloudflare Accountへ追加しません．
+
+将来は，親credentialをWorker等の信頼環境だけに置き，operator認証後に対象Objectと短い有効期間へ限定したR2 temporary credentialを発行できます．これにより，日常のoperatorをCloudflare Account Memberにせず，長期credentialも端末へ配布しない運用へ移行できます．
+
 この制限は公式deploymentのpolicyです．`davis-core`の`add`や`push`能力を削除しません．別組織が独自repositoryとstorageを運営する場合は，その組織の権限規則で利用できます．
 
-## 54.2 Runtimeの入力元
+## 54.2 公開後の訂正・公開停止
+
+誤りへ後から気付いた場合も，公開済みObjectを同じkeyで上書きしません．訂正版を新しいrevisionとして公開し，旧revisionへ`superseded`，`withdrawn`または`revoked`の状態，理由，判明日時，代替revisionを記録します．通常の誤りでは旧Objectを再現性のため保持しますが，Catalogの既定検索と通常の`get`から除外し，明示的に旧revisionを参照した場合は警告します．
+
+個人情報，契約違反等により保持自体が許されない場合は，緊急失効として新規署名付きURLの発行を停止し，該当ObjectをR2から削除します．必要に応じてGit履歴内の機微metadataも別途purgeします．すでに利用者が取得したcopyは技術的に回収できないため，運営上の連絡と利用停止依頼が必要です．訂正履歴と緊急操作はaudit logへ残します．
+
+## 54.3 Runtimeの入力元
 
 `davis-runtime`は公式カタログへの接続を必須としません．次の入力元を同じ検証済みローカル参照へ正規化します．
 
@@ -2113,15 +2125,28 @@ Formの構造化設定は標準MNL component固有の`config_schema`に従い，
 
 GUI編集とcode編集のどちらで作成したmodelも，同じModelManifest，RunRequest，RunResultを使って実行します．したがって，GUIが表現できないmodelでも，データ解決，実行記録，成果物管理，比較機能は失いません．
 
+## 58.5 インストールと更新
+
+Webだけを使う参加者は何もインストールしません．CLI利用者には，Windows，macOS，Linux向けの小さな`davis`基本binaryをGitHub Releasesから配布し，GitHub URLを使うinstall scriptも用意します．基本binaryは`login`，`list`，`info`，`get`，cache，検証，更新確認を含みますが，Python，MNL，GUI，他modelを同梱しません．Runtime，model component，GUIは必要になった利用者だけが後から追加します．
+
+```text
+davis component install runtime
+davis component install mnl
+```
+
+基本binaryとcomponentは独立してSemVerで版管理します．CLIは対話端末で1日1回以下の頻度でGitHub Releasesの最新版を確認し，新版がある場合だけ変更概要と`davis update`を案内します．利用者の確認なしに実行中のbinaryを自動置換せず，非対話実行とoffline利用では通知を抑止できます．更新時はrelease artifactのchecksumと署名を検証します．Catalog protocolと互換である限り旧CLIを直ちに使用不能にはしません．
+
 ---
 
 # 59. 実装順序
 
 ## 59.1 基本方針
 
-実装順序は次の3段階を最優先とします．
+実装順序は次の段階を最優先とします．
 
 ```text
+P0-0  実データとschema.yamlを取込み，R2をbootstrap
+        ↓
 P0-A  CLIでlist・詳細確認・get
         ↓
 P0-B  運営者CLIで差分確認・R2公開・検証
@@ -2135,9 +2160,23 @@ P3  その他の拡張
 
 各段階は，後続componentが未実装でも単独でreleaseできる状態を完了条件とします．同時に，後続段階が既存処理を再実装せず接続できるcontractを残します．
 
-## 59.2 P0-A: CLIによるカタログ閲覧とget
+## 59.2 P0-0: R2 bootstrap取込み
 
-最初のreleaseでは，1〜50節のCore仕様全体を完成させません．既存DVC資産を読み取る互換adapterを利用し，読取専用の縦断経路を最短で安定させます．
+最初の利用者向けreleaseはCLIですが，その前提として新しいR2取得経路を一度成立させます．現行DVC remoteから必要な実データを復元し，実データと`schema.yaml`をDavisへ入力します．DavisはBLAKE3，Object，DatasetManifest，CatalogIndexを生成し，全ObjectをR2へstreaming uploadします．この段階でDVC repositoryを作り直しません．
+
+同時に，共通招待codeをCLI用sessionへ交換し，短寿命GET URLを返す最小Workerを用意します．P0-0は移行用bootstrapでもよく，反復利用しやすい運営者UXと差分同期はP0-Bで完成させます．
+
+### 完了条件
+
+1. 対象Git revisionの全DVC管理対象を実データとして復元できます．
+2. 全実データへBLAKE3 Object IDを付与し，R2でsizeとdigestを検証できます．
+3. 全FileSchemaとschema未整備FileからCatalogIndexを生成できます．
+4. 最小Worker経由で認証済みのtest clientがR2 Objectを取得できます．
+5. 旧DVC remoteを停止しても利用できる新経路のcopyを確保します．
+
+## 59.3 P0-A: CLIによるカタログ閲覧とget
+
+最初のreleaseでは，1〜50節のCore仕様全体を完成させません．P0-0で構築したR2経路を第一経路とし，既存DVC資産を読む互換adapterをfallbackとして残して，読取専用の縦断経路を最短で安定させます．
 
 ### 実装対象
 
@@ -2151,6 +2190,7 @@ P3  その他の拡張
 ### 初期command
 
 ```text
+davis login <catalog-url>
 davis list
 davis info <dataset-id>
 davis get <dataset-id>
@@ -2165,8 +2205,8 @@ davis get <dataset-id> -o <directory>
 ### 完了条件
 
 1. 現行CLIで取得できる全Datasetと関連文書を取得できます．
-2. 256個のDVC管理対象が一覧とdownload対象から欠落しません．
-3. 177個のFileSchemaを詳細表示に利用できます．
+2. 対象Git revisionの全DVC管理対象が一覧とdownload対象から欠落しません．current revisionでは255個です．
+3. 対象Git revisionの全FileSchemaを詳細表示に利用できます．current revisionでは176個です．
 4. schema未整備のファイルも`schema-missing`として取得できます．
 5. CLI以外から同じuse caseを呼ぶunit testを用意します．
 6. Web，Runtime，MNLを導入しなくてもCLIだけで動作します．
@@ -2174,7 +2214,7 @@ davis get <dataset-id> -o <directory>
 
 機能互換性はcommand名や内部構造の一致ではなく，現行CLIで可能な一覧，詳細確認，File・directory単位の取得，関連文書の取得が欠落しないことで判定します．
 
-## 59.3 P0-B: 運営者によるR2公開
+## 59.4 P0-B: 運営者によるR2公開
 
 P1のWeb公開に先立ち，運営者がDavisだけでlocalの変更を確認し，R2へ不足Objectを安全に反映できる最小更新経路を実装します．
 
@@ -2184,6 +2224,8 @@ davis push --dry-run
 davis push
 davis verify --remote
 ```
+
+participantは`davis login`からbrowserを開いて共通招待codeを入力し，CLI用session tokenをOS credential storeへ保存します．`davis get`はP0-0のWorkerから対象Objectごとの短寿命GET URLを取得します．operatorのR2 upload credentialとは別系統にし，participant sessionからPUT，DELETE，Object一覧を許可しません．この認証・DownloadGrant APIをP1のWebでも再利用します．
 
 `status`はlocalのManifest・FileSchema・実データと公開中revisionとの差分を表示します．`push`はcontent-addressed Objectの存在を確認し，不足Objectだけをuploadします．既存Objectの上書き，remote Objectの自動削除，GC，競合mergeは行いません．公開順序は次のとおりです．
 
@@ -2203,7 +2245,7 @@ CatalogIndexを生成・公開
 
 `init`，`add`の一般化，`checkout`，remote削除，GC等の高度な更新系は，この段階の必須条件にせずP3で追加します．
 
-## 59.4 P1: Webによる検索とdownload
+## 59.5 P1: Webによる検索とdownload
 
 P0のDataset・File・Objectの意味をそのまま利用し，検索・認証・複数選択を追加します．Webのために別のcatalog生成処理やdownload処理を作りません．
 
@@ -2231,9 +2273,13 @@ P0のDataset・File・Objectの意味をそのまま利用し，検索・認証�
 
 Catalog metadataと検索indexは公開情報としてPagesから配信できます．実データのdownloadだけを共通招待codeとsession cookieで保護します．招待codeはclient側へ埋め込まずServer側で検証し，年度更新または流出時に差し替えられるようにします．code差替え時には旧codeで発行したsessionも失効できるよう，sessionを認証revisionへ紐付けます．
 
-Webは選択したFileを個別に順次downloadし，選択内容に対応する`davis get` commandのcopyも提供します．大量Fileや大容量DatasetにはCLIを案内します．Webの保存先はbrowser設定に従い，Davisから任意directoryを指定しません．
+sessionの初期有効期間は180日を上限とし，年度切替またはcode差替え時には残存期間にかかわらず失効できるようにします．
 
-## 59.5 P2: 推定器
+Webは選択したFileを個別に順次downloadし，選択内容に対応する`davis get` commandのcopyも提供します．browserは任意のdirectory階層へ自動配置できないため，個別選択時の保存先と階層はbrowser設定に従います．Dataset全体については，公開時に生成した任意のZIP bundleがある場合に限り，階層を保った一括downloadを提供します．大量File，大容量Dataset，任意選択での階層維持にはCLIを案内します．ZIP bundleは派生物であり，実データの正本にはしません．
+
+現在の全FileSchemaには，行動モデル夏の学校に利用を限定する`license_`が記載されています．WebとCLIは取得前に対象Fileのlicenseを表示し，CatalogIndex生成時に欠落を検証します．
+
+## 59.6 P2: 推定器
 
 カタログ機能が安定した後，研究実行層を追加します．RuntimeはWebへ埋め込まず，まず利用者PC内で実行します．
 
@@ -2259,7 +2305,11 @@ Runtimeはlocal fileだけで実行でき，公式catalogを必須にしませ�
 4. 入力digest，model revision，環境，RunRequest，RunResult，成果物を`run.json`へ記録できます．
 5. CatalogとWebがなくてもlocal推定を実行できます．
 
-## 59.6 P3以降
+最初の実データ例は`Tohoku_History`の居住地選択データとし，`df_individual.csv`の選択結果と`df_ex_var.csv`の選択肢別説明変数から，小規模な回帰test用subsetを作ります．これは推定器の最初の検証対象であり，Catalogとdownloadの全Dataset対応を限定しません．
+
+標準MNLの初版は，線形効用，alternative-specific constant，共通係数・選択肢固有係数，固定parameter，availability，最尤推定，基本的な標準誤差と適合度指標までを対象にします．weight，panel向け分散推定，robust standard errorは後続拡張とします．
+
+## 59.7 P3以降
 
 P0〜P2が安定した後，次を優先度と需要に応じて追加します．
 
@@ -2293,7 +2343,7 @@ P0〜P2が安定した後，次を優先度と需要に応じて追加します�
 10. MNLは固定機能ではなく，変更modelを作る参考componentです．
 11. CLIを中核APIにせず，GUI，Notebook，remote APIと同列にします．
 12. 利用者が記述する`project.yaml`はMVPに設けません．
-13. 実装順序は，CLIのlist・info・get，運営者CLIのR2公開，Webの検索・複数選択download，local推定器，その他の拡張とします．
+13. 実装順序は，R2 bootstrap，CLIのlist・info・get，運営者CLIの反復公開，Webの検索・複数選択download，local推定器，その他の拡張とします．
 14. 各componentは単独利用を可能にし，中央contractとuse caseを通じて接続します．
 15. CLI，Web，GUIでdomain logicを複製せず，それぞれを共通use caseのadapterとして実装します．
 16. 現行の`data/<category>/<dataset>/...`を基本的に維持し，DatasetManifestでDataset境界と安定IDを明示します．
@@ -2304,17 +2354,26 @@ P0〜P2が安定した後，次を優先度と需要に応じて追加します�
 21. 標準MNLは共通の意味上の列roleとmodel固有の追加要件を組み合わせ，他modelへ同じ入力形式を強制しません．
 22. GUIは線形効用をFormと対応構文のcodeから編集でき，非対応構文を使う場合は高度なcode modeへ一方向に移行します．任意codeをFormへ逆変換しません．
 23. Model出力は状態，来歴，成果物参照だけを共通必須とし，係数等は任意標準成果物とします．
+24. 新R2環境は実データと`schema.yaml`を取込入力とし，DavisがBLAKE3，DatasetManifest，CatalogIndexを生成します．`.dvc`は移行時の互換入力に限定します．
+25. P0-0で共通招待codeによるCLI login，DownloadGrant API，短寿命GET URLを提供する最小Workerを導入します．
+26. 誤った公開は新revisionで訂正し，旧revisionを状態付きで保持します．個人情報等の緊急時だけObjectの失効・削除を行います．
+27. `davis`基本binaryはGitHub Releasesとinstall scriptから配布し，Runtime，model，GUIを必要時に追加します．
+28. CLIは利用者へ確認して更新する`davis update`と，新版の低頻度な確認通知を提供します．
+29. Webの個別File downloadではdirectory階層を保証せず，任意のDataset ZIPまたはCLIで階層を維持します．
+30. 共通招待codeのsessionは初期値を最大180日とし，年度切替とcode差替えで強制失効できます．
+31. 現在の全FileSchemaにある夏の学校限定`license_`を取得前に表示します．
+32. 標準MNLの最初の実データ例は`Tohoku_History`から作る小規模subsetとします．
+33. 標準MNL初版は線形効用，ASC，共通・選択肢固有係数，固定parameter，availability，最尤推定，基本標準誤差・適合度指標を対象とします．
+34. MVPでは少数の記名operatorだけをCloudflare Account Memberへ追加し，個人のUser API tokenをDavis専用R2 bucketへ限定します．
 
 ## 60.2 要確認事項
 
 1. 各Datasetの確定ID，旧path alias，例外的なDataset境界の対応表
-2. 新規ObjectへBLAKE3を採用するか，既存DVC Objectをいつ再hashするか
-3. 将来複数のaccess区分を設ける場合，DatasetManifestとFileSchemaのどちらで管理するか
-4. 標準MNLの初期入力として現行`los.csv`と`trip.csv`を維持するか
-5. 最初の変更model例として何を採用するか
-6. Python SDKをNumPy・SciPy中心にするか，JAX等を採用するか
-7. 標準MNLのP2初版にweight，panel，robust standard errorを含めるか
-8. 既存FileSchemaへ将来の検索fieldをどこまで追加するか
-9. Webで一度に個別downloadするFile数・合計sizeの上限
-10. session有効期間，同時利用者数，download量，R2費用上限
-11. Davis本体とmodel componentのlicense
+2. 将来複数のaccess区分を設ける場合，DatasetManifestとFileSchemaのどちらで管理するか
+3. 現行`los.csv`と`trip.csv`向け互換adapterをいつ追加するか
+4. 最初の変更model例として何を採用するか
+5. Python SDKをNumPy・SciPy中心にするか，JAX等を採用するか
+6. 既存FileSchemaへ将来の検索fieldをどこまで追加するか
+7. Webで一度に個別downloadするFile数・合計sizeの上限
+8. 同時利用者数，download量，R2費用上限
+9. Davis本体とmodel componentのlicense
