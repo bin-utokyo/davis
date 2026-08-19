@@ -1768,6 +1768,8 @@ metadataの正本はGit上の`DatasetManifest`と`FileSchema`，実データの�
 
 Dataset IDは人間が読めるglobalに一意な値とし，初回移行時は`<category>/<dataset>`を候補にします．IDはManifestへ保存し，以後categoryやpathを変更しても自動変更しません．`category`は別のgroup・facetとして保持します．File IDも初回登録時に保存し，pathを変更しても維持します．既存の相対pathはaliasとして残し，現行CLI相当のprefix指定も互換adapterで解決します．
 
+`PT_data`は初期移行では1つのlegacy Datasetとして維持できます．地域，調査年，調査回等のmetadataが整理できた段階で，`pt/<region>-<year>`等のDatasetへ分割し，`pt`配下から探せる論理階層へ移行します．R2上の実データは`objects/<algorithm>/<digest>`へcontent-addressed Objectとして保存し，この論理階層をObject keyへ直接埋め込みません．そのため，後からDatasetを分割しても同じObjectを再uploadせず，DatasetManifestとCatalogIndexの参照だけを組み替えられます．旧`PT_data`は移行期間中のaliasまたはcollectionとして残します．
+
 ## 52.3 既存FileSchemaの利用
 
 2026-08-17時点の`data/`には，256個のDVC管理対象と177個の`*.schema.yaml`があります．Webでは実データファイルごとの`<filename>.schema.yaml`を表示・検索します．データセット単位のYAMLだけで列情報を代替しません．
