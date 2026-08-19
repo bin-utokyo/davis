@@ -1,22 +1,42 @@
-# Davis 交通行動モデル研究プラットフォーム構想
+# Davis 統合仕様書
 
-> 状態: Draft 0.7
+> 状態: Draft 0.8
 >
 > 作成日: 2026-08-17
 >
 > 最終更新日: 2026-08-19
 >
-> 対象: Davisを，データ配布ツールから，交通行動モデルを実装・推定・比較・再現するための研究プラットフォームへ発展させる計画
+> 対象: Davisを，Git-nativeなデータバージョン管理・カタログ基盤と，交通行動モデルを実装・推定・比較・再現する研究実行基盤から成るプラットフォームへ発展させる計画
 >
 > 原則: 未確定事項を推測で補わず，本書内で「要確認」と明示する
 
-## 1. 構想の再定義
+## 1. Davisの定義
 
 Davisの当面の利用者を，交通行動モデルとプログラミングに関する基礎知識を持ち，既存モデルを読み，必要に応じてコードを編集できる研究者・学生とします．
 
-Davisの目標を，次の1文に定めます．
+Davisの基盤部分は，Gitとオブジェクトストレージを組み合わせたデータバージョン管理・カタログ基盤とします．Gitにはデータセットの意味，構造，参照，履歴を保存し，大容量ファイルの実体はCloudflare R2，Amazon S3，MinIO，ローカルストレージ等へ保存します．DavisはDVCやGitを全面的に再実装せず，データセットの意味論，Git上のメタデータとデータ実体の対応，同期，キャッシュ，カタログに責任を持ちます．
+
+その上に，整形，モデル実行，結果整理，再現を行う研究実行層を構築します．ストレージ基盤とMNLを無理に同じ内部APIへ入れず，版付きのデータ参照を境界として接続します．これにより，データ管理だけでも利用でき，研究実行まで一貫して利用することもできます．
+
+Davis全体の目標を，次の1文に定めます．
 
 > データの発見・取得から，整形，モデル実行，結果整理，再現までの共通作業をDavisが担い，研究者が「どのようなモデルを構築するか」に集中できる基盤を提供する．
+
+```text
+Git                         Object Storage
+metadata / history          binary content
+          \                    /
+           \                  /
+            davis_core
+   Dataset / Manifest / Cache / Sync
+                  │
+             FileSchema
+                  │
+            davis_runtime
+       Format / Run / Provenance
+                  │
+        MNL／研究者独自モデル
+```
 
 初期段階では，対話型ウィザードやノーコード化を中心に置きません．最初に公開するWebの責務は，実データファイルごとの`*.schema.yaml`を使った閲覧，検索，絞り込み，ダウンロードに限定します．データ取得後の整形，推定，可視化はローカル実行を基本としますが，その入口をCLIへ固定しません．
 
@@ -70,7 +90,7 @@ Davisの目標を，次の1文に定めます．
 
 ### 3.1. 細い共通部分を安定させる
 
-接続には共通規約が必要です．一方，すべてを共通APIへ押し込むと，新しい数式，データ構造，最適化方法，出力を追加しにくくなります．そこで，Davisは少数の安定した契約だけを中央に置きます．
+接続には共通規約が必要です．一方，すべてを共通APIへ押し込むと，新しい数式，データ構造，最適化方法，出力を追加しにくくなります．そこで，Davisはデータ基盤と研究実行の境界ごとに，少数の安定した契約だけを置きます．
 
 ```mermaid
 flowchart TB
@@ -90,12 +110,16 @@ flowchart TB
     Request --> Wasm --> Result
 ```
 
-中央で共通化するのは，次の4点に限定します．
+共通化する中央契約は，次の6点に限定します．
 
-1. 既存`*.schema.yaml`を版付きで扱う`FileSchema`
-2. モデルコンポーネントを識別する`ModelManifest`
-3. モデルへ解決済み入力と設定を渡す`RunRequest`
-4. 状態，来歴，標準成果物の場所を返す`RunResult`
+1. 論理データセットとファイル参照を表す`DatasetManifest`
+2. 不変な実データを識別する`ObjectId`
+3. 既存`*.schema.yaml`を版付きで扱う`FileSchema`
+4. モデルコンポーネントを識別する`ModelManifest`
+5. モデルへ解決済み入力と設定を渡す`RunRequest`
+6. 状態，来歴，標準成果物の場所を返す`RunResult`
+
+`DatasetManifest`，`ObjectId`，`FileSchema`はデータ基盤の契約です．`ModelManifest`，`RunRequest`，`RunResult`は研究実行の契約です．検索索引，画面状態，Rust内部の細かな型は，中央契約に含めません．
 
 利用者が記述する`project.yaml`はMVPに設けません．初回実行要求はCLI，GUI，SDK等のいずれから作成してもよく，Davisが解決済みの入力，整形，モデル，環境，出力を`run.json`へ自動記録します．再実行はこの記録を利用します．多数の条件を一括実行する必要が実際に生じた場合だけ，将来`experiment.yaml`等を任意機能として検討します．
 
@@ -250,36 +274,46 @@ davis model install git+https://github.com/example-lab/my-scale-mnl
 flowchart LR
     subgraph Cloud["配布系"]
         Web["davis_web<br/>Cloudflare Pages"]
-        API["davis_api<br/>認証・カタログ・署名URL"]
+        API["davis_server／Worker<br/>認証・カタログ・署名URL"]
+        Index["公開用CatalogIndex"]
         R2["Cloudflare R2"]
+        Web --> Index
         Web --> API --> R2
     end
 
     subgraph Local["研究実行系・利用者PC"]
         Clients["CLI／GUI／Notebook"]
-        Core["davis_core"]
+        Runtime["davis_runtime"]
+        Core["davis_core<br/>Dataset／Manifest／Cache／Sync"]
         Runner["davis_model_runner"]
         ModelA["標準MNL"]
         ModelB["独自モデル"]
         Artifacts["実行成果物"]
-        Clients --> Core --> Runner
+        Clients --> Runtime --> Runner
+        Runtime --> Core
         Runner --> ModelA --> Artifacts
         Runner --> ModelB --> Artifacts
     end
 
-    R2 -. "署名付きURL" .-> Core
+    Git["Git<br/>metadata／history"] --> Core
+    Core --> R2
+    Core -. "索引生成" .-> Index
+    API -. "サーバー側で利用" .-> Core
     Artifacts -. "将来の共有・表示" .-> API
 ```
 
-MVPでは，任意のモデルコードは利用者PCで実行します．最初の参照クライアントは実装速度を理由にCLIとしますが，`davis_core`と`davis_model_runner`はCLIの表示・引数形式へ依存させません．Cloudflare Pages上のWebアプリは，Pythonや任意の実行可能ファイルを直接起動できないため，将来はWASM，ローカル実行サービス，PCアプリ，遠隔ランナーのいずれかを同じ`RunRequest`へ接続します．
+`davis_core`は，Git metadataとオブジェクトストレージを結ぶ唯一のデータ基盤実装です．`davis_runtime`は，そのデータ参照を使って整形，モデル実行，成果物整理を調整します．CoreからRuntimeへの依存は禁止し，データ管理だけを単独利用できるようにします．
+
+MVPでは，任意のモデルコードは利用者PCで実行します．最初の参照クライアントは実装速度を理由にCLIとしますが，`davis_core`，`davis_runtime`，`davis_model_runner`はCLIの表示・引数形式へ依存させません．Cloudflare Pages上のWebアプリは，RustライブラリやPythonプロセスを直接起動できないため，静的な`CatalogIndex`またはHTTP APIを利用します．将来のモデル実行は，WASM，ローカル実行サービス，PCアプリ，遠隔ランナーのいずれかを同じ`RunRequest`へ接続します．
 
 ### 5.2. コンポーネントの責務
 
 | コンポーネント | 責務 | MVP |
 | --- | --- | --- |
-| `davis_core` | カタログ，成果物，実行要求，来歴を扱う中核 | P0 |
+| `davis_core` | Dataset，Manifest，ObjectId，Git revision，キャッシュ，ストレージ同期，checkout，status | 最小読取経路をP0，更新系をP1 |
+| `davis_runtime` | 入力解決，整形，モデル実行，成果物整理，来歴記録のユースケース | P0 |
 | `davis_catalog` | `*.schema.yaml`の検証，列単位の索引，検索，ファイル対応付け | P0 |
-| `davis_api` | 認証，カタログ配信，R2署名付きURL | P0 |
+| `davis_server` | 認証，カタログ配信，R2署名付きURL．Cloudflare Worker等の実装を許容 | P0 |
 | `davis_web` | ファイル・列スキーマの検索，絞り込み，詳細，ダウンロード | P0 |
 | `davis_cli` | 中核ユースケースを検証する最初の参照クライアント | P0 |
 | `davis_model_api` | 3つのモデル関連契約のスキーマ | P0 |
@@ -293,15 +327,16 @@ MVPでは，任意のモデルコードは利用者PCで実行します．最初
 
 ### 5.3. APIを増やし過ぎず，将来の入口を増やす
 
-API-firstを「すべての内部関数をHTTP化すること」とは捉えません．初期段階では，利用場所の異なる次の3境界だけを明確にします．
+API-firstを「すべての内部関数をHTTP化すること」とは捉えません．初期段階では，利用場所の異なる次の4境界だけを明確にします．
 
 | 境界 | 形式 | 初期利用者 | 将来の利用者 |
 | --- | --- | --- | --- |
+| データリポジトリAPI | Rustの型付きAPI | Runtime，参照CLI，索引生成器 | サーバー，別のローカルアプリ |
 | カタログAPI | HTTP＋OpenAPI | Web，参照CLI | 外部ポータル，Notebook，別組織のサービス |
-| アプリケーションAPI | 言語非依存の要求・応答とRust実装 | 参照CLI，APIサーバー | PCアプリ，Notebook，サーバージョブ |
+| 研究実行API | 言語非依存の要求・応答とRust実装 | 参照CLI | PCアプリ，Notebook，サーバージョブ |
 | モデル実行API | JSON＋Parquetのプロセス契約 | ローカルモデル | コンテナ，WASI，遠隔ランナー |
 
-Webのためだけの検索ロジック，CLIのためだけのダウンロード・実行ロジックを作りません．`davis_catalog`と`davis_core`にユースケースを置き，Web，CLI，GUI，SDKは薄い入口にします．一方，細かな内部関数まで遠隔APIとして公開せず，実際に別プロセス・別サービスとの接続が必要な境界だけを版管理します．
+Webのためだけの検索ロジック，CLIのためだけのダウンロード・実行ロジックを作りません．データ管理は`davis_core`，検索索引は`davis_catalog`，研究実行は`davis_runtime`へ置き，Web，CLI，GUI，SDKは薄い入口にします．一方，細かな内部関数まで遠隔APIとして公開せず，実際に別プロセス・別サービスとの接続が必要な境界だけを版管理します．
 
 この構成により，将来は中核を書き直さず，次を追加できます．
 
@@ -315,6 +350,78 @@ Webのためだけの検索ロジック，CLIのためだけのダウンロー�
 - 実験比較・共有サービス
 
 拡張可能性は，空の抽象インターフェースを先に大量に作ることではなく，ファイル・プロジェクト・実行の意味を安定させ，同じユースケースへ複数の入口を後付けできることによって確保します．
+
+### 5.4. `davis_core`のデータ管理仕様
+
+受領したデータ基盤仕様の中核方針を採用し，データ管理の責任を次のように定めます．
+
+```text
+Git
+= DatasetManifestと履歴のsource of truth
+
+Object Storage
+= binary contentのsource of truth
+
+davis_core
+= Git metadataとObject Storageのbridge
+```
+
+Gitのcommit，branch，tag，merge，remote，認証はGit本体へ委譲します．S3 API，HTTP，TLS，multipart upload，retry，ハッシュアルゴリズムの実装も既存ライブラリへ委譲します．Davisは，どのデータセットがどのObjectを参照し，どの版を復元すべきかを判断します．
+
+初期のデータリポジトリは，次の配置を基本とします．正確な配置名はADRで確定します．
+
+```text
+project/
+├── .git/
+├── .davis/
+│   ├── config.toml
+│   ├── datasets/
+│   │   └── <dataset-id>.yaml
+│   └── cache/              # Git管理外
+└── data/                   # 大容量実体はGit管理外
+```
+
+データ実体はcontent-addressed objectとして扱います．新規Objectの推奨IDは`blake3:<digest>`とし，ストレージキーは`objects/{algorithm}/{digest[0..2]}/{digest[2..]}`を基本とします．ただし，現行DVC資産を一度に再ハッシュしなければ利用できない仕様にはしません．`ObjectId`はアルゴリズム名を含み，移行中はDVC由来のMD5等も読み取れるようにします．新規保存時のアルゴリズムと，既存Objectの移行方法は要確認です．
+
+Coreが段階的に提供する操作は，次のとおりです．
+
+| 操作 | 責務 | 導入時期 |
+| --- | --- | --- |
+| `open`，`datasets`，`resolve`，`pull` | Manifest読取，データ発見，ローカルキャッシュへの取得 | P0 |
+| `init`，`add`，`status`，`push` | リポジトリ作成，Object登録，差分検出，同期 | P1 |
+| `checkout`，`verify`，local `gc` | Git revisionの復元，整合性検証，安全なキャッシュ整理 | P1 |
+| remote `gc`，DVC export | 破壊的な遠隔整理，外部形式への書出し | P2以降 |
+
+公開APIの形は，次を目安とします．同期方法や進捗表示を固定しないよう，各操作は構造化されたReportを返します．
+
+```rust
+let repo = DavisRepository::open(".").await?;
+
+let datasets = repo.datasets().await?;
+let status = repo.status().await?;
+let pull_report = repo.pull(options).await?;
+let checkout_report = repo.checkout(options).await?;
+```
+
+初期は`1 file = 1 object`とし，ハッシュ計算と転送はストリーミングで行います．キャッシュ内のObjectは不変とし，同一Object IDへ異なる内容を保存してはなりません．同一リポジトリに対するpush，pull，checkout，gcの競合を防ぐロックを設けます．remote GCはdry-runを既定とし，到達可能性の仕様が確定するまで実データを削除しません．
+
+Storage abstractionにはApache OpenDALを第一候補とし，Cloudflare R2は独自backendではなくS3互換backendとして扱います．Git操作には`gix`を第一候補とします．これらは実装候補であり，`DatasetManifest`と`ObjectId`のファイル契約を特定ライブラリへ依存させません．
+
+Coreの公開APIは構造化された結果と型付きエラーを返します．Core内で画面表示，`println!`，process終了，CLI引数解釈，HTTP routing，HTML生成を行いません．依存方向は常にクライアントまたは上位ユースケースからCoreへ向け，CoreからCLI，Web，Runtime，モデルへの逆依存を禁止します．
+
+### 5.5. 基本不変条件
+
+1. 同一`ObjectId`に異なる内容が存在しない
+2. 同じGit revision，DatasetManifest，参照Objectがあれば，同じデータセット状態を復元できる
+3. データセットの意味を決めるmetadataはGitに存在する
+4. 大容量データ実体はGit object databaseへ保存しない
+5. Objectの識別はR2，S3，ローカル等の保存先に依存しない
+6. Credential，API token，署名付きURLをGit管理対象へ保存しない
+7. 既存CLIで取得可能な対象は，移行完了まで旧経路または新経路の少なくとも一方から必ず取得できる
+
+### 5.6. Coreの非目標とDavis全体の目標を分ける
+
+`davis_core`単体では，DVC pipeline DAG，実験追跡，hyperparameter管理，metrics可視化，モデルregistryを実装しません．ただし，これはDavis全体から実験履歴や可視化を除外する意味ではありません．実行履歴は`davis_runtime`，表示は`davis_viz`，将来の共有は別サービスの責務とします．データ基盤を研究機能から独立させるための非目標です．
 
 ## 6. モデルコンポーネント契約
 
@@ -393,7 +500,7 @@ outputs:
 }
 ```
 
-R2 URLや資格情報はモデルへ渡しません．`davis_core`が入力を取得・検証し，変更不能なローカル参照として渡します．
+R2 URLや資格情報はモデルへ渡しません．`davis_runtime`が`davis_core`を通じて入力を取得・検証し，変更不能なローカル参照として渡します．
 
 ### 6.4. 入力データ
 
@@ -524,7 +631,43 @@ runtime_capabilities:
 
 ## 9. ファイルスキーマカタログとストレージ
 
-### 9.1. 既存`*.schema.yaml`をカタログの原本にする
+### 9.1. 3種類のmetadataを混同しない
+
+データ基盤仕様の`DatasetManifest`，現行`*.schema.yaml`，現行CLIが配布する`manifest.json`は，役割が異なります．同じManifestという名前で扱いません．
+
+| 名称 | 原本／派生 | 単位 | 責務 |
+| --- | --- | --- | --- |
+| `DatasetManifest` | Git上の原本 | 論理データセット | metadata，版，構成ファイル，Object参照 |
+| `FileSchema` | Git上の原本 | 実データファイル | 列名，型，説明，地域，年，利用条件 |
+| `CatalogIndex` | 公開時に生成する派生物 | カタログ全体 | Web検索，facet，ダウンロード参照 |
+
+`DatasetManifest`の最小イメージは次のとおりです．フィールド名と既存データ群からの生成規則は，要確認事項を解決した後にJSON Schemaで確定します．
+
+```yaml
+version: 1
+dataset:
+  id: tokyo-person-trip
+  title: Tokyo Person Trip Survey
+  description: Person-trip survey dataset.
+  creators:
+    - Tokyo Metropolitan Government
+  license: restricted
+  tags:
+    - mobility
+    - person-trip
+files:
+  - path: trips.parquet
+    object:
+      oid: blake3:aaaaaaaa
+      size: 728193721
+    schema: trips.parquet.schema.yaml
+```
+
+`DatasetManifest`は必ずschema versionを持ちます．将来形式を変更しても旧版を読めるmigrationを用意し，Git revisionだけを進めたことで過去のデータ状態が復元不能になる変更を禁止します．
+
+現行`dist/manifest.json`は，CLI版，bootstrap package，データ群と`.dvc`ファイル一覧をまとめたリリース用索引です．移行中は互換入力として読みますが，新仕様では`DatasetManifest`群から生成する`CatalogIndex`へ責務を移します．利用者が手書きする`project.yaml`とは無関係です．
+
+### 9.2. 既存`*.schema.yaml`をカタログの原本にする
 
 2026-08-17時点の`data/`には，256個のDVC管理対象と177個の`*.schema.yaml`があります．DVCメタデータ上の合計サイズは約8.66 GiBで，最大の単一ファイルは約1.37 GiBです．
 
@@ -542,7 +685,7 @@ Webカタログの中心は，現在実データファイルごとに置かれ�
 
 MVPでは，既存177ファイルを一括で別形式へ書き換えません．現在の形式を`v0`として読み込む索引生成器を作ります．将来フィールドを追加するときは，`schema_version`を持つ新形式を定義し，旧形式も読み続けられる移行処理を用意します．
 
-### 9.2. ファイルとスキーマの対応
+### 9.3. ファイルとスキーマの対応
 
 `foo.csv.schema.yaml`は`foo.csv`を説明するものとして対応付けます．DVC管理中で実体がローカルにない場合は，`foo.csv.dvc`からサイズ，保存対象，ハッシュ等を補完します．
 
@@ -557,7 +700,7 @@ MVPでは，既存177ファイルを一括で別形式へ書き換えません�
 
 現行CLIで取得できる全ファイルをダウンロード可能にする要件と，全ファイルのスキーマ整備を分離します．スキーマ不足を理由に，MVPのダウンロード互換性を落としません．
 
-### 9.3. 検索と絞り込み
+### 9.4. 検索と絞り込み
 
 公開時にすべての`*.schema.yaml`を検証し，Web検索用の索引を生成します．WebがR2内のYAMLを毎回すべて読み込んで検索する構成にはしません．
 
@@ -582,7 +725,7 @@ MVPでは，既存177ファイルを一括で別形式へ書き換えません�
 
 例えば，「東京」「2020年以降」「`travel_time`または説明に所要時間を含む列」「数値型」という条件で候補ファイルを探せるようにします．検索結果には，一致した列も併記します．
 
-### 9.4. Webのファイル詳細
+### 9.5. Webのファイル詳細
 
 ファイル詳細画面では，次を表示します．
 
@@ -597,9 +740,9 @@ MVPでは，既存177ファイルを一括で別形式へ書き換えません�
 
 実データの中身は，MVPではWeb上に表示しません．非公開データの値を不用意にブラウザへ展開せず，まずスキーマから必要なファイルを判断できることを重視します．
 
-### 9.5. 検索索引とAPI
+### 9.6. 検索索引とAPI
 
-Git上の`data/**/*.schema.yaml`を原本とし，公開処理で次を生成します．
+Git上の`DatasetManifest`群と`data/**/*.schema.yaml`を原本とし，公開処理で次を生成します．
 
 ```text
 catalog/
@@ -621,11 +764,13 @@ POST /api/v1/files/{file_id}/download-url
 
 検索APIを追加する場合は，例えば`q`，`city`，`year_from`，`year_to`，`format`，`column`，`column_type`，`has_column_description`を受け取ります．Web固有の状態をAPIへ持ち込まず，CLIや将来の外部カタログからも利用できる形にします．
 
-### 9.6. R2，DVC，アクセス制御
+### 9.7. R2，DVC，アクセス制御
 
 本番配布はCloudflare R2を第一候補とし，WebとCLIは認証後の署名付きURLから取得します．保存先はS3互換ストレージまたはローカルファイルへ交換できる境界を持ちます．DVCは現行データの移行，管理者同期，既存研究の再現に残しますが，一般参加者の必須ランタイムにはしません．
 
-MVPのアクセス制御は，まず全体を参加者限定とします．将来ファイルごとの公開範囲が必要になった場合は，既存`*.schema.yaml`へ互換的な`access`フィールドを追加します．それまでは，存在しないアクセス区分を推測してYAMLへ書き込みません．
+MVPのアクセス制御は，まず全体を参加者限定とします．この条件では，静的Pagesだけでダウンロード認可を完結できないため，Cloudflare Accessに加えて，認証済み利用者へ短寿命の署名付きURLを発行するWorkerまたは`davis_server`をP0に含めます．大容量ファイルをアプリケーションサーバーでproxyせず，ブラウザまたはローカルクライアントからR2へ直接取得します．
+
+将来ファイルごとの公開範囲が必要になった場合は，`DatasetManifest`または既存`*.schema.yaml`へ互換的な`access`情報を追加します．どちらを認可判断の原本にするかは要確認です．それまでは，存在しないアクセス区分を推測してYAMLへ書き込みません．
 
 ## 10. `davis_fmt`と`davis_viz`
 
@@ -663,11 +808,11 @@ MVPのアクセス制御は，まず全体を参加者限定とします．将�
 - 認証済みデータのダウンロード
 - 同等のCLIダウンロードコマンドの提示
 
-データ整形，モデル編集，推定，可視化は初期Webに含めません．これにより，Webの都合でモデルAPIを制限せず，カタログを早期に安定公開できます．将来の分析画面は，同じ`davis_core`とモデル実行契約を利用する別機能として追加します．
+データ整形，モデル編集，推定，可視化は初期Webに含めません．これにより，Webの都合でモデルAPIを制限せず，カタログを早期に安定公開できます．将来の分析画面は，同じ`davis_runtime`とモデル実行契約を利用する別機能として追加します．
 
 ### 11.2. 参照CLI
 
-研究モデルの作成と実行を最短で検証するため，CLIを最初の参照クライアントとして実装します．CLIのコマンド体系は正式なドメインAPIそのものではなく，`davis_core`のユースケースを呼ぶ操作面です．
+研究モデルの作成と実行を最短で検証するため，CLIを最初の参照クライアントとして実装します．CLIのコマンド体系は正式なドメインAPIそのものではなく，データ操作では`davis_core`，研究実行では`davis_runtime`のユースケースを呼ぶ操作面です．
 
 ```text
 davis dataset list
@@ -711,14 +856,14 @@ GUI feature
   ↓
 UI用service adapter
   ↓
-davis_catalog／davis_core／davis_model_runner
+davis_catalog／davis_core／davis_runtime／davis_model_runner
 ```
 
 serviceモジュール自体をバックエンド契約にはしません．正式な契約はOpenAPI，`RunRequest`，`RunResult`とし，UI側serviceはそれらを画面向けに変換するアダプターとします．
 
 #### スキーマに基づく候補制限
 
-後続のGUI案では，モデルに指定できる変数を，選択したデータのスキーマに存在する列へ限定しています．この原則は`davis_core`の入力検証へ取り入れ，すべてのクライアントへ適用します．
+後続のGUI案では，モデルに指定できる変数を，選択したデータのスキーマに存在する列へ限定しています．この原則は`davis_runtime`の入力検証へ取り入れ，すべてのクライアントへ適用します．
 
 - `Run`ユースケースは，指定変数が対応する`*.schema.yaml`に存在するか検証する
 - 数値変数が必要な場所では，列型も検証する
@@ -768,7 +913,11 @@ davis model check ./my-model --input ...
 
 | 領域 | 第一候補 | 理由 |
 | --- | --- | --- |
-| Core，実行ホスト，API，参照CLI | Rust | 配布容易性，型安全，プロセス管理，Arrow・WASMとの接続 |
+| Core，Runtime，参照CLI | Rust | 配布容易性，型安全，ストリーミング，プロセス管理，Arrow・WASMとの接続 |
+| Git接続 | `gix` | Git内部形式をDavisで再実装しない |
+| Storage abstraction | Apache OpenDAL | R2，S3，MinIO，ローカル等を同じ境界で扱える |
+| Object ID | BLAKE3を新規Objectの第一候補 | ストリーミング可能で高速．既存DVC hashも移行中は読取対応する |
+| Async runtime | Tokio | ハッシュ，存在確認，転送の並列化 |
 | 標準モデルと研究モデルSDK | Pythonから開始 | 既存コード，数値計算資産，編集のしやすさ |
 | モデル交換形式 | JSON・YAML＋Parquet | 言語とプロセスをまたいで扱える |
 | 高速表転送 | Arrow IPC | 必要になった段階で追加できる |
@@ -780,7 +929,7 @@ davis model check ./my-model --input ...
 | Python環境 | uv＋ロックファイル | コンポーネント単位で環境を固定しやすい |
 | 長期再現・隔離 | OCIコンテナ | 必要なモデルだけ環境全体を固定できる |
 
-PythonとRustのどちらか一方へ統一すること自体を目標にしません．研究コードの編集性と，基盤の配布・安定性で役割を分けます．
+PythonとRustのどちらか一方へ統一すること自体を目標にしません．研究コードの編集性と，基盤の配布・安定性で役割を分けます．Rustライブラリの採否は小さな実証で確認し，選定結果を公開ファイル契約へ漏らしません．
 
 ## 13. リポジトリ構成案
 
@@ -789,8 +938,9 @@ davis/
   Cargo.toml
   crates/
     davis-core/
+    davis-runtime/
     davis-catalog/
-    davis-api/
+    davis-server/
     davis-model-api/
     davis-model-runner/
     davis-cli/
@@ -806,6 +956,7 @@ davis/
     desktop/
   catalog/
     datasets/
+    generated/             # Git原本から生成する検索索引
   schemas/
     v1alpha1/
   examples/
@@ -820,11 +971,13 @@ davis/
     davis-platform-concept.md
 ```
 
-既存コードは互換試験と最初のコンポーネントの移行元として残し，新経路が動く前に移動・削除しません．
+`davis-core`は当初1 crateとして始め，実際に独立利用や依存分離が必要になるまで`davis-manifest`，`davis-storage`，`davis-git`等へ細分化しません．既存コードは互換試験と最初のコンポーネントの移行元として残し，新経路が動く前に移動・削除しません．
 
 ## 14. 実装の優先順位
 
-### P0: 3〜5日で縦断経路を作る
+### P0: 3〜5日で互換性を保った縦断プロトタイプを作る
+
+3〜5日で，データ基盤仕様にある`add`，`push`，`checkout`，`gc`までを本番品質で完成させるのは現実的ではありません．P0では，現行DVC資産を読み取る最小Core，カタログWeb，既存MNLをつないだ縦断経路を作ります．既存ダウンロード経路を残し，全ファイルを取得できることを優先します．
 
 #### Day 0: 安全確保と棚卸し
 
@@ -832,10 +985,12 @@ davis/
 - 現行マニフェストから，全取得対象，サイズ，ハッシュの基準一覧を作る
 - データの利用条件と参加者向け再配布可否を確認する
 
-#### Day 1: 最小契約と実行ホスト
+#### Day 1: 最小契約，読取Core，実行ホスト
 
-- 4つの中央契約だけを定義する
+- 6つの中央契約の最小版を定義する
 - JSON Schemaと正常・異常例を作る
+- 現行`manifest.json`，`.dvc`，`*.schema.yaml`を読む互換アダプターを作る
+- `DatasetManifest`と`CatalogIndex`を生成し，既存ファイル参照を解決できるようにする
 - Rustの実行ホストからローカルのモデルプロセスを起動し，参照CLIから呼ぶ
 - 既存DVCメタデータと177個の`*.schema.yaml`から，ファイル・列・facet索引を生成する
 
@@ -852,14 +1007,13 @@ davis/
 #### Day 3: カタログWebと配布API
 
 - Cloudflare Accessを設定する
-- ファイル一覧，列検索，facet，スキーマ詳細，署名付きURLの経路を作る
+- ファイル一覧，列検索，facet，スキーマ詳細，短寿命の署名付きURLを発行するWorkerまたはServerを作る
 - Webへ検索，複合絞り込み，列一覧，Raw YAML，ダウンロード画面を作る
 - スキーマ未整備・不正・実ファイル不明の状態を表示する
 
 #### Day 4〜5: 全データ互換性と拡張例
 
-- 現行の全取得対象をR2へ移行する
-- 全ファイルのサイズとSHA-256を照合する
+- 新経路へ移したObjectはサイズとハッシュを照合し，未移行Objectは既存DVC経路へ安全にfallbackする
 - `list`，`info`，`get`相当の互換試験を実行する
 - 全`*.schema.yaml`の検証結果と，実データ・DVCファイルとの対応を確認する
 - 標準MNLを少し変更したサンプルコンポーネントを1つ作る
@@ -867,10 +1021,15 @@ davis/
 - GUI案を参考に，係数表，係数図，診断の共通HTMLを生成する
 - モデル開発者向けREADMEとデバッグ手順を作る
 
-短期間では，新しい数値計算エンジン，WASM，PCアプリ，多言語SDKを同時に完成させません．現行資産を利用し，データ取得とモデル追加の縦断経路を通すことを優先します．
+短期間では，新しい数値計算エンジン，完全なGit-native同期エンジン，WASM，PCアプリ，多言語SDKを同時に完成させません．現行資産を利用し，データ取得とモデル追加の縦断経路を通すことを優先します．
 
 ### P1: MVP後の1〜3週間
 
+- `davis_core`の`init`，`add`，`status`，`push`，`pull`，`checkout`を段階的に実装する
+- Local filesystem backendでCore統合試験を作り，R2，S3，MinIOの互換試験を追加する
+- 現行全ObjectをR2へ移行し，サイズとハッシュを照合する
+- local cache，repository lock，streaming transfer，並列数制限，`verify`，local `gc`を実装する
+- DVC metadata importと，旧Object IDを保持する移行手順を実装する
 - 標準MNLの数値処理と診断の改善
 - `davis_fmt`の宣言的レシピとPython変換コンポーネント
 - 共通係数表，予測値，実行比較
@@ -884,6 +1043,8 @@ davis/
 
 ### P2: 1〜3か月以降
 
+- remote GCをdry-runから導入し，到達可能性と運用承認を経て実削除を検討する
+- DVC metadata exportの必要性を確認する
 - Nested Logit，Mixed Logit，Recursive Logit等の参考コンポーネント
 - OCIコンテナ・WASIランナー
 - 隔離されたサーバー推定
@@ -899,14 +1060,25 @@ davis/
 ### 15.1. データ配布
 
 - 現行マニフェストの全対象を新経路から取得できる
-- ファイルサイズとSHA-256が一致する
+- ファイルサイズと，移行元または`ObjectId`で宣言されたdigestが一致する
 - 全`*.schema.yaml`を検証し，対応する実データまたはDVCメタデータを特定できる
 - ファイル属性と列属性を組み合わせた検索結果が正しい
 - スキーマがないファイルもダウンロード対象から欠落しない
 - 未認証者と権限のない参加者が取得できない
 - R2とローカルストレージが同じカタログ契約を満たす
 
-### 15.2. モデル契約
+### 15.2. データCore
+
+- `ObjectId`とStorage Keyの相互変換が正しい
+- `DatasetManifest`を版ごとに読み書き・検証できる
+- 同一内容の再追加でObjectを重複保存しない
+- ハッシュ不一致，Object欠落，Manifestとworking treeの差分を検出できる
+- Local filesystem backendだけでadd，push，pull，checkout相当の統合試験を完結できる
+- 大容量の合成ファイルを全体メモリ読込なしでハッシュ・転送できる
+- 同一リポジトリの競合操作をlockで拒否し，異常終了後に回復できる
+- GCのdry-runが到達可能なObjectを削除候補へ含めない
+
+### 15.3. モデル契約
 
 - Pythonとネイティブ実行ファイルが，同じ`RunRequest`を読める
 - 正常終了時に`RunResult`と宣言済み成果物が存在する
@@ -914,7 +1086,7 @@ davis/
 - コンポーネント固有フィールドを失わず保持できる
 - 古い互換版の結果をすべての対応クライアントが読める
 
-### 15.3. 数値検証
+### 15.4. 数値検証
 
 - 手計算可能な小規模な2項・多項Logit
 - 合成データによる推定値の回復
@@ -926,7 +1098,7 @@ davis/
 
 | リスク | 影響 | 対応 |
 | --- | --- | --- |
-| 接続契約を増やし過ぎる | 冗長になり，研究コードを書きにくい | 4つの中央契約に絞り，内部関数を標準化しない |
+| 接続契約を増やし過ぎる | 冗長になり，研究コードを書きにくい | データ基盤3種，研究実行3種の中央契約に絞り，内部関数を標準化しない |
 | 契約が少な過ぎる | Web，CLI，GUI，可視化が分断される | 状態，来歴，成果物参照，任意の標準表を共通化する |
 | Python環境が壊れる | 再現・実行できない | コンポーネント単位の`uv.lock`と実行版記録 |
 | Rustだけに寄せる | 研究者がモデルを追加しにくい | Python SDKを第一経路とする |
@@ -941,10 +1113,13 @@ davis/
 | GUI案をそのまま実装する | Webの範囲が広がり，モック仕様が正式仕様になる | 有用な概念を中核ユースケースと共通成果物へ移し，GUIを交換可能なクライアントにする |
 | 列名と型から意味を推測する | 誤った変数・選択肢をモデルへ割り当てる | 存在と型だけを確実に検証し，意味は明示的なレシピ・メタデータがある場合だけ使う |
 | CLIのコマンド体系を中核APIとみなす | GUIやNotebookがCLIを迂回実装またはシェル実行する | `Run`等のユースケースを独立させ，CLIを薄い参照クライアントにする |
+| データ管理とモデル実行を1つのCoreへ詰め込む | 単独利用しにくく，依存関係が循環する | `davis_core`をデータ基盤，`davis_runtime`を研究実行の上位層とする |
+| 新CASを先に完成させようとする | Webとモデルの縦断検証が遅れる | P0は既存DVCの読取互換，P1で更新・同期機能を実装する |
+| `Manifest`の意味が複数ある | 移行とAPIが曖昧になる | `DatasetManifest`，`FileSchema`，`CatalogIndex`へ名称と責務を分ける |
 
 ## 17. 先に作るADR
 
-1. ADR-0001: 中央契約を4種類に限定するか
+1. ADR-0001: 中央契約をデータ基盤3種，研究実行3種に限定するか
 2. ADR-0002: モデル拡張を動的ライブラリではなく，プロセス＋ファイル契約にするか
 3. ADR-0003: モデル開発をPython，基盤実装をRustから始めるか
 4. ADR-0004: Python環境をコンポーネント単位の`uv.lock`で隔離するか
@@ -957,6 +1132,11 @@ davis/
 11. ADR-0011: 実験設定ファイルをMVPに設けず，実行記録を`run.json`として自動生成するか
 12. ADR-0012: GUIプロトタイプの実験履歴，結果表示，スキーマ検証を中核ユースケースと共通成果物へ移すか
 13. ADR-0013: CLIを中核APIにせず，GUI・Notebook・遠隔APIと同列のクライアントにするか
+14. ADR-0014: Gitをmetadataと履歴，Object Storageをbinary contentの原本とするか
+15. ADR-0015: `davis_core`をデータ基盤，`davis_runtime`を研究実行層として分けるか
+16. ADR-0016: 新規Object IDをBLAKE3とし，既存DVC hashを移行中も読み取るか
+17. ADR-0017: Storage abstractionにOpenDAL，Git接続に`gix`を採用するか
+18. ADR-0018: `DatasetManifest`，`FileSchema`，`CatalogIndex`の責務と生成関係をどう定めるか
 
 ## 18. 確認済み事項と残る確認事項
 
@@ -975,6 +1155,9 @@ davis/
 11. 利用者が記述する`project.yaml`はMVPに設けず，Davisが実行条件を`run.json`へ保存する
 12. `feature/davis-gui`はそのまま採用せず，サービス分離，実験比較，共通結果，スキーマ検証を取り入れる
 13. CLIは最初の参照クライアントであり，Davisの中核や最終的な利用形態ではない
+14. Git-nativeなデータ管理・カタログ基盤をDavisの土台とし，研究実行層はその上へ接続する
+15. Gitはmetadataと履歴，大容量実体はオブジェクトストレージで管理する
+16. `davis_core`にはCLI，Web，モデル固有の処理を含めない
 
 ### 18.2. 残る確認事項
 
@@ -985,10 +1168,14 @@ davis/
 5. 既存`*.schema.yaml`へ，将来の検索用フィールドをどこまで追加するか
 6. 同時利用者数，ダウンロード量，R2の費用上限
 7. Davis本体とモデルコンポーネントのライセンス
+8. 既存ディレクトリから論理`DatasetManifest`を作るデータ群の区切りとID
+9. 新規ObjectへBLAKE3を採用するか，既存DVC Objectをいつ再ハッシュするか
+10. データ単位のアクセス区分を`DatasetManifest`と`FileSchema`のどちらで管理するか
+11. `davis_core`の初期更新系操作を，既存DVC remoteへの書込みまで対応させるか，R2移行後だけにするか
 
 ## 19. 直近の着手順
 
-1. 4つの最小契約を作り，標準MNLと変更モデルの両方で不足がないか確認する
+1. 6つの最小契約を作り，既存データ，標準MNL，変更モデルで不足がないか確認する
 2. 現行データの全取得対象，サイズ，ハッシュを棚卸しする
 3. 全`*.schema.yaml`を検証し，実データ・DVCメタデータとの対応表と検索索引を作る
 4. Webへファイル・列検索，複合絞り込み，スキーマ詳細，Raw YAML，ダウンロードを実装する
