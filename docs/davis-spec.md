@@ -1,6 +1,6 @@
 # Davis 仕様書
 
-> 状態: Draft 0.10
+> 状態: Draft 0.11
 >
 > 最終更新日: 2026-08-19
 >
@@ -270,7 +270,7 @@ Git repository 自体を **Data Catalog as Code** として利用する．
 
 # 8. davis-server
 
-一般公開データまたはローカル利用だけのdeploymentでは，初期バージョンの必須要素としません．行動モデル夏の学校の公式環境は参加者限定データを扱うため，認証と署名付きURLを提供する最小ServerまたはCloudflare WorkerをP0から必須とします．
+一般公開データまたはローカル利用だけのdeploymentでは，初期バージョンの必須要素としません．行動モデル夏の学校の公式環境は参加者限定データを扱うため，Webを公開するP1で，認証と署名付きURLを提供する最小ServerまたはCloudflare Workerを必須とします．
 
 以下が必要になった段階で導入する．
 
@@ -1525,9 +1525,11 @@ Object identity は storage backend に依存しない．
 
 ---
 
-# 48. davis-core MVP
+# 48. davis-coreの長期機能範囲
 
-## Phase 1
+本節は，受領した仕様に基づくCoreと周辺機能の到達範囲を示します．記載順を直近の実装順序とはしません．実際には既存DVC資産を活用して読取経路から着手し，CLI，Web，推定器の順に実装します．優先順位と各releaseの完了条件は59節を正とします．
+
+## 機能群1
 
 最小機能:
 
@@ -1556,7 +1558,7 @@ davis checkout
 
 ---
 
-## Phase 2
+## 機能群2
 
 ```text
 davis gc
@@ -1577,7 +1579,7 @@ structured metadata
 
 ---
 
-## Phase 3
+## 機能群3
 
 `davis-web`
 
@@ -1593,9 +1595,9 @@ structured metadata
 
 ---
 
-## Phase 4
+## 機能群4
 
-一般公開またはローカルdeploymentでは，必要に応じて`davis-server`を追加します．参加者限定の夏の学校公式deploymentでは，Phase 3と同時に最小ServerまたはWorkerを導入します．
+一般公開またはローカルdeploymentでは，必要に応じて`davis-server`を追加します．参加者限定の夏の学校公式deploymentでは，機能群3と同時に最小ServerまたはWorkerを導入します．
 
 機能候補:
 
@@ -1798,26 +1800,73 @@ davis-runtime ─X─▶ 特定モデルの内部実装
 
 ---
 
-# 53. 研究実行コンポーネント
+# 53. コンポーネントと実装優先順位
 
 | コンポーネント | 責務 | 初期優先度 |
 | --- | --- | --- |
-| `davis-core` | 1〜50節のデータ基盤 | P0は読取，P1で更新系を拡張 |
-| `davis-catalog` | FileSchema検証，ファイル・列・facet索引生成 | P0 |
-| `davis-server` | 認証，CatalogIndex配信，署名付きURL | 公式環境ではP0 |
-| `davis-web` | スキーマ検索，絞り込み，詳細，ダウンロード | P0 |
-| `davis-runtime` | 入力解決，整形，モデル実行，成果物整理，来歴記録 | P0 |
-| `davis-model-api` | ModelManifest，RunRequest，RunResultのschema | P0 |
-| `davis-model-runner` | モデルprocess起動，ログ，結果検証 | P0 |
-| `davis-mnl` | 標準MNLの参考コンポーネント | P0 |
-| `davis-model-sdk-python` | Pythonモデル向け補助関数と型 | P0 |
-| `davis-fmt` | 既知の変換recipeと外部変換process | 最小機能をP0 |
-| `davis-viz` | 共通結果とモデル固有表示の接続 | 最小機能をP0 |
-| `davis-cli` | CoreとRuntimeの最初の参照クライアント | P0 |
-| `davis-app` | 同じユースケースを使うGUIクライアント | P1以降 |
-| `davis-remote-runner` | 隔離されたサーバー実行 | P2以降 |
+| `davis-core` | Manifest・Object・storageの読取，検証，cache，download | 読取経路をP0，更新系をP3 |
+| `davis-catalog` | Dataset・FileSchema検証，list・search，CatalogIndex生成 | P0 |
+| `davis-cli` | list，show，downloadを提供する最初の参照client | P0 |
+| `davis-server` | 参加者認証，CatalogIndex配信，download認可，署名付きURL | P1 |
+| `davis-web` | 検索，絞り込み，複数選択，download queue | P1 |
+| `davis-model-api` | ModelManifest，RunRequest，RunResultのschema | P2 |
+| `davis-runtime` | 入力解決，モデル実行，成果物整理，来歴記録 | P2 |
+| `davis-model-runner` | モデルprocess起動，log，結果検証 | P2 |
+| `davis-mnl` | 標準MNLの参考component | P2 |
+| `davis-model-sdk-python` | Pythonモデル向け補助関数と型 | P2 |
+| `davis-fmt` | 既知の変換recipeと外部変換process | 互換に必要な最小処理をP2，一般化をP3 |
+| `davis-viz` | 共通結果とモデル固有表示の接続 | P3 |
+| `davis-app` | 同じuse caseを使うGUI client | P3 |
+| `davis-remote-runner` | 隔離されたserver実行 | P4以降 |
 
 `davis-core`をモデル実行の都合で肥大化させません．`davis-runtime`はCoreの版付きデータ参照を利用しますが，ローカルファイルや別組織のストレージもInput Resolverから利用できます．
+
+## 53.1 独立利用と接続利用
+
+各componentは，隣接componentをすべて導入しなくても主要責務を実行できるようにします．
+
+| Component | 単独でできること | 接続時に増えること |
+| --- | --- | --- |
+| `davis-core` | localまたはremoteのManifestを開き，Objectを検証・取得します | CatalogとRuntimeへ版付きデータ参照を提供します |
+| `davis-catalog` | ManifestとFileSchemaからlist・search・index生成を行います | CLIとWebが同じカタログ意味論を利用します |
+| `davis-cli` | local catalogからlist・show・downloadを行います | server adapterを使えば公式catalogも利用できます |
+| `davis-server` | Webなしでもcatalog APIとdownload認可を提供します | Web，CLI，外部clientの共通backendになります |
+| `davis-web` | CatalogIndexまたはcatalog APIだけで検索・downloadできます | 将来Runtime APIへ接続できます |
+| `davis-runtime` | local fileだけでもmodelを実行できます | CatalogRefをCoreで解決し，公式データから実行できます |
+| model component | fixtureの`request.json`だけで単体試験できます | Runnerから起動され，共通の来歴と成果物管理を利用します |
+| `davis-viz` | 保存済みRunResultを読み表示できます | Runtime直後の自動report生成に利用できます |
+
+単独利用のために同じ処理を複製しません．共有するのはdomain contractとuse caseであり，client固有の表示やtransportではありません．
+
+## 53.2 Layerと依存規則
+
+```text
+Contracts
+DatasetManifest／ObjectId／FileSchema
+ModelManifest／RunRequest／RunResult
+        │
+        ▼
+Use cases
+ListCatalog／SearchCatalog／ResolveDownload／RunModel
+        │
+        ▼
+Adapters
+CLI／HTTP／Pages／Local FS／R2／DVC compatibility
+```
+
+次の規則を守ります．
+
+1. Domain contractはCLI引数，HTML，HTTP header，Cloudflare固有型を含めません．
+2. Use caseは構造化されたrequestとresultを受け取り，画面出力やprocess終了を行いません．
+3. CLI，Web，Server，GUIはadapterであり，domain logicを持ちません．
+4. GUIやWebからCLIをshell実行する方式を正式APIにしません．
+5. CoreからCatalog，Runtime，clientへの逆依存を禁止します．
+6. Runtimeから特定modelの内部実装への依存を禁止します．
+7. Component間に循環依存を作りません．
+
+CLIはRust use caseを同一process内で直接呼べます．WebはRust Coreを直接実行せず，`davis-catalog`が生成したCatalogIndexと，`davis-server`のHTTP APIを利用します．この違いがあっても，Dataset ID，File ID，filter，sort，ObjectRef，error codeの意味は共通にします．
+
+`CatalogQuery`，`DownloadSelection`，`DownloadGrant`等はAPI用DTOとしてOpenAPIで版管理しますが，Gitへ保存する中央contractには加えません．複数選択downloadは`DownloadSelection`へFile IDの集合を渡し，Serverが各Objectの権限と存在を検証してから，開始直前に短寿命のURLを発行します．
 
 ---
 
@@ -1842,11 +1891,11 @@ davis-runtime ─X─▶ 特定モデルの内部実装
 
 | `kind` | 用途 | 導入時期 |
 | --- | --- | --- |
-| `catalog` | 公式または別組織のDavis repository | P0 |
-| `local` | PC上のファイルまたはディレクトリ | P0 |
-| `https` | 組織内外のHTTPS download先 | 認証なしをP0，profile認証をP1 |
-| `s3` | R2，S3，MinIO等 | P1 |
-| `custom` | 組織固有resolver | P2以降 |
+| `catalog` | 公式または別組織のDavis repository | Runtime導入時のP2 |
+| `local` | PC上のファイルまたはディレクトリ | Runtime導入時のP2 |
+| `https` | 組織内外のHTTPS download先 | P3 |
+| `s3` | R2，S3，MinIO等 | P3 |
+| `custom` | 組織固有resolver | P4以降 |
 
 研究者や行政職員がローカルデータや庁内サーバーを利用しても，Davis公式環境へのuploadは発生しません．明示的な公開操作を行わない限り，Runtimeは入力データを外部送信しません．
 
@@ -2038,75 +2087,123 @@ Remote API─┘
 
 ---
 
-# 59. 統合MVP
+# 59. 実装順序
 
-## 59.1 成功条件
+## 59.1 基本方針
 
-1. 現行CLIで取得できる全データセットと関連文書を引き続き取得できます．
-2. 256個のDVC管理対象を欠落させず，177個のFileSchemaを検索できます．
-3. schema未整備のファイルもdownload対象から欠落しません．
-4. 公式環境ではoperatorだけが登録・更新でき，participantは閲覧・downloadだけを行えます．
-5. catalogとlocalの両入力を同じRun use caseから利用できます．
-6. 既存MNLを独立componentとして実行できます．
-7. 標準MNLを変更した別componentをDavis本体のforkなしに実行できます．
-8. RunRequest，RunResult，入力，model revision，環境，成果物を記録できます．
-9. 共通係数表を出力するモデルからHTML・CSV・JSONを生成できます．
+実装順序は次の3段階を最優先とします．
 
-## 59.2 P0: 3〜5日の縦断prototype
+```text
+P0  CLIでlist・詳細確認・download
+        ↓
+P1  Webでschema検索・複数選択・download
+        ↓
+P2  localまたはcatalog入力からモデル推定
+        ↓
+P3  その他の拡張
+```
 
-3〜5日で1〜50節の全Core機能を本番品質で完成させることは目標にしません．P0ではデータ基盤仕様を崩さず，現行DVC資産を読む互換adapterから縦断経路を作ります．
+各段階は，後続componentが未実装でも単独でreleaseできる状態を完了条件とします．同時に，後続段階が既存処理を再実装せず接続できるcontractを残します．
 
-### Day 0
+## 59.2 P0: CLIによるカタログ閲覧とdownload
 
-* 現行manifestの全取得対象，size，hashを棚卸しします．
-* データ利用条件と参加者向け再配布可否を確認します．
-* 平文credentialが存在する場合は失効・再発行します．
+最初のreleaseでは，1〜50節のCore仕様全体を完成させません．既存DVC資産を読み取る互換adapterを利用し，読取専用の縦断経路を最短で安定させます．
 
-### Day 1
+### 実装対象
 
-* 6つの中央契約の最小schemaを定義します．
-* 現行`manifest.json`，`.dvc`，`*.schema.yaml`の読取adapterを作ります．
-* file，column，facetのCatalogIndexを生成します．
-* `catalog`と`local`をローカル参照へ解決します．
+1. `davis-core`のManifest読取，Object参照解決，hash・size検証，cache，download
+2. 現行`manifest.json`，`.dvc`，`*.schema.yaml`の互換adapter
+3. `davis-catalog`のDataset・File一覧，詳細，基本filter，CatalogIndex生成
+4. 薄い`davis-cli`
+5. 全件互換testとLocal storageによる統合test
 
-### Day 2
+### 初期command
 
-* 現行Python MNLを独立componentへ接続します．
-* RunRequest，RunResult，`run.json`，log，標準成果物を通します．
-* 合成データと現行実装による回帰試験を作ります．
+```text
+davis dataset list
+davis dataset show <dataset-id>
+davis file list --dataset <dataset-id>
+davis download <dataset-id>
+davis download <dataset-id> --file <file-id>...
+```
 
-### Day 3
+`davis download`は，対象Objectと期待digestを含む内部Download Planを作り，storage adapterが取得します．Command自身にManifest解析，remote選択，copy処理を書きません．
 
-* Cloudflare Accessと署名付きGET URL発行経路を作ります．
-* FileSchema検索，詳細，Raw YAML，downloadをWebへ実装します．
-* participantの登録，更新，PUT URL発行を拒否します．
+### 完了条件
 
-### Day 4〜5
+1. 現行CLIで取得できる全Datasetと関連文書を取得できます．
+2. 256個のDVC管理対象が一覧とdownload対象から欠落しません．
+3. 177個のFileSchemaを詳細表示に利用できます．
+4. schema未整備のファイルも`schema-missing`として取得できます．
+5. CLI以外から同じuse caseを呼ぶunit testを用意します．
+6. Web，Runtime，MNLを導入しなくてもCLIだけで動作します．
 
-* `list`，`info`，`get`相当の全件互換試験を行います．
-* 未移行Objectは既存DVCへ安全にfallbackします．
-* 変更MNL componentを1つ作り，標準MNLと比較します．
-* 係数表，係数図，diagnosticsの共通HTMLを生成します．
+`init`，`add`，`push`，`checkout`，GC等の更新系は，この段階の必須条件にしません．データ基盤仕様から削除するのではなく，P3で追加します．
 
-## 59.3 P1
+## 59.3 P1: Webによる検索とdownload
 
-1〜50節のCore仕様を段階的に実装します．
+P0のDataset・File・Objectの意味をそのまま利用し，検索・認証・複数選択を追加します．Webのために別のcatalog生成処理やdownload処理を作りません．
 
-* `init`，`add`，`status`，`push`，`pull`，`checkout`
-* local cache，repository lock，streaming transfer，並列数制限
-* `verify`とlocal GC
-* Local backendによる統合試験，R2・S3・MinIO互換試験
-* DVC metadata importと旧ObjectId移行
-* authenticated HTTPSとS3 Input Resolver
-* davis-fmt recipe，実行比較，GUIまたはNotebookの薄いclient
+### 実装対象
 
-## 59.4 P2
+1. `davis-catalog`によるfile，column，facetの静的index生成
+2. Pages上の検索，filter，Dataset・File詳細，Raw YAML表示
+3. File単位とDataset単位のcheckbox，選択drawer，合計size表示
+4. 選択したFile ID集合を受け取るDownloadSelection API
+5. 参加者ごとの招待code，session cookie，operator・participant権限
+6. 短寿命の署名付きGET URLとdownload queue
+7. D1，Worker／Pages Functions，R2の接続
 
-* remote GCのdry-runと運用承認
-* OCI，WASI，remote runner
+### 独立性
+
+`davis-web`はCatalogIndexとHTTP APIだけで動き，RuntimeやMNLを要求しません．`davis-server`はWebなしでもAPI testとCLI用remote adapterから利用できます．CLIはP1後もlocal・互換経路で動作し，Serverを必須にしません．
+
+### 完了条件
+
+1. FileSchemaの名称，説明，地域，年，形式，列名，列説明，列型を検索できます．
+2. 複数FileまたはDataset全体を選択し，queueから順次取得できます．
+3. 参加者は閲覧・downloadだけを行い，upload・更新・PUT URL発行を行えません．
+4. 100〜200人規模を想定した認証・download負荷testを通します．
+5. CLIとWebでDataset ID，File ID，size，digest，download対象が一致します．
+
+## 59.4 P2: 推定器
+
+カタログ機能が安定した後，研究実行層を追加します．RuntimeはWebへ埋め込まず，まず利用者PC内で実行します．
+
+### 実装対象
+
+1. `davis-model-api`のModelManifest，RunRequest，RunResult
+2. `davis-runtime`のInput Resolver，実行directory，来歴記録
+3. `davis-model-runner`のprocess起動，log，終了状態，成果物検証
+4. 現行Python MNLを接続する`davis-mnl`
+5. component単位の`uv.lock`とPython環境管理
+6. 現行入力を推奨入力へ接続する必要最小限のformat adapter
+7. parameters・metrics等の基本CSV・JSON出力
+
+### 独立性
+
+Runtimeはlocal fileだけで実行でき，公式catalogを必須にしません．Catalogと接続する場合は`catalog` InputRefをCoreでlocal pathへ解決します．MNL componentはfixtureの`request.json`から単体実行・testできます．CLI，GUI，Notebookは同じRun use caseを呼びます．
+
+### 完了条件
+
+1. catalogとlocalの両入力を同じRun use caseから利用できます．
+2. 既存MNLを独立componentとして実行できます．
+3. 標準MNLを変更したcomponentをDavis本体のforkなしに実行できます．
+4. 入力digest，model revision，環境，RunRequest，RunResult，成果物を`run.json`へ記録できます．
+5. CatalogとWebがなくてもlocal推定を実行できます．
+
+## 59.5 P3以降
+
+P0〜P2が安定した後，次を優先度と需要に応じて追加します．
+
+* `davis-core`の`init`，`add`，`status`，`push`，`checkout`，`verify`，local GC
+* `davis-fmt`の一般的なrecipe・外部変換component
+* `davis-viz`の係数表，係数図，diagnostics，共通HTML
+* GUI，Notebook SDK，実行履歴比較
+* authenticated HTTPS，S3，組織固有Input Resolver
 * Nested Logit，Mixed Logit，Recursive Logit等の参考component
-* 組織・project・権限・利用規約同意
-* model registryと署名・信頼情報
+* OCI，WASI，remote runner
+* remote GC，組織・権限，model registry
 
 ---
 
@@ -2126,6 +2223,9 @@ Remote API─┘
 10. MNLは固定機能ではなく，変更modelを作る参考componentです．
 11. CLIを中核APIにせず，GUI，Notebook，remote APIと同列にします．
 12. 利用者が記述する`project.yaml`はMVPに設けません．
+13. 実装順序は，CLIのlist・詳細確認・download，Webの検索・複数選択download，local推定器，その他の拡張とします．
+14. 各componentは単独利用を可能にし，中央contractとuse caseを通じて接続します．
+15. CLI，Web，GUIでdomain logicを複製せず，それぞれを共通use caseのadapterとして実装します．
 
 ## 60.2 要確認事項
 
@@ -2136,7 +2236,7 @@ Remote API─┘
 5. 標準MNLの初期入力として現行`los.csv`と`trip.csv`を維持するか
 6. 最初の変更model例として何を採用するか
 7. Python SDKをNumPy・SciPy中心にするか，JAX等を採用するか
-8. 標準MNLのP0にweight，panel，robust standard errorを含めるか
+8. 標準MNLのP2初版にweight，panel，robust standard errorを含めるか
 9. 既存FileSchemaへ将来の検索fieldをどこまで追加するか
 10. 同時利用者数，download量，R2費用上限
 11. Davis本体とmodel componentのlicense
