@@ -10,19 +10,27 @@ columns:
   name: userID
   type_:
     name: Int64
-- description: null
+- description:
+    en: Date and time in Japan Standard Time (JST, UTC+09:00).
+    ja: 日本標準時（JST、UTC+09:00）による日時。
   name: creationDate
   type_:
     name: Datetime
-- description: null
+- description:
+    en: Date and time in Japan Standard Time (JST, UTC+09:00).
+    ja: 日本標準時（JST、UTC+09:00）による日時。
   name: departureTime
   type_:
     name: Datetime
-- description: null
+- description:
+    en: Date and time in Japan Standard Time (JST, UTC+09:00).
+    ja: 日本標準時（JST、UTC+09:00）による日時。
   name: arrivalTime
   type_:
     name: Datetime
-- description: null
+- description:
+    en: Date and time in Japan Standard Time (JST, UTC+09:00).
+    ja: 日本標準時（JST、UTC+09:00）による日時。
   name: updateDate
   type_:
     name: Datetime
@@ -37,11 +45,11 @@ columns:
 description:
   en: All trip (movement) data of Probe Person (PP) between Matsuyama and Shinjuku.
   ja: 松山と新宿間のプローブパーソン(PP)の全トリップ（移動）データ
-hash_: 6229c047961bc6b82985d20e4274cf69d64c8db1702ca8fdd91da66451a3324b
+hash_: b54d29a9ad831a8cb12ae435039359c70983d6dbf57e54cf889f199737fbac82
 license_:
-  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+  en: Use is permitted only for the 2026 Summer Course on Behavior Modeling in Transportation
     Networks.
-  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+  ja: 2026年度の行動モデル夏の学校のための利用のみ許可します。
 name:
   en: Matsuyama-Shinjuku
   ja: 松山-新宿

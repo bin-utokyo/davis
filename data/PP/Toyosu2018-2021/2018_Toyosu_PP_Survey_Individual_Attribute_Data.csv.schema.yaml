@@ -22,7 +22,9 @@ columns:
   name: Date of Birth
   type_:
     name: Datetime
-- description: null
+- description:
+    en: Age in years.
+    ja: 年齢（歳）。
   name: Age
   type_:
     name: String
@@ -55,9 +57,9 @@ description:
   ja: 2018間の豊洲PPデータにおける個人属性情報です
 hash_: 0e84e4c6d74ad4f965acfab015a221f5a6d890a8094f5a80366dcfa6b8cf60d3
 license_:
-  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+  en: Use is permitted only for the 2026 Summer Course on Behavior Modeling in Transportation
     Networks.
-  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+  ja: 2026年度の行動モデル夏の学校のための利用のみ許可します。
 name:
   en: Toyosu personal Information 2018
   ja: 豊洲個人属性2018

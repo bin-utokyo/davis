@@ -10,7 +10,9 @@ columns:
   name: Gender
   type_:
     name: Int8
-- description: null
+- description:
+    en: Age in years.
+    ja: 年齢（歳）。
   name: Age
   type_:
     name: Int8
@@ -38,11 +40,15 @@ columns:
   name: Type of Residence
   type_:
     name: Int8
-- description: null
+- description:
+    en: Floor level of the residence (floor number).
+    ja: 居住階（階）。
   name: Owned Housing Floor
   type_:
     name: Int8
-- description: null
+- description:
+    en: Floor level of the residence (floor number).
+    ja: 居住階（階）。
   name: Rented Housing Floor
   type_:
     name: Int8
@@ -50,11 +56,15 @@ columns:
   name: Housing Cost
   type_:
     name: Int8
-- description: null
+- description:
+    en: Length of residence, whole-year component (years).
+    ja: 居住期間の年数部分（年）。
   name: Years of Residence
   type_:
     name: Int8
-- description: null
+- description:
+    en: Length of residence, remaining-month component (months).
+    ja: 居住期間の月数部分（月）。
   name: Months of Residence
   type_:
     name: Int8
@@ -135,13 +145,14 @@ columns:
   type_:
     name: Int8
 description:
-  en: This is a personal data of Toyosu PPwhile 2019-2021
+  en: This is personal attribute data from the Toyosu PP survey conducted from 2019
+    to 2021.
   ja: 豊洲2019-2021の個人情報データです
-hash_: 3114f581423d2d4a9c58d2eb257f9c5e5cc765db426ae5c29ac79f8f0a98652d
+hash_: 77b3ab781457530482fd03005f42a7f17dd15120e9e2291b209de5c605792298
 license_:
-  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+  en: Use is permitted only for the 2026 Summer Course on Behavior Modeling in Transportation
     Networks.
-  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+  ja: 2026年度の行動モデル夏の学校のための利用のみ許可します。
 name:
   en: Toyosu2019-2021
   ja: 豊洲2019-2021

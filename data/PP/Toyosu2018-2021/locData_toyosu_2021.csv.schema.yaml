@@ -7,19 +7,25 @@ columns:
   type_:
     name: Int64
 - description: null
-  name: ユーザーID
+  name: UserID
   type_:
     name: Int64
-- description: null
-  name: 日時
+- description:
+    en: Date and time in Japan Standard Time (JST, UTC+09:00).
+    ja: 日本標準時（JST、UTC+09:00）による日時。
+  name: Time
   type_:
     name: Datetime
-- description: null
-  name: 緯度（世界測地系）
+- description:
+    en: Latitude in decimal degrees using the World Geodetic System (WGS 84).
+    ja: 世界測地系（WGS 84）による緯度（10進度）。
+  name: Lat(WGS)
   type_:
     name: Float64
-- description: null
-  name: 経度（世界測地系）
+- description:
+    en: Longitude in decimal degrees using the World Geodetic System (WGS 84).
+    ja: 世界測地系（WGS 84）による経度（10進度）。
+  name: Lon(WGS)
   type_:
     name: Float64
 - description:
@@ -33,9 +39,9 @@ description:
   ja: 331人の07/18~07/16の移動のGPS軌跡
 hash_: 4e3cd09a5e612697419dae3395dce5e10d9f0866bc5cb1a89f8572448c2dd5d7
 license_:
-  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+  en: Use is permitted only for the 2026 Summer Course on Behavior Modeling in Transportation
     Networks.
-  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+  ja: 2026年度の行動モデル夏の学校のための利用のみ許可します。
 name:
   en: locData.csv
   ja: locData.csv

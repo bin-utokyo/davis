@@ -18,23 +18,35 @@ columns:
   name: monitorID
   type_:
     name: String
-- description: null
+- description:
+    en: Date and time in Japan Standard Time (JST, UTC+09:00).
+    ja: 日本標準時（JST、UTC+09:00）による日時。
   name: time
   type_:
     name: Datetime
-- description: null
+- description:
+    en: Latitude in decimal degrees using the Japanese geodetic datum indicated by
+      the column name.
+    ja: 列名に示す日本測地系による緯度（10進度）。
   name: latitude(Tokyo Datum)
   type_:
     name: Float64
-- description: null
+- description:
+    en: Longitude in decimal degrees using the Japanese geodetic datum indicated by
+      the column name.
+    ja: 列名に示す日本測地系による経度（10進度）。
   name: longitude(Tokyo Datum)
   type_:
     name: Float64
-- description: null
+- description:
+    en: Latitude in decimal degrees using the World Geodetic System (WGS 84).
+    ja: 世界測地系（WGS 84）による緯度（10進度）。
   name: latitude(WGS)
   type_:
     name: Float64
-- description: null
+- description:
+    en: Longitude in decimal degrees using the World Geodetic System (WGS 84).
+    ja: 世界測地系（WGS 84）による経度（10進度）。
   name: longitude(WGS)
   type_:
     name: Float64
@@ -59,9 +71,9 @@ description:
   ja: 2007年に松山市で収集されたPP（プローブパーソン）データ 1,253,114件の位置情報レコード 2007年2月19日~3月23日
 hash_: 6fe44f27bda27e586428cbf0a4d5f9671ee6de05e29cd234f5ace7f61063da4a
 license_:
-  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+  en: Use is permitted only for the 2026 Summer Course on Behavior Modeling in Transportation
     Networks.
-  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+  ja: 2026年度の行動モデル夏の学校のための利用のみ許可します。
 name:
   en: Matsuyama PP locdata
   ja: 松山PP位置データ

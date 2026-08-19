@@ -6,15 +6,21 @@ columns:
   name: ID
   type_:
     name: Int64
-- description: null
+- description:
+    en: Estimated horizontal accuracy radius in metres.
+    ja: 推定水平位置精度の半径（メートル）。
   name: accuracy
   type_:
     name: Float64
-- description: null
+- description:
+    en: Direction of travel in degrees clockwise from true north.
+    ja: 真北を0度として時計回りに表した進行方位（度）。
   name: bearing
   type_:
     name: Float64
-- description: null
+- description:
+    en: Travel speed in metres per second.
+    ja: 移動速度（メートル毎秒）。
   name: speed
   type_:
     name: Float64
@@ -22,23 +28,33 @@ columns:
   name: user_id
   type_:
     name: Int64
-- description: null
+- description:
+    en: Date and time in Japan Standard Time (JST, UTC+09:00).
+    ja: 日本標準時（JST、UTC+09:00）による日時。
   name: created_at
   type_:
     name: Datetime
-- description: null
+- description:
+    en: Longitude in decimal degrees using the World Geodetic System (WGS 84).
+    ja: 世界測地系（WGS 84）による経度（10進度）。
   name: lon
   type_:
     name: Float64
-- description: null
+- description:
+    en: Latitude in decimal degrees using the World Geodetic System (WGS 84).
+    ja: 世界測地系（WGS 84）による緯度（10進度）。
   name: lat
   type_:
     name: Float64
-- description: null
+- description:
+    en: Date and time in Japan Standard Time (JST, UTC+09:00).
+    ja: 日本標準時（JST、UTC+09:00）による日時。
   name: recorded_at
   type_:
     name: Datetime
-- description: null
+- description:
+    en: Altitude in metres.
+    ja: 高度（メートル）。
   name: altitude
   type_:
     name: Int64
@@ -52,9 +68,9 @@ description:
   ja: 渋谷区のPPデータで、2021年11/01~30までのデータを格納しています
 hash_: 2322c11df749ae734297fe637e7d697cd5ae0b47a90dd239dd05a9aa7e1d58fd
 license_:
-  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+  en: Use is permitted only for the 2026 Summer Course on Behavior Modeling in Transportation
     Networks.
-  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+  ja: 2026年度の行動モデル夏の学校のための利用のみ許可します。
 name:
   en: Shibuya_2021
   ja: Shibuya_2021
