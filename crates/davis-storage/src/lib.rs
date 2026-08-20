@@ -179,6 +179,9 @@ impl ObjectStorage {
     ///
     /// Returns an error when `OpenDAL` rejects the backend configuration.
     pub fn s3(config: &S3StorageConfig) -> Result<Self, StorageError> {
+        // Default features are disabled to keep Davis binaries small, so the
+        // HTTP transport must be installed explicitly before any S3 request.
+        opendal::install_default();
         let builder = S3::default()
             .bucket(&config.bucket)
             .endpoint(&config.endpoint)
