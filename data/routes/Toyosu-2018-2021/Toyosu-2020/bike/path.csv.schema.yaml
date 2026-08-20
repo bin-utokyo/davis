@@ -2,43 +2,63 @@ city:
   en: Toyosu
   ja: 豊洲
 columns:
-- description: null
+- description:
+    en: Identifier for the individual.
+    ja: 個人を識別するID
   name: MonitorID
   type_:
     name: Int64
-- description: null
+- description:
+    en: Identifier for the trip date.
+    ja: トリップの日付を識別するID
   name: DiaryID
   type_:
     name: String
-- description: null
+- description:
+    en: Identifier for the trip.
+    ja: トリップを識別するID
   name: TripID
   type_:
     name: Int64
-- description: null
+- description:
+    en: Transportation mode code.
+    ja: 交通手段を表すコード
   name: Mode
   type_:
     name: Int64
-- description: null
+- description:
+    en: Trip purpose code.
+    ja: トリップの目的を表すコード
   name: Purpose
   type_:
     name: Int64
-- description: null
+- description:
+    en: ID of the origin node of the path.
+    ja: パスデータの起点nodeのID
   name: Path_Origin_nodeID
   type_:
     name: Int64
-- description: null
+- description:
+    en: ID of the destination node of the path.
+    ja: パスデータの終点nodeのID
   name: Path_Destination_nodeID
   type_:
     name: Int64
-- description: null
+- description:
+    en: Length of the path in meters.
+    ja: パスデータ全体の長さ（m）
   name: Path_Length(m)
   type_:
     name: Float64
-- description: null
+- description:
+    en: Travel time in seconds.
+    ja: 所要時間（秒）
   name: Travel_Time(s)
   type_:
     name: Float64
-- description: null
+- description:
+    en: Average speed in kilometers per hour.
+    ja: 平均速度（km/h）
   name: Speed(km/h)
   type_:
     name: Float64
@@ -47,9 +67,9 @@ description:
   ja: アンリンクトトリップごとのパスデータです。
 hash_: 0ecc41c381bc842f4a453865c9d45bbca5fb86eb31ba5d1f696ae3425b1ac268
 license_:
-  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+  en: Use is permitted only for the 2026 Summer Course on Behavior Modeling in Transportation
     Networks.
-  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+  ja: 2026年度の行動モデル夏の学校のための利用のみ許可します。
 name:
   en: Toyosu_2020_bike_path
   ja: Toyosu_2020_bike_path

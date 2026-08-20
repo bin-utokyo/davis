@@ -2,47 +2,69 @@ city:
   en: Toyosu
   ja: 豊洲
 columns:
-- description: null
+- description:
+    en: Identifier for the individual.
+    ja: 個人を識別するID
   name: MonitorID
   type_:
     name: Int64
-- description: null
+- description:
+    en: Identifier for the trip date.
+    ja: トリップの日付を識別するID
   name: DiaryID
   type_:
     name: Int64
-- description: null
+- description:
+    en: Identifier for the trip.
+    ja: トリップを識別するID
   name: TripID
   type_:
     name: Int64
-- description: null
+- description:
+    en: Transportation mode code.
+    ja: 交通手段を表すコード
   name: Mode
   type_:
     name: Int64
-- description: null
+- description:
+    en: Trip purpose code.
+    ja: トリップの目的を表すコード
   name: Purpose
   type_:
     name: Int64
-- description: null
+- description:
+    en: Unique ID of the link traveled.
+    ja: 移動中のリンクの固有のID
   name: LinkID
   type_:
     name: Int64
-- description: null
+- description:
+    en: Japan Standard Time (JST).
+    ja: 日本標準時（JST）
   name: Link_Dep_Time
   type_:
     name: String
-- description: null
+- description:
+    en: Travel time in seconds.
+    ja: 所要時間（秒）
   name: Travel_Time(s)
   type_:
     name: Float64
-- description: null
+- description:
+    en: Average speed in kilometers per hour.
+    ja: 平均速度（km/h）
   name: Speed(km/h)
   type_:
     name: Float64
-- description: null
+- description:
+    en: Cost of traveling along the link.
+    ja: 当該リンクの移動にかかるコスト
   name: Link_Cost
   type_:
     name: Int64
-- description: null
+- description:
+    en: Length of the link in meters.
+    ja: リンクの長さ（m）
   name: Link_Length(m)
   type_:
     name: Float64
@@ -51,9 +73,9 @@ description:
   ja: 通過リンクを列挙したデータです。
 hash_: c39fade3e19132769cff15dd65813ca688947adc8c18baee8cee69af99ec12cc
 license_:
-  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+  en: Use is permitted only for the 2026 Summer Course on Behavior Modeling in Transportation
     Networks.
-  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+  ja: 2026年度の行動モデル夏の学校のための利用のみ許可します。
 name:
   en: Toyosu_2018_bike_link
   ja: Toyosu_2018_bike_link
