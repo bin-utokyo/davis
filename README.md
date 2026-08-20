@@ -1,6 +1,17 @@
 # Davis
 
+[English](READMEen.md)
+
 Davisは，交通データの取得から行動モデルの実行までを，一つの流れにつなぐためのplatformです．現在は，既存データカタログの機能を維持しながら，内容アドレス型storage，Rust CLI，静的Webカタログの基盤を開発しています．
+
+## 導入
+
+通常利用ではRust，Cargo，Pythonは不要です．GitHub Releaseで配布するOS・CPU別の実行ファイルをinstallerが自動選択します．利用目的に応じて，次のガイドを参照してください．
+
+- [参加者向け導入ガイド](docs/participant-installation.md) ([English](docs/participant-installation_en.md))
+- [運営者向け導入ガイド](docs/operator-installation.md) ([English](docs/operator-installation_en.md))
+
+Davis本体の開発・buildを行う場合だけ，RustとCargoが必要です．
 
 ## 現在の構成
 
@@ -81,7 +92,7 @@ cargo run -p davis-cli -- verify
 cargo run -p davis-cli -- ingest --all
 ```
 
-R2またはfilesystem remoteへの差分uploadには`davis-next push`を使用します．1 Datasetだけを指定できるほか，`davis-next push --all --dry-run`で全Datasetの差分を安全に確認できます．通常の`push`は不足Objectのupload後に最新の`schema.yaml`からCatalogIndexを生成し，revision単位で保存してから`catalog/current.json`を切り替えます．Objectの差分がなくschemaだけが変わった場合もWebへ反映されます．設定例は`.davis/config.example.toml`にあります．
+R2またはfilesystem remoteへの差分uploadには`davis push`を使用します．1 Datasetだけを指定できるほか，`davis push --all --dry-run`で全Datasetの差分を安全に確認できます．通常の`push`は不足Objectのupload後に最新の`schema.yaml`からCatalogIndexを生成し，revision単位で保存してから`catalog/current.json`を切り替えます．Objectの差分がなくschemaだけが変わった場合もWebへ反映されます．設定例は`.davis/config.example.toml`にあります．
 
 対話terminalでは，`push`のlocal検証・uploadと，remoteを指定した`get`のdownloadについて，処理済みObject数，処理済み容量，割合，残り時間をprogress barで表示します．pipeやCI等の非対話実行ではprogress barを自動的に非表示にし，既存の標準出力を維持します．
 
@@ -112,9 +123,15 @@ pnpm lint
 
 ## Document
 
+- [参加者向け導入ガイド](docs/participant-installation.md) ([English](docs/participant-installation_en.md))
+- [運営者向け導入ガイド](docs/operator-installation.md) ([English](docs/operator-installation_en.md))
 - [Davis仕様書](docs/davis-spec.md)
 - [Platform構想](docs/davis-platform-concept.md)
 - [既存dataset CLI](packages/dataset_cli/README.md)
 - [Base model](src/base_model/README.md)
+
+## 文書更新方針
+
+利用者に読んでもらうREADME，導入ガイド，運用ガイドを変更する場合は，日本語版と英語版を同じcommitまたはPull Requestで同時に更新します．一方だけを先行更新しません．日本語版と英語版の対応関係は，各文書の冒頭または上位READMEから相互に確認できる状態を維持します．
 
 質問やcontributionについては，行動モデル夏の学校の運営までお問い合わせください．

@@ -1,42 +1,100 @@
-name: Create Release and Upload Assets
+name: Release Davis CLI
 
 on:
-    push:
-        tags:
-            - "v*"
+  push:
+    tags:
+      - "v*"
 
 permissions:
-    contents: write
+  contents: write
 
 jobs:
-    build-and-release:
-        runs-on: ubuntu-latest
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v5
+  build-unix:
+    name: Build ${{ matrix.asset }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-24.04
+            asset: davis-linux-x86_64.tar.gz
+          - runner: ubuntu-24.04-arm
+            asset: davis-linux-aarch64.tar.gz
+          - runner: macos-15-intel
+            asset: davis-macos-x86_64.tar.gz
+          - runner: macos-15
+            asset: davis-macos-aarch64.tar.gz
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Build CLI
+        run: cargo build --release --locked --package davis-cli
+      - name: Verify binary
+        run: target/release/davis --version
+      - name: Package binary
+        run: tar -C target/release -czf "${{ matrix.asset }}" davis
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.asset }}
+          path: ${{ matrix.asset }}
+          if-no-files-found: error
 
-            - name: Install uv
-              uses: astral-sh/setup-uv@v6
-              with:
-                  enable-cache: true
+  build-windows:
+    name: Build ${{ matrix.asset }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: windows-2025
+            asset: davis-windows-x86_64.zip
+          - runner: windows-11-arm
+            asset: davis-windows-aarch64.zip
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Build CLI with a static C runtime
+        shell: pwsh
+        env:
+          RUSTFLAGS: -C target-feature=+crt-static
+        run: cargo build --release --locked --package davis-cli
+      - name: Verify binary
+        shell: pwsh
+        run: .\target\release\davis.exe --version
+      - name: Package binary
+        shell: pwsh
+        run: Compress-Archive -Path .\target\release\davis.exe -DestinationPath "${{ matrix.asset }}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.asset }}
+          path: ${{ matrix.asset }}
+          if-no-files-found: error
 
-            - name: Create dist directory
-              run: mkdir dist
-
-            - name: Generate Manifest and Bootstrap Package
-              run: |
-                  uv run davis manage generate-manifest --output dist/manifest.json --tag ${{ github.ref_name }} --branch main
-                  uv run davis manage create-bootstrap --output dist/dvc-bootstrap.zip
-
-            - name: Compile translations
-              run: uv run pybabel compile -d packages/dataset_cli/src/dataset_cli/locales
-
-            - name: Build Python package
-              run: uv build --all-packages --out-dir dist
-
-            - name: Create GitHub Release
-              id: create_release
-              uses: softprops/action-gh-release@v2
-              with:
-                  files: dist/*
-                  token: ${{ secrets.GITHUB_TOKEN }}
+  release:
+    name: Publish GitHub Release
+    needs: [build-unix, build-windows]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/download-artifact@v5
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Verify tag and package versions
+        shell: bash
+        run: |
+          package_version=$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[] | select(.name == "davis-cli") | .version')
+          tag_version="${GITHUB_REF_NAME#v}"
+          test "$package_version" = "$tag_version"
+      - name: Create checksums and include installers
+        shell: bash
+        run: |
+          cp scripts/install.sh scripts/install.ps1 dist/
+          cd dist
+          sha256sum davis-* > SHA256SUMS
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true
+          fail_on_unmatched_files: true
