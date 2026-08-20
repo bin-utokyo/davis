@@ -98,7 +98,7 @@ Until the DatasetManifest-first workflow is finalized, follow the organizer team
 
 ## Updating
 
-Run the same installer again to update to the latest release. The installer preserves the repository, real data, participant session, and organizer session.
+The CLI checks for a newer release once every 24 hours and displays a notice after a normal command when an update is available. Run `davis update` to compare the installed version with the latest release and display the update command for the current operating system. Run the displayed installer to update. The installer preserves the repository, real data, participant session, and organizer session.
 
 ## Troubleshooting
 

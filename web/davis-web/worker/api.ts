@@ -7,6 +7,7 @@ import {
   signToken,
   verifyToken,
 } from "./tokens.ts";
+import releaseInfo from "../../../release/latest-version.json" with { type: "json" };
 
 const SESSION_COOKIE = "davis_session";
 const DEFAULT_SESSION_TTL_SECONDS = 30 * 24 * 60 * 60;
@@ -83,6 +84,11 @@ export async function handleApiRequest(request: Request, env: DavisWorkerEnv): P
   const url = new URL(request.url);
   if (url.pathname === "/api/v1/health" && request.method === "GET") {
     return json({ status: "ok", version: 1 });
+  }
+  if (url.pathname === "/api/v1/version" && request.method === "GET") {
+    return json(releaseInfo, {
+      headers: { "Cache-Control": "public, max-age=3600, must-revalidate" },
+    });
   }
   if (url.pathname === "/api/v1/auth/exchange") {
     if (request.method !== "POST") return methodNotAllowed("POST");
@@ -784,6 +790,6 @@ function errorResponse(
 function json(value: unknown, init: ResponseInit = {}): Response {
   const headers = new Headers(init.headers);
   headers.set("Content-Type", "application/json; charset=utf-8");
-  headers.set("Cache-Control", "no-store");
+  if (!headers.has("Cache-Control")) headers.set("Cache-Control", "no-store");
   return new Response(JSON.stringify(value), { ...init, headers });
 }

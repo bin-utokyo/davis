@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "latest": "0.1.1",
+  "minimum_supported": "0.1.0",
+  "released_at": "2026-08-21",
+  "release_url": "https://github.com/bin-utokyo/davis/releases/tag/v0.1.1",
+  "message": {
+    "ja": "CLIの自動更新確認と`davis update`commandを追加しました．",
+    "en": "Added automatic CLI update checks and the `davis update` command."
+  }
+}

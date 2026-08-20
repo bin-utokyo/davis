@@ -84,8 +84,10 @@ jobs:
         shell: bash
         run: |
           package_version=$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[] | select(.name == "davis-cli") | .version')
+          release_version=$(jq -r '.latest' release/latest-version.json)
           tag_version="${GITHUB_REF_NAME#v}"
           test "$package_version" = "$tag_version"
+          test "$release_version" = "$tag_version"
       - name: Create checksums and include installers
         shell: bash
         run: |

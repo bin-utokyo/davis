@@ -125,6 +125,25 @@ function apiRequest(path: string, init: RequestInit = {}) {
   return new Request(`https://davis.example${path}`, init);
 }
 
+test("publishes cacheable CLI release information without authentication", async () => {
+  const { env } = createEnv();
+  const response = await handleApiRequest(apiRequest("/api/v1/version"), env);
+  const body = await response.json() as {
+    schema_version: number;
+    latest: string;
+    minimum_supported: string;
+    message: { ja: string; en: string };
+  };
+
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get("Cache-Control"), "public, max-age=3600, must-revalidate");
+  assert.equal(body.schema_version, 1);
+  assert.equal(body.latest, "0.1.1");
+  assert.equal(body.minimum_supported, "0.1.0");
+  assert.ok(body.message.ja);
+  assert.ok(body.message.en);
+});
+
 async function exchange(env: DavisWorkerEnv, client: "web" | "cli" = "cli") {
   const response = await handleApiRequest(apiRequest("/api/v1/auth/exchange", {
     method: "POST",

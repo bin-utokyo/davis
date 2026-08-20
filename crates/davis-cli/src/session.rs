@@ -54,11 +54,11 @@ pub enum SessionError {
 }
 
 pub fn load() -> Result<Option<Session>, SessionError> {
-    load_from(session_path("session.toml")?)
+    load_from(config_path("session.toml")?)
 }
 
 pub fn load_operator() -> Result<Option<Session>, SessionError> {
-    load_from(session_path("operator-session.toml")?)
+    load_from(config_path("operator-session.toml")?)
 }
 
 fn load_from(path: PathBuf) -> Result<Option<Session>, SessionError> {
@@ -78,11 +78,11 @@ fn load_from(path: PathBuf) -> Result<Option<Session>, SessionError> {
 }
 
 pub fn save(session: &Session) -> Result<PathBuf, SessionError> {
-    save_to(session, session_path("session.toml")?)
+    save_to(session, config_path("session.toml")?)
 }
 
 pub fn save_operator(session: &Session) -> Result<PathBuf, SessionError> {
-    save_to(session, session_path("operator-session.toml")?)
+    save_to(session, config_path("operator-session.toml")?)
 }
 
 fn save_to(session: &Session, path: PathBuf) -> Result<PathBuf, SessionError> {
@@ -121,11 +121,11 @@ fn save_to(session: &Session, path: PathBuf) -> Result<PathBuf, SessionError> {
 }
 
 pub fn clear() -> Result<bool, SessionError> {
-    clear_path(session_path("session.toml")?)
+    clear_path(config_path("session.toml")?)
 }
 
 pub fn clear_operator() -> Result<bool, SessionError> {
-    clear_path(session_path("operator-session.toml")?)
+    clear_path(config_path("operator-session.toml")?)
 }
 
 fn clear_path(path: PathBuf) -> Result<bool, SessionError> {
@@ -136,7 +136,7 @@ fn clear_path(path: PathBuf) -> Result<bool, SessionError> {
     }
 }
 
-fn session_path(filename: &str) -> Result<PathBuf, SessionError> {
+pub(crate) fn config_path(filename: &str) -> Result<PathBuf, SessionError> {
     if let Some(directory) = std::env::var_os("DAVIS_CONFIG_HOME") {
         return Ok(PathBuf::from(directory).join(filename));
     }

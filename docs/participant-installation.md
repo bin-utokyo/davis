@@ -65,7 +65,13 @@ davis get routes/Matsuyama
 
 ## 更新
 
-同じinstallerをもう一度実行すると，最新releaseへ更新できます．login sessionとdownload済みcacheは維持されます．
+CLIは24時間に1回だけ最新版を確認し，新しいreleaseがある場合は通常commandの完了後に案内します．更新確認に失敗しても，データの検索や取得には影響しません．
+
+```text
+davis update
+```
+
+このcommandを実行すると，現在のversionと最新版を比較し，OSに対応する更新commandを表示します．表示されたinstallerを実行すると最新版へ更新できます．login sessionとdownload済みcacheは維持されます．
 
 ## 困ったとき
 

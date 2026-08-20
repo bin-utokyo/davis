@@ -8,7 +8,7 @@ members = [
 resolver = "2"
 
 [workspace.package]
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 license = "MIT"
 repository = "https://github.com/bin-utokyo/davis"
@@ -22,6 +22,7 @@ md-5 = "0.10"
 opendal = { version = "0.58", default-features = false, features = ["http-transport-reqwest", "services-fs", "services-s3"] }
 reqwest = { version = "0.13", default-features = false, features = ["json", "rustls", "stream"] }
 rpassword = "7"
+semver = "1"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 serde_yaml = "0.9"
@@ -29,6 +30,7 @@ tempfile = "3"
 thiserror = "2"
 tokio = { version = "1", features = ["fs", "io-util", "macros", "rt-multi-thread"] }
 toml = "0.9"
+url = "2"
 walkdir = "2"
 
 [workspace.lints.rust]

@@ -13,6 +13,8 @@ Normal use does not require Rust, Cargo, or Python. The installer selects a preb
 
 Rust and Cargo are required only when developing or building Davis itself.
 
+After a normal command completes, the CLI checks for a newer release at most once every 24 hours. When an update is available, it prints guidance without interrupting the command or corrupting JSON output. Run `davis update` to check explicitly and display the update command for the current operating system.
+
 ## Current structure
 
 ```text

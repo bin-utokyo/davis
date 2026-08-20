@@ -65,7 +65,13 @@ davis get routes/Matsuyama
 
 ## Updating
 
-Run the same installer again to update to the latest release. The installer preserves the login session and downloaded object cache.
+The CLI checks for a newer release once every 24 hours and displays a notice after a normal command when an update is available. A failed update check never interrupts catalog searches or downloads.
+
+```text
+davis update
+```
+
+This command compares the installed version with the latest release and displays the update command for the current operating system. Run the displayed installer to update. The installer preserves the login session and downloaded object cache.
 
 ## Troubleshooting
 

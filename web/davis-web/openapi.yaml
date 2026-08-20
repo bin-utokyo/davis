@@ -20,6 +20,15 @@ paths:
                 properties:
                   status: { const: ok }
                   version: { const: 1 }
+  /api/v1/version:
+    get:
+      operationId: getLatestVersion
+      responses:
+        "200":
+          description: Current Davis CLI release information
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ReleaseInfo" }
   /api/v1/auth/exchange:
     post:
       operationId: exchangeInviteCode
@@ -131,6 +140,21 @@ components:
       in: cookie
       name: davis_session
   schemas:
+    ReleaseInfo:
+      type: object
+      required: [schema_version, latest, minimum_supported, released_at, release_url, message]
+      properties:
+        schema_version: { const: 1 }
+        latest: { type: string }
+        minimum_supported: { type: string }
+        released_at: { type: string, format: date }
+        release_url: { type: string, format: uri }
+        message:
+          type: object
+          required: [ja, en]
+          properties:
+            ja: { type: string }
+            en: { type: string }
     Session:
       type: object
       required: [authenticated, access_revision, expires_at]
