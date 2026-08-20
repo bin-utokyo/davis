@@ -39,15 +39,18 @@ export async function verifyToken<T extends SessionToken | DownloadToken>(
   const parts = token.split(".");
   if (parts.length !== 2 || !parts[0] || !parts[1]) return null;
   try {
+    const body = decodeCanonicalBase64Url(parts[0]);
+    const signature = decodeCanonicalBase64Url(parts[1]);
+    if (!body || !signature) return null;
     const key = await importHmacKey(secret);
     const valid = await crypto.subtle.verify(
       "HMAC",
       key,
-      decodeBase64Url(parts[1]),
+      signature,
       encoder.encode(`${purpose}.${parts[0]}`),
     );
     if (!valid) return null;
-    return JSON.parse(decoder.decode(decodeBase64Url(parts[0]))) as T;
+    return JSON.parse(decoder.decode(body)) as T;
   } catch {
     return null;
   }
@@ -99,4 +102,9 @@ function decodeBase64Url(value: string): ArrayBuffer {
   const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, "=");
   const binary = atob(padded);
   return Uint8Array.from(binary, (character) => character.charCodeAt(0)).buffer;
+}
+
+function decodeCanonicalBase64Url(value: string): ArrayBuffer | null {
+  const decoded = decodeBase64Url(value);
+  return encodeBase64Url(new Uint8Array(decoded)) === value ? decoded : null;
 }

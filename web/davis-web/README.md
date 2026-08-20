@@ -53,6 +53,12 @@ pnpm exec wrangler secret put DAVIS_INVITE_CODE
 pnpm exec wrangler secret put DAVIS_TOKEN_SECRET
 ```
 
+Cloudflareへloginし，Secretを登録した後は，次のcommandでbuild済みassetとWorkerを`davis-bin` accountへdeployします．既存の`davis-bmss`を`DAVIS_DATA`としてbindingし，R2 Objectのuploadや削除は行いません．
+
+```bash
+pnpm deploy
+```
+
 R2 binding名は`DAVIS_DATA`，既定bucket名は`davis-bmss`です．`DAVIS_ACCESS_REVISION`を変更して再deployすると，旧招待codeで発行済みのsessionとdownload grantを一括失効できます．sessionは既定30日で最大180日，download grantは既定5分で最大15分です．
 
 CLIからは，deployment URLと共通招待codeを使用します．
