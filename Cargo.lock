@@ -404,6 +404,7 @@ dependencies = [
 name = "davis-cli"
 version = "0.1.0"
 dependencies = [
+ "blake3",
  "clap",
  "davis-catalog",
  "davis-core",

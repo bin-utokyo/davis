@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { type DavisWorkerEnv, handleApiRequest } from "../worker/api.ts";
+import {
+  type DavisWorkerEnv,
+  handleApiRequest,
+  handleCatalogRequest,
+} from "../worker/api.ts";
 
 const contents = new TextEncoder().encode("id,value\n1,example\n");
 const sampleFile = {
@@ -28,6 +32,7 @@ function createEnv(overrides: Partial<DavisWorkerEnv> = {}) {
     DAVIS_DATA: {
       async get(key, options) {
         requestedKeys.push(key);
+        if (key.startsWith("catalog/")) return null;
         const rangeHeader = options?.range?.get("Range");
         const range = rangeHeader === "bytes=0-2" ? { offset: 0, length: 3 } : undefined;
         const body = range ? contents.slice(0, 3) : contents;
@@ -45,6 +50,16 @@ function createEnv(overrides: Partial<DavisWorkerEnv> = {}) {
     ...overrides,
   };
   return { env, requestedKeys };
+}
+
+function r2Json(value: unknown, etag = '"catalog-etag"') {
+  const body = new TextEncoder().encode(JSON.stringify(value));
+  return {
+    body: new Blob([body]).stream(),
+    size: body.length,
+    httpEtag: etag,
+    writeHttpMetadata() {},
+  };
 }
 
 function apiRequest(path: string, init: RequestInit = {}) {
@@ -141,6 +156,38 @@ test("creates grants only for catalogued File IDs", async () => {
   assert.equal(missing.status, 404);
 });
 
+test("serves the atomically selected R2 catalog revision", async () => {
+  const revision = "a".repeat(64);
+  const requestedKeys: string[] = [];
+  const { env } = createEnv({
+    DAVIS_DATA: {
+      async get(key) {
+        requestedKeys.push(key);
+        if (key === "catalog/current.json") return r2Json({ version: 1, revision });
+        if (key === `catalog/revisions/${revision}/files.json`) return r2Json([sampleFile]);
+        return null;
+      },
+    },
+  });
+
+  const response = await handleCatalogRequest(apiRequest("/catalog/files.json"), env);
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get("Content-Type"), "application/json; charset=utf-8");
+  assert.equal(response.headers.get("X-Davis-Catalog-Revision"), revision);
+  assert.deepEqual(await response.json(), [sampleFile]);
+  assert.deepEqual(requestedKeys, [
+    "catalog/current.json",
+    `catalog/revisions/${revision}/files.json`,
+  ]);
+});
+
+test("falls back to deployed catalog assets before the first R2 publication", async () => {
+  const { env } = createEnv();
+  const response = await handleCatalogRequest(apiRequest("/catalog/files.json"), env);
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), [sampleFile]);
+});
+
 test("creates download grants from the browser session cookie", async () => {
   const { env } = createEnv();
   const { response: login } = await exchange(env, "web");
@@ -173,6 +220,7 @@ test("streams an authorized R2 object and supports byte ranges", async () => {
   assert.equal(response.headers.get("Content-Disposition")?.includes("source.csv"), true);
   assert.deepEqual(new Uint8Array(await response.arrayBuffer()), contents.slice(0, 3));
   assert.deepEqual(requestedKeys, [
+    "catalog/current.json",
     "objects/blake3/e2/d004c4d48e0a7b166c588fc479eec8610940be7a58f0456b86c90dd0126cc9",
   ]);
 });

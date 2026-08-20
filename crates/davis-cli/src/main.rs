@@ -236,6 +236,14 @@ struct GetRequest {
     remote: String,
 }
 
+const CATALOG_DOCUMENTS: [&str; 5] = [
+    "index.json",
+    "datasets.json",
+    "files.json",
+    "columns.json",
+    "facets.json",
+];
+
 async fn handle_login(
     service_url: &str,
     invite_code_stdin: bool,
@@ -568,7 +576,65 @@ async fn handle_push(request: PushRequest) -> Result<(), Box<dyn std::error::Err
         println!("Uploaded objects: {}", report.uploaded);
         println!("Skipped objects: {}", report.skipped);
     }
+    let revision = publish_catalog(
+        &request.repository,
+        &catalog,
+        &remote_store,
+        request.dry_run,
+    )
+    .await?;
+    if request.dry_run {
+        println!("Catalog revision: {revision} (dry run, not published)");
+    } else {
+        println!("Catalog revision: {revision}");
+        println!("Catalog published: yes");
+    }
     Ok(())
+}
+
+async fn publish_catalog(
+    repository: &std::path::Path,
+    catalog: &davis_core::Catalog,
+    remote: &ObjectStorage,
+    dry_run: bool,
+) -> Result<String, Box<dyn std::error::Error>> {
+    let index = build_catalog_index(repository, catalog)?;
+    let temporary = tempfile::tempdir()?;
+    write_catalog_index(temporary.path(), &index)?;
+    let index_bytes = std::fs::read(temporary.path().join("index.json"))?;
+    let revision = blake3::hash(&index_bytes).to_hex().to_string();
+    if dry_run {
+        return Ok(revision);
+    }
+
+    let manifest_root = repository.join(".davis/datasets");
+    let manifests = catalog
+        .datasets
+        .iter()
+        .map(|dataset| read_manifest(&manifest_root.join(format!("{}.yaml", dataset.id))))
+        .collect::<Result<Vec<_>, _>>()?;
+    let coverage = remote.remote_coverage(&manifests).await?;
+    if coverage.missing > 0 {
+        return Err(format!(
+            "catalog was not published because {} referenced remote objects are missing",
+            coverage.missing
+        )
+        .into());
+    }
+
+    for name in CATALOG_DOCUMENTS {
+        let contents = std::fs::read(temporary.path().join(name))?;
+        let key = format!("catalog/revisions/{revision}/{name}");
+        remote.write_document(&key, contents).await?;
+    }
+    let pointer = serde_json::to_vec(&serde_json::json!({
+        "version": 1,
+        "revision": revision.clone(),
+    }))?;
+    remote
+        .write_document("catalog/current.json", pointer)
+        .await?;
+    Ok(revision)
 }
 
 fn open_remote(

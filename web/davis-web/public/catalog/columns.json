@@ -16288,147 +16288,210 @@
     "file_id": "Toyosu-2018/bike/link.csv",
     "name": "MonitorID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "個人を識別するID",
+      "en": "Identifier for the individual."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/bike/link.csv",
     "name": "DiaryID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップの日付を識別するID",
+      "en": "Identifier for the trip date."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/bike/link.csv",
     "name": "TripID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップを識別するID",
+      "en": "Identifier for the trip."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/bike/link.csv",
     "name": "Mode",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "交通手段を表すコード",
+      "en": "Transportation mode code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/bike/link.csv",
     "name": "Purpose",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップの目的を表すコード",
+      "en": "Trip purpose code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/bike/link.csv",
     "name": "LinkID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "移動中のリンクの固有のID",
+      "en": "Unique ID of the link traveled."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/bike/link.csv",
     "name": "Link_Dep_Time",
     "data_type": "String",
-    "description": null
+    "description": {
+      "ja": "日本標準時（JST）",
+      "en": "Japan Standard Time (JST)."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/bike/link.csv",
     "name": "Travel_Time(s)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "所要時間（秒）",
+      "en": "Travel time in seconds."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/bike/link.csv",
     "name": "Speed(km/h)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "平均速度（km/h）",
+      "en": "Average speed in kilometers per hour."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/bike/link.csv",
     "name": "Link_Cost",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "当該リンクの移動にかかるコスト",
+      "en": "Cost of traveling along the link."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/bike/link.csv",
     "name": "Link_Length(m)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "リンクの長さ（m）",
+      "en": "Length of the link in meters."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/bike/path.csv",
     "name": "MonitorID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "個人を識別するID",
+      "en": "Identifier for the individual."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/bike/path.csv",
     "name": "DiaryID",
     "data_type": "String",
-    "description": null
+    "description": {
+      "ja": "トリップの日付を識別するID",
+      "en": "Identifier for the trip date."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/bike/path.csv",
     "name": "TripID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップを識別するID",
+      "en": "Identifier for the trip."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/bike/path.csv",
     "name": "Mode",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "交通手段を表すコード",
+      "en": "Transportation mode code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/bike/path.csv",
     "name": "Purpose",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップの目的を表すコード",
+      "en": "Trip purpose code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/bike/path.csv",
     "name": "Path_Origin_nodeID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "パスデータの起点nodeのID",
+      "en": "ID of the origin node of the path."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/bike/path.csv",
     "name": "Path_Destination_nodeID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "パスデータの終点nodeのID",
+      "en": "ID of the destination node of the path."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/bike/path.csv",
     "name": "Path_Length(m)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "パスデータ全体の長さ（m）",
+      "en": "Length of the path in meters."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/bike/path.csv",
     "name": "Travel_Time(s)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "所要時間（秒）",
+      "en": "Travel time in seconds."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/bike/path.csv",
     "name": "Speed(km/h)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "平均速度（km/h）",
+      "en": "Average speed in kilometers per hour."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
@@ -16463,147 +16526,210 @@
     "file_id": "Toyosu-2018/bus/link.csv",
     "name": "MonitorID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "個人を識別するID",
+      "en": "Identifier for the individual."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/bus/link.csv",
     "name": "DiaryID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップの日付を識別するID",
+      "en": "Identifier for the trip date."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/bus/link.csv",
     "name": "TripID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップを識別するID",
+      "en": "Identifier for the trip."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/bus/link.csv",
     "name": "Mode",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "交通手段を表すコード",
+      "en": "Transportation mode code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/bus/link.csv",
     "name": "Purpose",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップの目的を表すコード",
+      "en": "Trip purpose code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/bus/link.csv",
     "name": "LinkID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "移動中のリンクの固有のID",
+      "en": "Unique ID of the link traveled."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/bus/link.csv",
     "name": "Link_Dep_Time",
     "data_type": "String",
-    "description": null
+    "description": {
+      "ja": "日本標準時（JST）",
+      "en": "Japan Standard Time (JST)."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/bus/link.csv",
     "name": "Travel_Time(s)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "所要時間（秒）",
+      "en": "Travel time in seconds."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/bus/link.csv",
     "name": "Speed(km/h)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "平均速度（km/h）",
+      "en": "Average speed in kilometers per hour."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/bus/link.csv",
     "name": "Link_Cost",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "当該リンクの移動にかかるコスト",
+      "en": "Cost of traveling along the link."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/bus/link.csv",
     "name": "Link_Length(m)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "リンクの長さ（m）",
+      "en": "Length of the link in meters."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/bus/path.csv",
     "name": "MonitorID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "個人を識別するID",
+      "en": "Identifier for the individual."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/bus/path.csv",
     "name": "DiaryID",
     "data_type": "String",
-    "description": null
+    "description": {
+      "ja": "トリップの日付を識別するID",
+      "en": "Identifier for the trip date."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/bus/path.csv",
     "name": "TripID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップを識別するID",
+      "en": "Identifier for the trip."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/bus/path.csv",
     "name": "Mode",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "交通手段を表すコード",
+      "en": "Transportation mode code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/bus/path.csv",
     "name": "Purpose",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップの目的を表すコード",
+      "en": "Trip purpose code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/bus/path.csv",
     "name": "Path_Origin_nodeID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "パスデータの起点nodeのID",
+      "en": "ID of the origin node of the path."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/bus/path.csv",
     "name": "Path_Destination_nodeID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "パスデータの終点nodeのID",
+      "en": "ID of the destination node of the path."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/bus/path.csv",
     "name": "Path_Length(m)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "パスデータ全体の長さ（m）",
+      "en": "Length of the path in meters."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/bus/path.csv",
     "name": "Travel_Time(s)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "所要時間（秒）",
+      "en": "Travel time in seconds."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/bus/path.csv",
     "name": "Speed(km/h)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "平均速度（km/h）",
+      "en": "Average speed in kilometers per hour."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
@@ -16638,294 +16764,420 @@
     "file_id": "Toyosu-2018/car/link.csv",
     "name": "MonitorID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "個人を識別するID",
+      "en": "Identifier for the individual."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/car/link.csv",
     "name": "DiaryID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップの日付を識別するID",
+      "en": "Identifier for the trip date."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/car/link.csv",
     "name": "TripID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップを識別するID",
+      "en": "Identifier for the trip."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/car/link.csv",
     "name": "Mode",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "交通手段を表すコード",
+      "en": "Transportation mode code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/car/link.csv",
     "name": "Purpose",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップの目的を表すコード",
+      "en": "Trip purpose code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/car/link.csv",
     "name": "LinkID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "移動中のリンクの固有のID",
+      "en": "Unique ID of the link traveled."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/car/link.csv",
     "name": "Link_Dep_Time",
     "data_type": "String",
-    "description": null
+    "description": {
+      "ja": "日本標準時（JST）",
+      "en": "Japan Standard Time (JST)."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/car/link.csv",
     "name": "Travel_Time(s)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "所要時間（秒）",
+      "en": "Travel time in seconds."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/car/link.csv",
     "name": "Speed(km/h)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "平均速度（km/h）",
+      "en": "Average speed in kilometers per hour."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/car/link.csv",
     "name": "Link_Cost",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "当該リンクの移動にかかるコスト",
+      "en": "Cost of traveling along the link."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/car/link.csv",
     "name": "Link_Length(m)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "リンクの長さ（m）",
+      "en": "Length of the link in meters."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/car/path.csv",
     "name": "MonitorID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "個人を識別するID",
+      "en": "Identifier for the individual."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/car/path.csv",
     "name": "DiaryID",
     "data_type": "String",
-    "description": null
+    "description": {
+      "ja": "トリップの日付を識別するID",
+      "en": "Identifier for the trip date."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/car/path.csv",
     "name": "TripID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップを識別するID",
+      "en": "Identifier for the trip."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/car/path.csv",
     "name": "Mode",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "交通手段を表すコード",
+      "en": "Transportation mode code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/car/path.csv",
     "name": "Purpose",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップの目的を表すコード",
+      "en": "Trip purpose code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/car/path.csv",
     "name": "Path_Origin_nodeID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "パスデータの起点nodeのID",
+      "en": "ID of the origin node of the path."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/car/path.csv",
     "name": "Path_Destination_nodeID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "パスデータの終点nodeのID",
+      "en": "ID of the destination node of the path."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/car/path.csv",
     "name": "Path_Length(m)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "パスデータ全体の長さ（m）",
+      "en": "Length of the path in meters."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/car/path.csv",
     "name": "Travel_Time(s)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "所要時間（秒）",
+      "en": "Travel time in seconds."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/car/path.csv",
     "name": "Speed(km/h)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "平均速度（km/h）",
+      "en": "Average speed in kilometers per hour."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/rail/link.csv",
     "name": "MonitorID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "個人を識別するID",
+      "en": "Identifier for the individual."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/rail/link.csv",
     "name": "DiaryID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップの日付を識別するID",
+      "en": "Identifier for the trip date."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/rail/link.csv",
     "name": "TripID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップを識別するID",
+      "en": "Identifier for the trip."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/rail/link.csv",
     "name": "Mode",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "交通手段を表すコード",
+      "en": "Transportation mode code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/rail/link.csv",
     "name": "Purpose",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップの目的を表すコード",
+      "en": "Trip purpose code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/rail/link.csv",
     "name": "LinkID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "移動中のリンクの固有のID",
+      "en": "Unique ID of the link traveled."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/rail/link.csv",
     "name": "Link_Dep_Time",
     "data_type": "String",
-    "description": null
+    "description": {
+      "ja": "日本標準時（JST）",
+      "en": "Japan Standard Time (JST)."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/rail/link.csv",
     "name": "Travel_Time(s)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "所要時間（秒）",
+      "en": "Travel time in seconds."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/rail/link.csv",
     "name": "Speed(km/h)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "平均速度（km/h）",
+      "en": "Average speed in kilometers per hour."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/rail/link.csv",
     "name": "Link_Cost",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "当該リンクの移動にかかるコスト",
+      "en": "Cost of traveling along the link."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/rail/link.csv",
     "name": "Link_Length(m)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "リンクの長さ（m）",
+      "en": "Length of the link in meters."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/rail/path.csv",
     "name": "MonitorID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "個人を識別するID",
+      "en": "Identifier for the individual."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/rail/path.csv",
     "name": "DiaryID",
     "data_type": "String",
-    "description": null
+    "description": {
+      "ja": "トリップの日付を識別するID",
+      "en": "Identifier for the trip date."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/rail/path.csv",
     "name": "TripID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップを識別するID",
+      "en": "Identifier for the trip."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/rail/path.csv",
     "name": "Mode",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "交通手段を表すコード",
+      "en": "Transportation mode code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/rail/path.csv",
     "name": "Purpose",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップの目的を表すコード",
+      "en": "Trip purpose code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/rail/path.csv",
     "name": "Path_Origin_nodeID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "パスデータの起点nodeのID",
+      "en": "ID of the origin node of the path."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/rail/path.csv",
     "name": "Path_Destination_nodeID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "パスデータの終点nodeのID",
+      "en": "ID of the destination node of the path."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/rail/path.csv",
     "name": "Path_Length(m)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "パスデータ全体の長さ（m）",
+      "en": "Length of the path in meters."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/rail/path.csv",
     "name": "Travel_Time(s)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "所要時間（秒）",
+      "en": "Travel time in seconds."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/rail/path.csv",
     "name": "Speed(km/h)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "平均速度（km/h）",
+      "en": "Average speed in kilometers per hour."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
@@ -16960,147 +17212,210 @@
     "file_id": "Toyosu-2018/walk/link.csv",
     "name": "MonitorID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "個人を識別するID",
+      "en": "Identifier for the individual."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/walk/link.csv",
     "name": "DiaryID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップの日付を識別するID",
+      "en": "Identifier for the trip date."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/walk/link.csv",
     "name": "TripID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップを識別するID",
+      "en": "Identifier for the trip."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/walk/link.csv",
     "name": "Mode",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "交通手段を表すコード",
+      "en": "Transportation mode code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/walk/link.csv",
     "name": "Purpose",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップの目的を表すコード",
+      "en": "Trip purpose code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/walk/link.csv",
     "name": "LinkID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "移動中のリンクの固有のID",
+      "en": "Unique ID of the link traveled."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/walk/link.csv",
     "name": "Link_Dep_Time",
     "data_type": "String",
-    "description": null
+    "description": {
+      "ja": "日本標準時（JST）",
+      "en": "Japan Standard Time (JST)."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/walk/link.csv",
     "name": "Travel_Time(s)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "所要時間（秒）",
+      "en": "Travel time in seconds."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/walk/link.csv",
     "name": "Speed(km/h)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "平均速度（km/h）",
+      "en": "Average speed in kilometers per hour."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/walk/link.csv",
     "name": "Link_Cost",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "当該リンクの移動にかかるコスト",
+      "en": "Cost of traveling along the link."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/walk/link.csv",
     "name": "Link_Length(m)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "リンクの長さ（m）",
+      "en": "Length of the link in meters."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/walk/path.csv",
     "name": "MonitorID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "個人を識別するID",
+      "en": "Identifier for the individual."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/walk/path.csv",
     "name": "DiaryID",
     "data_type": "String",
-    "description": null
+    "description": {
+      "ja": "トリップの日付を識別するID",
+      "en": "Identifier for the trip date."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/walk/path.csv",
     "name": "TripID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップを識別するID",
+      "en": "Identifier for the trip."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/walk/path.csv",
     "name": "Mode",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "交通手段を表すコード",
+      "en": "Transportation mode code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/walk/path.csv",
     "name": "Purpose",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップの目的を表すコード",
+      "en": "Trip purpose code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/walk/path.csv",
     "name": "Path_Origin_nodeID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "パスデータの起点nodeのID",
+      "en": "ID of the origin node of the path."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/walk/path.csv",
     "name": "Path_Destination_nodeID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "パスデータの終点nodeのID",
+      "en": "ID of the destination node of the path."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/walk/path.csv",
     "name": "Path_Length(m)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "パスデータ全体の長さ（m）",
+      "en": "Length of the path in meters."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/walk/path.csv",
     "name": "Travel_Time(s)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "所要時間（秒）",
+      "en": "Travel time in seconds."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2018/walk/path.csv",
     "name": "Speed(km/h)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "平均速度（km/h）",
+      "en": "Average speed in kilometers per hour."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
@@ -17163,147 +17478,210 @@
     "file_id": "Toyosu-2019/bike/link.csv",
     "name": "MonitorID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "個人を識別するID",
+      "en": "Identifier for the individual."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/bike/link.csv",
     "name": "DiaryID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップの日付を識別するID",
+      "en": "Identifier for the trip date."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/bike/link.csv",
     "name": "TripID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップを識別するID",
+      "en": "Identifier for the trip."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/bike/link.csv",
     "name": "Mode",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "交通手段を表すコード",
+      "en": "Transportation mode code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/bike/link.csv",
     "name": "Purpose",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップの目的を表すコード",
+      "en": "Trip purpose code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/bike/link.csv",
     "name": "LinkID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "移動中のリンクの固有のID",
+      "en": "Unique ID of the link traveled."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/bike/link.csv",
     "name": "Link_Dep_Time",
     "data_type": "String",
-    "description": null
+    "description": {
+      "ja": "日本標準時（JST）",
+      "en": "Japan Standard Time (JST)."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/bike/link.csv",
     "name": "Travel_Time(s)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "所要時間（秒）",
+      "en": "Travel time in seconds."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/bike/link.csv",
     "name": "Speed(km/h)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "平均速度（km/h）",
+      "en": "Average speed in kilometers per hour."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/bike/link.csv",
     "name": "Link_Cost",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "当該リンクの移動にかかるコスト",
+      "en": "Cost of traveling along the link."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/bike/link.csv",
     "name": "Link_Length(m)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "リンクの長さ（m）",
+      "en": "Length of the link in meters."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/bike/path.csv",
     "name": "MonitorID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "個人を識別するID",
+      "en": "Identifier for the individual."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/bike/path.csv",
     "name": "DiaryID",
     "data_type": "String",
-    "description": null
+    "description": {
+      "ja": "トリップの日付を識別するID",
+      "en": "Identifier for the trip date."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/bike/path.csv",
     "name": "TripID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップを識別するID",
+      "en": "Identifier for the trip."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/bike/path.csv",
     "name": "Mode",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "交通手段を表すコード",
+      "en": "Transportation mode code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/bike/path.csv",
     "name": "Purpose",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップの目的を表すコード",
+      "en": "Trip purpose code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/bike/path.csv",
     "name": "Path_Origin_nodeID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "パスデータの起点nodeのID",
+      "en": "ID of the origin node of the path."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/bike/path.csv",
     "name": "Path_Destination_nodeID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "パスデータの終点nodeのID",
+      "en": "ID of the destination node of the path."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/bike/path.csv",
     "name": "Path_Length(m)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "パスデータ全体の長さ（m）",
+      "en": "Length of the path in meters."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/bike/path.csv",
     "name": "Travel_Time(s)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "所要時間（秒）",
+      "en": "Travel time in seconds."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/bike/path.csv",
     "name": "Speed(km/h)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "平均速度（km/h）",
+      "en": "Average speed in kilometers per hour."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
@@ -17338,147 +17716,210 @@
     "file_id": "Toyosu-2019/bus/link.csv",
     "name": "MonitorID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "個人を識別するID",
+      "en": "Identifier for the individual."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/bus/link.csv",
     "name": "DiaryID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップの日付を識別するID",
+      "en": "Identifier for the trip date."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/bus/link.csv",
     "name": "TripID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップを識別するID",
+      "en": "Identifier for the trip."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/bus/link.csv",
     "name": "Mode",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "交通手段を表すコード",
+      "en": "Transportation mode code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/bus/link.csv",
     "name": "Purpose",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップの目的を表すコード",
+      "en": "Trip purpose code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/bus/link.csv",
     "name": "LinkID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "移動中のリンクの固有のID",
+      "en": "Unique ID of the link traveled."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/bus/link.csv",
     "name": "Link_Dep_Time",
     "data_type": "String",
-    "description": null
+    "description": {
+      "ja": "日本標準時（JST）",
+      "en": "Japan Standard Time (JST)."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/bus/link.csv",
     "name": "Travel_Time(s)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "所要時間（秒）",
+      "en": "Travel time in seconds."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/bus/link.csv",
     "name": "Speed(km/h)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "平均速度（km/h）",
+      "en": "Average speed in kilometers per hour."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/bus/link.csv",
     "name": "Link_Cost",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "当該リンクの移動にかかるコスト",
+      "en": "Cost of traveling along the link."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/bus/link.csv",
     "name": "Link_Length(m)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "リンクの長さ（m）",
+      "en": "Length of the link in meters."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/bus/path.csv",
     "name": "MonitorID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "個人を識別するID",
+      "en": "Identifier for the individual."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/bus/path.csv",
     "name": "DiaryID",
     "data_type": "String",
-    "description": null
+    "description": {
+      "ja": "トリップの日付を識別するID",
+      "en": "Identifier for the trip date."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/bus/path.csv",
     "name": "TripID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップを識別するID",
+      "en": "Identifier for the trip."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/bus/path.csv",
     "name": "Mode",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "交通手段を表すコード",
+      "en": "Transportation mode code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/bus/path.csv",
     "name": "Purpose",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップの目的を表すコード",
+      "en": "Trip purpose code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/bus/path.csv",
     "name": "Path_Origin_nodeID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "パスデータの起点nodeのID",
+      "en": "ID of the origin node of the path."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/bus/path.csv",
     "name": "Path_Destination_nodeID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "パスデータの終点nodeのID",
+      "en": "ID of the destination node of the path."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/bus/path.csv",
     "name": "Path_Length(m)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "パスデータ全体の長さ（m）",
+      "en": "Length of the path in meters."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/bus/path.csv",
     "name": "Travel_Time(s)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "所要時間（秒）",
+      "en": "Travel time in seconds."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/bus/path.csv",
     "name": "Speed(km/h)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "平均速度（km/h）",
+      "en": "Average speed in kilometers per hour."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
@@ -17513,294 +17954,420 @@
     "file_id": "Toyosu-2019/car/link.csv",
     "name": "MonitorID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "個人を識別するID",
+      "en": "Identifier for the individual."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/car/link.csv",
     "name": "DiaryID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップの日付を識別するID",
+      "en": "Identifier for the trip date."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/car/link.csv",
     "name": "TripID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップを識別するID",
+      "en": "Identifier for the trip."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/car/link.csv",
     "name": "Mode",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "交通手段を表すコード",
+      "en": "Transportation mode code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/car/link.csv",
     "name": "Purpose",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップの目的を表すコード",
+      "en": "Trip purpose code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/car/link.csv",
     "name": "LinkID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "移動中のリンクの固有のID",
+      "en": "Unique ID of the link traveled."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/car/link.csv",
     "name": "Link_Dep_Time",
     "data_type": "String",
-    "description": null
+    "description": {
+      "ja": "日本標準時（JST）",
+      "en": "Japan Standard Time (JST)."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/car/link.csv",
     "name": "Travel_Time(s)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "所要時間（秒）",
+      "en": "Travel time in seconds."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/car/link.csv",
     "name": "Speed(km/h)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "平均速度（km/h）",
+      "en": "Average speed in kilometers per hour."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/car/link.csv",
     "name": "Link_Cost",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "当該リンクの移動にかかるコスト",
+      "en": "Cost of traveling along the link."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/car/link.csv",
     "name": "Link_Length(m)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "リンクの長さ（m）",
+      "en": "Length of the link in meters."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/car/path.csv",
     "name": "MonitorID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "個人を識別するID",
+      "en": "Identifier for the individual."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/car/path.csv",
     "name": "DiaryID",
     "data_type": "String",
-    "description": null
+    "description": {
+      "ja": "トリップの日付を識別するID",
+      "en": "Identifier for the trip date."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/car/path.csv",
     "name": "TripID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップを識別するID",
+      "en": "Identifier for the trip."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/car/path.csv",
     "name": "Mode",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "交通手段を表すコード",
+      "en": "Transportation mode code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/car/path.csv",
     "name": "Purpose",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップの目的を表すコード",
+      "en": "Trip purpose code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/car/path.csv",
     "name": "Path_Origin_nodeID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "パスデータの起点nodeのID",
+      "en": "ID of the origin node of the path."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/car/path.csv",
     "name": "Path_Destination_nodeID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "パスデータの終点nodeのID",
+      "en": "ID of the destination node of the path."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/car/path.csv",
     "name": "Path_Length(m)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "パスデータ全体の長さ（m）",
+      "en": "Length of the path in meters."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/car/path.csv",
     "name": "Travel_Time(s)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "所要時間（秒）",
+      "en": "Travel time in seconds."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/car/path.csv",
     "name": "Speed(km/h)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "平均速度（km/h）",
+      "en": "Average speed in kilometers per hour."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/rail/link.csv",
     "name": "MonitorID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "個人を識別するID",
+      "en": "Identifier for the individual."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/rail/link.csv",
     "name": "DiaryID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップの日付を識別するID",
+      "en": "Identifier for the trip date."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/rail/link.csv",
     "name": "TripID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップを識別するID",
+      "en": "Identifier for the trip."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/rail/link.csv",
     "name": "Mode",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "交通手段を表すコード",
+      "en": "Transportation mode code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/rail/link.csv",
     "name": "Purpose",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップの目的を表すコード",
+      "en": "Trip purpose code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/rail/link.csv",
     "name": "LinkID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "移動中のリンクの固有のID",
+      "en": "Unique ID of the link traveled."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/rail/link.csv",
     "name": "Link_Dep_Time",
     "data_type": "String",
-    "description": null
+    "description": {
+      "ja": "日本標準時（JST）",
+      "en": "Japan Standard Time (JST)."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/rail/link.csv",
     "name": "Travel_Time(s)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "所要時間（秒）",
+      "en": "Travel time in seconds."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/rail/link.csv",
     "name": "Speed(km/h)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "平均速度（km/h）",
+      "en": "Average speed in kilometers per hour."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/rail/link.csv",
     "name": "Link_Cost",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "当該リンクの移動にかかるコスト",
+      "en": "Cost of traveling along the link."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/rail/link.csv",
     "name": "Link_Length(m)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "リンクの長さ（m）",
+      "en": "Length of the link in meters."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/rail/path.csv",
     "name": "MonitorID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "個人を識別するID",
+      "en": "Identifier for the individual."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/rail/path.csv",
     "name": "DiaryID",
     "data_type": "String",
-    "description": null
+    "description": {
+      "ja": "トリップの日付を識別するID",
+      "en": "Identifier for the trip date."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/rail/path.csv",
     "name": "TripID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップを識別するID",
+      "en": "Identifier for the trip."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/rail/path.csv",
     "name": "Mode",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "交通手段を表すコード",
+      "en": "Transportation mode code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/rail/path.csv",
     "name": "Purpose",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップの目的を表すコード",
+      "en": "Trip purpose code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/rail/path.csv",
     "name": "Path_Origin_nodeID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "パスデータの起点nodeのID",
+      "en": "ID of the origin node of the path."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/rail/path.csv",
     "name": "Path_Destination_nodeID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "パスデータの終点nodeのID",
+      "en": "ID of the destination node of the path."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/rail/path.csv",
     "name": "Path_Length(m)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "パスデータ全体の長さ（m）",
+      "en": "Length of the path in meters."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/rail/path.csv",
     "name": "Travel_Time(s)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "所要時間（秒）",
+      "en": "Travel time in seconds."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/rail/path.csv",
     "name": "Speed(km/h)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "平均速度（km/h）",
+      "en": "Average speed in kilometers per hour."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
@@ -17835,147 +18402,210 @@
     "file_id": "Toyosu-2019/walk/link.csv",
     "name": "MonitorID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "個人を識別するID",
+      "en": "Identifier for the individual."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/walk/link.csv",
     "name": "DiaryID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップの日付を識別するID",
+      "en": "Identifier for the trip date."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/walk/link.csv",
     "name": "TripID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップを識別するID",
+      "en": "Identifier for the trip."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/walk/link.csv",
     "name": "Mode",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "交通手段を表すコード",
+      "en": "Transportation mode code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/walk/link.csv",
     "name": "Purpose",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップの目的を表すコード",
+      "en": "Trip purpose code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/walk/link.csv",
     "name": "LinkID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "移動中のリンクの固有のID",
+      "en": "Unique ID of the link traveled."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/walk/link.csv",
     "name": "Link_Dep_Time",
     "data_type": "String",
-    "description": null
+    "description": {
+      "ja": "日本標準時（JST）",
+      "en": "Japan Standard Time (JST)."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/walk/link.csv",
     "name": "Travel_Time(s)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "所要時間（秒）",
+      "en": "Travel time in seconds."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/walk/link.csv",
     "name": "Speed(km/h)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "平均速度（km/h）",
+      "en": "Average speed in kilometers per hour."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/walk/link.csv",
     "name": "Link_Cost",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "当該リンクの移動にかかるコスト",
+      "en": "Cost of traveling along the link."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/walk/link.csv",
     "name": "Link_Length(m)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "リンクの長さ（m）",
+      "en": "Length of the link in meters."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/walk/path.csv",
     "name": "MonitorID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "個人を識別するID",
+      "en": "Identifier for the individual."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/walk/path.csv",
     "name": "DiaryID",
     "data_type": "String",
-    "description": null
+    "description": {
+      "ja": "トリップの日付を識別するID",
+      "en": "Identifier for the trip date."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/walk/path.csv",
     "name": "TripID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップを識別するID",
+      "en": "Identifier for the trip."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/walk/path.csv",
     "name": "Mode",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "交通手段を表すコード",
+      "en": "Transportation mode code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/walk/path.csv",
     "name": "Purpose",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップの目的を表すコード",
+      "en": "Trip purpose code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/walk/path.csv",
     "name": "Path_Origin_nodeID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "パスデータの起点nodeのID",
+      "en": "ID of the origin node of the path."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/walk/path.csv",
     "name": "Path_Destination_nodeID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "パスデータの終点nodeのID",
+      "en": "ID of the destination node of the path."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/walk/path.csv",
     "name": "Path_Length(m)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "パスデータ全体の長さ（m）",
+      "en": "Length of the path in meters."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/walk/path.csv",
     "name": "Travel_Time(s)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "所要時間（秒）",
+      "en": "Travel time in seconds."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2019/walk/path.csv",
     "name": "Speed(km/h)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "平均速度（km/h）",
+      "en": "Average speed in kilometers per hour."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
@@ -18038,147 +18668,210 @@
     "file_id": "Toyosu-2020/bike/link.csv",
     "name": "MonitorID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "個人を識別するID",
+      "en": "Identifier for the individual."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/bike/link.csv",
     "name": "DiaryID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップの日付を識別するID",
+      "en": "Identifier for the trip date."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/bike/link.csv",
     "name": "TripID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップを識別するID",
+      "en": "Identifier for the trip."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/bike/link.csv",
     "name": "Mode",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "交通手段を表すコード",
+      "en": "Transportation mode code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/bike/link.csv",
     "name": "Purpose",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップの目的を表すコード",
+      "en": "Trip purpose code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/bike/link.csv",
     "name": "LinkID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "移動中のリンクの固有のID",
+      "en": "Unique ID of the link traveled."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/bike/link.csv",
     "name": "Link_Dep_Time",
     "data_type": "String",
-    "description": null
+    "description": {
+      "ja": "日本標準時（JST）",
+      "en": "Japan Standard Time (JST)."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/bike/link.csv",
     "name": "Travel_Time(s)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "所要時間（秒）",
+      "en": "Travel time in seconds."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/bike/link.csv",
     "name": "Speed(km/h)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "平均速度（km/h）",
+      "en": "Average speed in kilometers per hour."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/bike/link.csv",
     "name": "Link_Cost",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "当該リンクの移動にかかるコスト",
+      "en": "Cost of traveling along the link."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/bike/link.csv",
     "name": "Link_Length(m)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "リンクの長さ（m）",
+      "en": "Length of the link in meters."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/bike/path.csv",
     "name": "MonitorID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "個人を識別するID",
+      "en": "Identifier for the individual."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/bike/path.csv",
     "name": "DiaryID",
     "data_type": "String",
-    "description": null
+    "description": {
+      "ja": "トリップの日付を識別するID",
+      "en": "Identifier for the trip date."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/bike/path.csv",
     "name": "TripID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップを識別するID",
+      "en": "Identifier for the trip."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/bike/path.csv",
     "name": "Mode",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "交通手段を表すコード",
+      "en": "Transportation mode code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/bike/path.csv",
     "name": "Purpose",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップの目的を表すコード",
+      "en": "Trip purpose code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/bike/path.csv",
     "name": "Path_Origin_nodeID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "パスデータの起点nodeのID",
+      "en": "ID of the origin node of the path."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/bike/path.csv",
     "name": "Path_Destination_nodeID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "パスデータの終点nodeのID",
+      "en": "ID of the destination node of the path."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/bike/path.csv",
     "name": "Path_Length(m)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "パスデータ全体の長さ（m）",
+      "en": "Length of the path in meters."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/bike/path.csv",
     "name": "Travel_Time(s)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "所要時間（秒）",
+      "en": "Travel time in seconds."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/bike/path.csv",
     "name": "Speed(km/h)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "平均速度（km/h）",
+      "en": "Average speed in kilometers per hour."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
@@ -18213,147 +18906,210 @@
     "file_id": "Toyosu-2020/bus/link.csv",
     "name": "MonitorID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "個人を識別するID",
+      "en": "Identifier for the individual."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/bus/link.csv",
     "name": "DiaryID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップの日付を識別するID",
+      "en": "Identifier for the trip date."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/bus/link.csv",
     "name": "TripID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップを識別するID",
+      "en": "Identifier for the trip."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/bus/link.csv",
     "name": "Mode",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "交通手段を表すコード",
+      "en": "Transportation mode code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/bus/link.csv",
     "name": "Purpose",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップの目的を表すコード",
+      "en": "Trip purpose code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/bus/link.csv",
     "name": "LinkID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "移動中のリンクの固有のID",
+      "en": "Unique ID of the link traveled."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/bus/link.csv",
     "name": "Link_Dep_Time",
     "data_type": "String",
-    "description": null
+    "description": {
+      "ja": "日本標準時（JST）",
+      "en": "Japan Standard Time (JST)."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/bus/link.csv",
     "name": "Travel_Time(s)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "所要時間（秒）",
+      "en": "Travel time in seconds."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/bus/link.csv",
     "name": "Speed(km/h)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "平均速度（km/h）",
+      "en": "Average speed in kilometers per hour."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/bus/link.csv",
     "name": "Link_Cost",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "当該リンクの移動にかかるコスト",
+      "en": "Cost of traveling along the link."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/bus/link.csv",
     "name": "Link_Length(m)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "リンクの長さ（m）",
+      "en": "Length of the link in meters."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/bus/path.csv",
     "name": "MonitorID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "個人を識別するID",
+      "en": "Identifier for the individual."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/bus/path.csv",
     "name": "DiaryID",
     "data_type": "String",
-    "description": null
+    "description": {
+      "ja": "トリップの日付を識別するID",
+      "en": "Identifier for the trip date."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/bus/path.csv",
     "name": "TripID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップを識別するID",
+      "en": "Identifier for the trip."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/bus/path.csv",
     "name": "Mode",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "交通手段を表すコード",
+      "en": "Transportation mode code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/bus/path.csv",
     "name": "Purpose",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップの目的を表すコード",
+      "en": "Trip purpose code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/bus/path.csv",
     "name": "Path_Origin_nodeID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "パスデータの起点nodeのID",
+      "en": "ID of the origin node of the path."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/bus/path.csv",
     "name": "Path_Destination_nodeID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "パスデータの終点nodeのID",
+      "en": "ID of the destination node of the path."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/bus/path.csv",
     "name": "Path_Length(m)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "パスデータ全体の長さ（m）",
+      "en": "Length of the path in meters."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/bus/path.csv",
     "name": "Travel_Time(s)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "所要時間（秒）",
+      "en": "Travel time in seconds."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/bus/path.csv",
     "name": "Speed(km/h)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "平均速度（km/h）",
+      "en": "Average speed in kilometers per hour."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
@@ -18388,294 +19144,420 @@
     "file_id": "Toyosu-2020/car/link.csv",
     "name": "MonitorID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "個人を識別するID",
+      "en": "Identifier for the individual."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/car/link.csv",
     "name": "DiaryID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップの日付を識別するID",
+      "en": "Identifier for the trip date."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/car/link.csv",
     "name": "TripID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップを識別するID",
+      "en": "Identifier for the trip."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/car/link.csv",
     "name": "Mode",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "交通手段を表すコード",
+      "en": "Transportation mode code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/car/link.csv",
     "name": "Purpose",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップの目的を表すコード",
+      "en": "Trip purpose code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/car/link.csv",
     "name": "LinkID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "移動中のリンクの固有のID",
+      "en": "Unique ID of the link traveled."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/car/link.csv",
     "name": "Link_Dep_Time",
     "data_type": "String",
-    "description": null
+    "description": {
+      "ja": "日本標準時（JST）",
+      "en": "Japan Standard Time (JST)."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/car/link.csv",
     "name": "Travel_Time(s)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "所要時間（秒）",
+      "en": "Travel time in seconds."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/car/link.csv",
     "name": "Speed(km/h)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "平均速度（km/h）",
+      "en": "Average speed in kilometers per hour."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/car/link.csv",
     "name": "Link_Cost",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "当該リンクの移動にかかるコスト",
+      "en": "Cost of traveling along the link."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/car/link.csv",
     "name": "Link_Length(m)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "リンクの長さ（m）",
+      "en": "Length of the link in meters."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/car/path.csv",
     "name": "MonitorID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "個人を識別するID",
+      "en": "Identifier for the individual."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/car/path.csv",
     "name": "DiaryID",
     "data_type": "String",
-    "description": null
+    "description": {
+      "ja": "トリップの日付を識別するID",
+      "en": "Identifier for the trip date."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/car/path.csv",
     "name": "TripID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップを識別するID",
+      "en": "Identifier for the trip."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/car/path.csv",
     "name": "Mode",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "交通手段を表すコード",
+      "en": "Transportation mode code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/car/path.csv",
     "name": "Purpose",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップの目的を表すコード",
+      "en": "Trip purpose code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/car/path.csv",
     "name": "Path_Origin_nodeID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "パスデータの起点nodeのID",
+      "en": "ID of the origin node of the path."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/car/path.csv",
     "name": "Path_Destination_nodeID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "パスデータの終点nodeのID",
+      "en": "ID of the destination node of the path."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/car/path.csv",
     "name": "Path_Length(m)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "パスデータ全体の長さ（m）",
+      "en": "Length of the path in meters."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/car/path.csv",
     "name": "Travel_Time(s)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "所要時間（秒）",
+      "en": "Travel time in seconds."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/car/path.csv",
     "name": "Speed(km/h)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "平均速度（km/h）",
+      "en": "Average speed in kilometers per hour."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/rail/link.csv",
     "name": "MonitorID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "個人を識別するID",
+      "en": "Identifier for the individual."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/rail/link.csv",
     "name": "DiaryID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップの日付を識別するID",
+      "en": "Identifier for the trip date."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/rail/link.csv",
     "name": "TripID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップを識別するID",
+      "en": "Identifier for the trip."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/rail/link.csv",
     "name": "Mode",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "交通手段を表すコード",
+      "en": "Transportation mode code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/rail/link.csv",
     "name": "Purpose",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップの目的を表すコード",
+      "en": "Trip purpose code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/rail/link.csv",
     "name": "LinkID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "移動中のリンクの固有のID",
+      "en": "Unique ID of the link traveled."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/rail/link.csv",
     "name": "Link_Dep_Time",
     "data_type": "String",
-    "description": null
+    "description": {
+      "ja": "日本標準時（JST）",
+      "en": "Japan Standard Time (JST)."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/rail/link.csv",
     "name": "Travel_Time(s)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "所要時間（秒）",
+      "en": "Travel time in seconds."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/rail/link.csv",
     "name": "Speed(km/h)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "平均速度（km/h）",
+      "en": "Average speed in kilometers per hour."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/rail/link.csv",
     "name": "Link_Cost",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "当該リンクの移動にかかるコスト",
+      "en": "Cost of traveling along the link."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/rail/link.csv",
     "name": "Link_Length(m)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "リンクの長さ（m）",
+      "en": "Length of the link in meters."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/rail/path.csv",
     "name": "MonitorID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "個人を識別するID",
+      "en": "Identifier for the individual."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/rail/path.csv",
     "name": "DiaryID",
     "data_type": "String",
-    "description": null
+    "description": {
+      "ja": "トリップの日付を識別するID",
+      "en": "Identifier for the trip date."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/rail/path.csv",
     "name": "TripID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップを識別するID",
+      "en": "Identifier for the trip."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/rail/path.csv",
     "name": "Mode",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "交通手段を表すコード",
+      "en": "Transportation mode code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/rail/path.csv",
     "name": "Purpose",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップの目的を表すコード",
+      "en": "Trip purpose code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/rail/path.csv",
     "name": "Path_Origin_nodeID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "パスデータの起点nodeのID",
+      "en": "ID of the origin node of the path."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/rail/path.csv",
     "name": "Path_Destination_nodeID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "パスデータの終点nodeのID",
+      "en": "ID of the destination node of the path."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/rail/path.csv",
     "name": "Path_Length(m)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "パスデータ全体の長さ（m）",
+      "en": "Length of the path in meters."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/rail/path.csv",
     "name": "Travel_Time(s)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "所要時間（秒）",
+      "en": "Travel time in seconds."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/rail/path.csv",
     "name": "Speed(km/h)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "平均速度（km/h）",
+      "en": "Average speed in kilometers per hour."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
@@ -18710,147 +19592,210 @@
     "file_id": "Toyosu-2020/walk/link.csv",
     "name": "MonitorID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "個人を識別するID",
+      "en": "Identifier for the individual."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/walk/link.csv",
     "name": "DiaryID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップの日付を識別するID",
+      "en": "Identifier for the trip date."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/walk/link.csv",
     "name": "TripID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップを識別するID",
+      "en": "Identifier for the trip."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/walk/link.csv",
     "name": "Mode",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "交通手段を表すコード",
+      "en": "Transportation mode code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/walk/link.csv",
     "name": "Purpose",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップの目的を表すコード",
+      "en": "Trip purpose code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/walk/link.csv",
     "name": "LinkID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "移動中のリンクの固有のID",
+      "en": "Unique ID of the link traveled."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/walk/link.csv",
     "name": "Link_Dep_Time",
     "data_type": "String",
-    "description": null
+    "description": {
+      "ja": "日本標準時（JST）",
+      "en": "Japan Standard Time (JST)."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/walk/link.csv",
     "name": "Travel_Time(s)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "所要時間（秒）",
+      "en": "Travel time in seconds."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/walk/link.csv",
     "name": "Speed(km/h)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "平均速度（km/h）",
+      "en": "Average speed in kilometers per hour."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/walk/link.csv",
     "name": "Link_Cost",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "当該リンクの移動にかかるコスト",
+      "en": "Cost of traveling along the link."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/walk/link.csv",
     "name": "Link_Length(m)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "リンクの長さ（m）",
+      "en": "Length of the link in meters."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/walk/path.csv",
     "name": "MonitorID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "個人を識別するID",
+      "en": "Identifier for the individual."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/walk/path.csv",
     "name": "DiaryID",
     "data_type": "String",
-    "description": null
+    "description": {
+      "ja": "トリップの日付を識別するID",
+      "en": "Identifier for the trip date."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/walk/path.csv",
     "name": "TripID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップを識別するID",
+      "en": "Identifier for the trip."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/walk/path.csv",
     "name": "Mode",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "交通手段を表すコード",
+      "en": "Transportation mode code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/walk/path.csv",
     "name": "Purpose",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップの目的を表すコード",
+      "en": "Trip purpose code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/walk/path.csv",
     "name": "Path_Origin_nodeID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "パスデータの起点nodeのID",
+      "en": "ID of the origin node of the path."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/walk/path.csv",
     "name": "Path_Destination_nodeID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "パスデータの終点nodeのID",
+      "en": "ID of the destination node of the path."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/walk/path.csv",
     "name": "Path_Length(m)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "パスデータ全体の長さ（m）",
+      "en": "Length of the path in meters."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/walk/path.csv",
     "name": "Travel_Time(s)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "所要時間（秒）",
+      "en": "Travel time in seconds."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2020/walk/path.csv",
     "name": "Speed(km/h)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "平均速度（km/h）",
+      "en": "Average speed in kilometers per hour."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
@@ -18913,147 +19858,210 @@
     "file_id": "Toyosu-2021/bike/link.csv",
     "name": "MonitorID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "個人を識別するID",
+      "en": "Identifier for the individual."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/bike/link.csv",
     "name": "DiaryID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップの日付を識別するID",
+      "en": "Identifier for the trip date."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/bike/link.csv",
     "name": "TripID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップを識別するID",
+      "en": "Identifier for the trip."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/bike/link.csv",
     "name": "Mode",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "交通手段を表すコード",
+      "en": "Transportation mode code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/bike/link.csv",
     "name": "Purpose",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップの目的を表すコード",
+      "en": "Trip purpose code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/bike/link.csv",
     "name": "LinkID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "移動中のリンクの固有のID",
+      "en": "Unique ID of the link traveled."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/bike/link.csv",
     "name": "Link_Dep_Time",
     "data_type": "String",
-    "description": null
+    "description": {
+      "ja": "日本標準時（JST）",
+      "en": "Japan Standard Time (JST)."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/bike/link.csv",
     "name": "Travel_Time(s)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "所要時間（秒）",
+      "en": "Travel time in seconds."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/bike/link.csv",
     "name": "Speed(km/h)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "平均速度（km/h）",
+      "en": "Average speed in kilometers per hour."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/bike/link.csv",
     "name": "Link_Cost",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "当該リンクの移動にかかるコスト",
+      "en": "Cost of traveling along the link."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/bike/link.csv",
     "name": "Link_Length(m)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "リンクの長さ（m）",
+      "en": "Length of the link in meters."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/bike/path.csv",
     "name": "MonitorID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "個人を識別するID",
+      "en": "Identifier for the individual."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/bike/path.csv",
     "name": "DiaryID",
     "data_type": "String",
-    "description": null
+    "description": {
+      "ja": "トリップの日付を識別するID",
+      "en": "Identifier for the trip date."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/bike/path.csv",
     "name": "TripID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップを識別するID",
+      "en": "Identifier for the trip."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/bike/path.csv",
     "name": "Mode",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "交通手段を表すコード",
+      "en": "Transportation mode code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/bike/path.csv",
     "name": "Purpose",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップの目的を表すコード",
+      "en": "Trip purpose code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/bike/path.csv",
     "name": "Path_Origin_nodeID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "パスデータの起点nodeのID",
+      "en": "ID of the origin node of the path."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/bike/path.csv",
     "name": "Path_Destination_nodeID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "パスデータの終点nodeのID",
+      "en": "ID of the destination node of the path."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/bike/path.csv",
     "name": "Path_Length(m)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "パスデータ全体の長さ（m）",
+      "en": "Length of the path in meters."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/bike/path.csv",
     "name": "Travel_Time(s)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "所要時間（秒）",
+      "en": "Travel time in seconds."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/bike/path.csv",
     "name": "Speed(km/h)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "平均速度（km/h）",
+      "en": "Average speed in kilometers per hour."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
@@ -19088,147 +20096,210 @@
     "file_id": "Toyosu-2021/bus/link.csv",
     "name": "MonitorID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "個人を識別するID",
+      "en": "Identifier for the individual."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/bus/link.csv",
     "name": "DiaryID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップの日付を識別するID",
+      "en": "Identifier for the trip date."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/bus/link.csv",
     "name": "TripID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップを識別するID",
+      "en": "Identifier for the trip."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/bus/link.csv",
     "name": "Mode",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "交通手段を表すコード",
+      "en": "Transportation mode code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/bus/link.csv",
     "name": "Purpose",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップの目的を表すコード",
+      "en": "Trip purpose code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/bus/link.csv",
     "name": "LinkID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "移動中のリンクの固有のID",
+      "en": "Unique ID of the link traveled."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/bus/link.csv",
     "name": "Link_Dep_Time",
     "data_type": "String",
-    "description": null
+    "description": {
+      "ja": "日本標準時（JST）",
+      "en": "Japan Standard Time (JST)."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/bus/link.csv",
     "name": "Travel_Time(s)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "所要時間（秒）",
+      "en": "Travel time in seconds."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/bus/link.csv",
     "name": "Speed(km/h)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "平均速度（km/h）",
+      "en": "Average speed in kilometers per hour."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/bus/link.csv",
     "name": "Link_Cost",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "当該リンクの移動にかかるコスト",
+      "en": "Cost of traveling along the link."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/bus/link.csv",
     "name": "Link_Length(m)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "リンクの長さ（m）",
+      "en": "Length of the link in meters."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/bus/path.csv",
     "name": "MonitorID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "個人を識別するID",
+      "en": "Identifier for the individual."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/bus/path.csv",
     "name": "DiaryID",
     "data_type": "String",
-    "description": null
+    "description": {
+      "ja": "トリップの日付を識別するID",
+      "en": "Identifier for the trip date."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/bus/path.csv",
     "name": "TripID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップを識別するID",
+      "en": "Identifier for the trip."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/bus/path.csv",
     "name": "Mode",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "交通手段を表すコード",
+      "en": "Transportation mode code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/bus/path.csv",
     "name": "Purpose",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップの目的を表すコード",
+      "en": "Trip purpose code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/bus/path.csv",
     "name": "Path_Origin_nodeID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "パスデータの起点nodeのID",
+      "en": "ID of the origin node of the path."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/bus/path.csv",
     "name": "Path_Destination_nodeID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "パスデータの終点nodeのID",
+      "en": "ID of the destination node of the path."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/bus/path.csv",
     "name": "Path_Length(m)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "パスデータ全体の長さ（m）",
+      "en": "Length of the path in meters."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/bus/path.csv",
     "name": "Travel_Time(s)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "所要時間（秒）",
+      "en": "Travel time in seconds."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/bus/path.csv",
     "name": "Speed(km/h)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "平均速度（km/h）",
+      "en": "Average speed in kilometers per hour."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
@@ -19263,294 +20334,420 @@
     "file_id": "Toyosu-2021/car/link.csv",
     "name": "MonitorID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "個人を識別するID",
+      "en": "Identifier for the individual."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/car/link.csv",
     "name": "DiaryID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップの日付を識別するID",
+      "en": "Identifier for the trip date."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/car/link.csv",
     "name": "TripID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップを識別するID",
+      "en": "Identifier for the trip."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/car/link.csv",
     "name": "Mode",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "交通手段を表すコード",
+      "en": "Transportation mode code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/car/link.csv",
     "name": "Purpose",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップの目的を表すコード",
+      "en": "Trip purpose code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/car/link.csv",
     "name": "LinkID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "移動中のリンクの固有のID",
+      "en": "Unique ID of the link traveled."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/car/link.csv",
     "name": "Link_Dep_Time",
     "data_type": "String",
-    "description": null
+    "description": {
+      "ja": "日本標準時（JST）",
+      "en": "Japan Standard Time (JST)."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/car/link.csv",
     "name": "Travel_Time(s)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "所要時間（秒）",
+      "en": "Travel time in seconds."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/car/link.csv",
     "name": "Speed(km/h)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "平均速度（km/h）",
+      "en": "Average speed in kilometers per hour."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/car/link.csv",
     "name": "Link_Cost",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "当該リンクの移動にかかるコスト",
+      "en": "Cost of traveling along the link."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/car/link.csv",
     "name": "Link_Length(m)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "リンクの長さ（m）",
+      "en": "Length of the link in meters."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/car/path.csv",
     "name": "MonitorID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "個人を識別するID",
+      "en": "Identifier for the individual."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/car/path.csv",
     "name": "DiaryID",
     "data_type": "String",
-    "description": null
+    "description": {
+      "ja": "トリップの日付を識別するID",
+      "en": "Identifier for the trip date."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/car/path.csv",
     "name": "TripID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップを識別するID",
+      "en": "Identifier for the trip."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/car/path.csv",
     "name": "Mode",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "交通手段を表すコード",
+      "en": "Transportation mode code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/car/path.csv",
     "name": "Purpose",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップの目的を表すコード",
+      "en": "Trip purpose code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/car/path.csv",
     "name": "Path_Origin_nodeID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "パスデータの起点nodeのID",
+      "en": "ID of the origin node of the path."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/car/path.csv",
     "name": "Path_Destination_nodeID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "パスデータの終点nodeのID",
+      "en": "ID of the destination node of the path."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/car/path.csv",
     "name": "Path_Length(m)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "パスデータ全体の長さ（m）",
+      "en": "Length of the path in meters."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/car/path.csv",
     "name": "Travel_Time(s)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "所要時間（秒）",
+      "en": "Travel time in seconds."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/car/path.csv",
     "name": "Speed(km/h)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "平均速度（km/h）",
+      "en": "Average speed in kilometers per hour."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/rail/link.csv",
     "name": "MonitorID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "個人を識別するID",
+      "en": "Identifier for the individual."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/rail/link.csv",
     "name": "DiaryID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップの日付を識別するID",
+      "en": "Identifier for the trip date."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/rail/link.csv",
     "name": "TripID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップを識別するID",
+      "en": "Identifier for the trip."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/rail/link.csv",
     "name": "Mode",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "交通手段を表すコード",
+      "en": "Transportation mode code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/rail/link.csv",
     "name": "Purpose",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップの目的を表すコード",
+      "en": "Trip purpose code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/rail/link.csv",
     "name": "LinkID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "移動中のリンクの固有のID",
+      "en": "Unique ID of the link traveled."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/rail/link.csv",
     "name": "Link_Dep_Time",
     "data_type": "String",
-    "description": null
+    "description": {
+      "ja": "日本標準時（JST）",
+      "en": "Japan Standard Time (JST)."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/rail/link.csv",
     "name": "Travel_Time(s)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "所要時間（秒）",
+      "en": "Travel time in seconds."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/rail/link.csv",
     "name": "Speed(km/h)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "平均速度（km/h）",
+      "en": "Average speed in kilometers per hour."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/rail/link.csv",
     "name": "Link_Cost",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "当該リンクの移動にかかるコスト",
+      "en": "Cost of traveling along the link."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/rail/link.csv",
     "name": "Link_Length(m)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "リンクの長さ（m）",
+      "en": "Length of the link in meters."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/rail/path.csv",
     "name": "MonitorID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "個人を識別するID",
+      "en": "Identifier for the individual."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/rail/path.csv",
     "name": "DiaryID",
     "data_type": "String",
-    "description": null
+    "description": {
+      "ja": "トリップの日付を識別するID",
+      "en": "Identifier for the trip date."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/rail/path.csv",
     "name": "TripID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップを識別するID",
+      "en": "Identifier for the trip."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/rail/path.csv",
     "name": "Mode",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "交通手段を表すコード",
+      "en": "Transportation mode code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/rail/path.csv",
     "name": "Purpose",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップの目的を表すコード",
+      "en": "Trip purpose code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/rail/path.csv",
     "name": "Path_Origin_nodeID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "パスデータの起点nodeのID",
+      "en": "ID of the origin node of the path."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/rail/path.csv",
     "name": "Path_Destination_nodeID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "パスデータの終点nodeのID",
+      "en": "ID of the destination node of the path."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/rail/path.csv",
     "name": "Path_Length(m)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "パスデータ全体の長さ（m）",
+      "en": "Length of the path in meters."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/rail/path.csv",
     "name": "Travel_Time(s)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "所要時間（秒）",
+      "en": "Travel time in seconds."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/rail/path.csv",
     "name": "Speed(km/h)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "平均速度（km/h）",
+      "en": "Average speed in kilometers per hour."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
@@ -19585,147 +20782,210 @@
     "file_id": "Toyosu-2021/walk/link.csv",
     "name": "MonitorID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "個人を識別するID",
+      "en": "Identifier for the individual."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/walk/link.csv",
     "name": "DiaryID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップの日付を識別するID",
+      "en": "Identifier for the trip date."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/walk/link.csv",
     "name": "TripID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップを識別するID",
+      "en": "Identifier for the trip."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/walk/link.csv",
     "name": "Mode",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "交通手段を表すコード",
+      "en": "Transportation mode code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/walk/link.csv",
     "name": "Purpose",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップの目的を表すコード",
+      "en": "Trip purpose code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/walk/link.csv",
     "name": "LinkID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "移動中のリンクの固有のID",
+      "en": "Unique ID of the link traveled."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/walk/link.csv",
     "name": "Link_Dep_Time",
     "data_type": "String",
-    "description": null
+    "description": {
+      "ja": "日本標準時（JST）",
+      "en": "Japan Standard Time (JST)."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/walk/link.csv",
     "name": "Travel_Time(s)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "所要時間（秒）",
+      "en": "Travel time in seconds."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/walk/link.csv",
     "name": "Speed(km/h)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "平均速度（km/h）",
+      "en": "Average speed in kilometers per hour."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/walk/link.csv",
     "name": "Link_Cost",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "当該リンクの移動にかかるコスト",
+      "en": "Cost of traveling along the link."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/walk/link.csv",
     "name": "Link_Length(m)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "リンクの長さ（m）",
+      "en": "Length of the link in meters."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/walk/path.csv",
     "name": "MonitorID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "個人を識別するID",
+      "en": "Identifier for the individual."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/walk/path.csv",
     "name": "DiaryID",
     "data_type": "String",
-    "description": null
+    "description": {
+      "ja": "トリップの日付を識別するID",
+      "en": "Identifier for the trip date."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/walk/path.csv",
     "name": "TripID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップを識別するID",
+      "en": "Identifier for the trip."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/walk/path.csv",
     "name": "Mode",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "交通手段を表すコード",
+      "en": "Transportation mode code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/walk/path.csv",
     "name": "Purpose",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "トリップの目的を表すコード",
+      "en": "Trip purpose code."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/walk/path.csv",
     "name": "Path_Origin_nodeID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "パスデータの起点nodeのID",
+      "en": "ID of the origin node of the path."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/walk/path.csv",
     "name": "Path_Destination_nodeID",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "パスデータの終点nodeのID",
+      "en": "ID of the destination node of the path."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/walk/path.csv",
     "name": "Path_Length(m)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "パスデータ全体の長さ（m）",
+      "en": "Length of the path in meters."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/walk/path.csv",
     "name": "Travel_Time(s)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "所要時間（秒）",
+      "en": "Travel time in seconds."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",
     "file_id": "Toyosu-2021/walk/path.csv",
     "name": "Speed(km/h)",
     "data_type": "Float64",
-    "description": null
+    "description": {
+      "ja": "平均速度（km/h）",
+      "en": "Average speed in kilometers per hour."
+    }
   },
   {
     "dataset_id": "routes/Toyosu-2018-2021",

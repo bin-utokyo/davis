@@ -77,6 +77,12 @@ pub struct UploadPlan {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct RemoteCoverage {
+    pub existing: usize,
+    pub missing: usize,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct DownloadReport {
     pub downloaded: usize,
     pub cached: usize,
@@ -149,6 +155,8 @@ pub enum StorageError {
         path: PathBuf,
         source: std::io::Error,
     },
+    #[error("remote key must be a safe relative path: {0}")]
+    InvalidRemoteKey(String),
 }
 
 /// Reads a versioned `.davis/config.toml` file.
@@ -238,6 +246,56 @@ impl ObjectStorage {
                 })
             }
         }
+    }
+
+    /// Writes a small derived document to a stable remote key.
+    ///
+    /// This is intended for catalog metadata. Content-addressed dataset objects
+    /// continue to use the verified streaming upload methods below.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when the key is unsafe or the backend rejects the write.
+    pub async fn write_document(&self, key: &str, contents: Vec<u8>) -> Result<(), StorageError> {
+        validate_remote_key(key)?;
+        self.operator.write(key, contents).await?;
+        Ok(())
+    }
+
+    /// Checks whether every content-addressed object referenced by manifests
+    /// exists remotely, without reading the local object cache.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error for invalid manifests, conflicting object sizes, or a
+    /// backend failure. Existing objects with an unexpected size also fail.
+    pub async fn remote_coverage(
+        &self,
+        manifests: &[DatasetManifest],
+    ) -> Result<RemoteCoverage, StorageError> {
+        let objects = unique_objects(manifests)?;
+        let mut coverage = RemoteCoverage {
+            existing: 0,
+            missing: 0,
+        };
+        for object in objects {
+            let key = object_key(&object.oid);
+            match self.operator.stat(&key).await {
+                Ok(metadata) => {
+                    if metadata.content_length() != object.size {
+                        return Err(StorageError::SizeMismatch {
+                            oid: object.oid,
+                            expected: object.size,
+                            actual: metadata.content_length(),
+                        });
+                    }
+                    coverage.existing += 1;
+                }
+                Err(error) if error.kind() == ErrorKind::NotFound => coverage.missing += 1,
+                Err(error) => return Err(error.into()),
+            }
+        }
+        Ok(coverage)
     }
 
     /// Calculates which manifest objects are missing without uploading anything.
@@ -685,6 +743,26 @@ fn default_region() -> String {
     "auto".into()
 }
 
+fn validate_remote_key(key: &str) -> Result<(), StorageError> {
+    let path = Path::new(key);
+    if key.is_empty()
+        || key.contains('\\')
+        || path.is_absolute()
+        || path.components().any(|component| {
+            matches!(
+                component,
+                std::path::Component::ParentDir
+                    | std::path::Component::CurDir
+                    | std::path::Component::RootDir
+                    | std::path::Component::Prefix(_)
+            )
+        })
+    {
+        return Err(StorageError::InvalidRemoteKey(key.to_owned()));
+    }
+    Ok(())
+}
+
 fn unique_objects(manifests: &[DatasetManifest]) -> Result<Vec<ObjectRef>, StorageError> {
     let mut sizes = HashMap::<ObjectId, u64>::new();
     let mut objects = Vec::new();
@@ -725,7 +803,27 @@ mod tests {
     use davis_core::{DatasetManifest, LocalObjectStore, ManifestDataset, ManifestFile, ObjectRef};
     use tempfile::tempdir;
 
-    use super::{ObjectStorage, UploadOutcome};
+    use super::{ObjectStorage, StorageError, UploadOutcome};
+
+    #[tokio::test]
+    async fn writes_catalog_documents_only_to_safe_relative_keys() {
+        let temporary = tempdir().unwrap();
+        let remote_root = temporary.path().join("remote");
+        let remote = ObjectStorage::filesystem(&remote_root).unwrap();
+
+        remote
+            .write_document("catalog/revisions/abc/files.json", b"[]\n".to_vec())
+            .await
+            .unwrap();
+        assert_eq!(
+            fs::read(remote_root.join("catalog/revisions/abc/files.json")).unwrap(),
+            b"[]\n"
+        );
+        assert!(matches!(
+            remote.write_document("../outside", Vec::new()).await,
+            Err(StorageError::InvalidRemoteKey(_))
+        ));
+    }
 
     #[tokio::test]
     async fn uploads_to_filesystem_without_overwriting_existing_object() {
@@ -797,6 +895,12 @@ mod tests {
         let final_plan = remote.plan_upload(&local, &manifest).await.unwrap();
         assert_eq!(final_plan.missing, 0);
         assert_eq!(final_plan.existing, 1);
+        let final_coverage = remote
+            .remote_coverage(std::slice::from_ref(&manifest))
+            .await
+            .unwrap();
+        assert_eq!(final_coverage.missing, 0);
+        assert_eq!(final_coverage.existing, 1);
 
         let empty_cache = LocalObjectStore::new(temporary.path().join("empty-cache"));
         let mut download_progress = Vec::new();

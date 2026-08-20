@@ -13,6 +13,13 @@ const MAX_SESSION_TTL_SECONDS = 180 * 24 * 60 * 60;
 const DEFAULT_GRANT_TTL_SECONDS = 5 * 60;
 const MAX_GRANT_TTL_SECONDS = 15 * 60;
 const MAX_FILES_PER_GRANT = 256;
+const CATALOG_DOCUMENTS = new Set([
+  "index.json",
+  "datasets.json",
+  "files.json",
+  "columns.json",
+  "facets.json",
+]);
 
 type AssetFetcher = {
   fetch(request: Request): Promise<Response>;
@@ -79,6 +86,42 @@ export async function handleApiRequest(request: Request, env: DavisWorkerEnv): P
     return downloadObject(request, env);
   }
   return errorResponse(404, "not_found", "API endpoint was not found");
+}
+
+export async function handleCatalogRequest(request: Request, env: DavisWorkerEnv): Promise<Response> {
+  if (request.method !== "GET" && request.method !== "HEAD") return methodNotAllowed("GET, HEAD");
+  const name = new URL(request.url).pathname.match(/^\/catalog\/([^/]+)$/u)?.[1] ?? "";
+  if (!CATALOG_DOCUMENTS.has(name)) {
+    return errorResponse(404, "catalog_document_not_found", "Catalog document was not found");
+  }
+  if (!env.DAVIS_DATA) return env.ASSETS.fetch(request);
+
+  const pointerObject = await env.DAVIS_DATA.get("catalog/current.json");
+  if (!pointerObject) return env.ASSETS.fetch(request);
+  if (!("body" in pointerObject)) {
+    return errorResponse(503, "catalog_unavailable", "Catalog pointer is unavailable");
+  }
+  const pointer = await new Response(pointerObject.body).json().catch(() => null) as {
+    version?: unknown;
+    revision?: unknown;
+  } | null;
+  if (pointer?.version !== 1
+    || typeof pointer.revision !== "string"
+    || !/^[0-9a-f]{64}$/u.test(pointer.revision)) {
+    return errorResponse(503, "catalog_unavailable", "Catalog pointer is invalid");
+  }
+
+  const object = await env.DAVIS_DATA.get(`catalog/revisions/${pointer.revision}/${name}`);
+  if (!object || !("body" in object)) {
+    return errorResponse(503, "catalog_unavailable", "Current catalog revision is incomplete");
+  }
+  const headers = new Headers({
+    "Cache-Control": "public, max-age=60, must-revalidate",
+    "Content-Type": "application/json; charset=utf-8",
+    "ETag": object.httpEtag,
+    "X-Davis-Catalog-Revision": pointer.revision,
+  });
+  return new Response(request.method === "HEAD" ? null : object.body, { headers });
 }
 
 async function exchangeInviteCode(request: Request, env: DavisWorkerEnv): Promise<Response> {
@@ -256,7 +299,7 @@ async function authenticate(request: Request, env: DavisWorkerEnv): Promise<Sess
 async function readCatalog(request: Request, env: DavisWorkerEnv): Promise<CatalogFile[] | Response> {
   try {
     const catalogUrl = new URL("/catalog/files.json", request.url);
-    const response = await env.ASSETS.fetch(new Request(catalogUrl));
+    const response = await handleCatalogRequest(new Request(catalogUrl), env);
     if (!response.ok) throw new Error(`catalog returned ${response.status}`);
     const value: unknown = await response.json();
     if (!Array.isArray(value) || !value.every(isCatalogFile)) throw new Error("catalog is invalid");

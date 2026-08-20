@@ -10,6 +10,7 @@ name = "davis-next"
 path = "src/main.rs"
 
 [dependencies]
+blake3.workspace = true
 clap.workspace = true
 davis-catalog = { path = "../davis-catalog" }
 davis-core = { path = "../davis-core" }

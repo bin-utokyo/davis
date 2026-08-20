@@ -1,5 +1,5 @@
 import handler from "vinext/server/app-router-entry";
-import { type DavisWorkerEnv, handleApiRequest } from "./api";
+import { type DavisWorkerEnv, handleApiRequest, handleCatalogRequest } from "./api";
 
 type Env = DavisWorkerEnv;
 
@@ -10,9 +10,12 @@ interface ExecutionContext {
 
 const worker = {
   async fetch(request: Request, env: Env, context: ExecutionContext): Promise<Response> {
-    if (new URL(request.url).pathname.startsWith("/api/")) {
+    const pathname = new URL(request.url).pathname;
+    if (pathname.startsWith("/api/") || pathname.startsWith("/catalog/")) {
       try {
-        return await handleApiRequest(request, env);
+        return pathname.startsWith("/catalog/")
+          ? await handleCatalogRequest(request, env)
+          : await handleApiRequest(request, env);
       } catch {
         return Response.json(
           { error: { code: "internal_error", message: "Internal server error" } },

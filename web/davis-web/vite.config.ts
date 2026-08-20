@@ -21,7 +21,7 @@ const localBindingConfig = {
     binding: "ASSETS",
     // API requests must reach our Worker, while generated CSS, JavaScript,
     // catalog JSON, and images should be served by Cloudflare Assets.
-    run_worker_first: ["/api/*"],
+    run_worker_first: ["/api/*", "/catalog/*"],
   },
   compatibility_flags: ["nodejs_compat"],
   d1_databases: d1

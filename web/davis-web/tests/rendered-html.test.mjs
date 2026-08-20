@@ -67,5 +67,5 @@ test("deployment routes only API requests through the Worker first", async () =>
   ).then(JSON.parse);
 
   assert.equal(config.assets.binding, "ASSETS");
-  assert.deepEqual(config.assets.run_worker_first, ["/api/*"]);
+  assert.deepEqual(config.assets.run_worker_first, ["/api/*", "/catalog/*"]);
 });

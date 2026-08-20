@@ -67,13 +67,13 @@ cargo run -p davis-cli -- verify
 cargo run -p davis-cli -- ingest --all
 ```
 
-R2またはfilesystem remoteへの差分uploadには`davis-next push`を使用します．1 Datasetだけを指定できるほか，`davis-next push --all --dry-run`で全Datasetの差分を安全に確認できます．設定例は`.davis/config.example.toml`にあります．
+R2またはfilesystem remoteへの差分uploadには`davis-next push`を使用します．1 Datasetだけを指定できるほか，`davis-next push --all --dry-run`で全Datasetの差分を安全に確認できます．通常の`push`は不足Objectのupload後に最新の`schema.yaml`からCatalogIndexを生成し，revision単位で保存してから`catalog/current.json`を切り替えます．Objectの差分がなくschemaだけが変わった場合もWebへ反映されます．設定例は`.davis/config.example.toml`にあります．
 
 対話terminalでは，`push`のlocal検証・uploadと，remoteを指定した`get`のdownloadについて，処理済みObject数，処理済み容量，割合，残り時間をprogress barで表示します．pipeやCI等の非対話実行ではprogress barを自動的に非表示にし，既存の標準出力を維持します．
 
 ## Webカタログ
 
-Webが使用する静的indexは，すべての`schema.yaml`から生成します．
+WebはR2上の現在のCatalogIndexを読みます．まだ一度もCatalogIndexがR2へ公開されていない環境では，deploymentに同梱した静的indexへfallbackします．開発時に静的indexを更新する場合は，すべての`schema.yaml`から次のように生成します．
 
 ```bash
 cargo run -p davis-cli -- index
