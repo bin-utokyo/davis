@@ -1,0 +1,8 @@
+version = 1
+
+[remote.default]
+type = "s3"
+bucket = "REPLACE_WITH_DAVIS_BUCKET"
+endpoint = "https://REPLACE_WITH_ACCOUNT_ID.r2.cloudflarestorage.com"
+region = "auto"
+root = ""

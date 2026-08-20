@@ -99,7 +99,10 @@ pkg/
 
 # Rust
 target/
-Cargo.lock
+# Cargo.lock is tracked because this workspace ships CLI applications.
+
+# Davis local cache (generated content-addressed objects)
+.davis/cache/
 
 # Logs
 *.log

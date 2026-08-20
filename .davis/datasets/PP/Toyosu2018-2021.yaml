@@ -1,0 +1,95 @@
+version: 1
+dataset:
+  id: PP/Toyosu2018-2021
+  root: data/PP/Toyosu2018-2021
+files:
+- id: 2018_Toyosu_PP_Survey_Individual_Attribute_Data.csv
+  path: 2018_Toyosu_PP_Survey_Individual_Attribute_Data.csv
+  object:
+    oid: blake3:9aea8399261bde2b47e6cfd4c5b473501341531e78de423f1be43b13bfa19682
+    size: 24154
+  schema_path: data/PP/Toyosu2018-2021/2018_Toyosu_PP_Survey_Individual_Attribute_Data.csv.schema.yaml
+- id: 2019-21_Toyosu_PP_Survey_Individual_Attribute_Data.csv
+  path: 2019-21_Toyosu_PP_Survey_Individual_Attribute_Data.csv
+  object:
+    oid: blake3:f08a1b39c70eca9da6cb47cade381d853e58e901a0e5323efc3defb5454529e6
+    size: 27630
+  schema_path: data/PP/Toyosu2018-2021/2019-21_Toyosu_PP_Survey_Individual_Attribute_Data.csv.schema.yaml
+- id: ID_panel_survey.csv
+  path: ID_panel_survey.csv
+  object:
+    oid: blake3:5e8c1392ad0f77f31159a3f9be050139b99b8f1d37da8489b36b590d43c19508
+    size: 11819
+  schema_path: data/PP/Toyosu2018-2021/ID_panel_survey.csv.schema.yaml
+- id: feeder_2018.csv
+  path: feeder_2018.csv
+  object:
+    oid: blake3:277bb65be3f61b108cf79fa34d974a56a133474bad1e0e88b4a5cc532a2f0cb5
+    size: 3703708
+  schema_path: data/PP/Toyosu2018-2021/feeder_2018.csv.schema.yaml
+- id: feeder_2019.csv
+  path: feeder_2019.csv
+  object:
+    oid: blake3:f7d5f2f17d04a83e5672c5ae5fbb41c07f8cd9b03408283ee688de3020bd9f6d
+    size: 6604417
+  schema_path: data/PP/Toyosu2018-2021/feeder_2019.csv.schema.yaml
+- id: feeder_2020.csv
+  path: feeder_2020.csv
+  object:
+    oid: blake3:a3ce7496aa410168ae87cb2fd79b21079e42c3d4a2daf88e80b42f1b58d0f25c
+    size: 6832524
+  schema_path: data/PP/Toyosu2018-2021/feeder_2020.csv.schema.yaml
+- id: feeder_2021.csv
+  path: feeder_2021.csv
+  object:
+    oid: blake3:f4eacd77f37a8630ee7559a504c6a37b50fd8420bb81e441d5e3d87d3716d719
+    size: 7352497
+  schema_path: data/PP/Toyosu2018-2021/feeder_2021.csv.schema.yaml
+- id: locData_toyosu_2018.csv
+  path: locData_toyosu_2018.csv
+  object:
+    oid: blake3:ec6850d79706d9b40672550019d6b24042c6f0ac06b1e4b277ee8ac1e19331ca
+    size: 574790127
+  schema_path: data/PP/Toyosu2018-2021/locData_toyosu_2018.csv.schema.yaml
+- id: locData_toyosu_2019.csv
+  path: locData_toyosu_2019.csv
+  object:
+    oid: blake3:1b16ba31e32d93a635f2a72f3bad7f72299d979ef0cd69212e2ace8b27179893
+    size: 1274516605
+  schema_path: data/PP/Toyosu2018-2021/locData_toyosu_2019.csv.schema.yaml
+- id: locData_toyosu_2020.csv
+  path: locData_toyosu_2020.csv
+  object:
+    oid: blake3:45560dd6582adbf3a291315350c765da380050871e2b0b2f09789693033eb546
+    size: 1473891953
+  schema_path: data/PP/Toyosu2018-2021/locData_toyosu_2020.csv.schema.yaml
+- id: locData_toyosu_2021.csv
+  path: locData_toyosu_2021.csv
+  object:
+    oid: blake3:46caf3f2d7b98a7d252e3e68586237aff5a730e8781bb2175d74f4bc552c1fe8
+    size: 1111449987
+  schema_path: data/PP/Toyosu2018-2021/locData_toyosu_2021.csv.schema.yaml
+- id: trip_toyosu_2018.csv
+  path: trip_toyosu_2018.csv
+  object:
+    oid: blake3:0ca4c7db511b2b23346f24fa1d7f31e269426f0c723840303f262e73c2acc501
+    size: 3720311
+  schema_path: data/PP/Toyosu2018-2021/trip_toyosu_2018.csv.schema.yaml
+- id: trip_toyosu_2019.csv
+  path: trip_toyosu_2019.csv
+  object:
+    oid: blake3:d6a78801b8cb02b02287d7962f3be7c49c9d78f07a3fcd7daa0311fb52f46e23
+    size: 9109054
+  schema_path: data/PP/Toyosu2018-2021/trip_toyosu_2019.csv.schema.yaml
+- id: trip_toyosu_2020.csv
+  path: trip_toyosu_2020.csv
+  object:
+    oid: blake3:1176ba012a9093e2dfc240b17b289ebe2648c6a4d2805bd706832ff7570bd225
+    size: 10406584
+  schema_path: data/PP/Toyosu2018-2021/trip_toyosu_2020.csv.schema.yaml
+- id: trip_toyosu_2021.csv
+  path: trip_toyosu_2021.csv
+  object:
+    oid: blake3:d6add2b8bb2f08dc1c65fdf9d0e3f126559defe18b320d356bf2e802e10bc791
+    size: 10807558
+  schema_path: data/PP/Toyosu2018-2021/trip_toyosu_2021.csv.schema.yaml

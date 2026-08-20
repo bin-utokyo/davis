@@ -1,0 +1,22 @@
+version: 1
+dataset:
+  id: network/matsuyama
+  root: data/network/matsuyama
+files:
+- id: link.csv
+  path: link.csv
+  object:
+    oid: blake3:e2d004c4d48e0a7b166c588fc479eec8610940be7a58f0456b86c90dd0126cc9
+    size: 751840
+  schema_path: data/network/matsuyama/link.csv.schema.yaml
+- id: network.xmps
+  path: network.xmps
+  object:
+    oid: blake3:38295ba720575b1bd5f2f76ae604c216d2e98250220815fb6597f318bf16c593
+    size: 6972980
+- id: node.csv
+  path: node.csv
+  object:
+    oid: blake3:1aec1822782514ebf84e5401235d1b67e3c8e655e2efb606176c4fedaf115fda
+    size: 333722
+  schema_path: data/network/matsuyama/node.csv.schema.yaml

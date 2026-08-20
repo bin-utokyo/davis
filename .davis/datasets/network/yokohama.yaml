@@ -1,0 +1,27 @@
+version: 1
+dataset:
+  id: network/yokohama
+  root: data/network/yokohama
+files:
+- id: YOKOHAMAlink.csv
+  path: YOKOHAMAlink.csv
+  object:
+    oid: blake3:28cc7c7ef7a515bbca8a4d5e995a68c79c08cfd669783cab8cea4b78ecd69b78
+    size: 22123939
+  schema_path: data/network/yokohama/YOKOHAMAlink.csv.schema.yaml
+- id: YOKOHAMAnode.csv
+  path: YOKOHAMAnode.csv
+  object:
+    oid: blake3:1293f1ac976b19caf026325d6928f327d643abe16b63c6a6fa717f7fa290a18a
+    size: 4791008
+  schema_path: data/network/yokohama/YOKOHAMAnode.csv.schema.yaml
+- id: network-data-overview.pdf
+  path: network-data-overview.pdf
+  object:
+    oid: blake3:e8262bfcf58a7a9c2109b5c5483d3cf6adc15e5e844e40b15db38cc3db0ca13b
+    size: 173935
+- id: network.kml
+  path: network.kml
+  object:
+    oid: blake3:792442c88a0635e17584be18df3e681752f494cbbf3374485d93c09026bc5a52
+    size: 76022293

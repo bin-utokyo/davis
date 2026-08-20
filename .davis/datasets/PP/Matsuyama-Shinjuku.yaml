@@ -1,0 +1,23 @@
+version: 1
+dataset:
+  id: PP/Matsuyama-Shinjuku
+  root: data/PP/Matsuyama-Shinjuku
+files:
+- id: feeder_all.csv
+  path: feeder_all.csv
+  object:
+    oid: blake3:ef46e9dc45aa561413a5eeef41e22c092fc42e19d2201d26af9dd531b38020f8
+    size: 302006
+  schema_path: data/PP/Matsuyama-Shinjuku/feeder_all.csv.schema.yaml
+- id: locData_Matsuyama_Shinjuku2022.csv
+  path: locData_Matsuyama_Shinjuku2022.csv
+  object:
+    oid: blake3:789d6bfb307ebb8ce4ae64b453220d10da2634a67a40c32df08b60c69e4bb192
+    size: 115146835
+  schema_path: data/PP/Matsuyama-Shinjuku/locData_Matsuyama_Shinjuku2022.csv.schema.yaml
+- id: trip_all.csv
+  path: trip_all.csv
+  object:
+    oid: blake3:963066cfcc37d12783cb9caf13bbf4c68323109cc1c179b0153278a183837a1b
+    size: 265698
+  schema_path: data/PP/Matsuyama-Shinjuku/trip_all.csv.schema.yaml

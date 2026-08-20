@@ -1,0 +1,475 @@
+version: 1
+dataset:
+  id: routes/Toyosu-2018-2021
+  root: data/routes/Toyosu-2018-2021
+files:
+- id: README.docx
+  path: README.docx
+  object:
+    oid: blake3:c5fbb7f6712fd05e80f9e56f9e210d84ca0b382c45623d30252f0ac68b506f1b
+    size: 12344
+- id: Toyosu-2018/bike/bike_result.csv
+  path: Toyosu-2018/bike/bike_result.csv
+  object:
+    oid: blake3:8d40aae2e811dd80b0a4638b9df6bdff6b390418dc0d0c30b1879b069cd257b2
+    size: 1326305
+  schema_path: data/routes/Toyosu-2018-2021/Toyosu-2018/bike/bike_result.csv.schema.yaml
+- id: Toyosu-2018/bike/link.csv
+  path: Toyosu-2018/bike/link.csv
+  object:
+    oid: blake3:285e150daf0dfa9551817f985c9d201c9a09d7476e1b2f71b8f219271b5c807c
+    size: 3210145
+  schema_path: data/routes/Toyosu-2018-2021/Toyosu-2018/bike/link.csv.schema.yaml
+- id: Toyosu-2018/bike/linkFile.zip
+  path: Toyosu-2018/bike/linkFile.zip
+  object:
+    oid: blake3:339e3d19695a2e2dc5bc782d6e3618c469d162b8af1367087ff68f2f7701d9c6
+    size: 15458272
+- id: Toyosu-2018/bike/path.csv
+  path: Toyosu-2018/bike/path.csv
+  object:
+    oid: blake3:d633ecfd0fb09c9e12547d2d91a3e3e0d0bbbce158d3557111af966d63cf861f
+    size: 4924
+  schema_path: data/routes/Toyosu-2018-2021/Toyosu-2018/bike/path.csv.schema.yaml
+- id: Toyosu-2018/bus/bus_result.csv
+  path: Toyosu-2018/bus/bus_result.csv
+  object:
+    oid: blake3:9b7724c19c7a9b1785a9695b0e071f8ecd0bfad099bc1527b99e5972b7942d2b
+    size: 55467
+  schema_path: data/routes/Toyosu-2018-2021/Toyosu-2018/bus/bus_result.csv.schema.yaml
+- id: Toyosu-2018/bus/link.csv
+  path: Toyosu-2018/bus/link.csv
+  object:
+    oid: blake3:d8296667bea4a448540827d77dcb41a0045c3ebd3edf19741f20dd91b182136a
+    size: 169610
+  schema_path: data/routes/Toyosu-2018-2021/Toyosu-2018/bus/link.csv.schema.yaml
+- id: Toyosu-2018/bus/linkFile.zip
+  path: Toyosu-2018/bus/linkFile.zip
+  object:
+    oid: blake3:0ebd2941a0cb16a08d475308c0153fcb25c5f0690394f0d04d9caee1c9eb2531
+    size: 3533660
+- id: Toyosu-2018/bus/path.csv
+  path: Toyosu-2018/bus/path.csv
+  object:
+    oid: blake3:0e939dc36eecbbc7e20db605dfb65965ecc6e9e1b628ff19c5d0e8e8fc908130
+    size: 82798
+  schema_path: data/routes/Toyosu-2018-2021/Toyosu-2018/bus/path.csv.schema.yaml
+- id: Toyosu-2018/car/car_result.csv
+  path: Toyosu-2018/car/car_result.csv
+  object:
+    oid: blake3:9c26b6f704ec9b1566d89e27bd1fffa4bb28bfe2de21cbbb0af0ea0c80a537f6
+    size: 2711856
+  schema_path: data/routes/Toyosu-2018-2021/Toyosu-2018/car/car_result.csv.schema.yaml
+- id: Toyosu-2018/car/link.csv
+  path: Toyosu-2018/car/link.csv
+  object:
+    oid: blake3:2e3a621f2effa359c723f32fbd481445a009fff4810302bf4883d9d9c466335b
+    size: 7577360
+  schema_path: data/routes/Toyosu-2018-2021/Toyosu-2018/car/link.csv.schema.yaml
+- id: Toyosu-2018/car/linkFile.zip
+  path: Toyosu-2018/car/linkFile.zip
+  object:
+    oid: blake3:f0381701933e2c42b04953fa9e59a9c3c32f86bcd8f91ca1def13b7fff08c88d
+    size: 40109681
+- id: Toyosu-2018/car/path.csv
+  path: Toyosu-2018/car/path.csv
+  object:
+    oid: blake3:a2d5d2e52783ad2e5b331a9b7acb646ebb12943594d7d3a6b87556ff6bb52e3f
+    size: 131173
+  schema_path: data/routes/Toyosu-2018-2021/Toyosu-2018/car/path.csv.schema.yaml
+- id: Toyosu-2018/rail/link.csv
+  path: Toyosu-2018/rail/link.csv
+  object:
+    oid: blake3:bbd816fb596122e3ce93f758bfd75ceef0876ef34589f429fbd529c0227cca79
+    size: 92655
+  schema_path: data/routes/Toyosu-2018-2021/Toyosu-2018/rail/link.csv.schema.yaml
+- id: Toyosu-2018/rail/linkFile.zip
+  path: Toyosu-2018/rail/linkFile.zip
+  object:
+    oid: blake3:b45db3edfb5d4bbbcbdfc4e82883e90f4ce059ff54e704a0956e1f4dc2d5312d
+    size: 2444042
+- id: Toyosu-2018/rail/path.csv
+  path: Toyosu-2018/rail/path.csv
+  object:
+    oid: blake3:78750cde63aeaf8cfac354fb719e581aae3e3d6a508d799b806d6ef903c913d0
+    size: 739321
+  schema_path: data/routes/Toyosu-2018-2021/Toyosu-2018/rail/path.csv.schema.yaml
+- id: Toyosu-2018/rail/rail_result.csv
+  path: Toyosu-2018/rail/rail_result.csv
+  object:
+    oid: blake3:a42998033c4b28ef12ff1a4ede3cba3a2b863944ab9b478959794631d471ebc8
+    size: 9
+  schema_path: data/routes/Toyosu-2018-2021/Toyosu-2018/rail/rail_result.csv.schema.yaml
+- id: Toyosu-2018/walk/link.csv
+  path: Toyosu-2018/walk/link.csv
+  object:
+    oid: blake3:b364d7cd490ac3553d69a617ab1a3b3ea93c5f47ca6ef8642bea508e12b678ef
+    size: 13961589
+  schema_path: data/routes/Toyosu-2018-2021/Toyosu-2018/walk/link.csv.schema.yaml
+- id: Toyosu-2018/walk/linkFile.zip
+  path: Toyosu-2018/walk/linkFile.zip
+  object:
+    oid: blake3:f1d9d623ec96f08f27e359b17548e3e5625690b4c53472830f621419db231b1c
+    size: 57262908
+- id: Toyosu-2018/walk/path.csv
+  path: Toyosu-2018/walk/path.csv
+  object:
+    oid: blake3:842e6f38ff6311c1ed16be7e88471b51527c3b21d39214c13927424d33df7221
+    size: 979731
+  schema_path: data/routes/Toyosu-2018-2021/Toyosu-2018/walk/path.csv.schema.yaml
+- id: Toyosu-2018/walk/walk_result.csv
+  path: Toyosu-2018/walk/walk_result.csv
+  object:
+    oid: blake3:8d22ad9caabca24dfd8dee6acaabbb3242be2ca2d1b74043bdfbd4e4487b9d4a
+    size: 5433791
+  schema_path: data/routes/Toyosu-2018-2021/Toyosu-2018/walk/walk_result.csv.schema.yaml
+- id: Toyosu-2019/bike/bike_result.csv
+  path: Toyosu-2019/bike/bike_result.csv
+  object:
+    oid: blake3:b53ed548149cecaff181227fdb6cf972ed6eb03932d2cc57f0be47ebaef12ce6
+    size: 2310683
+  schema_path: data/routes/Toyosu-2018-2021/Toyosu-2019/bike/bike_result.csv.schema.yaml
+- id: Toyosu-2019/bike/link.csv
+  path: Toyosu-2019/bike/link.csv
+  object:
+    oid: blake3:e7279882c361c517e0b994c87fcab2fc40fc5d4dd4d655f541a53049474c1679
+    size: 5697424
+  schema_path: data/routes/Toyosu-2018-2021/Toyosu-2019/bike/link.csv.schema.yaml
+- id: Toyosu-2019/bike/linkFile.zip
+  path: Toyosu-2019/bike/linkFile.zip
+  object:
+    oid: blake3:a15f806a98e87859c3587286a0dc316310c4a16aa5024a3bae2d80ed22c2776c
+    size: 30290754
+- id: Toyosu-2019/bike/path.csv
+  path: Toyosu-2019/bike/path.csv
+  object:
+    oid: blake3:488578a33d3c30af5ec7418eeb997a3322405ba1b0a2cb49151e2e46a465f2aa
+    size: 297940
+  schema_path: data/routes/Toyosu-2018-2021/Toyosu-2019/bike/path.csv.schema.yaml
+- id: Toyosu-2019/bus/bus_result.csv
+  path: Toyosu-2019/bus/bus_result.csv
+  object:
+    oid: blake3:d82d4fa79086c50537148e7960b2a536af3ebe40e168347b7e23633907669d41
+    size: 276746
+  schema_path: data/routes/Toyosu-2018-2021/Toyosu-2019/bus/bus_result.csv.schema.yaml
+- id: Toyosu-2019/bus/link.csv
+  path: Toyosu-2019/bus/link.csv
+  object:
+    oid: blake3:de5195cf7940905acf425e170b7e6daf05415a8db7d8868e0a9a3c6fe308c6fe
+    size: 774425
+  schema_path: data/routes/Toyosu-2018-2021/Toyosu-2019/bus/link.csv.schema.yaml
+- id: Toyosu-2019/bus/linkFile.zip
+  path: Toyosu-2019/bus/linkFile.zip
+  object:
+    oid: blake3:90ddf6681b6b603ce1715d37c7f61e615b87fb083dc7b04812428d03d82018ca
+    size: 11203906
+- id: Toyosu-2019/bus/path.csv
+  path: Toyosu-2019/bus/path.csv
+  object:
+    oid: blake3:6a4714bcc1e2b6967e5bb4e0e62e584c0c2aeb4da21d64c4bb8d24bc2b3dffa0
+    size: 210051
+  schema_path: data/routes/Toyosu-2018-2021/Toyosu-2019/bus/path.csv.schema.yaml
+- id: Toyosu-2019/car/car_result.csv
+  path: Toyosu-2019/car/car_result.csv
+  object:
+    oid: blake3:0ea8481a8078db614876097eb0c072a43a5e2ba88bca620813e2e1c2278ee9b3
+    size: 5417650
+  schema_path: data/routes/Toyosu-2018-2021/Toyosu-2019/car/car_result.csv.schema.yaml
+- id: Toyosu-2019/car/link.csv
+  path: Toyosu-2019/car/link.csv
+  object:
+    oid: blake3:45bb9cc38eea3d12d4221193068bdc2770821535674e0be86514a0057eb7e5c7
+    size: 15146524
+  schema_path: data/routes/Toyosu-2018-2021/Toyosu-2019/car/link.csv.schema.yaml
+- id: Toyosu-2019/car/linkFile.zip
+  path: Toyosu-2019/car/linkFile.zip
+  object:
+    oid: blake3:80ac95a983f07e8d786ec479ec8daf975b62949957970cd4778e604758e7269f
+    size: 70131135
+- id: Toyosu-2019/car/path.csv
+  path: Toyosu-2019/car/path.csv
+  object:
+    oid: blake3:34e4ed1c363f89b8295598deeeb58bce340bd58b5ecf4139e10a9193985fdf24
+    size: 254091
+  schema_path: data/routes/Toyosu-2018-2021/Toyosu-2019/car/path.csv.schema.yaml
+- id: Toyosu-2019/rail/link.csv
+  path: Toyosu-2019/rail/link.csv
+  object:
+    oid: blake3:76c878c4ae91f7e3e40a2ec3e9ff6f720feb6a951473f3460bafc18a2d9ca43e
+    size: 150189
+  schema_path: data/routes/Toyosu-2018-2021/Toyosu-2019/rail/link.csv.schema.yaml
+- id: Toyosu-2019/rail/linkFile.zip
+  path: Toyosu-2019/rail/linkFile.zip
+  object:
+    oid: blake3:dd4319ef2ab20079667769af46b7f922b5a9a9b63eb93a6358a56327af3c82c9
+    size: 3666332
+- id: Toyosu-2019/rail/path.csv
+  path: Toyosu-2019/rail/path.csv
+  object:
+    oid: blake3:1f8991f5b88e92895258b04b80b41bcc66386edd60e5005ac69307c990520bf4
+    size: 1320614
+  schema_path: data/routes/Toyosu-2018-2021/Toyosu-2019/rail/path.csv.schema.yaml
+- id: Toyosu-2019/rail/rail_result.csv
+  path: Toyosu-2019/rail/rail_result.csv
+  object:
+    oid: blake3:a42998033c4b28ef12ff1a4ede3cba3a2b863944ab9b478959794631d471ebc8
+    size: 9
+  schema_path: data/routes/Toyosu-2018-2021/Toyosu-2019/rail/rail_result.csv.schema.yaml
+- id: Toyosu-2019/walk/link.csv
+  path: Toyosu-2019/walk/link.csv
+  object:
+    oid: blake3:2f6538e349767a242719de34b20ca46b88216526d80805047cc0586581775fbc
+    size: 27987791
+  schema_path: data/routes/Toyosu-2018-2021/Toyosu-2019/walk/link.csv.schema.yaml
+- id: Toyosu-2019/walk/linkFile.zip
+  path: Toyosu-2019/walk/linkFile.zip
+  object:
+    oid: blake3:63e0b16c275ecffa15a1b903b3ad2b6f0f8b50bfbdb6fc4cb80eabb2219e94a5
+    size: 141008027
+- id: Toyosu-2019/walk/path.csv
+  path: Toyosu-2019/walk/path.csv
+  object:
+    oid: blake3:fd55b8708c4e855758a36d3e02aaed7ad0a511d1468dcce0bd2cc77333df9fbb
+    size: 2315231
+  schema_path: data/routes/Toyosu-2018-2021/Toyosu-2019/walk/path.csv.schema.yaml
+- id: Toyosu-2019/walk/walk_result.csv
+  path: Toyosu-2019/walk/walk_result.csv
+  object:
+    oid: blake3:80c021298ecdb0c638e7264bd26bba68d409f3d9b2aac2a6dbe6725ac5705621
+    size: 10774143
+  schema_path: data/routes/Toyosu-2018-2021/Toyosu-2019/walk/walk_result.csv.schema.yaml
+- id: Toyosu-2020/bike/bike_result.csv
+  path: Toyosu-2020/bike/bike_result.csv
+  object:
+    oid: blake3:0a857727d379c2ea5d30e8b993c6557f8cb2388da012eb265a7a3a5df9b323ab
+    size: 3648277
+  schema_path: data/routes/Toyosu-2018-2021/Toyosu-2020/bike/bike_result.csv.schema.yaml
+- id: Toyosu-2020/bike/link.csv
+  path: Toyosu-2020/bike/link.csv
+  object:
+    oid: blake3:658ed5808d3860497096b1773de3c00c8430fc4dff66f7442db8a8806a6a6cc7
+    size: 8931161
+  schema_path: data/routes/Toyosu-2018-2021/Toyosu-2020/bike/link.csv.schema.yaml
+- id: Toyosu-2020/bike/linkFile.zip
+  path: Toyosu-2020/bike/linkFile.zip
+  object:
+    oid: blake3:9c1dbadb6cd63aa91fc6949509d3e7d488f97ef0e2b042d9d94a3a876ee8c116
+    size: 47778459
+- id: Toyosu-2020/bike/path.csv
+  path: Toyosu-2020/bike/path.csv
+  object:
+    oid: blake3:71aed78aa5cdfd15006b1c42aad569d1e40842bf09a55211b49f53782f3a0719
+    size: 416797
+  schema_path: data/routes/Toyosu-2018-2021/Toyosu-2020/bike/path.csv.schema.yaml
+- id: Toyosu-2020/bus/bus_result.csv
+  path: Toyosu-2020/bus/bus_result.csv
+  object:
+    oid: blake3:953bc63eb453aa3d44f2370b5697c5fbca18e4515f5d892e5a55b647e72f9284
+    size: 165827
+  schema_path: data/routes/Toyosu-2018-2021/Toyosu-2020/bus/bus_result.csv.schema.yaml
+- id: Toyosu-2020/bus/link.csv
+  path: Toyosu-2020/bus/link.csv
+  object:
+    oid: blake3:3389015d3502b15b095bc95a4cdf81b643e6b0270c8dc58f2d923eca45fb20a0
+    size: 461837
+  schema_path: data/routes/Toyosu-2018-2021/Toyosu-2020/bus/link.csv.schema.yaml
+- id: Toyosu-2020/bus/linkFile.zip
+  path: Toyosu-2020/bus/linkFile.zip
+  object:
+    oid: blake3:8c9082857eb397d3aae146bfe98e213dbb1307b11d37a2a552374fc8f1f6d5d1
+    size: 5547773
+- id: Toyosu-2020/bus/path.csv
+  path: Toyosu-2020/bus/path.csv
+  object:
+    oid: blake3:e53f66df9a5506767d93e1a363036a058a74ae96877dde52052b62f6704f90ec
+    size: 122779
+  schema_path: data/routes/Toyosu-2018-2021/Toyosu-2020/bus/path.csv.schema.yaml
+- id: Toyosu-2020/car/car_result.csv
+  path: Toyosu-2020/car/car_result.csv
+  object:
+    oid: blake3:ad4a13443b6d1e6589fe6aaa896c97a97cee48f89b1132d1e5fc90e769436b90
+    size: 7702180
+  schema_path: data/routes/Toyosu-2018-2021/Toyosu-2020/car/car_result.csv.schema.yaml
+- id: Toyosu-2020/car/link.csv
+  path: Toyosu-2020/car/link.csv
+  object:
+    oid: blake3:3f364cc397382954c5777d0e36aff64a48783835f6ba7b039220867035305ab5
+    size: 21547362
+  schema_path: data/routes/Toyosu-2018-2021/Toyosu-2020/car/link.csv.schema.yaml
+- id: Toyosu-2020/car/linkFile.zip
+  path: Toyosu-2020/car/linkFile.zip
+  object:
+    oid: blake3:cb9a541aae5e0c35346977fb3382c72fd7ae7cea02787684bd9976e07bd0b775
+    size: 113945765
+- id: Toyosu-2020/car/path.csv
+  path: Toyosu-2020/car/path.csv
+  object:
+    oid: blake3:b06e237eae7c3bcce237abb1a39b69aa2a52c7a02c091050caa7d8ee59837ccd
+    size: 393129
+  schema_path: data/routes/Toyosu-2018-2021/Toyosu-2020/car/path.csv.schema.yaml
+- id: Toyosu-2020/rail/link.csv
+  path: Toyosu-2020/rail/link.csv
+  object:
+    oid: blake3:b9f3e2fb195069e9d78f6e5c3e8acf38375ddbc109e41d8e6b515ec3fe120033
+    size: 117149
+  schema_path: data/routes/Toyosu-2018-2021/Toyosu-2020/rail/link.csv.schema.yaml
+- id: Toyosu-2020/rail/linkFile.zip
+  path: Toyosu-2020/rail/linkFile.zip
+  object:
+    oid: blake3:624ed3887307f2085ce50c7d49e63b2009d2ed647c513a9e9e1a3a5b98b82401
+    size: 2279511
+- id: Toyosu-2020/rail/path.csv
+  path: Toyosu-2020/rail/path.csv
+  object:
+    oid: blake3:64c3b1d1de297ed32f7a3ed47d2d8bbfdd480d8758150adb8b261f6916d2c174
+    size: 1048579
+  schema_path: data/routes/Toyosu-2018-2021/Toyosu-2020/rail/path.csv.schema.yaml
+- id: Toyosu-2020/rail/rail_result.csv
+  path: Toyosu-2020/rail/rail_result.csv
+  object:
+    oid: blake3:a42998033c4b28ef12ff1a4ede3cba3a2b863944ab9b478959794631d471ebc8
+    size: 9
+  schema_path: data/routes/Toyosu-2018-2021/Toyosu-2020/rail/rail_result.csv.schema.yaml
+- id: Toyosu-2020/walk/link.csv
+  path: Toyosu-2020/walk/link.csv
+  object:
+    oid: blake3:da4f5c633d06630fa9024a4570c79a6204fdeb082a0e54ba5fb5a8bba2e330ff
+    size: 28257164
+  schema_path: data/routes/Toyosu-2018-2021/Toyosu-2020/walk/link.csv.schema.yaml
+- id: Toyosu-2020/walk/linkFile.zip
+  path: Toyosu-2020/walk/linkFile.zip
+  object:
+    oid: blake3:d532dcc6b51da59df11d7bae46cb6afab0603e738be2e2a6dc6f17acaed21b69
+    size: 172076402
+- id: Toyosu-2020/walk/path.csv
+  path: Toyosu-2020/walk/path.csv
+  object:
+    oid: blake3:9893498e598d8c9ed6c505108d6e930c597a95d6eaa13a65b711c2564faccd60
+    size: 2515032
+  schema_path: data/routes/Toyosu-2018-2021/Toyosu-2020/walk/path.csv.schema.yaml
+- id: Toyosu-2020/walk/walk_result.csv
+  path: Toyosu-2020/walk/walk_result.csv
+  object:
+    oid: blake3:452a571f83ad453fed0491ac4bb42c0f3c71e642b5ecb7a615801003d2f777a0
+    size: 10829485
+  schema_path: data/routes/Toyosu-2018-2021/Toyosu-2020/walk/walk_result.csv.schema.yaml
+- id: Toyosu-2021/bike/bike_result.csv
+  path: Toyosu-2021/bike/bike_result.csv
+  object:
+    oid: blake3:d6d93bcff42562d61364fbf9b2610378f0d7daae7c3d14317408437da3753a60
+    size: 4255789
+  schema_path: data/routes/Toyosu-2018-2021/Toyosu-2021/bike/bike_result.csv.schema.yaml
+- id: Toyosu-2021/bike/link.csv
+  path: Toyosu-2021/bike/link.csv
+  object:
+    oid: blake3:9dff19b9688ec14ec1e8e591b3a971e796d4cfa22cf932d9e0e00e60b16f0891
+    size: 10458083
+  schema_path: data/routes/Toyosu-2018-2021/Toyosu-2021/bike/link.csv.schema.yaml
+- id: Toyosu-2021/bike/linkFile.zip
+  path: Toyosu-2021/bike/linkFile.zip
+  object:
+    oid: blake3:20409885ae2c269117a02c6be3c3fe00958e48cbcc98486a4738056c5d7836f3
+    size: 68221363
+- id: Toyosu-2021/bike/path.csv
+  path: Toyosu-2021/bike/path.csv
+  object:
+    oid: blake3:6d397d151c591a3682c001154dfcb9cec607c85706b8db4eeae439f3f5763d42
+    size: 644735
+  schema_path: data/routes/Toyosu-2018-2021/Toyosu-2021/bike/path.csv.schema.yaml
+- id: Toyosu-2021/bus/bus_result.csv
+  path: Toyosu-2021/bus/bus_result.csv
+  object:
+    oid: blake3:8caabc17e22d62afec0eafb9f5459e9e5baab5b30d78834d34fb559b884119a7
+    size: 156205
+  schema_path: data/routes/Toyosu-2018-2021/Toyosu-2021/bus/bus_result.csv.schema.yaml
+- id: Toyosu-2021/bus/link.csv
+  path: Toyosu-2021/bus/link.csv
+  object:
+    oid: blake3:b105dedca782c95e4b5ac7db94795cec61d788594a9b84b8505443a36b01abe4
+    size: 442662
+  schema_path: data/routes/Toyosu-2018-2021/Toyosu-2021/bus/link.csv.schema.yaml
+- id: Toyosu-2021/bus/linkFile.zip
+  path: Toyosu-2021/bus/linkFile.zip
+  object:
+    oid: blake3:1e070ea2691666c338bb14dcde289a5beb5755985d724843f88cc73026a1273e
+    size: 5737430
+- id: Toyosu-2021/bus/path.csv
+  path: Toyosu-2021/bus/path.csv
+  object:
+    oid: blake3:d62c2249af11d546db5d7c3dfbf33cc77f24980a46742f9c0a7a387d0d91af51
+    size: 129690
+  schema_path: data/routes/Toyosu-2018-2021/Toyosu-2021/bus/path.csv.schema.yaml
+- id: Toyosu-2021/car/car_result.csv
+  path: Toyosu-2021/car/car_result.csv
+  object:
+    oid: blake3:f695d689dfc1296eab95f2bb9c8df56c8125d225d214bae47bddc3641ef430f2
+    size: 8211845
+  schema_path: data/routes/Toyosu-2018-2021/Toyosu-2021/car/car_result.csv.schema.yaml
+- id: Toyosu-2021/car/link.csv
+  path: Toyosu-2021/car/link.csv
+  object:
+    oid: blake3:a6f8f03328e70a420c96f2c75810c9b98e5dce49a23489f087b02771aac251cd
+    size: 23034178
+  schema_path: data/routes/Toyosu-2018-2021/Toyosu-2021/car/link.csv.schema.yaml
+- id: Toyosu-2021/car/link.xlsx
+  path: Toyosu-2021/car/link.xlsx
+  object:
+    oid: blake3:469e5fdfac0e30a90d752ab270bad4ff05ade722b1482f778e733a4963b5127c
+    size: 15956774
+- id: Toyosu-2021/car/linkFile.zip
+  path: Toyosu-2021/car/linkFile.zip
+  object:
+    oid: blake3:34056ed05293d56669cc624c27d0e7d28bd804b22899874f30ef963038f4fb8d
+    size: 126184406
+- id: Toyosu-2021/car/path.csv
+  path: Toyosu-2021/car/path.csv
+  object:
+    oid: blake3:c55855176dc253b44ad1303cc8b9eac7643246ac40b2a61a9c2f895427d14c25
+    size: 453900
+  schema_path: data/routes/Toyosu-2018-2021/Toyosu-2021/car/path.csv.schema.yaml
+- id: Toyosu-2021/rail/link.csv
+  path: Toyosu-2021/rail/link.csv
+  object:
+    oid: blake3:db34792c6d9aa1f9b87900606dae6eb7f71e7794dc93a6d6238a1f8e3f4361d8
+    size: 98675
+  schema_path: data/routes/Toyosu-2018-2021/Toyosu-2021/rail/link.csv.schema.yaml
+- id: Toyosu-2021/rail/linkFile.zip
+  path: Toyosu-2021/rail/linkFile.zip
+  object:
+    oid: blake3:2227ea8e8d2260879a53f6ee0751a016b26048c9f74a9505e9e3ab3d28c23331
+    size: 2102111
+- id: Toyosu-2021/rail/path.csv
+  path: Toyosu-2021/rail/path.csv
+  object:
+    oid: blake3:077839c68f0cd951cd2fd356f1cf1e8fde08a45f455f6faa6fedf4d9cb199737
+    size: 934475
+  schema_path: data/routes/Toyosu-2018-2021/Toyosu-2021/rail/path.csv.schema.yaml
+- id: Toyosu-2021/rail/rail_result.csv
+  path: Toyosu-2021/rail/rail_result.csv
+  object:
+    oid: blake3:a42998033c4b28ef12ff1a4ede3cba3a2b863944ab9b478959794631d471ebc8
+    size: 9
+  schema_path: data/routes/Toyosu-2018-2021/Toyosu-2021/rail/rail_result.csv.schema.yaml
+- id: Toyosu-2021/walk/link.csv
+  path: Toyosu-2021/walk/link.csv
+  object:
+    oid: blake3:c4c3d1664a4a315a46424f400cfad0746f895530ff559dddaad3583cc80650c6
+    size: 21587374
+  schema_path: data/routes/Toyosu-2018-2021/Toyosu-2021/walk/link.csv.schema.yaml
+- id: Toyosu-2021/walk/linkFile.zip
+  path: Toyosu-2021/walk/linkFile.zip
+  object:
+    oid: blake3:208c5e5f2e564ef836501eac08b7dcb9bd9037868293c59abfc04acc504dad7d
+    size: 151464922
+- id: Toyosu-2021/walk/path.csv
+  path: Toyosu-2021/walk/path.csv
+  object:
+    oid: blake3:44670a90359f869823ffe3c30140a4f652ec30fdfdc240e133cd1ec04783c679
+    size: 2676090
+  schema_path: data/routes/Toyosu-2018-2021/Toyosu-2021/walk/path.csv.schema.yaml
+- id: Toyosu-2021/walk/walk_result.csv
+  path: Toyosu-2021/walk/walk_result.csv
+  object:
+    oid: blake3:cb7e8c798c8d45232071922a0257862b7be3b38da00df67223e21e4dd9350be5
+    size: 8022717
+  schema_path: data/routes/Toyosu-2018-2021/Toyosu-2021/walk/walk_result.csv.schema.yaml

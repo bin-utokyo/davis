@@ -1,0 +1,23 @@
+version: 1
+dataset:
+  id: PP/Matsuyama
+  root: data/PP/Matsuyama
+files:
+- id: UserInfo.csv
+  path: UserInfo.csv
+  object:
+    oid: blake3:951c52a94db60ab85d3e98abf3b692b152dbf6a9a9452afd048c395f51ba67f7
+    size: 3331
+  schema_path: data/PP/Matsuyama/UserInfo.csv.schema.yaml
+- id: locData.csv
+  path: locData.csv
+  object:
+    oid: blake3:f7484060cc6107f624b2a5d216dc0bce863512e9901a41414cd9d18631b8c5c6
+    size: 104610916
+  schema_path: data/PP/Matsuyama/locData.csv.schema.yaml
+- id: trip.csv
+  path: trip.csv
+  object:
+    oid: blake3:bd517f04b2fda9e79526efced70f647affd53dfafd57486c3773ab9624e332a2
+    size: 3055289
+  schema_path: data/PP/Matsuyama/trip.csv.schema.yaml

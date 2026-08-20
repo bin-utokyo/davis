@@ -1,0 +1,102 @@
+version: 1
+dataset:
+  id: routes/Ojima-6chome-2020
+  root: data/routes/Ojima-6chome-2020
+files:
+- id: README.docx
+  path: README.docx
+  object:
+    oid: blake3:8e5828e2cd51292e8d272ff38d5578fcc6cf994b7cb81aeed83b3ba7ee0e93cb
+    size: 221246
+- id: bike/bike_result.csv
+  path: bike/bike_result.csv
+  object:
+    oid: blake3:903ac4f3ddad825eb871f15c20dedeabf4a8be67423be2cbb1ef43e683e7b4e3
+    size: 109251
+  schema_path: data/routes/Ojima-6chome-2020/bike/bike_result.csv.schema.yaml
+- id: bike/link.csv
+  path: bike/link.csv
+  object:
+    oid: blake3:29cdfd07a8fc804380de28cd77b18bfe7173333222b4fa6ed0951fa198583b90
+    size: 272593
+  schema_path: data/routes/Ojima-6chome-2020/bike/link.csv.schema.yaml
+- id: bike/linkFile.zip
+  path: bike/linkFile.zip
+  object:
+    oid: blake3:706bbf993fef32e08a63cf8de2a198b8a43dddbfe2696d22c951504e467cf204
+    size: 2248275
+- id: bike/path.csv
+  path: bike/path.csv
+  object:
+    oid: blake3:dfeb32182f1653ae51a8b43507ac34524a2d270bc579ee2c844b8555037ff568
+    size: 22809
+  schema_path: data/routes/Ojima-6chome-2020/bike/path.csv.schema.yaml
+- id: bus/bus_result.csv
+  path: bus/bus_result.csv
+  object:
+    oid: blake3:4c83b5082884de9cb4808f9ff7c44222cb37d61ad6c681677ce8c429d15890e5
+    size: 10141
+  schema_path: data/routes/Ojima-6chome-2020/bus/bus_result.csv.schema.yaml
+- id: bus/link.csv
+  path: bus/link.csv
+  object:
+    oid: blake3:00d5a505421febb50829579cb50af13b7b592cc9146be5f7f41c49d2656948e3
+    size: 29369
+  schema_path: data/routes/Ojima-6chome-2020/bus/link.csv.schema.yaml
+- id: bus/linkFile.zip
+  path: bus/linkFile.zip
+  object:
+    oid: blake3:64cefe533bd1038a581fa174e0c7284acd8efd32e6ea012e593ca31d496be921
+    size: 413814
+- id: bus/path.csv
+  path: bus/path.csv
+  object:
+    oid: blake3:2aada84d34c6567578ef58cddc3f42e5d6918a5cceb5c1d8ada47532652c7477
+    size: 5826
+  schema_path: data/routes/Ojima-6chome-2020/bus/path.csv.schema.yaml
+- id: car/car_result.csv
+  path: car/car_result.csv
+  object:
+    oid: blake3:b694a402e83390c0e5040ca794c774ed4ec4af946d73c5a4ae44f1cac9c36a48
+    size: 113284
+  schema_path: data/routes/Ojima-6chome-2020/car/car_result.csv.schema.yaml
+- id: car/link.csv
+  path: car/link.csv
+  object:
+    oid: blake3:ca582231390da659f20a2d9ed70d8c96ebb54adfe771db28caa5257b24442c48
+    size: 315781
+  schema_path: data/routes/Ojima-6chome-2020/car/link.csv.schema.yaml
+- id: car/linkFile.zip
+  path: car/linkFile.zip
+  object:
+    oid: blake3:43a85794ed4a59e497f56c6989013f5fc34e5c423b367e77d8921fdeabc62172
+    size: 2077668
+- id: car/path.csv
+  path: car/path.csv
+  object:
+    oid: blake3:07047255a208e6e723f0099780a414e5a90cdea4c37ae9f5dd237dd48b052696
+    size: 5870
+  schema_path: data/routes/Ojima-6chome-2020/car/path.csv.schema.yaml
+- id: walk/link.csv
+  path: walk/link.csv
+  object:
+    oid: blake3:17e856d06e9611b6c21bb10d17564e02bd6b1b919ef348942fefcb07a55ac445
+    size: 515575
+  schema_path: data/routes/Ojima-6chome-2020/walk/link.csv.schema.yaml
+- id: walk/linkFile.zip
+  path: walk/linkFile.zip
+  object:
+    oid: blake3:782e633c30fed3d9a943cd3c21edd84cc297b35ef4e9f200f2d7f55ad46cfd17
+    size: 4755828
+- id: walk/path.csv
+  path: walk/path.csv
+  object:
+    oid: blake3:b19c3a4a2378167eaca3e4b80290add4da251857697e57ae38fcfbca98af76aa
+    size: 94177
+  schema_path: data/routes/Ojima-6chome-2020/walk/path.csv.schema.yaml
+- id: walk/walk_result.csv
+  path: walk/walk_result.csv
+  object:
+    oid: blake3:bbc017b76d752e12a2919b1e014e5319c49c72df672f5faec529ed50a0e99f2f
+    size: 176809
+  schema_path: data/routes/Ojima-6chome-2020/walk/walk_result.csv.schema.yaml

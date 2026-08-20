@@ -1,0 +1,94 @@
+version: 1
+dataset:
+  id: Tohoku_History
+  root: data/Tohoku_History
+files:
+- id: README.md
+  path: README.md
+  object:
+    oid: blake3:c5feb0144efdf8ef7840035701161a7c60ebd760e5fcc690bea59fb803bfc6d5
+    size: 2417
+- id: df_ex_var.csv
+  path: df_ex_var.csv
+  object:
+    oid: blake3:ca267200115620a63ad4d93bf05cb2446199da40696165bc7352c4d06e73733b
+    size: 42611554
+  schema_path: data/Tohoku_History/df_ex_var.csv.schema.yaml
+- id: df_ex_var_disaster.csv
+  path: df_ex_var_disaster.csv
+  object:
+    oid: blake3:e1c7f28ce394eb0f31e996552377c560c3bf57dc91c1168f4717989b783cbc22
+    size: 6630159
+  schema_path: data/Tohoku_History/df_ex_var_disaster.csv.schema.yaml
+- id: df_history.csv
+  path: df_history.csv
+  object:
+    oid: blake3:d3031488aa056804b1e1257a8dc02bbae149d7724a918ec4fe4920ac801e4453
+    size: 5767029
+  schema_path: data/Tohoku_History/df_history.csv.schema.yaml
+- id: df_individual.csv
+  path: df_individual.csv
+  object:
+    oid: blake3:af4345d1e8d8f3b45697ced329eb2288792601700defca2455b08697f1c0f7de
+    size: 2437704
+  schema_path: data/Tohoku_History/df_individual.csv.schema.yaml
+- id: df_individual_disaster.csv
+  path: df_individual_disaster.csv
+  object:
+    oid: blake3:b33c8406e2dc584e0e0a2b90399f8a1d5f1ca7fd25704ec24e259148a7e7a655
+    size: 381558
+  schema_path: data/Tohoku_History/df_individual_disaster.csv.schema.yaml
+- id: df_init.csv
+  path: df_init.csv
+  object:
+    oid: blake3:d1904009d86311d4b5330ce97271d33d03a1c86edc0bdc3c55710ae6505bfabf
+    size: 215070
+  schema_path: data/Tohoku_History/df_init.csv.schema.yaml
+- id: df_initial.csv
+  path: df_initial.csv
+  object:
+    oid: blake3:3c5e162896deaa08334e6caf55fe1e9fce9f73ad7f81800d9c9a2fbfcee059a5
+    size: 186037
+  schema_path: data/Tohoku_History/df_initial.csv.schema.yaml
+- id: df_initial_disaster.csv
+  path: df_initial_disaster.csv
+  object:
+    oid: blake3:fb0202888398757c95d00283961a7ce68a09240652d2c258bedc0bd941648411
+    size: 29208
+  schema_path: data/Tohoku_History/df_initial_disaster.csv.schema.yaml
+- id: df_stay_var.csv
+  path: df_stay_var.csv
+  object:
+    oid: blake3:e0c8c3d948943612010355635b7619954a2657a42835ce63de4a3a3214af8d98
+    size: 2494838
+  schema_path: data/Tohoku_History/df_stay_var.csv.schema.yaml
+- id: df_stay_var_disaster.csv
+  path: df_stay_var_disaster.csv
+  object:
+    oid: blake3:cd27594627413ee017c92afdcee4e11d288d84ca62bcc1c59264f9b3598e662e
+    size: 416695
+  schema_path: data/Tohoku_History/df_stay_var_disaster.csv.schema.yaml
+- id: initial_information.csv
+  path: initial_information.csv
+  object:
+    oid: blake3:f65e518b457355a0625fe99fd5e0ba56b424324d3014c6027810d64b2e40f60b
+    size: 159984
+  schema_path: data/Tohoku_History/initial_information.csv.schema.yaml
+- id: raw/survey_questions.csv
+  path: raw/survey_questions.csv
+  object:
+    oid: blake3:f0954db8d6e70d29fa4434b0df43dd477f2949066909e211bd4697c34ffa3c41
+    size: 1414722
+  schema_path: data/Tohoku_History/raw/survey_questions.csv.schema.yaml
+- id: raw/survey_responses.csv
+  path: raw/survey_responses.csv
+  object:
+    oid: blake3:16bc601fcfa40c83702a5ca35c61b947fa7dabd61556cb7f1cb6a73d40ef1dda
+    size: 5176890
+  schema_path: data/Tohoku_History/raw/survey_responses.csv.schema.yaml
+- id: raw/survey_responses_tabulation.csv
+  path: raw/survey_responses_tabulation.csv
+  object:
+    oid: blake3:201688ba2e5f39e7bee4a47db65351440fdc4973abf770febeacfbd6b96cc317
+    size: 1411350
+  schema_path: data/Tohoku_History/raw/survey_responses_tabulation.csv.schema.yaml

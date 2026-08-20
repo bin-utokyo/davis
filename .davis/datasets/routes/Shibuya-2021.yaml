@@ -1,0 +1,125 @@
+version: 1
+dataset:
+  id: routes/Shibuya-2021
+  root: data/routes/Shibuya-2021
+files:
+- id: README.docx
+  path: README.docx
+  object:
+    oid: blake3:c093f992ad1674664da9b629234e7a55023fcff5aee5c08a988a0a90a4d67c23
+    size: 12114
+- id: bike/bike_result.csv
+  path: bike/bike_result.csv
+  object:
+    oid: blake3:77cb29b5ea86a660599c782e2c65bed0ab54c0d2f7ec23cff5e9fb7ee0518a83
+    size: 134717
+  schema_path: data/routes/Shibuya-2021/bike/bike_result.csv.schema.yaml
+- id: bike/link.csv
+  path: bike/link.csv
+  object:
+    oid: blake3:00aa72d8d42f278926d406f364db08dceb80d2a8ae8bd256ea1f6f5d67235f1f
+    size: 342319
+  schema_path: data/routes/Shibuya-2021/bike/link.csv.schema.yaml
+- id: bike/linkFile.zip
+  path: bike/linkFile.zip
+  object:
+    oid: blake3:6b4893bf67a2b198748f06730b20176328f26b8ced02b5fab8ecccfe75ec4435
+    size: 2890505
+- id: bike/path.csv
+  path: bike/path.csv
+  object:
+    oid: blake3:17c475b12c1de9c16028499afe751ff291701ef6f6b338e238baac87d2c5d52a
+    size: 37119
+  schema_path: data/routes/Shibuya-2021/bike/path.csv.schema.yaml
+- id: bus/bus_result.csv
+  path: bus/bus_result.csv
+  object:
+    oid: blake3:7985e923ff639fa285eab9c76eca516f5d9614225e2f05fb22d77a9ca9dfc647
+    size: 26937
+  schema_path: data/routes/Shibuya-2021/bus/bus_result.csv.schema.yaml
+- id: bus/link.csv
+  path: bus/link.csv
+  object:
+    oid: blake3:f18521019563b0cf4e84e4490f9615ba2645a1887cd8fef084cf3eb36166fd36
+    size: 73610
+  schema_path: data/routes/Shibuya-2021/bus/link.csv.schema.yaml
+- id: bus/linkFile.zip
+  path: bus/linkFile.zip
+  object:
+    oid: blake3:6218ae851a6e67642b0daf94665d812317324fdfced19a3465803f9d8a29e1f2
+    size: 967272
+- id: bus/path.csv
+  path: bus/path.csv
+  object:
+    oid: blake3:2a0ce8765a0be9b4e6c02dd9681012bfe103f5865b66047ea4e7a19fe0b539f2
+    size: 23535
+  schema_path: data/routes/Shibuya-2021/bus/path.csv.schema.yaml
+- id: car/car_result.csv
+  path: car/car_result.csv
+  object:
+    oid: blake3:4050058e9e61886eedf8f7f0a10a3892b2aaaf7ca1735f0b787725ef40c05a64
+    size: 577900
+  schema_path: data/routes/Shibuya-2021/car/car_result.csv.schema.yaml
+- id: car/link.csv
+  path: car/link.csv
+  object:
+    oid: blake3:d26adf438b2e78934741aa7edba0f75edc026725633911d5138782d6ca8d06e0
+    size: 1621166
+  schema_path: data/routes/Shibuya-2021/car/link.csv.schema.yaml
+- id: car/linkFile.zip
+  path: car/linkFile.zip
+  object:
+    oid: blake3:2cd1411ce68f4c0a79f87d2f87dc72c733cd8cf2bf5270557281a14082eb2c16
+    size: 9306106
+- id: car/path.csv
+  path: car/path.csv
+  object:
+    oid: blake3:eed197102e3c395bba9cac4256d00b5cbfdf058ab3de84d038bacd2ba2dd3bf3
+    size: 39631
+  schema_path: data/routes/Shibuya-2021/car/path.csv.schema.yaml
+- id: rail/link.csv
+  path: rail/link.csv
+  object:
+    oid: blake3:f09a710177e53757f87c3f5cd42efcb75e9bd4c70461b0d061beb4440e62db14
+    size: 27314
+  schema_path: data/routes/Shibuya-2021/rail/link.csv.schema.yaml
+- id: rail/linkFile.zip
+  path: rail/linkFile.zip
+  object:
+    oid: blake3:688ea697e96a649fcdcf1fa0949d0c240fc521ad885835ed428678047ac354d8
+    size: 1179741
+- id: rail/path.csv
+  path: rail/path.csv
+  object:
+    oid: blake3:5e1cee193afe44a7ef39441562dbe16ca8f668a39e5107bbc24ce4da915fed46
+    size: 284554
+  schema_path: data/routes/Shibuya-2021/rail/path.csv.schema.yaml
+- id: rail/rail_result.csv
+  path: rail/rail_result.csv
+  object:
+    oid: blake3:a42998033c4b28ef12ff1a4ede3cba3a2b863944ab9b478959794631d471ebc8
+    size: 9
+  schema_path: data/routes/Shibuya-2021/rail/rail_result.csv.schema.yaml
+- id: walk/link.csv
+  path: walk/link.csv
+  object:
+    oid: blake3:83bdce8ebbddf486ec7531a73c73a9bd3b3ac3ac8e84095326df5a894b2ff236
+    size: 3660812
+  schema_path: data/routes/Shibuya-2021/walk/link.csv.schema.yaml
+- id: walk/linkFile.zip
+  path: walk/linkFile.zip
+  object:
+    oid: blake3:dc69de88af112abf4a0eb51f92756eb4414aedeef336a829331f182e84989446
+    size: 25717428
+- id: walk/path.csv
+  path: walk/path.csv
+  object:
+    oid: blake3:bbe98e7930d8472aeb9fb32e7bc0b6fe2a2bfc029d0258bdb87adb0386e4fb72
+    size: 471770
+  schema_path: data/routes/Shibuya-2021/walk/path.csv.schema.yaml
+- id: walk/walk_result.csv
+  path: walk/walk_result.csv
+  object:
+    oid: blake3:5f2d284bf0e4ad15d45c0252ccd3a42d0d50c41829748cb7ab6f630c076953c7
+    size: 1405161
+  schema_path: data/routes/Shibuya-2021/walk/walk_result.csv.schema.yaml

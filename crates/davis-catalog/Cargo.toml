@@ -1,0 +1,20 @@
+[package]
+name = "davis-catalog"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+davis-core = { path = "../davis-core" }
+md-5.workspace = true
+serde.workspace = true
+serde_yaml.workspace = true
+thiserror.workspace = true
+walkdir.workspace = true
+
+[dev-dependencies]
+serde_json.workspace = true
+
+[lints]
+workspace = true

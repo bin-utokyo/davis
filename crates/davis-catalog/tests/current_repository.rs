@@ -1,0 +1,62 @@
+use std::path::PathBuf;
+
+use davis_catalog::scan_legacy_repository;
+use davis_core::{read_manifest, SchemaStatus};
+
+fn repository_root() -> PathBuf {
+    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("../..")
+        .canonicalize()
+        .unwrap()
+}
+
+#[test]
+fn current_repository_has_no_catalog_coverage_regression() {
+    let catalog = scan_legacy_repository(&repository_root()).unwrap();
+
+    assert_eq!(catalog.file_count(), 255);
+    assert_eq!(catalog.schema_ready_count(), 176);
+    assert_eq!(
+        catalog
+            .datasets
+            .iter()
+            .flat_map(|dataset| &dataset.files)
+            .filter(|file| file.schema_status == SchemaStatus::Invalid)
+            .count(),
+        0
+    );
+    assert!(catalog.dataset("PT_data").is_some());
+    assert!(catalog.dataset("Tohoku_History").is_some());
+    assert!(catalog.dataset("routes/Toyosu-2018-2021").is_some());
+}
+
+#[test]
+fn generated_manifests_cover_the_current_catalog() {
+    let root = repository_root();
+    let catalog = scan_legacy_repository(&root).unwrap();
+    let mut manifest_files = 0_usize;
+    let mut schema_references = 0_usize;
+
+    for dataset in &catalog.datasets {
+        let manifest_path = root
+            .join(".davis/datasets")
+            .join(format!("{}.yaml", dataset.id));
+        let manifest = read_manifest(&manifest_path).unwrap();
+        assert_eq!(manifest.dataset.id, dataset.id);
+        assert_eq!(manifest.dataset.root, dataset.root);
+        assert_eq!(manifest.files.len(), dataset.files.len());
+        assert!(manifest
+            .files
+            .iter()
+            .all(|file| file.object.oid.algorithm() == "blake3"));
+        manifest_files += manifest.files.len();
+        schema_references += manifest
+            .files
+            .iter()
+            .filter(|file| file.schema_path.is_some())
+            .count();
+    }
+
+    assert_eq!(manifest_files, 255);
+    assert_eq!(schema_references, 176);
+}
