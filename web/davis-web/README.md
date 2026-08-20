@@ -30,7 +30,7 @@ pnpm test
 pnpm lint
 ```
 
-現段階では，検索，facet絞り込み，Dataset・File詳細，Raw YAML表示，複数選択，合計容量表示，`davis-next get` commandのcopyに対応しています．参加者認証とR2 downloadのWorker APIも実装済みで，Web UIとの接続は次の段階です．
+現段階では，検索，facet絞り込み，Dataset・File詳細，Raw YAML表示，複数選択，合計容量表示，`davis-next get` commandのcopyに対応しています．参加者認証とR2 downloadのWorker APIも実装済みで，CLIは接続済み，Web UIとのdownload接続は次の段階です．
 
 ## Download API
 
@@ -54,3 +54,13 @@ pnpm exec wrangler secret put DAVIS_TOKEN_SECRET
 ```
 
 R2 binding名は`DAVIS_DATA`，既定bucket名は`davis-bmss`です．`DAVIS_ACCESS_REVISION`を変更して再deployすると，旧招待codeで発行済みのsessionとdownload grantを一括失効できます．sessionは既定30日で最大180日，download grantは既定5分で最大15分です．
+
+CLIからは，deployment URLと共通招待codeを使用します．
+
+```bash
+davis-next login https://<deployment URL>
+davis-next list
+davis-next get network/matsuyama
+```
+
+CLIは`catalog/datasets.json`と`catalog/files.json`からDatasetManifestを再構成し，`POST /api/v1/download-grants`で不足Objectだけを取得します．したがって，参加者はrepositoryのclone，DVC，R2 credentialを必要としません．

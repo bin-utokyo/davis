@@ -5,12 +5,12 @@ use std::path::{Path, PathBuf};
 use davis_core::{
     read_manifest, Catalog, ColumnSchema, FileSchema, LocalizedText, ObjectRef, SchemaStatus,
 };
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use crate::CatalogError;
 
 /// Stable metadata consumed by static clients and future HTTP APIs.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct CatalogIndex {
     pub version: u32,
     pub summary: CatalogSummary,
@@ -20,7 +20,7 @@ pub struct CatalogIndex {
     pub facets: CatalogFacets,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct CatalogSummary {
     pub dataset_count: usize,
     pub file_count: usize,
@@ -28,7 +28,7 @@ pub struct CatalogSummary {
     pub total_size: u64,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct IndexedDataset {
     pub id: String,
     pub root: String,
@@ -37,7 +37,7 @@ pub struct IndexedDataset {
     pub total_size: u64,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct IndexedFile {
     pub id: String,
     pub dataset_id: String,
@@ -58,7 +58,7 @@ pub struct IndexedFile {
     pub raw_schema: Option<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct IndexedColumn {
     pub dataset_id: String,
     pub file_id: String,
@@ -67,7 +67,7 @@ pub struct IndexedColumn {
     pub description: Option<LocalizedText>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct CatalogFacets {
     pub cities: Vec<LocalizedText>,
     pub years: Vec<i64>,

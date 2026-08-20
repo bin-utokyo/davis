@@ -20,6 +20,8 @@ futures = "0.3"
 indicatif = "0.18"
 md-5 = "0.10"
 opendal = { version = "0.58", default-features = false, features = ["http-transport-reqwest", "services-fs", "services-s3"] }
+reqwest = { version = "0.13", default-features = false, features = ["json", "rustls", "stream"] }
+rpassword = "7"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 serde_yaml = "0.9"

@@ -1,4 +1,7 @@
-use std::io::IsTerminal;
+mod remote;
+mod session;
+
+use std::io::{IsTerminal, Read};
 use std::path::PathBuf;
 use std::time::Duration;
 
@@ -13,6 +16,7 @@ use davis_storage::{
     TransferProgress,
 };
 use indicatif::{ProgressBar, ProgressStyle};
+use remote::DavisService;
 
 #[derive(Debug, Parser)]
 #[command(name = "davis-next", version, about = "Davis data catalog client")]
@@ -27,6 +31,16 @@ struct Cli {
 
 #[derive(Debug, Subcommand)]
 enum Command {
+    /// Exchange a participant invite code for a CLI session.
+    Login {
+        /// Davis Web service URL, for example <https://davis.example.pages.dev>.
+        service_url: String,
+        /// Read the invite code from standard input instead of prompting.
+        #[arg(long)]
+        invite_code_stdin: bool,
+    },
+    /// Remove the locally stored CLI session.
+    Logout,
     /// List available datasets.
     List {
         /// Print structured JSON.
@@ -125,9 +139,14 @@ async fn main() {
 
 async fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
     match cli.command {
-        Command::List { json } => handle_list(&cli.repository, json)?,
+        Command::Login {
+            service_url,
+            invite_code_stdin,
+        } => handle_login(&service_url, invite_code_stdin).await?,
+        Command::Logout => handle_logout()?,
+        Command::List { json } => handle_list(&cli.repository, json).await?,
         Command::Info { dataset_id, json } => {
-            handle_info(&cli.repository, &dataset_id, json)?;
+            handle_info(&cli.repository, &dataset_id, json).await?;
         }
         Command::Index { out } => handle_index(&cli.repository, &out)?,
         Command::Ingest {
@@ -217,8 +236,53 @@ struct GetRequest {
     remote: String,
 }
 
-fn handle_list(repository: &std::path::Path, json: bool) -> Result<(), Box<dyn std::error::Error>> {
-    let catalog = scan_legacy_repository(repository)?;
+async fn handle_login(
+    service_url: &str,
+    invite_code_stdin: bool,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let invite_code = if invite_code_stdin {
+        let mut input = String::new();
+        std::io::stdin().read_to_string(&mut input)?;
+        input.trim_end_matches(['\r', '\n']).to_owned()
+    } else if std::io::stdin().is_terminal() {
+        rpassword::prompt_password("Invite code: ")?
+    } else {
+        return Err("standard input is not a terminal; use --invite-code-stdin".into());
+    };
+    if invite_code.is_empty() {
+        return Err("invite code must not be empty".into());
+    }
+    let service = DavisService::new(service_url, None)?;
+    let login = service.exchange_invite_code(&invite_code).await?;
+    let stored =
+        session::Session::new(service.base_url().to_owned(), login.token, login.expires_at);
+    let path = session::save(&stored)?;
+    println!("Logged in to {}", stored.service_url);
+    println!("Session expires: {}", stored.expires_at);
+    println!("Session: {}", path.display());
+    Ok(())
+}
+
+fn handle_logout() -> Result<(), Box<dyn std::error::Error>> {
+    if session::clear()? {
+        println!("Logged out");
+    } else {
+        println!("No stored session");
+    }
+    Ok(())
+}
+
+async fn handle_list(
+    repository: &std::path::Path,
+    json: bool,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let catalog = if let Some(stored) = session::load()? {
+        DavisService::new(&stored.service_url, Some(stored.token))?
+            .catalog()
+            .await?
+    } else {
+        scan_legacy_repository(repository)?
+    };
     if json {
         println!("{}", serde_json::to_string_pretty(&catalog)?);
     } else {
@@ -227,12 +291,18 @@ fn handle_list(repository: &std::path::Path, json: bool) -> Result<(), Box<dyn s
     Ok(())
 }
 
-fn handle_info(
+async fn handle_info(
     repository: &std::path::Path,
     dataset_id: &str,
     json: bool,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let catalog = scan_legacy_repository(repository)?;
+    let catalog = if let Some(stored) = session::load()? {
+        DavisService::new(&stored.service_url, Some(stored.token))?
+            .catalog()
+            .await?
+    } else {
+        scan_legacy_repository(repository)?
+    };
     let dataset = catalog
         .dataset(dataset_id)
         .ok_or_else(|| format!("dataset was not found: {dataset_id}"))?;
@@ -307,9 +377,20 @@ fn handle_ingest(
 }
 
 async fn handle_get(request: GetRequest) -> Result<(), Box<dyn std::error::Error>> {
-    let manifest_path = resolve(&request.repository, &request.manifest_directory)
-        .join(format!("{}.yaml", request.dataset_id));
-    let manifest = read_manifest(&manifest_path)?;
+    let stored_session = if request.config.is_none() {
+        session::load()?
+    } else {
+        None
+    };
+    let manifest = if let Some(stored) = &stored_session {
+        DavisService::new(&stored.service_url, Some(stored.token.clone()))?
+            .manifest(&request.dataset_id)
+            .await?
+    } else {
+        let manifest_path = resolve(&request.repository, &request.manifest_directory)
+            .join(format!("{}.yaml", request.dataset_id));
+        read_manifest(&manifest_path)?
+    };
     if manifest.dataset.id != request.dataset_id {
         return Err(format!(
             "manifest dataset ID mismatch: expected {}, found {}",
@@ -330,6 +411,33 @@ async fn handle_get(request: GetRequest) -> Result<(), Box<dyn std::error::Error
             .download_manifest_with_progress(&object_store, &manifest, |progress| {
                 update_transfer_progress(&progress_bar, "Download", progress);
             })
+            .await;
+        let report = match result {
+            Ok(report) => {
+                progress_bar.finish_with_message("Download complete");
+                report
+            }
+            Err(error) => {
+                progress_bar.abandon_with_message("Download failed");
+                return Err(error.into());
+            }
+        };
+        println!("Downloaded objects: {}", report.downloaded);
+        println!("Cached objects: {}", report.cached);
+    } else if let Some(stored) = stored_session {
+        let service = DavisService::new(&stored.service_url, Some(stored.token))?;
+        let progress_bar = transfer_progress_bar("Download");
+        let result = service
+            .download_manifest(
+                &object_store,
+                &manifest,
+                |completed_bytes, total_bytes, completed_objects, total_objects| {
+                    progress_bar.set_length(total_bytes);
+                    progress_bar.set_position(completed_bytes.min(total_bytes));
+                    progress_bar
+                        .set_message(format!("Download {completed_objects}/{total_objects}"));
+                },
+            )
             .await;
         let report = match result {
             Ok(report) => {

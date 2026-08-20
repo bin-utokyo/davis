@@ -42,6 +42,24 @@ davis-next --help
 
 将来，Rust版が既存機能を置き換えられる段階で`davis-next`を`davis`へ昇格し，必要な場合だけ既存版を`davis-legacy`として残します．
 
+参加者は，運営から案内されたDavis WebのURLを指定して一度loginします．招待codeは画面に表示されない対話promptから入力し，sessionが有効な間は再入力不要です．以後の`list`，`info`，`get`は公開catalogと認証済みDownload APIを利用します．`get`はcurrent directory以下に`data/<Dataset root>/...`を再現し，取得済みObjectはlocal cacheから再利用します．
+
+```bash
+davis-next login https://<配布されたURL>
+davis-next list
+davis-next info network/matsuyama
+davis-next get network/matsuyama
+davis-next logout
+```
+
+非対話環境では，招待codeをcommand line引数やshell履歴へ残さず，標準入力から渡します．
+
+```bash
+printf '%s\n' "$DAVIS_INVITE_CODE" | davis-next login https://<配布されたURL> --invite-code-stdin
+```
+
+sessionはOSごとのuser設定directoryに権限を限定して保存します．これはMVPの暫定credential storageであり，release配布前にOS credential store adapterへ置き換えられる境界を維持します．operatorのR2 credentialとは独立しており，参加者sessionにはupload，削除，Object一覧の権限がありません．
+
 現行DVC metadataと実データの整合性確認，BLAKE3 objectの生成，DatasetManifestの更新には次を使用します．
 
 ```bash
@@ -64,7 +82,7 @@ pnpm install
 pnpm dev
 ```
 
-Webカタログでは，名称・説明・地域・年・形式・license・schema状態・列情報による検索，Dataset・File詳細，Raw YAML表示，複数選択，合計容量表示，対応する`davis-next get` commandのcopyができます．Workerには，共通招待code，失効可能なsession，短寿命Download Grant，private R2 Object配信の共通APIがあります．Web UIとCLIからのAPI利用は次の段階です．
+Webカタログでは，名称・説明・地域・年・形式・license・schema状態・列情報による検索，Dataset・File詳細，Raw YAML表示，複数選択，合計容量表示，対応する`davis-next get` commandのcopyができます．Workerには，共通招待code，失効可能なsession，短寿命Download Grant，private R2 Object配信の共通APIがあります．CLIはこのAPIへ接続済みで，Web UIからのdownload接続が次の段階です．
 
 ## 検証
 
