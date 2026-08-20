@@ -37,6 +37,9 @@ nav { display: flex; gap: 34px; }
 nav a { color: var(--muted); font-size: 14px; padding: 29px 0 25px; }
 nav a.active { border-bottom: 2px solid var(--orange); color: var(--ink); }
 .header-actions { align-items: center; display: flex; gap: 10px; justify-self: end; }
+.language-switch { border: 1px solid var(--line); display: flex; padding: 2px; }
+.language-switch button { background: transparent; border: 0; color: var(--muted); cursor: pointer; font-size: 11px; padding: 6px 8px; }
+.language-switch button[aria-pressed="true"] { background: var(--green); color: white; }
 .auth-button { background: transparent; border: 1px solid var(--line); color: var(--green); cursor: pointer; font-size: 12px; padding: 9px 13px; }
 .selection-button { background: transparent; border: 0; cursor: pointer; }
 .selection-button span { align-items: center; background: var(--green); border-radius: 50%; color: white; display: inline-flex; font-size: 12px; height: 25px; justify-content: center; margin-left: 6px; width: 25px; }
@@ -187,6 +190,9 @@ footer > a:last-child { color: #f0a27d; font-family: var(--font-geist-mono), mon
 }
 
 @media (max-width: 520px) {
+  .site-header { min-height: 92px; }
+  .header-actions { flex-wrap: wrap; justify-content: flex-end; }
+  .language-switch { order: 3; }
   h1 { font-size: 44px; }
   .search-panel { padding: 18px; }
   .search-row { grid-template-columns: auto 1fr; }

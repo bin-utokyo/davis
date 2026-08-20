@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const title = "Davis | 交通データカタログ";
-const description = "交通行動研究のためのデータを，schemaから検索できるカタログです．";
+const title = "Davis | 交通データカタログ / Transport Data Catalog";
+const description = "交通行動研究のためのデータをschemaから検索できる，日英対応のカタログです． Search transport data and schemas for travel behavior research.";
 
 export async function generateMetadata(): Promise<Metadata> {
   const requestHeaders = await headers();

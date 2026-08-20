@@ -29,12 +29,14 @@ test("server-renders the Davis catalog shell", async () => {
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
 
   const html = await response.text();
-  assert.match(html, /<title>Davis \| 交通データカタログ<\/title>/i);
+  assert.match(html, /<title>Davis \| 交通データカタログ \/ Transport Data Catalog<\/title>/i);
   assert.match(html, /交通データを/);
   assert.match(html, /研究のすぐそばに/);
   assert.match(html, /データセットを探す/);
   assert.match(html, /Webから個別に保存できます/);
   assert.match(html, /確認中/);
+  assert.match(html, /日本語/);
+  assert.match(html, /English/);
   assert.match(html, /property="og:image" content="http:\/\/localhost:3000\/og\.png"/);
   assert.match(html, /name="twitter:card" content="summary_large_image"/);
   assert.doesNotMatch(html, /codex-preview|SkeletonPreview|Your site is taking shape/);
