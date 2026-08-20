@@ -80,7 +80,7 @@ cargo run -p davis-cli -- verify
 cargo run -p davis-cli -- ingest --all
 ```
 
-Use `davis push` for differential uploads to R2 or a filesystem remote. `davis push --all --dry-run` checks all datasets without uploading or publishing. A production push uploads missing objects, writes a revisioned CatalogIndex, and then switches `catalog/current.json`.
+Use `davis push` to publish differential updates to R2 or a filesystem remote. A normal push ingests changed source files into the content-addressed store automatically, reuses unchanged files from the local cache, uploads missing objects, writes a revisioned CatalogIndex, and then switches `catalog/current.json`. Operators therefore do not need to run `ingest` separately during routine updates. `davis push --all --dry-run` checks all datasets without uploading or publishing, while `--rehash` re-reads every source file and verifies it against the DVC metadata.
 
 ## Web catalog
 

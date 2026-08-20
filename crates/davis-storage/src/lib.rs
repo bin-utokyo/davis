@@ -359,10 +359,6 @@ impl ObjectStorage {
             missing_objects: Vec::new(),
         };
         for object in objects {
-            local.verify_object_with_progress(&object.oid, object.size, |bytes| {
-                progress.completed_bytes = progress.completed_bytes.saturating_add(bytes);
-                on_progress(progress);
-            })?;
             let key = object_key(&object.oid);
             match self.operator.stat(&key).await {
                 Ok(metadata) => {
@@ -374,8 +370,13 @@ impl ObjectStorage {
                         });
                     }
                     plan.existing += 1;
+                    progress.completed_bytes = progress.completed_bytes.saturating_add(object.size);
                 }
                 Err(error) if error.kind() == ErrorKind::NotFound => {
+                    local.verify_object_with_progress(&object.oid, object.size, |bytes| {
+                        progress.completed_bytes = progress.completed_bytes.saturating_add(bytes);
+                        on_progress(progress);
+                    })?;
                     plan.missing += 1;
                     plan.missing_bytes = plan
                         .missing_bytes
@@ -901,6 +902,11 @@ mod tests {
             .unwrap();
         assert_eq!(final_coverage.missing, 0);
         assert_eq!(final_coverage.existing, 1);
+
+        fs::remove_file(local.object_path(&manifest.files[0].object.oid)).unwrap();
+        let remote_only_plan = remote.plan_upload(&local, &manifest).await.unwrap();
+        assert_eq!(remote_only_plan.missing, 0);
+        assert_eq!(remote_only_plan.existing, 1);
 
         let empty_cache = LocalObjectStore::new(temporary.path().join("empty-cache"));
         let mut download_progress = Vec::new();

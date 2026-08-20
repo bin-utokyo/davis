@@ -8,8 +8,8 @@ use std::time::Duration;
 
 use clap::{Parser, Subcommand};
 use davis_catalog::{
-    audit_legacy_datasets, build_catalog_index, ingest_legacy_dataset, scan_legacy_repository,
-    write_catalog_index,
+    audit_legacy_datasets, build_catalog_index, ingest_legacy_dataset, refresh_legacy_dataset,
+    scan_legacy_repository, write_catalog_index,
 };
 use davis_core::{
     read_manifest, write_manifest, Dataset, LocalObjectStore, ObjectRef, SchemaStatus,
@@ -115,14 +115,14 @@ enum Command {
         /// Verify only one dataset. All datasets are checked when omitted.
         dataset_id: Option<String>,
     },
-    /// Upload missing content-addressed objects without deleting remote data.
+    /// Ingest local changes, upload missing objects, and publish the catalog.
     Push {
         /// One dataset to upload.
         dataset_id: Option<String>,
         /// Upload every dataset in the current catalog.
         #[arg(long, conflicts_with = "dataset_id")]
         all: bool,
-        /// Local object storage root populated by `davis ingest`.
+        /// Local content-addressed cache.
         #[arg(long, default_value = ".davis/cache")]
         store: PathBuf,
         /// Directory containing `DatasetManifest` YAML files.
@@ -137,6 +137,9 @@ enum Command {
         /// Show missing objects without uploading them.
         #[arg(long)]
         dry_run: bool,
+        /// Re-read and verify every source file instead of reusing unchanged local objects.
+        #[arg(long)]
+        rehash: bool,
     },
 }
 
@@ -225,6 +228,7 @@ async fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
             config,
             remote,
             dry_run,
+            rehash,
         } => {
             handle_push(PushRequest {
                 repository: cli.repository,
@@ -235,6 +239,7 @@ async fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
                 config,
                 remote,
                 dry_run,
+                rehash,
             })
             .await?;
         }
@@ -270,6 +275,7 @@ struct PushRequest {
     config: PathBuf,
     remote: String,
     dry_run: bool,
+    rehash: bool,
 }
 
 struct GetRequest {
@@ -636,19 +642,15 @@ async fn handle_push(request: PushRequest) -> Result<(), Box<dyn std::error::Err
         vec![dataset_id.to_owned()]
     };
     let manifest_directory = resolve(&request.repository, &request.manifest_directory);
-    let mut manifests = Vec::with_capacity(dataset_ids.len());
-    for dataset_id in &dataset_ids {
-        let manifest = read_manifest(&manifest_directory.join(format!("{dataset_id}.yaml")))?;
-        if manifest.dataset.id != *dataset_id {
-            return Err(format!(
-                "manifest dataset ID mismatch: expected {dataset_id}, found {}",
-                manifest.dataset.id
-            )
-            .into());
-        }
-        manifests.push(manifest);
-    }
     let local_store = LocalObjectStore::new(resolve(&request.repository, &request.store));
+    let manifests = prepare_push_manifests(
+        &request.repository,
+        &catalog,
+        &dataset_ids,
+        &manifest_directory,
+        &local_store,
+        request.rehash,
+    )?;
     if let Some(operator_session) = session::load_operator()? {
         let operator_session = ensure_operator_session(operator_session).await?;
         return handle_operator_push(
@@ -843,6 +845,39 @@ fn unique_manifest_objects(
     let mut objects = objects.into_values().collect::<Vec<_>>();
     objects.sort_by_key(|object| object.oid.to_string());
     Ok(objects)
+}
+
+fn prepare_push_manifests(
+    repository: &std::path::Path,
+    catalog: &davis_core::Catalog,
+    dataset_ids: &[String],
+    manifest_directory: &std::path::Path,
+    local_store: &LocalObjectStore,
+    rehash: bool,
+) -> Result<Vec<davis_core::DatasetManifest>, Box<dyn std::error::Error>> {
+    let mut manifests = Vec::with_capacity(dataset_ids.len());
+    for dataset_id in dataset_ids {
+        let manifest_path = manifest_directory.join(format!("{dataset_id}.yaml"));
+        let previous = manifest_path
+            .is_file()
+            .then(|| read_manifest(&manifest_path))
+            .transpose()?;
+        let dataset = catalog
+            .dataset(dataset_id)
+            .ok_or_else(|| format!("dataset was not found: {dataset_id}"))?;
+        let report =
+            refresh_legacy_dataset(repository, dataset, local_store, previous.as_ref(), rehash)?;
+        if previous.as_ref() != Some(&report.manifest) {
+            write_manifest(&manifest_path, &report.manifest)?;
+        }
+        println!(
+            "Prepared {dataset_id}: {} ingested, {} unchanged",
+            report.added_objects + report.existing_objects,
+            report.reused_files
+        );
+        manifests.push(report.manifest);
+    }
+    Ok(manifests)
 }
 
 async fn publish_catalog(

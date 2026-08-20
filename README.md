@@ -92,7 +92,7 @@ cargo run -p davis-cli -- verify
 cargo run -p davis-cli -- ingest --all
 ```
 
-R2またはfilesystem remoteへの差分uploadには`davis push`を使用します．1 Datasetだけを指定できるほか，`davis push --all --dry-run`で全Datasetの差分を安全に確認できます．通常の`push`は不足Objectのupload後に最新の`schema.yaml`からCatalogIndexを生成し，revision単位で保存してから`catalog/current.json`を切り替えます．Objectの差分がなくschemaだけが変わった場合もWebへ反映されます．設定例は`.davis/config.example.toml`にあります．
+R2またはfilesystem remoteへの差分公開には`davis push`を使用します．通常の`push`は，実データの変更を自動的に内容アドレス形式へ取り込み，不足Objectのupload後に最新の`schema.yaml`からCatalogIndexを生成し，revision単位で保存してから`catalog/current.json`を切り替えます．未変更の実データはlocal cacheから再利用するため，運営者が通常の更新で`ingest`を別途実行する必要はありません．Objectの差分がなくschemaだけが変わった場合もWebへ反映されます．1 Datasetだけを指定できるほか，`davis push --all --dry-run`で全Datasetの差分を確認できます．実データをすべて読み直してDVC metadataとの整合性を厳密に再検査する場合は`--rehash`を指定します．設定例は`.davis/config.example.toml`にあります．
 
 対話terminalでは，`push`のlocal検証・uploadと，remoteを指定した`get`のdownloadについて，処理済みObject数，処理済み容量，割合，残り時間をprogress barで表示します．pipeやCI等の非対話実行ではprogress barを自動的に非表示にし，既存の標準出力を維持します．
 

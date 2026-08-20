@@ -82,6 +82,7 @@ pub struct IngestReport {
     pub manifest: DatasetManifest,
     pub added_objects: usize,
     pub existing_objects: usize,
+    pub reused_files: usize,
     pub bytes: u64,
 }
 
@@ -266,13 +267,64 @@ pub fn ingest_legacy_dataset(
     dataset: &Dataset,
     store: &LocalObjectStore,
 ) -> Result<IngestReport, CatalogError> {
+    refresh_legacy_dataset(repository_root, dataset, store, None, true)
+}
+
+/// Refreshes a legacy dataset manifest while reusing unchanged local objects.
+///
+/// The fast path compares source and cached-object metadata. `rehash` disables
+/// that path and verifies every source against its DVC digest.
+///
+/// # Errors
+///
+/// Returns an error when a changed source differs from its DVC metadata,
+/// storage fails, or a catalog path is outside the declared dataset root.
+pub fn refresh_legacy_dataset(
+    repository_root: &Path,
+    dataset: &Dataset,
+    store: &LocalObjectStore,
+    previous: Option<&DatasetManifest>,
+    rehash: bool,
+) -> Result<IngestReport, CatalogError> {
     let mut files = Vec::with_capacity(dataset.files.len());
     let mut added_objects = 0;
     let mut existing_objects = 0;
+    let mut reused_files = 0;
     let mut bytes = 0_u64;
 
     for catalog_file in &dataset.files {
         let source = repository_root.join(&catalog_file.path);
+        if !rehash {
+            let previous_file = previous
+                .filter(|manifest| {
+                    manifest.dataset.id == dataset.id && manifest.dataset.root == dataset.root
+                })
+                .and_then(|manifest| {
+                    manifest
+                        .files
+                        .iter()
+                        .find(|file| file.id == catalog_file.id)
+                });
+            if let Some(previous_file) = previous_file
+                .filter(|file| reusable_source(&source, catalog_file.size, store, &file.object))
+            {
+                bytes = bytes
+                    .checked_add(previous_file.object.size)
+                    .ok_or_else(|| CatalogError::LegacySizeMismatch {
+                        path: source.clone(),
+                        expected: u64::MAX,
+                        actual: u64::MAX,
+                    })?;
+                files.push(ManifestFile {
+                    id: catalog_file.id.clone(),
+                    path: catalog_file.id.clone(),
+                    object: previous_file.object.clone(),
+                    schema_path: catalog_file.schema_path.clone(),
+                });
+                reused_files += 1;
+                continue;
+            }
+        }
         verify_legacy_object(&source, &catalog_file.object, catalog_file.size)?;
         let ingested = store.ingest_file(&source)?;
         if ingested.already_present {
@@ -306,8 +358,39 @@ pub fn ingest_legacy_dataset(
         manifest,
         added_objects,
         existing_objects,
+        reused_files,
         bytes,
     })
+}
+
+fn reusable_source(
+    source: &Path,
+    expected_size: u64,
+    store: &LocalObjectStore,
+    object: &ObjectRef,
+) -> bool {
+    if object.size != expected_size {
+        return false;
+    }
+    let Ok(source_metadata) = source.metadata() else {
+        return false;
+    };
+    let Ok(object_metadata) = store.object_path(&object.oid).metadata() else {
+        return false;
+    };
+    if !source_metadata.is_file()
+        || !object_metadata.is_file()
+        || source_metadata.len() != expected_size
+        || object_metadata.len() != object.size
+    {
+        return false;
+    }
+    let (Ok(source_modified), Ok(object_modified)) =
+        (source_metadata.modified(), object_metadata.modified())
+    else {
+        return false;
+    };
+    source_modified <= object_modified
 }
 
 /// Verifies local files against the MD5 and size recorded by DVC.
@@ -457,8 +540,15 @@ fn path_to_slash(path: &Path) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::infer_dataset_id;
+    use super::{infer_dataset_id, refresh_legacy_dataset};
+    use davis_core::{CatalogFile, Dataset, LocalObjectStore, SchemaStatus};
+    use md5::{Digest, Md5};
+    use std::fs;
     use std::path::Path;
+
+    fn legacy_object(contents: &[u8]) -> davis_core::ObjectId {
+        format!("md5:{:x}", Md5::digest(contents)).parse().unwrap()
+    }
 
     #[test]
     fn infers_category_and_dataset() {
@@ -477,6 +567,66 @@ mod tests {
         assert_eq!(
             infer_dataset_id(Path::new("data/Tohoku_History/df_individual.csv")).unwrap(),
             "Tohoku_History"
+        );
+    }
+
+    #[test]
+    fn refresh_reuses_unchanged_files_and_ingests_changed_files() {
+        let temporary = tempfile::tempdir().unwrap();
+        let source = temporary.path().join("data/routes/sample/source.csv");
+        fs::create_dir_all(source.parent().unwrap()).unwrap();
+        let first_contents = b"id,value\n1,first\n";
+        fs::write(&source, first_contents).unwrap();
+        let store = LocalObjectStore::new(temporary.path().join(".davis/cache"));
+        let mut dataset = Dataset {
+            id: "routes/sample".into(),
+            root: "data/routes/sample".into(),
+            files: vec![CatalogFile {
+                id: "source.csv".into(),
+                path: "data/routes/sample/source.csv".into(),
+                object: legacy_object(first_contents),
+                size: u64::try_from(first_contents.len()).unwrap(),
+                schema_status: SchemaStatus::Missing,
+                schema_path: None,
+                schema_error: None,
+                schema: None,
+            }],
+        };
+
+        let first =
+            refresh_legacy_dataset(temporary.path(), &dataset, &store, None, false).unwrap();
+        assert_eq!(first.added_objects, 1);
+        assert_eq!(first.reused_files, 0);
+
+        let second = refresh_legacy_dataset(
+            temporary.path(),
+            &dataset,
+            &store,
+            Some(&first.manifest),
+            false,
+        )
+        .unwrap();
+        assert_eq!(second.added_objects, 0);
+        assert_eq!(second.existing_objects, 0);
+        assert_eq!(second.reused_files, 1);
+
+        let changed_contents = b"id,value\n1,changed-and-longer\n";
+        fs::write(&source, changed_contents).unwrap();
+        dataset.files[0].object = legacy_object(changed_contents);
+        dataset.files[0].size = u64::try_from(changed_contents.len()).unwrap();
+        let changed = refresh_legacy_dataset(
+            temporary.path(),
+            &dataset,
+            &store,
+            Some(&second.manifest),
+            false,
+        )
+        .unwrap();
+        assert_eq!(changed.added_objects, 1);
+        assert_eq!(changed.reused_files, 0);
+        assert_ne!(
+            changed.manifest.files[0].object.oid,
+            first.manifest.files[0].object.oid
         );
     }
 }
