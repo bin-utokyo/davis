@@ -77,6 +77,9 @@ enum Command {
     /// Materialize a dataset from its Manifest and local object storage.
     Get {
         dataset_id: String,
+        /// Davis Web service URL. When no matching CLI session exists, prompt for an invite code.
+        #[arg(long)]
+        service_url: Option<String>,
         /// Materialize only these logical file IDs. Repeat for multiple files.
         #[arg(long = "file")]
         files: Vec<String>,
@@ -165,6 +168,7 @@ async fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
         }
         Command::Get {
             dataset_id,
+            service_url,
             files,
             store,
             manifest_directory,
@@ -176,6 +180,7 @@ async fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
             handle_get(GetRequest {
                 repository: cli.repository,
                 dataset_id,
+                service_url,
                 files,
                 store,
                 manifest_directory,
@@ -227,6 +232,7 @@ struct PushRequest {
 struct GetRequest {
     repository: PathBuf,
     dataset_id: String,
+    service_url: Option<String>,
     files: Vec<String>,
     store: PathBuf,
     manifest_directory: PathBuf,
@@ -386,7 +392,7 @@ fn handle_ingest(
 
 async fn handle_get(request: GetRequest) -> Result<(), Box<dyn std::error::Error>> {
     let stored_session = if request.config.is_none() {
-        session::load()?
+        get_session(request.service_url.as_deref()).await?
     } else {
         None
     };
@@ -468,6 +474,41 @@ async fn handle_get(request: GetRequest) -> Result<(), Box<dyn std::error::Error
         output.join(&manifest.dataset.root).display()
     );
     Ok(())
+}
+
+async fn get_session(
+    service_url: Option<&str>,
+) -> Result<Option<session::Session>, Box<dyn std::error::Error>> {
+    let stored = session::load()?;
+    let Some(service_url) = service_url else {
+        return Ok(stored);
+    };
+    let service = DavisService::new(service_url, None)?;
+    if stored
+        .as_ref()
+        .is_some_and(|session| session.service_url == service.base_url())
+    {
+        return Ok(stored);
+    }
+    if !std::io::stdin().is_terminal() {
+        return Err(format!(
+            "no CLI session for {}; run `davis-next login {}` first",
+            service.base_url(),
+            service.base_url()
+        )
+        .into());
+    }
+    println!("CLI login is required for {}", service.base_url());
+    let invite_code = rpassword::prompt_password("Invite code: ")?;
+    if invite_code.is_empty() {
+        return Err("invite code must not be empty".into());
+    }
+    let login = service.exchange_invite_code(&invite_code).await?;
+    let stored =
+        session::Session::new(service.base_url().to_owned(), login.token, login.expires_at);
+    session::save(&stored)?;
+    println!("Logged in to {}", stored.service_url);
+    Ok(Some(stored))
 }
 
 fn handle_verify(

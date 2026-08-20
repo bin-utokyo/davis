@@ -52,6 +52,8 @@ davis-next get network/matsuyama
 davis-next logout
 ```
 
+Webカタログの「CLIコマンドをコピー」で得られるcommandには`--service-url`が含まれます．CLI側で未loginの場合は，任意のdirectoryから実行してもその場で招待codeを入力でき，login後に同じ処理のままdownloadを続行します．Web browserのlogin sessionとCLIのlogin sessionは別です．
+
 非対話環境では，招待codeをcommand line引数やshell履歴へ残さず，標準入力から渡します．
 
 ```bash

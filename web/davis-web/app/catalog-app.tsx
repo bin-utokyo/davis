@@ -210,12 +210,13 @@ export function CatalogApp() {
   }
 
   async function copyCommands() {
+    const serviceOption = ` --service-url ${JSON.stringify(window.location.origin)}`;
     const ids = [...new Set(selectedFiles.map((file) => file.dataset_id))];
     const commands = ids.map((id) => {
       const datasetFiles = files.filter((file) => file.dataset_id === id);
       const chosenFiles = selectedFiles.filter((file) => file.dataset_id === id);
-      if (datasetFiles.length === chosenFiles.length) return `davis-next get ${id}`;
-      return `davis-next get ${id} ${chosenFiles.map((file) => `--file ${JSON.stringify(file.file_id)}`).join(" ")}`;
+      if (datasetFiles.length === chosenFiles.length) return `davis-next get ${id}${serviceOption}`;
+      return `davis-next get ${id} ${chosenFiles.map((file) => `--file ${JSON.stringify(file.file_id)}`).join(" ")}${serviceOption}`;
     }).join("\n");
     await navigator.clipboard.writeText(commands);
     setCopied(true);
