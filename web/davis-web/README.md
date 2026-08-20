@@ -30,4 +30,4 @@ pnpm test
 pnpm lint
 ```
 
-現段階では，検索，facet絞り込み，Dataset・File詳細，Raw YAML表示，複数選択，合計容量表示，`davis get` commandのcopyに対応しています．実データのWeb downloadと参加者認証はR2・Worker接続後に追加します．
+現段階では，検索，facet絞り込み，Dataset・File詳細，Raw YAML表示，複数選択，合計容量表示，`davis-next get` commandのcopyに対応しています．実データのWeb downloadと参加者認証はR2・Worker接続後に追加します．

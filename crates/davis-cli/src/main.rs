@@ -11,7 +11,7 @@ use davis_storage::{
 };
 
 #[derive(Debug, Parser)]
-#[command(name = "davis", version, about = "Davis data catalog client")]
+#[command(name = "davis-next", version, about = "Davis data catalog client")]
 struct Cli {
     /// Davis repository to read.
     #[arg(long, global = true, default_value = ".")]
@@ -88,7 +88,11 @@ enum Command {
     },
     /// Upload missing content-addressed objects without deleting remote data.
     Push {
-        dataset_id: String,
+        /// One dataset to upload.
+        dataset_id: Option<String>,
+        /// Upload every dataset in the current catalog.
+        #[arg(long, conflicts_with = "dataset_id")]
+        all: bool,
         /// Local object storage root populated by `davis ingest`.
         #[arg(long, default_value = ".davis/cache")]
         store: PathBuf,
@@ -162,6 +166,7 @@ async fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
         Command::Verify { dataset_id } => handle_verify(&cli.repository, dataset_id.as_deref())?,
         Command::Push {
             dataset_id,
+            all,
             store,
             manifest_directory,
             config,
@@ -171,6 +176,7 @@ async fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
             handle_push(PushRequest {
                 repository: cli.repository,
                 dataset_id,
+                all,
                 store,
                 manifest_directory,
                 config,
@@ -186,7 +192,8 @@ async fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
 
 struct PushRequest {
     repository: PathBuf,
-    dataset_id: String,
+    dataset_id: Option<String>,
+    all: bool,
     store: PathBuf,
     manifest_directory: PathBuf,
     config: PathBuf,
@@ -352,20 +359,49 @@ fn handle_verify(
 }
 
 async fn handle_push(request: PushRequest) -> Result<(), Box<dyn std::error::Error>> {
-    let manifest_path = resolve(&request.repository, &request.manifest_directory)
-        .join(format!("{}.yaml", request.dataset_id));
-    let manifest = read_manifest(&manifest_path)?;
-    if manifest.dataset.id != request.dataset_id {
-        return Err(format!(
-            "manifest dataset ID mismatch: expected {}, found {}",
-            request.dataset_id, manifest.dataset.id
-        )
-        .into());
+    if request.dataset_id.is_none() && !request.all {
+        return Err("provide a dataset ID or use --all".into());
+    }
+    let catalog = scan_legacy_repository(&request.repository)?;
+    let dataset_ids: Vec<String> = if request.all {
+        catalog
+            .datasets
+            .iter()
+            .map(|dataset| dataset.id.clone())
+            .collect()
+    } else {
+        let dataset_id = request
+            .dataset_id
+            .as_deref()
+            .ok_or("provide a dataset ID or use --all")?;
+        if catalog.dataset(dataset_id).is_none() {
+            return Err(format!("dataset was not found: {dataset_id}").into());
+        }
+        vec![dataset_id.to_owned()]
+    };
+    let manifest_directory = resolve(&request.repository, &request.manifest_directory);
+    let mut manifests = Vec::with_capacity(dataset_ids.len());
+    for dataset_id in &dataset_ids {
+        let manifest = read_manifest(&manifest_directory.join(format!("{dataset_id}.yaml")))?;
+        if manifest.dataset.id != *dataset_id {
+            return Err(format!(
+                "manifest dataset ID mismatch: expected {dataset_id}, found {}",
+                manifest.dataset.id
+            )
+            .into());
+        }
+        manifests.push(manifest);
     }
     let remote_store = open_remote(&request.repository, &request.config, &request.remote)?;
     let local_store = LocalObjectStore::new(resolve(&request.repository, &request.store));
-    let plan = remote_store.plan_upload(&local_store, &manifest).await?;
-    println!("Dataset: {}", request.dataset_id);
+    let plan = remote_store
+        .plan_upload_manifests(&local_store, &manifests)
+        .await?;
+    if request.all {
+        println!("Datasets: {}", manifests.len());
+    } else {
+        println!("Dataset: {}", dataset_ids[0]);
+    }
     println!("Remote: {}", request.remote);
     println!("Missing objects: {}", plan.missing);
     println!("Existing objects: {}", plan.existing);
@@ -374,7 +410,7 @@ async fn handle_push(request: PushRequest) -> Result<(), Box<dyn std::error::Err
         println!("Dry run: no objects were uploaded");
     } else {
         let report = remote_store
-            .upload_manifest(&local_store, &manifest)
+            .upload_manifests(&local_store, &manifests)
             .await?;
         println!("Uploaded objects: {}", report.uploaded);
         println!("Skipped objects: {}", report.skipped);

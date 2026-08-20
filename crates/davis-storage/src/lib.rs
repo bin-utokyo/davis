@@ -1,11 +1,11 @@
 //! `OpenDAL` adapters for local filesystems and S3-compatible object storage.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashMap};
 use std::fs;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 
-use davis_core::{object_key, DatasetManifest, LocalObjectStore, ObjectId};
+use davis_core::{object_key, DatasetManifest, LocalObjectStore, ObjectId, ObjectRef};
 use futures::TryStreamExt;
 use opendal::services::{Fs, S3};
 use opendal::{ErrorKind, Operator};
@@ -104,6 +104,12 @@ pub enum StorageError {
         oid: ObjectId,
         expected: u64,
         actual: u64,
+    },
+    #[error("conflicting sizes for object {oid}: {first} and {second}")]
+    ConflictingObjectSize {
+        oid: ObjectId,
+        first: u64,
+        second: u64,
     },
     #[error(transparent)]
     LocalStore(#[from] davis_core::StoreError),
@@ -235,21 +241,35 @@ impl ObjectStorage {
         local: &LocalObjectStore,
         manifest: &DatasetManifest,
     ) -> Result<UploadPlan, StorageError> {
-        manifest.validate().map_err(davis_core::StoreError::from)?;
+        self.plan_upload_manifests(local, std::slice::from_ref(manifest))
+            .await
+    }
+
+    /// Calculates missing objects across multiple manifests without double counting.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when manifest validation, local verification, or remote
+    /// metadata access fails.
+    pub async fn plan_upload_manifests(
+        &self,
+        local: &LocalObjectStore,
+        manifests: &[DatasetManifest],
+    ) -> Result<UploadPlan, StorageError> {
         let mut plan = UploadPlan {
             missing: 0,
             existing: 0,
             missing_bytes: 0,
         };
-        for file in &manifest.files {
-            local.verify_object(&file.object.oid, file.object.size)?;
-            let key = object_key(&file.object.oid);
+        for object in unique_objects(manifests)? {
+            local.verify_object(&object.oid, object.size)?;
+            let key = object_key(&object.oid);
             match self.operator.stat(&key).await {
                 Ok(metadata) => {
-                    if metadata.content_length() != file.object.size {
+                    if metadata.content_length() != object.size {
                         return Err(StorageError::SizeMismatch {
-                            oid: file.object.oid.clone(),
-                            expected: file.object.size,
+                            oid: object.oid,
+                            expected: object.size,
                             actual: metadata.content_length(),
                         });
                     }
@@ -259,7 +279,7 @@ impl ObjectStorage {
                     plan.missing += 1;
                     plan.missing_bytes = plan
                         .missing_bytes
-                        .checked_add(file.object.size)
+                        .checked_add(object.size)
                         .ok_or(StorageError::SizeOverflow)?;
                 }
                 Err(error) => return Err(error.into()),
@@ -348,23 +368,33 @@ impl ObjectStorage {
         local: &LocalObjectStore,
         manifest: &DatasetManifest,
     ) -> Result<UploadReport, StorageError> {
-        manifest.validate().map_err(davis_core::StoreError::from)?;
+        self.upload_manifests(local, std::slice::from_ref(manifest))
+            .await
+    }
+
+    /// Uploads every distinct object referenced by multiple manifests.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when manifest validation or any object upload fails.
+    pub async fn upload_manifests(
+        &self,
+        local: &LocalObjectStore,
+        manifests: &[DatasetManifest],
+    ) -> Result<UploadReport, StorageError> {
         let mut report = UploadReport {
             uploaded: 0,
             skipped: 0,
             bytes: 0,
         };
-        for file in &manifest.files {
-            match self
-                .upload_object(local, &file.object.oid, file.object.size)
-                .await?
-            {
+        for object in unique_objects(manifests)? {
+            match self.upload_object(local, &object.oid, object.size).await? {
                 UploadOutcome::Uploaded => report.uploaded += 1,
                 UploadOutcome::AlreadyPresent => report.skipped += 1,
             }
             report.bytes = report
                 .bytes
-                .checked_add(file.object.size)
+                .checked_add(object.size)
                 .ok_or(StorageError::SizeOverflow)?;
         }
         Ok(report)
@@ -446,6 +476,31 @@ impl ObjectStorage {
 
 fn default_region() -> String {
     "auto".into()
+}
+
+fn unique_objects(manifests: &[DatasetManifest]) -> Result<Vec<ObjectRef>, StorageError> {
+    let mut sizes = HashMap::<ObjectId, u64>::new();
+    let mut objects = Vec::new();
+    for manifest in manifests {
+        manifest.validate().map_err(davis_core::StoreError::from)?;
+        for file in &manifest.files {
+            match sizes.get(&file.object.oid) {
+                Some(size) if *size != file.object.size => {
+                    return Err(StorageError::ConflictingObjectSize {
+                        oid: file.object.oid.clone(),
+                        first: *size,
+                        second: file.object.size,
+                    });
+                }
+                Some(_) => {}
+                None => {
+                    sizes.insert(file.object.oid.clone(), file.object.size);
+                    objects.push(file.object.clone());
+                }
+            }
+        }
+    }
+    Ok(objects)
 }
 
 #[cfg(test)]
@@ -537,5 +592,54 @@ mod tests {
         empty_cache
             .verify_object(&manifest.files[0].object.oid, object.size)
             .unwrap();
+    }
+
+    #[tokio::test]
+    async fn deduplicates_objects_shared_by_multiple_manifests() {
+        let temporary = tempdir().unwrap();
+        let source = temporary.path().join("shared.csv");
+        fs::write(&source, b"id,value\n1,shared\n").unwrap();
+        let local = LocalObjectStore::new(temporary.path().join("local"));
+        let object = local.ingest_file(&source).unwrap();
+        let remote = ObjectStorage::filesystem(&temporary.path().join("remote")).unwrap();
+
+        let manifests: Vec<DatasetManifest> = ["sample/first", "sample/second"]
+            .into_iter()
+            .map(|dataset_id| DatasetManifest {
+                version: 1,
+                dataset: ManifestDataset {
+                    id: dataset_id.into(),
+                    root: format!("data/{dataset_id}"),
+                },
+                files: vec![ManifestFile {
+                    id: "shared.csv".into(),
+                    path: "shared.csv".into(),
+                    object: ObjectRef {
+                        oid: object.oid.clone(),
+                        size: object.size,
+                    },
+                    schema_path: None,
+                }],
+            })
+            .collect();
+
+        let initial = remote
+            .plan_upload_manifests(&local, &manifests)
+            .await
+            .unwrap();
+        assert_eq!(initial.missing, 1);
+        assert_eq!(initial.missing_bytes, object.size);
+
+        let uploaded = remote.upload_manifests(&local, &manifests).await.unwrap();
+        assert_eq!(uploaded.uploaded, 1);
+        assert_eq!(uploaded.skipped, 0);
+        assert_eq!(uploaded.bytes, object.size);
+
+        let final_plan = remote
+            .plan_upload_manifests(&local, &manifests)
+            .await
+            .unwrap();
+        assert_eq!(final_plan.missing, 0);
+        assert_eq!(final_plan.existing, 1);
     }
 }

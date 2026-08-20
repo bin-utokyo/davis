@@ -33,6 +33,15 @@ cargo run -p davis-cli -- get network/matsuyama
 cargo run -p davis-cli -- get network/matsuyama --file link.csv
 ```
 
+既存Python CLIの`davis`と移行中のRust CLIが衝突しないように，Rust版の実行file名は当面`davis-next`としています．既存版を残したまま，次のcommandで導入できます．
+
+```bash
+cargo install --path crates/davis-cli --locked --root ~/.local
+davis-next --help
+```
+
+将来，Rust版が既存機能を置き換えられる段階で`davis-next`を`davis`へ昇格し，必要な場合だけ既存版を`davis-legacy`として残します．
+
 現行DVC metadataと実データの整合性確認，BLAKE3 objectの生成，DatasetManifestの更新には次を使用します．
 
 ```bash
@@ -40,7 +49,7 @@ cargo run -p davis-cli -- verify
 cargo run -p davis-cli -- ingest --all
 ```
 
-R2またはfilesystem remoteへの差分uploadには`davis push`を使用します．設定例は`.davis/config.example.toml`にあります．
+R2またはfilesystem remoteへの差分uploadには`davis-next push`を使用します．1 Datasetだけを指定できるほか，`davis-next push --all --dry-run`で全Datasetの差分を安全に確認できます．設定例は`.davis/config.example.toml`にあります．
 
 ## Webカタログ
 
@@ -53,7 +62,7 @@ pnpm install
 pnpm dev
 ```
 
-Webカタログでは，名称・説明・地域・年・形式・license・schema状態・列情報による検索，Dataset・File詳細，Raw YAML表示，複数選択，合計容量表示，対応する`davis get` commandのcopyができます．
+Webカタログでは，名称・説明・地域・年・形式・license・schema状態・列情報による検索，Dataset・File詳細，Raw YAML表示，複数選択，合計容量表示，対応する`davis-next get` commandのcopyができます．
 
 実データのWeb download，共通招待code，署名付きURLはR2・Worker接続後に追加します．
 
