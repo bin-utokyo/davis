@@ -1,0 +1,163 @@
+{
+  "cities": [
+    {
+      "ja": "Matuyama-Shinjyuku",
+      "en": "Matuyama-Shinjyuku"
+    },
+    {
+      "ja": "千葉県",
+      "en": "Chiba Prefecture"
+    },
+    {
+      "ja": "埼玉県",
+      "en": "Saitama Prefecture"
+    },
+    {
+      "ja": "東京",
+      "en": "Tokyo"
+    },
+    {
+      "ja": "東京都",
+      "en": "Tokyo Metropolis"
+    },
+    {
+      "ja": "東京都市圏",
+      "en": "Tokyo metropolitan area"
+    },
+    {
+      "ja": "東北",
+      "en": "Tohoku"
+    },
+    {
+      "ja": "東北地方",
+      "en": "Tohoku Region"
+    },
+    {
+      "ja": "松山",
+      "en": "Matsuyama"
+    },
+    {
+      "ja": "松山",
+      "en": "Matuyama"
+    },
+    {
+      "ja": "松山-新宿",
+      "en": "Matsuyama-Shinjuku"
+    },
+    {
+      "ja": "松山ー新宿",
+      "en": "Matsuyama-Shinjuku"
+    },
+    {
+      "ja": "松山市",
+      "en": "Matsuyama"
+    },
+    {
+      "ja": "横浜",
+      "en": "Yokohama"
+    },
+    {
+      "ja": "横浜市",
+      "en": "Yokohama"
+    },
+    {
+      "ja": "江東区大島6丁目",
+      "en": "Ojima 6-chome, Koto-ku"
+    },
+    {
+      "ja": "渋谷",
+      "en": "SHibuya"
+    },
+    {
+      "ja": "渋谷",
+      "en": "Shibuya"
+    },
+    {
+      "ja": "渋谷2021",
+      "en": "Shibuya2021"
+    },
+    {
+      "ja": "渋谷区",
+      "en": "Shibuya"
+    },
+    {
+      "ja": "神奈川県",
+      "en": "Kanagawa Prefecture"
+    },
+    {
+      "ja": "茨城県",
+      "en": "Ibaraki Prefecture"
+    },
+    {
+      "ja": "豊洲",
+      "en": "Toyosu"
+    },
+    {
+      "ja": "豊洲",
+      "en": "Toyosu2021"
+    },
+    {
+      "ja": "豊洲2018",
+      "en": "Toyosu2018"
+    },
+    {
+      "ja": "豊洲2019",
+      "en": "Toyosu2019"
+    },
+    {
+      "ja": "豊洲2020",
+      "en": "Toyosu2020"
+    },
+    {
+      "ja": "首都圏",
+      "en": "Tokyo metropolitan area"
+    }
+  ],
+  "years": [
+    2007,
+    2008,
+    2009,
+    2010,
+    2018,
+    2019,
+    2020,
+    2021,
+    2022,
+    2023,
+    2024,
+    2025
+  ],
+  "formats": [
+    "csv",
+    "dbf",
+    "docx",
+    "kml",
+    "md",
+    "pdf",
+    "shp",
+    "shx",
+    "txt",
+    "xlsb",
+    "xlsx",
+    "xmps",
+    "zip"
+  ],
+  "licenses": [
+    {
+      "ja": "2025年度の行動モデル夏の学校のための利用のみ許可します。",
+      "en": "Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation Networks."
+    },
+    {
+      "ja": "2026年度の行動モデル夏の学校のための利用のみ許可します",
+      "en": "Use is permitted only for the 2026 Summer Course on Behavior Modeling in Transportation Networks."
+    },
+    {
+      "ja": "2026年度の行動モデル夏の学校のための利用のみ許可します。",
+      "en": "Use is permitted only for the 2026 Summer Course on Behavior Modeling in Transportation Networks."
+    }
+  ],
+  "schema_statuses": [
+    "ready",
+    "missing"
+  ]
+}

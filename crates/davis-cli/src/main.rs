@@ -1,7 +1,10 @@
 use std::path::PathBuf;
 
 use clap::{Parser, Subcommand};
-use davis_catalog::{audit_legacy_datasets, ingest_legacy_dataset, scan_legacy_repository};
+use davis_catalog::{
+    audit_legacy_datasets, build_catalog_index, ingest_legacy_dataset, scan_legacy_repository,
+    write_catalog_index,
+};
 use davis_core::{read_manifest, write_manifest, Dataset, LocalObjectStore, SchemaStatus};
 use davis_storage::{
     read_storage_configuration, ObjectStorage, RemoteConfig, S3Credentials, StorageError,
@@ -33,6 +36,12 @@ enum Command {
         #[arg(long)]
         json: bool,
     },
+    /// Generate the static catalog API consumed by Web clients.
+    Index {
+        /// Directory where JSON index files are written.
+        #[arg(short, long, default_value = "web/davis-web/public/catalog")]
+        out: PathBuf,
+    },
     /// Verify legacy files and ingest them into a local content-addressed store.
     Ingest {
         /// One dataset to ingest.
@@ -50,6 +59,9 @@ enum Command {
     /// Materialize a dataset from its Manifest and local object storage.
     Get {
         dataset_id: String,
+        /// Materialize only these logical file IDs. Repeat for multiple files.
+        #[arg(long = "file")]
+        files: Vec<String>,
         /// Local object storage root.
         #[arg(long, default_value = ".davis/cache")]
         store: PathBuf,
@@ -109,6 +121,7 @@ async fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
         Command::Info { dataset_id, json } => {
             handle_info(&cli.repository, &dataset_id, json)?;
         }
+        Command::Index { out } => handle_index(&cli.repository, &out)?,
         Command::Ingest {
             dataset_id,
             all,
@@ -125,6 +138,7 @@ async fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
         }
         Command::Get {
             dataset_id,
+            files,
             store,
             manifest_directory,
             out,
@@ -135,6 +149,7 @@ async fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
             handle_get(GetRequest {
                 repository: cli.repository,
                 dataset_id,
+                files,
                 store,
                 manifest_directory,
                 out,
@@ -182,6 +197,7 @@ struct PushRequest {
 struct GetRequest {
     repository: PathBuf,
     dataset_id: String,
+    files: Vec<String>,
     store: PathBuf,
     manifest_directory: PathBuf,
     out: PathBuf,
@@ -214,6 +230,21 @@ fn handle_info(
     } else {
         print_dataset_info(dataset);
     }
+    Ok(())
+}
+
+fn handle_index(
+    repository: &std::path::Path,
+    output_directory: &std::path::Path,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let catalog = scan_legacy_repository(repository)?;
+    let index = build_catalog_index(repository, &catalog)?;
+    let output_directory = resolve(repository, output_directory);
+    write_catalog_index(&output_directory, &index)?;
+    println!("Catalog index: {}", output_directory.display());
+    println!("Datasets: {}", index.summary.dataset_count);
+    println!("Files: {}", index.summary.file_count);
+    println!("Columns: {}", index.columns.len());
     Ok(())
 }
 
@@ -275,6 +306,11 @@ async fn handle_get(request: GetRequest) -> Result<(), Box<dyn std::error::Error
         )
         .into());
     }
+    let manifest = if request.files.is_empty() {
+        manifest
+    } else {
+        manifest.select_files(&request.files)?
+    };
     let object_store = LocalObjectStore::new(resolve(&request.repository, &request.store));
     if let Some(config) = &request.config {
         let remote_store = open_remote(&request.repository, config, &request.remote)?;

@@ -43,6 +43,35 @@ impl DatasetManifest {
         }
         Ok(())
     }
+
+    /// Creates a manifest containing only the requested logical file IDs.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when a requested ID is absent or the selection is empty.
+    pub fn select_files(&self, file_ids: &[String]) -> Result<Self, ManifestError> {
+        if file_ids.is_empty() {
+            return Err(ManifestError::EmptyFileSelection);
+        }
+        let requested: HashSet<&str> = file_ids.iter().map(String::as_str).collect();
+        for file_id in &requested {
+            if !self.files.iter().any(|file| file.id == *file_id) {
+                return Err(ManifestError::FileNotFound((*file_id).to_owned()));
+            }
+        }
+        let selected = Self {
+            version: self.version,
+            dataset: self.dataset.clone(),
+            files: self
+                .files
+                .iter()
+                .filter(|file| requested.contains(file.id.as_str()))
+                .cloned()
+                .collect(),
+        };
+        selected.validate()?;
+        Ok(selected)
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -91,6 +120,10 @@ pub enum ManifestError {
     DuplicateFileId(String),
     #[error("duplicate file path: {0}")]
     DuplicateFilePath(String),
+    #[error("file selection must not be empty")]
+    EmptyFileSelection,
+    #[error("file was not found in the manifest: {0}")]
+    FileNotFound(String),
 }
 
 /// Reads and validates a `DatasetManifest` YAML file.

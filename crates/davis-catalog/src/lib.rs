@@ -1,5 +1,12 @@
 //! Catalog generation and compatibility adapters.
 
+mod index;
+
+pub use index::{
+    build_catalog_index, write_catalog_index, CatalogFacets, CatalogIndex, CatalogSummary,
+    IndexedColumn, IndexedDataset, IndexedFile,
+};
+
 use std::collections::BTreeMap;
 use std::fs;
 use std::io::Read;
@@ -25,6 +32,15 @@ pub enum CatalogError {
         path: PathBuf,
         source: std::io::Error,
     },
+    #[error("failed to write {path}: {source}")]
+    Write {
+        path: PathBuf,
+        source: std::io::Error,
+    },
+    #[error("failed to serialize catalog index: {0}")]
+    SerializeIndex(#[from] serde_json::Error),
+    #[error(transparent)]
+    Manifest(#[from] davis_core::ManifestError),
     #[error("invalid DVC metadata in {path}: {source}")]
     InvalidDvc {
         path: PathBuf,

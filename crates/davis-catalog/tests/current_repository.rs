@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use davis_catalog::scan_legacy_repository;
+use davis_catalog::{build_catalog_index, scan_legacy_repository, write_catalog_index};
 use davis_core::{read_manifest, SchemaStatus};
 
 fn repository_root() -> PathBuf {
@@ -59,4 +59,42 @@ fn generated_manifests_cover_the_current_catalog() {
 
     assert_eq!(manifest_files, 255);
     assert_eq!(schema_references, 176);
+}
+
+#[test]
+fn static_index_covers_every_file_and_schema() {
+    let root = repository_root();
+    let catalog = scan_legacy_repository(&root).unwrap();
+    let index = build_catalog_index(&root, &catalog).unwrap();
+
+    assert_eq!(index.summary.dataset_count, 15);
+    assert_eq!(index.summary.file_count, 255);
+    assert_eq!(index.summary.schema_ready_count, 176);
+    assert_eq!(index.files.len(), 255);
+    assert!(index
+        .files
+        .iter()
+        .all(|file| file.object.oid.algorithm() == "blake3"));
+    assert!(index.columns.len() > 1_000);
+    assert!(index.files.iter().any(|file| {
+        file.dataset_id == "network/matsuyama"
+            && file
+                .raw_schema
+                .as_deref()
+                .is_some_and(|raw| raw.contains("columns:"))
+    }));
+    assert!(index.facets.formats.contains(&"csv".to_owned()));
+    assert!(!index.facets.licenses.is_empty());
+
+    let output = tempfile::tempdir().unwrap();
+    write_catalog_index(output.path(), &index).unwrap();
+    for name in [
+        "index.json",
+        "datasets.json",
+        "files.json",
+        "columns.json",
+        "facets.json",
+    ] {
+        assert!(output.path().join(name).is_file());
+    }
 }

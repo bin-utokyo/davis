@@ -1,0 +1,107 @@
+[
+  {
+    "id": "PP/Matsuyama",
+    "root": "data/PP/Matsuyama",
+    "file_count": 3,
+    "schema_ready_count": 3,
+    "total_size": 107669536
+  },
+  {
+    "id": "PP/Matsuyama-Shinjuku",
+    "root": "data/PP/Matsuyama-Shinjuku",
+    "file_count": 3,
+    "schema_ready_count": 3,
+    "total_size": 115714539
+  },
+  {
+    "id": "PP/Shibuya",
+    "root": "data/PP/Shibuya",
+    "file_count": 9,
+    "schema_ready_count": 9,
+    "total_size": 1564486064
+  },
+  {
+    "id": "PP/Toyosu2018-2021",
+    "root": "data/PP/Toyosu2018-2021",
+    "file_count": 15,
+    "schema_ready_count": 15,
+    "total_size": 4493248928
+  },
+  {
+    "id": "PP/Yokohama2008-2010",
+    "root": "data/PP/Yokohama2008-2010",
+    "file_count": 8,
+    "schema_ready_count": 8,
+    "total_size": 269628091
+  },
+  {
+    "id": "PT_data",
+    "root": "data/PT_data",
+    "file_count": 11,
+    "schema_ready_count": 10,
+    "total_size": 85301507
+  },
+  {
+    "id": "Tohoku_History",
+    "root": "data/Tohoku_History",
+    "file_count": 15,
+    "schema_ready_count": 14,
+    "total_size": 69335215
+  },
+  {
+    "id": "network/matsuyama",
+    "root": "data/network/matsuyama",
+    "file_count": 3,
+    "schema_ready_count": 2,
+    "total_size": 8058542
+  },
+  {
+    "id": "network/tokyo-metropolitan-area",
+    "root": "data/network/tokyo-metropolitan-area",
+    "file_count": 45,
+    "schema_ready_count": 10,
+    "total_size": 1017656869
+  },
+  {
+    "id": "network/yokohama",
+    "root": "data/network/yokohama",
+    "file_count": 4,
+    "schema_ready_count": 2,
+    "total_size": 103111175
+  },
+  {
+    "id": "routes/Matsuyama",
+    "root": "data/routes/Matsuyama",
+    "file_count": 5,
+    "schema_ready_count": 2,
+    "total_size": 28207828
+  },
+  {
+    "id": "routes/Matsuyama-Shinjuku-2022",
+    "root": "data/routes/Matsuyama-Shinjuku-2022",
+    "file_count": 14,
+    "schema_ready_count": 11,
+    "total_size": 8682876
+  },
+  {
+    "id": "routes/Ojima-6chome-2020",
+    "root": "data/routes/Ojima-6chome-2020",
+    "file_count": 17,
+    "schema_ready_count": 12,
+    "total_size": 11388316
+  },
+  {
+    "id": "routes/Shibuya-2021",
+    "root": "data/routes/Shibuya-2021",
+    "file_count": 21,
+    "schema_ready_count": 15,
+    "total_size": 48799720
+  },
+  {
+    "id": "routes/Toyosu-2018-2021",
+    "root": "data/routes/Toyosu-2018-2021",
+    "file_count": 82,
+    "schema_ready_count": 60,
+    "total_size": 1363089416
+  }
+]

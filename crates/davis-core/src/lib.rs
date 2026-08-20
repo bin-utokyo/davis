@@ -197,7 +197,7 @@ impl Catalog {
 
 #[cfg(test)]
 mod tests {
-    use super::ObjectId;
+    use super::{DatasetManifest, ManifestDataset, ManifestFile, ObjectId, ObjectRef};
 
     #[test]
     fn object_id_uses_portable_string_representation() {
@@ -205,5 +205,41 @@ mod tests {
         assert_eq!(id.algorithm(), "blake3");
         assert_eq!(id.digest(), "aabbcc");
         assert_eq!(serde_yaml::to_string(&id).unwrap(), "blake3:aabbcc\n");
+    }
+
+    #[test]
+    fn manifest_file_selection_preserves_manifest_order() {
+        let object: ObjectId = "blake3:aabbcc".parse().unwrap();
+        let manifest = DatasetManifest {
+            version: 1,
+            dataset: ManifestDataset {
+                id: "sample".into(),
+                root: "data/sample".into(),
+            },
+            files: ["first.csv", "second.csv", "third.csv"]
+                .into_iter()
+                .map(|id| ManifestFile {
+                    id: id.into(),
+                    path: id.into(),
+                    object: ObjectRef {
+                        oid: object.clone(),
+                        size: 1,
+                    },
+                    schema_path: None,
+                })
+                .collect(),
+        };
+        let selected = manifest
+            .select_files(&["third.csv".into(), "first.csv".into()])
+            .unwrap();
+        assert_eq!(
+            selected
+                .files
+                .iter()
+                .map(|file| file.id.as_str())
+                .collect::<Vec<_>>(),
+            vec!["first.csv", "third.csv"]
+        );
+        assert!(manifest.select_files(&["missing.csv".into()]).is_err());
     }
 }
