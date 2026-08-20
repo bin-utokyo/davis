@@ -50,6 +50,7 @@ local開発では`.dev.vars.example`を`.dev.vars`へcopyし，実際の値へ�
 
 ```bash
 pnpm exec wrangler secret put DAVIS_INVITE_CODE
+pnpm exec wrangler secret put DAVIS_OPERATOR_CODE
 pnpm exec wrangler secret put DAVIS_TOKEN_SECRET
 ```
 
@@ -60,6 +61,8 @@ pnpm deploy
 ```
 
 R2 binding名は`DAVIS_DATA`，既定bucket名は`davis-bmss`です．`DAVIS_ACCESS_REVISION`を変更して再deployすると，旧招待codeで発行済みのsessionとdownload grantを一括失効できます．sessionは既定30日で最大180日，download grantは既定5分で最大15分です．
+
+運営者認証は`DAVIS_OPERATOR_CODE`と`DAVIS_OPERATOR_ACCESS_REVISION`を使用し，参加者認証から分離します．運営sessionは既定30日で最大90日です．CLIは認証済みAPIを通じてR2 multipart uploadとcatalog公開を行うため，運営者のPCへR2秘密鍵を配布する必要はありません．運営code流出時は`DAVIS_OPERATOR_CODE`と`DAVIS_OPERATOR_ACCESS_REVISION`を変更して再deployすると，既存の運営sessionを一括失効できます．
 
 CLIからは，deployment URLと共通招待codeを使用します．
 

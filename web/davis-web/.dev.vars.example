@@ -1,3 +1,4 @@
 # Copy this file to `.dev.vars` for local Worker testing.
 DAVIS_INVITE_CODE=replace-with-a-long-participant-invite-code
+DAVIS_OPERATOR_CODE=replace-with-a-separate-long-operator-code
 DAVIS_TOKEN_SECRET=replace-with-at-least-32-random-characters

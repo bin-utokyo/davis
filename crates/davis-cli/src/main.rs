@@ -1,6 +1,7 @@
 mod remote;
 mod session;
 
+use std::collections::HashMap;
 use std::io::{IsTerminal, Read};
 use std::path::PathBuf;
 use std::time::Duration;
@@ -10,13 +11,15 @@ use davis_catalog::{
     audit_legacy_datasets, build_catalog_index, ingest_legacy_dataset, scan_legacy_repository,
     write_catalog_index,
 };
-use davis_core::{read_manifest, write_manifest, Dataset, LocalObjectStore, SchemaStatus};
+use davis_core::{
+    read_manifest, write_manifest, Dataset, LocalObjectStore, ObjectRef, SchemaStatus,
+};
 use davis_storage::{
     read_storage_configuration, ObjectStorage, RemoteConfig, S3Credentials, StorageError,
     TransferProgress,
 };
 use indicatif::{ProgressBar, ProgressStyle};
-use remote::DavisService;
+use remote::{DavisService, RemoteError};
 
 #[derive(Debug, Parser)]
 #[command(name = "davis", version, about = "Davis data catalog client")]
@@ -41,6 +44,11 @@ enum Command {
     },
     /// Remove the locally stored CLI session.
     Logout,
+    /// Authenticate and manage organizer access.
+    Operator {
+        #[command(subcommand)]
+        command: OperatorCommand,
+    },
     /// List available datasets.
     List {
         /// Print structured JSON.
@@ -132,6 +140,22 @@ enum Command {
     },
 }
 
+#[derive(Debug, Subcommand)]
+enum OperatorCommand {
+    /// Exchange the shared operator code for a short-lived upload session.
+    Login {
+        /// Davis Web service URL.
+        service_url: String,
+        /// Read the operator code from standard input instead of prompting.
+        #[arg(long)]
+        operator_code_stdin: bool,
+    },
+    /// Show whether the stored operator session is still valid.
+    Status,
+    /// Remove the locally stored operator session.
+    Logout,
+}
+
 #[tokio::main]
 async fn main() {
     if let Err(error) = run(Cli::parse()).await {
@@ -147,6 +171,7 @@ async fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
             invite_code_stdin,
         } => handle_login(&service_url, invite_code_stdin).await?,
         Command::Logout => handle_logout()?,
+        Command::Operator { command } => handle_operator(command).await?,
         Command::List { json } => handle_list(&cli.repository, json).await?,
         Command::Info { dataset_id, json } => {
             handle_info(&cli.repository, &dataset_id, json).await?;
@@ -218,6 +243,24 @@ async fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
+async fn handle_operator(command: OperatorCommand) -> Result<(), Box<dyn std::error::Error>> {
+    match command {
+        OperatorCommand::Login {
+            service_url,
+            operator_code_stdin,
+        } => handle_operator_login(&service_url, operator_code_stdin).await,
+        OperatorCommand::Status => handle_operator_status().await,
+        OperatorCommand::Logout => {
+            if session::clear_operator()? {
+                println!("Operator session removed");
+            } else {
+                println!("No stored operator session");
+            }
+            Ok(())
+        }
+    }
+}
+
 struct PushRequest {
     repository: PathBuf,
     dataset_id: Option<String>,
@@ -274,6 +317,44 @@ async fn handle_login(
     println!("Logged in to {}", stored.service_url);
     println!("Session expires: {}", stored.expires_at);
     println!("Session: {}", path.display());
+    Ok(())
+}
+
+async fn handle_operator_login(
+    service_url: &str,
+    operator_code_stdin: bool,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let operator_code = if operator_code_stdin {
+        let mut input = String::new();
+        std::io::stdin().read_to_string(&mut input)?;
+        input.trim_end_matches(['\r', '\n']).to_owned()
+    } else if std::io::stdin().is_terminal() {
+        rpassword::prompt_password("Operator code: ")?
+    } else {
+        return Err("standard input is not a terminal; use --operator-code-stdin".into());
+    };
+    if operator_code.is_empty() {
+        return Err("operator code must not be empty".into());
+    }
+    let service = DavisService::new(service_url, None)?;
+    let login = service.exchange_operator_code(&operator_code).await?;
+    let stored =
+        session::Session::new(service.base_url().to_owned(), login.token, login.expires_at);
+    let path = session::save_operator(&stored)?;
+    println!("Operator login: {}", stored.service_url);
+    println!("Session expires: {}", stored.expires_at);
+    println!("Session: {}", path.display());
+    Ok(())
+}
+
+async fn handle_operator_status() -> Result<(), Box<dyn std::error::Error>> {
+    let stored = session::load_operator()?.ok_or("no stored operator session")?;
+    let status = DavisService::new(&stored.service_url, Some(stored.token.clone()))?
+        .operator_session_status()
+        .await?;
+    println!("Operator session: active");
+    println!("Service: {}", stored.service_url);
+    println!("Session expires: {}", status.expires_at);
     Ok(())
 }
 
@@ -532,6 +613,7 @@ fn handle_verify(
     Ok(())
 }
 
+#[allow(clippy::too_many_lines)]
 async fn handle_push(request: PushRequest) -> Result<(), Box<dyn std::error::Error>> {
     if request.dataset_id.is_none() && !request.all {
         return Err("provide a dataset ID or use --all".into());
@@ -566,8 +648,19 @@ async fn handle_push(request: PushRequest) -> Result<(), Box<dyn std::error::Err
         }
         manifests.push(manifest);
     }
-    let remote_store = open_remote(&request.repository, &request.config, &request.remote)?;
     let local_store = LocalObjectStore::new(resolve(&request.repository, &request.store));
+    if let Some(operator_session) = session::load_operator()? {
+        let operator_session = ensure_operator_session(operator_session).await?;
+        return handle_operator_push(
+            &request,
+            &catalog,
+            &manifests,
+            &local_store,
+            operator_session,
+        )
+        .await;
+    }
+    let remote_store = open_remote(&request.repository, &request.config, &request.remote)?;
     if request.all {
         println!("Datasets: {}", manifests.len());
     } else {
@@ -633,17 +726,132 @@ async fn handle_push(request: PushRequest) -> Result<(), Box<dyn std::error::Err
     Ok(())
 }
 
+async fn ensure_operator_session(
+    stored: session::Session,
+) -> Result<session::Session, Box<dyn std::error::Error>> {
+    let service = DavisService::new(&stored.service_url, Some(stored.token.clone()))?;
+    match service.operator_session_status().await {
+        Ok(_) => Ok(stored),
+        Err(RemoteError::Api { status, .. }) if status == reqwest::StatusCode::UNAUTHORIZED => {
+            if !std::io::stdin().is_terminal() {
+                return Err(format!(
+                    "operator session expired; run `davis operator login {}`",
+                    stored.service_url
+                )
+                .into());
+            }
+            println!("Operator session expired; login is required");
+            let operator_code = rpassword::prompt_password("Operator code: ")?;
+            if operator_code.is_empty() {
+                return Err("operator code must not be empty".into());
+            }
+            let service = DavisService::new(&stored.service_url, None)?;
+            let login = service.exchange_operator_code(&operator_code).await?;
+            let refreshed =
+                session::Session::new(service.base_url().to_owned(), login.token, login.expires_at);
+            session::save_operator(&refreshed)?;
+            println!("Operator session renewed");
+            Ok(refreshed)
+        }
+        Err(error) => Err(error.into()),
+    }
+}
+
+async fn handle_operator_push(
+    request: &PushRequest,
+    catalog: &davis_core::Catalog,
+    manifests: &[davis_core::DatasetManifest],
+    local_store: &LocalObjectStore,
+    operator_session: session::Session,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let service = DavisService::new(
+        &operator_session.service_url,
+        Some(operator_session.token.clone()),
+    )?;
+    let objects = unique_manifest_objects(manifests)?;
+    if request.all {
+        println!("Datasets: {}", manifests.len());
+    } else if let Some(dataset_id) = &request.dataset_id {
+        println!("Dataset: {dataset_id}");
+    }
+    println!("Remote: {} (operator session)", service.base_url());
+    let upload_bar = transfer_progress_bar("Push");
+    let result = service
+        .upload_operator_objects(
+            local_store,
+            &objects,
+            request.dry_run,
+            |completed_bytes, total_bytes, completed_objects, total_objects| {
+                upload_bar.set_length(total_bytes);
+                upload_bar.set_position(completed_bytes.min(total_bytes));
+                upload_bar.set_message(format!("Push {completed_objects}/{total_objects}"));
+            },
+        )
+        .await;
+    let report = match result {
+        Ok(report) => {
+            upload_bar.finish_with_message(if request.dry_run {
+                "Check complete"
+            } else {
+                "Push complete"
+            });
+            report
+        }
+        Err(error) => {
+            upload_bar.abandon_with_message("Push failed");
+            return Err(error.into());
+        }
+    };
+    println!("Missing objects: {}", report.missing);
+    println!("Existing objects: {}", report.existing);
+    println!("Upload size: {}", human_size(report.missing_bytes));
+    if request.dry_run {
+        println!("Dry run: no objects were uploaded");
+    } else {
+        println!("Uploaded objects: {}", report.uploaded);
+    }
+    let (revision, documents) = build_catalog_publication(&request.repository, catalog)?;
+    if request.dry_run {
+        println!("Catalog revision: {revision} (dry run, not published)");
+    } else {
+        service
+            .publish_operator_catalog(&revision, &documents)
+            .await?;
+        println!("Catalog revision: {revision}");
+        println!("Catalog published: yes");
+    }
+    Ok(())
+}
+
+fn unique_manifest_objects(
+    manifests: &[davis_core::DatasetManifest],
+) -> Result<Vec<ObjectRef>, Box<dyn std::error::Error>> {
+    let mut objects = HashMap::<String, ObjectRef>::new();
+    for manifest in manifests {
+        manifest.validate()?;
+        for file in &manifest.files {
+            let key = file.object.oid.to_string();
+            if let Some(previous) = objects.get(&key) {
+                if previous.size != file.object.size {
+                    return Err(format!("conflicting sizes for object {}", file.object.oid).into());
+                }
+            } else {
+                objects.insert(key, file.object.clone());
+            }
+        }
+    }
+    let mut objects = objects.into_values().collect::<Vec<_>>();
+    objects.sort_by_key(|object| object.oid.to_string());
+    Ok(objects)
+}
+
 async fn publish_catalog(
     repository: &std::path::Path,
     catalog: &davis_core::Catalog,
     remote: &ObjectStorage,
     dry_run: bool,
 ) -> Result<String, Box<dyn std::error::Error>> {
-    let index = build_catalog_index(repository, catalog)?;
-    let temporary = tempfile::tempdir()?;
-    write_catalog_index(temporary.path(), &index)?;
-    let index_bytes = std::fs::read(temporary.path().join("index.json"))?;
-    let revision = blake3::hash(&index_bytes).to_hex().to_string();
+    let (revision, documents) = build_catalog_publication(repository, catalog)?;
     if dry_run {
         return Ok(revision);
     }
@@ -664,7 +872,11 @@ async fn publish_catalog(
     }
 
     for name in CATALOG_DOCUMENTS {
-        let contents = std::fs::read(temporary.path().join(name))?;
+        let contents = documents
+            .get(name)
+            .ok_or_else(|| format!("catalog document was not generated: {name}"))?
+            .as_bytes()
+            .to_vec();
         let key = format!("catalog/revisions/{revision}/{name}");
         remote.write_document(&key, contents).await?;
     }
@@ -676,6 +888,25 @@ async fn publish_catalog(
         .write_document("catalog/current.json", pointer)
         .await?;
     Ok(revision)
+}
+
+fn build_catalog_publication(
+    repository: &std::path::Path,
+    catalog: &davis_core::Catalog,
+) -> Result<(String, HashMap<String, String>), Box<dyn std::error::Error>> {
+    let index = build_catalog_index(repository, catalog)?;
+    let temporary = tempfile::tempdir()?;
+    write_catalog_index(temporary.path(), &index)?;
+    let index_bytes = std::fs::read(temporary.path().join("index.json"))?;
+    let revision = blake3::hash(&index_bytes).to_hex().to_string();
+    let documents = CATALOG_DOCUMENTS
+        .iter()
+        .map(|name| {
+            std::fs::read_to_string(temporary.path().join(name))
+                .map(|contents| ((*name).to_owned(), contents))
+        })
+        .collect::<Result<HashMap<_, _>, _>>()?;
+    Ok((revision, documents))
 }
 
 fn open_remote(

@@ -43,9 +43,10 @@ const localBindingConfig = {
     : [],
   vars: {
     DAVIS_ACCESS_REVISION: process.env.DAVIS_ACCESS_REVISION ?? "2026",
+    DAVIS_OPERATOR_ACCESS_REVISION: process.env.DAVIS_OPERATOR_ACCESS_REVISION ?? "2026",
   },
   secrets: {
-    required: ["DAVIS_INVITE_CODE", "DAVIS_TOKEN_SECRET"],
+    required: ["DAVIS_INVITE_CODE", "DAVIS_OPERATOR_CODE", "DAVIS_TOKEN_SECRET"],
   },
 };
 

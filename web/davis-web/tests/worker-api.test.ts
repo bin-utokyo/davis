@@ -20,10 +20,50 @@ const sampleFile = {
 
 function createEnv(overrides: Partial<DavisWorkerEnv> = {}) {
   const requestedKeys: string[] = [];
+  const stored = new Map<string, Uint8Array>([[
+    "objects/blake3/e2/d004c4d48e0a7b166c588fc479eec8610940be7a58f0456b86c90dd0126cc9",
+    contents,
+  ]]);
+  const multipart = new Map<string, { key: string; parts: Map<number, Uint8Array> }>();
+  const metadata = (value: Uint8Array) => ({
+    size: value.length,
+    httpEtag: '"test-etag"',
+    writeHttpMetadata() {},
+  });
+  const resumeMultipartUpload = (key: string, uploadId: string) => ({
+    key,
+    uploadId,
+    async uploadPart(partNumber: number, value: ReadableStream | ArrayBuffer) {
+      const bytes = value instanceof ArrayBuffer
+        ? new Uint8Array(value)
+        : new Uint8Array(await new Response(value).arrayBuffer());
+      multipart.get(uploadId)?.parts.set(partNumber, bytes);
+      return { partNumber, etag: `etag-${partNumber}` };
+    },
+    async complete(parts: Array<{ partNumber: number }>) {
+      const upload = multipart.get(uploadId)!;
+      const size = parts.reduce((sum, part) => sum + (upload.parts.get(part.partNumber)?.length ?? 0), 0);
+      const value = new Uint8Array(size);
+      let offset = 0;
+      for (const part of parts) {
+        const bytes = upload.parts.get(part.partNumber)!;
+        value.set(bytes, offset);
+        offset += bytes.length;
+      }
+      stored.set(key, value);
+      multipart.delete(uploadId);
+      return metadata(value);
+    },
+    async abort() {
+      multipart.delete(uploadId);
+    },
+  });
   const env: DavisWorkerEnv = {
     DAVIS_INVITE_CODE: "summer-school-invite-2026",
+    DAVIS_OPERATOR_CODE: "davis-admin-2026-test-code",
     DAVIS_TOKEN_SECRET: "test-secret-with-more-than-thirty-two-characters",
     DAVIS_ACCESS_REVISION: "2026",
+    DAVIS_OPERATOR_ACCESS_REVISION: "2026",
     ASSETS: {
       async fetch() {
         return Response.json([sampleFile]);
@@ -46,10 +86,29 @@ function createEnv(overrides: Partial<DavisWorkerEnv> = {}) {
           },
         };
       },
+      async head(key) {
+        const value = stored.get(key);
+        return value ? metadata(value) : null;
+      },
+      async put(key, value) {
+        const bytes = typeof value === "string"
+          ? new TextEncoder().encode(value)
+          : value instanceof ArrayBuffer
+            ? new Uint8Array(value)
+            : new Uint8Array(await new Response(value).arrayBuffer());
+        stored.set(key, bytes);
+        return metadata(bytes);
+      },
+      async createMultipartUpload(key) {
+        const uploadId = `upload-${multipart.size + 1}-abcdefghijklmnop`;
+        multipart.set(uploadId, { key, parts: new Map() });
+        return resumeMultipartUpload(key, uploadId);
+      },
+      resumeMultipartUpload,
     },
     ...overrides,
   };
-  return { env, requestedKeys };
+  return { env, requestedKeys, stored };
 }
 
 function r2Json(value: unknown, etag = '"catalog-etag"') {
@@ -71,6 +130,16 @@ async function exchange(env: DavisWorkerEnv, client: "web" | "cli" = "cli") {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ invite_code: "summer-school-invite-2026", client }),
+  }), env);
+  const body = await response.json() as { token?: string };
+  return { response, body };
+}
+
+async function exchangeOperator(env: DavisWorkerEnv) {
+  const response = await handleApiRequest(apiRequest("/api/v1/operator/auth/exchange", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ operator_code: "davis-admin-2026-test-code", client: "cli" }),
   }), env);
   const body = await response.json() as { token?: string };
   return { response, body };
@@ -123,6 +192,100 @@ test("invalidates an existing session when the access revision changes", async (
     headers: { Authorization: `Bearer ${body.token}` },
   }), rotated);
   assert.equal(response.status, 401);
+});
+
+test("exchanges the separate operator code and rejects participant sessions", async () => {
+  const { env } = createEnv();
+  const operator = await exchangeOperator(env);
+  assert.equal(operator.response.status, 200);
+  assert.ok(operator.body.token);
+
+  const { body: participant } = await exchange(env);
+  const rejected = await handleApiRequest(apiRequest("/api/v1/operator/auth/session", {
+    headers: { Authorization: `Bearer ${participant.token}` },
+  }), env);
+  assert.equal(rejected.status, 401);
+
+  const accepted = await handleApiRequest(apiRequest("/api/v1/operator/auth/session", {
+    headers: { Authorization: `Bearer ${operator.body.token}` },
+  }), env);
+  assert.equal(accepted.status, 200);
+});
+
+test("plans, uploads, and completes an operator multipart object", async () => {
+  const { env, stored } = createEnv();
+  const { body } = await exchangeOperator(env);
+  const oid = `blake3:${"a".repeat(64)}`;
+  const payload = new TextEncoder().encode("operator upload");
+  const authorization = { Authorization: `Bearer ${body.token}` };
+
+  const plan = await handleApiRequest(apiRequest("/api/v1/operator/uploads/plan", {
+    method: "POST",
+    headers: { ...authorization, "Content-Type": "application/json" },
+    body: JSON.stringify({ objects: [{ oid, size: payload.length }] }),
+  }), env);
+  assert.equal(plan.status, 200);
+  assert.equal((await plan.json() as { objects: Array<{ status: string }> }).objects[0].status, "missing");
+
+  const created = await handleApiRequest(apiRequest("/api/v1/operator/uploads/create", {
+    method: "POST",
+    headers: { ...authorization, "Content-Type": "application/json" },
+    body: JSON.stringify({ oid, size: payload.length }),
+  }), env);
+  const upload = await created.json() as { upload_id: string };
+  assert.equal(created.status, 200);
+
+  const part = await handleApiRequest(apiRequest(
+    `/api/v1/operator/uploads/part?oid=${encodeURIComponent(oid)}&upload_id=${upload.upload_id}&part_number=1`,
+    { method: "PUT", headers: { ...authorization, "Content-Length": String(payload.length) }, body: payload },
+  ), env);
+  const uploadedPart = await part.json() as { part_number: number; etag: string; size: number };
+  assert.equal(part.status, 200);
+
+  const completed = await handleApiRequest(apiRequest("/api/v1/operator/uploads/complete", {
+    method: "POST",
+    headers: { ...authorization, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      oid,
+      size: payload.length,
+      upload_id: upload.upload_id,
+      parts: [uploadedPart],
+    }),
+  }), env);
+  assert.equal(completed.status, 200);
+  assert.deepEqual(stored.get(`objects/blake3/aa/${"a".repeat(62)}`), payload);
+});
+
+test("publishes a complete catalog only with operator authentication", async () => {
+  const { env, stored } = createEnv();
+  const { body } = await exchangeOperator(env);
+  const revision = "b".repeat(64);
+  const documents = {
+    "index.json": JSON.stringify({ version: 1, files: [sampleFile] }),
+    "datasets.json": JSON.stringify([]),
+    "files.json": JSON.stringify([sampleFile]),
+    "columns.json": JSON.stringify([]),
+    "facets.json": JSON.stringify({}),
+  };
+  const unauthorized = await handleApiRequest(apiRequest("/api/v1/operator/catalog/publish", {
+    method: "POST",
+    body: JSON.stringify({ revision, documents }),
+  }), env);
+  assert.equal(unauthorized.status, 401);
+
+  const published = await handleApiRequest(apiRequest("/api/v1/operator/catalog/publish", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${body.token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ revision, documents }),
+  }), env);
+  assert.equal(published.status, 200);
+  assert.deepEqual(
+    JSON.parse(new TextDecoder().decode(stored.get("catalog/current.json"))),
+    { version: 1, revision },
+  );
 });
 
 test("creates grants only for catalogued File IDs", async () => {

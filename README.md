@@ -62,6 +62,18 @@ printf '%s\n' "$DAVIS_INVITE_CODE" | davis login https://<配布されたURL> --
 
 sessionはOSごとのuser設定directoryに権限を限定して保存します．これはMVPの暫定credential storageであり，release配布前にOS credential store adapterへ置き換えられる境界を維持します．operatorのR2 credentialとは独立しており，参加者sessionにはupload，削除，Object一覧の権限がありません．
 
+運営者は，参加者codeとは別の運営共通codeを使用して一度loginします．運営sessionは既定30日で，期限内は再入力不要です．期限切れ後の`push`では対話的にcodeを再入力してsessionを更新できます．運営sessionはObjectのuploadとcatalog公開だけに使用され，R2秘密鍵を各端末へ配布する必要はありません．
+
+```bash
+davis operator login https://davis-web.davis-bin.workers.dev
+davis operator status
+davis push network/matsuyama --dry-run
+davis push network/matsuyama
+davis operator logout
+```
+
+大容量Objectは32 MiBごとのmultipart uploadとしてR2へ送信します．運営共通code自体は端末へ保存せず，失効可能な運営sessionだけを権限を限定して保存します．
+
 現行DVC metadataと実データの整合性確認，BLAKE3 objectの生成，DatasetManifestの更新には次を使用します．
 
 ```bash

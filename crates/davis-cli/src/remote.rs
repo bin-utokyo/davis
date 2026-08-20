@@ -3,14 +3,16 @@ use std::collections::HashMap;
 use davis_catalog::{IndexedDataset, IndexedFile};
 use davis_core::{
     Catalog, CatalogFile, Dataset, DatasetManifest, FileSchema, LocalObjectStore, ManifestDataset,
-    ManifestFile,
+    ManifestFile, ObjectRef,
 };
 use futures::StreamExt;
 use reqwest::{Client, StatusCode};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use tempfile::NamedTempFile;
 use thiserror::Error;
-use tokio::io::AsyncWriteExt;
+use tokio::io::{AsyncReadExt, AsyncWriteExt};
+
+const DEFAULT_UPLOAD_PART_SIZE: usize = 32 * 1024 * 1024;
 
 #[derive(Debug, Error)]
 pub enum RemoteError {
@@ -30,6 +32,10 @@ pub enum RemoteError {
     InconsistentDataset(String),
     #[error("download grant was not returned for file: {0}")]
     MissingGrant(String),
+    #[error("upload plan did not contain object: {0}")]
+    MissingUploadPlan(String),
+    #[error("operator upload response is invalid: {0}")]
+    InvalidUploadResponse(String),
     #[error("download size mismatch for {file_id}: expected {expected}, found {actual}")]
     DownloadSize {
         file_id: String,
@@ -71,15 +77,34 @@ pub struct DownloadReport {
     pub total_bytes: u64,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct OperatorUploadReport {
+    pub missing: usize,
+    pub existing: usize,
+    pub uploaded: usize,
+    pub missing_bytes: u64,
+}
+
 #[derive(Debug, Serialize)]
 struct ExchangeRequest<'a> {
     invite_code: &'a str,
     client: &'static str,
 }
 
+#[derive(Debug, Serialize)]
+struct OperatorExchangeRequest<'a> {
+    operator_code: &'a str,
+    client: &'static str,
+}
+
 #[derive(Debug, Deserialize)]
 struct ExchangeResponse {
     token: String,
+    expires_at: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct OperatorStatusResponse {
     expires_at: String,
 }
 
@@ -104,6 +129,63 @@ struct DownloadGrant {
 struct ApiError {
     #[serde(default)]
     message: String,
+}
+
+#[derive(Debug, Serialize)]
+struct OperatorObjectsRequest<'a> {
+    objects: &'a [ObjectRef],
+}
+
+#[derive(Debug, Deserialize)]
+struct OperatorPlanResponse {
+    objects: Vec<OperatorPlanObject>,
+}
+
+#[derive(Debug, Deserialize)]
+struct OperatorPlanObject {
+    oid: String,
+    size: u64,
+    status: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct OperatorUploadCreateResponse {
+    already_present: bool,
+    #[serde(default)]
+    upload_id: String,
+    #[serde(default = "default_upload_part_size")]
+    part_size: usize,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+struct UploadedPart {
+    part_number: u32,
+    etag: String,
+    size: u64,
+}
+
+#[derive(Debug, Serialize)]
+struct CompleteUploadRequest<'a> {
+    oid: &'a str,
+    size: u64,
+    upload_id: &'a str,
+    parts: &'a [UploadedPart],
+}
+
+#[derive(Debug, Serialize)]
+struct AbortUploadRequest<'a> {
+    oid: &'a str,
+    upload_id: &'a str,
+}
+
+#[derive(Debug, Serialize)]
+struct PublishCatalogRequest<'a> {
+    revision: &'a str,
+    documents: &'a HashMap<String, String>,
+}
+
+fn default_upload_part_size() -> usize {
+    DEFAULT_UPLOAD_PART_SIZE
 }
 
 impl DavisService {
@@ -147,6 +229,307 @@ impl DavisService {
         Ok(LoginSession {
             token: response.token,
             expires_at: response.expires_at,
+        })
+    }
+
+    pub async fn exchange_operator_code(
+        &self,
+        operator_code: &str,
+    ) -> Result<LoginSession, RemoteError> {
+        let response = self
+            .client
+            .post(self.endpoint("api/v1/operator/auth/exchange"))
+            .json(&OperatorExchangeRequest {
+                operator_code,
+                client: "cli",
+            })
+            .send()
+            .await?;
+        let response: ExchangeResponse = decode(response).await?;
+        Ok(LoginSession {
+            token: response.token,
+            expires_at: response.expires_at,
+        })
+    }
+
+    pub async fn operator_session_status(&self) -> Result<LoginSession, RemoteError> {
+        let token = self.operator_token()?;
+        let response = self
+            .client
+            .get(self.endpoint("api/v1/operator/auth/session"))
+            .bearer_auth(token)
+            .send()
+            .await?;
+        let response: OperatorStatusResponse = decode(response).await?;
+        Ok(LoginSession {
+            token: token.to_owned(),
+            expires_at: response.expires_at,
+        })
+    }
+
+    pub async fn upload_operator_objects<F>(
+        &self,
+        store: &LocalObjectStore,
+        objects: &[ObjectRef],
+        dry_run: bool,
+        mut on_progress: F,
+    ) -> Result<OperatorUploadReport, RemoteError>
+    where
+        F: FnMut(u64, u64, usize, usize),
+    {
+        let token = self.operator_token()?;
+        let response = self
+            .client
+            .post(self.endpoint("api/v1/operator/uploads/plan"))
+            .bearer_auth(token)
+            .json(&OperatorObjectsRequest { objects })
+            .send()
+            .await?;
+        let plan: OperatorPlanResponse = decode(response).await?;
+        let planned = plan
+            .objects
+            .into_iter()
+            .map(|object| (object.oid.clone(), object))
+            .collect::<HashMap<_, _>>();
+        let mut missing = Vec::new();
+        let mut existing = 0_usize;
+        let mut missing_bytes = 0_u64;
+        for object in objects {
+            let oid = object.oid.to_string();
+            let item = planned
+                .get(&oid)
+                .ok_or_else(|| RemoteError::MissingUploadPlan(oid.clone()))?;
+            if item.size != object.size {
+                return Err(RemoteError::InvalidUploadResponse(format!(
+                    "size mismatch for {oid}"
+                )));
+            }
+            match item.status.as_str() {
+                "existing" => existing += 1,
+                "missing" => {
+                    store.verify_object(&object.oid, object.size)?;
+                    missing_bytes = missing_bytes.checked_add(object.size).ok_or_else(|| {
+                        RemoteError::InvalidUploadResponse("byte counter overflow".into())
+                    })?;
+                    missing.push(object);
+                }
+                status => {
+                    return Err(RemoteError::InvalidUploadResponse(format!(
+                        "unexpected plan status {status} for {oid}"
+                    )));
+                }
+            }
+        }
+        let total_objects = missing.len();
+        on_progress(0, missing_bytes, 0, total_objects);
+        if dry_run {
+            return Ok(OperatorUploadReport {
+                missing: missing.len(),
+                existing,
+                uploaded: 0,
+                missing_bytes,
+            });
+        }
+        let mut uploaded = 0_usize;
+        let mut completed_bytes = 0_u64;
+        for object in missing.iter().copied() {
+            self.upload_operator_object(
+                store,
+                object,
+                &mut completed_bytes,
+                missing_bytes,
+                uploaded,
+                total_objects,
+                &mut on_progress,
+            )
+            .await?;
+            uploaded += 1;
+            on_progress(completed_bytes, missing_bytes, uploaded, total_objects);
+        }
+        Ok(OperatorUploadReport {
+            missing: missing.len(),
+            existing,
+            uploaded,
+            missing_bytes,
+        })
+    }
+
+    pub async fn publish_operator_catalog(
+        &self,
+        revision: &str,
+        documents: &HashMap<String, String>,
+    ) -> Result<(), RemoteError> {
+        let token = self.operator_token()?;
+        let response = self
+            .client
+            .post(self.endpoint("api/v1/operator/catalog/publish"))
+            .bearer_auth(token)
+            .json(&PublishCatalogRequest {
+                revision,
+                documents,
+            })
+            .send()
+            .await?;
+        ensure_success(response).await?;
+        Ok(())
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    async fn upload_operator_object<F>(
+        &self,
+        store: &LocalObjectStore,
+        object: &ObjectRef,
+        completed_bytes: &mut u64,
+        total_bytes: u64,
+        completed_objects: usize,
+        total_objects: usize,
+        on_progress: &mut F,
+    ) -> Result<(), RemoteError>
+    where
+        F: FnMut(u64, u64, usize, usize),
+    {
+        let token = self.operator_token()?;
+        let oid = object.oid.to_string();
+        let response = self
+            .client
+            .post(self.endpoint("api/v1/operator/uploads/create"))
+            .bearer_auth(token)
+            .json(object)
+            .send()
+            .await?;
+        let created: OperatorUploadCreateResponse = decode(response).await?;
+        if created.already_present {
+            *completed_bytes = completed_bytes.saturating_add(object.size);
+            on_progress(
+                *completed_bytes,
+                total_bytes,
+                completed_objects + 1,
+                total_objects,
+            );
+            return Ok(());
+        }
+        if created.upload_id.is_empty() || created.part_size == 0 {
+            return Err(RemoteError::InvalidUploadResponse(format!(
+                "missing multipart settings for {oid}"
+            )));
+        }
+        let upload_result = self
+            .upload_operator_parts(
+                store,
+                object,
+                &created,
+                completed_bytes,
+                total_bytes,
+                completed_objects,
+                total_objects,
+                on_progress,
+            )
+            .await;
+        if upload_result.is_err() {
+            let _ = self
+                .client
+                .post(self.endpoint("api/v1/operator/uploads/abort"))
+                .bearer_auth(token)
+                .json(&AbortUploadRequest {
+                    oid: &oid,
+                    upload_id: &created.upload_id,
+                })
+                .send()
+                .await;
+        }
+        let parts = upload_result?;
+        let response = self
+            .client
+            .post(self.endpoint("api/v1/operator/uploads/complete"))
+            .bearer_auth(token)
+            .json(&CompleteUploadRequest {
+                oid: &oid,
+                size: object.size,
+                upload_id: &created.upload_id,
+                parts: &parts,
+            })
+            .send()
+            .await?;
+        ensure_success(response).await?;
+        Ok(())
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    async fn upload_operator_parts<F>(
+        &self,
+        store: &LocalObjectStore,
+        object: &ObjectRef,
+        created: &OperatorUploadCreateResponse,
+        completed_bytes: &mut u64,
+        total_bytes: u64,
+        completed_objects: usize,
+        total_objects: usize,
+        on_progress: &mut F,
+    ) -> Result<Vec<UploadedPart>, RemoteError>
+    where
+        F: FnMut(u64, u64, usize, usize),
+    {
+        let token = self.operator_token()?;
+        let oid = object.oid.to_string();
+        let mut input = tokio::fs::File::open(store.object_path(&object.oid)).await?;
+        let mut buffer = vec![0_u8; created.part_size];
+        let mut parts = Vec::new();
+        loop {
+            let read = input.read(&mut buffer).await?;
+            if read == 0 {
+                break;
+            }
+            let part_number = u32::try_from(parts.len() + 1).map_err(|_| {
+                RemoteError::InvalidUploadResponse("too many multipart parts".into())
+            })?;
+            let mut url = reqwest::Url::parse(&self.endpoint("api/v1/operator/uploads/part"))
+                .map_err(|error| RemoteError::InvalidUrl(error.to_string()))?;
+            url.query_pairs_mut()
+                .append_pair("oid", &oid)
+                .append_pair("upload_id", &created.upload_id)
+                .append_pair("part_number", &part_number.to_string());
+            let response = self
+                .client
+                .put(url)
+                .bearer_auth(token)
+                .header(reqwest::header::CONTENT_LENGTH, read)
+                .body(buffer[..read].to_vec())
+                .send()
+                .await?;
+            let part: UploadedPart = decode(response).await?;
+            if part.part_number != part_number {
+                return Err(RemoteError::InvalidUploadResponse(format!(
+                    "unexpected multipart part number for {oid}"
+                )));
+            }
+            if part.size
+                != u64::try_from(read).map_err(|_| {
+                    RemoteError::InvalidUploadResponse("multipart chunk is too large".into())
+                })?
+            {
+                return Err(RemoteError::InvalidUploadResponse(format!(
+                    "unexpected multipart part size for {oid}"
+                )));
+            }
+            parts.push(part);
+            let read = u64::try_from(read).map_err(|_| {
+                RemoteError::InvalidUploadResponse("multipart chunk is too large".into())
+            })?;
+            *completed_bytes = completed_bytes.saturating_add(read);
+            on_progress(
+                *completed_bytes,
+                total_bytes,
+                completed_objects,
+                total_objects,
+            );
+        }
+        Ok(parts)
+    }
+
+    fn operator_token(&self) -> Result<&str, RemoteError> {
+        self.token.as_deref().ok_or_else(|| RemoteError::Api {
+            status: StatusCode::UNAUTHORIZED,
+            message: "operator login is required; run `davis operator login <URL>`".into(),
         })
     }
 

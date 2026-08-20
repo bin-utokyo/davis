@@ -10,6 +10,15 @@ export type SessionToken = {
   nonce: string;
 };
 
+export type OperatorSessionToken = {
+  kind: "operator-session";
+  version: 1;
+  revision: string;
+  issued_at: number;
+  expires_at: number;
+  nonce: string;
+};
+
 export type DownloadToken = {
   kind: "download";
   version: 1;
@@ -22,19 +31,19 @@ export type DownloadToken = {
 };
 
 export async function signToken(
-  payload: SessionToken | DownloadToken,
+  payload: SessionToken | OperatorSessionToken | DownloadToken,
   secret: string,
-  purpose: "session" | "download",
+  purpose: "session" | "operator-session" | "download",
 ): Promise<string> {
   const body = encodeBase64Url(encoder.encode(JSON.stringify(payload)));
   const signature = await sign(`${purpose}.${body}`, secret);
   return `${body}.${encodeBase64Url(signature)}`;
 }
 
-export async function verifyToken<T extends SessionToken | DownloadToken>(
+export async function verifyToken<T extends SessionToken | OperatorSessionToken | DownloadToken>(
   token: string,
   secret: string,
-  purpose: "session" | "download",
+  purpose: "session" | "operator-session" | "download",
 ): Promise<T | null> {
   const parts = token.split(".");
   if (parts.length !== 2 || !parts[0] || !parts[1]) return null;

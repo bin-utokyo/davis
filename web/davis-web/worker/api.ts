@@ -1,6 +1,7 @@
 import {
   codesMatch,
   type DownloadToken,
+  type OperatorSessionToken,
   randomNonce,
   type SessionToken,
   signToken,
@@ -13,6 +14,10 @@ const MAX_SESSION_TTL_SECONDS = 180 * 24 * 60 * 60;
 const DEFAULT_GRANT_TTL_SECONDS = 5 * 60;
 const MAX_GRANT_TTL_SECONDS = 15 * 60;
 const MAX_FILES_PER_GRANT = 256;
+const DEFAULT_OPERATOR_SESSION_TTL_SECONDS = 30 * 24 * 60 * 60;
+const MAX_OPERATOR_SESSION_TTL_SECONDS = 90 * 24 * 60 * 60;
+const MAX_OPERATOR_OBJECTS_PER_REQUEST = 512;
+const MAX_MULTIPART_PART_BYTES = 32 * 1024 * 1024;
 const CATALOG_DOCUMENTS = new Set([
   "index.json",
   "datasets.json",
@@ -33,11 +38,25 @@ type R2ObjectMetadata = {
   writeHttpMetadata(headers: Headers): void;
 };
 type R2ObjectBody = R2ObjectMetadata & { body: ReadableStream };
+type R2UploadedPart = { partNumber: number; etag: string };
+type R2MultipartUpload = {
+  uploadId: string;
+  key: string;
+  uploadPart(partNumber: number, value: ReadableStream | ArrayBuffer): Promise<R2UploadedPart>;
+  complete(parts: R2UploadedPart[]): Promise<R2ObjectMetadata>;
+  abort(): Promise<void>;
+};
 type R2Bucket = {
   get(
     key: string,
     options?: { onlyIf?: Headers; range?: Headers },
   ): Promise<R2ObjectMetadata | R2ObjectBody | null>;
+  head(key: string): Promise<R2ObjectMetadata | null>;
+  put(key: string, value: string | ArrayBuffer | ReadableStream, options?: {
+    httpMetadata?: { contentType?: string };
+  }): Promise<R2ObjectMetadata>;
+  createMultipartUpload(key: string): Promise<R2MultipartUpload>;
+  resumeMultipartUpload(key: string, uploadId: string): R2MultipartUpload;
 };
 
 export type DavisWorkerEnv = {
@@ -48,6 +67,9 @@ export type DavisWorkerEnv = {
   DAVIS_ACCESS_REVISION?: string;
   DAVIS_SESSION_TTL_SECONDS?: string;
   DAVIS_GRANT_TTL_SECONDS?: string;
+  DAVIS_OPERATOR_CODE?: string;
+  DAVIS_OPERATOR_ACCESS_REVISION?: string;
+  DAVIS_OPERATOR_SESSION_TTL_SECONDS?: string;
 };
 
 type CatalogFile = {
@@ -75,6 +97,39 @@ export async function handleApiRequest(request: Request, env: DavisWorkerEnv): P
     if (request.method !== "POST") return methodNotAllowed("POST");
     if (!sameOrigin(request, url)) return errorResponse(403, "origin_forbidden", "Origin is not allowed");
     return logout();
+  }
+  if (url.pathname === "/api/v1/operator/auth/exchange") {
+    if (request.method !== "POST") return methodNotAllowed("POST");
+    if (!sameOrigin(request, url)) return errorResponse(403, "origin_forbidden", "Origin is not allowed");
+    return exchangeOperatorCode(request, env);
+  }
+  if (url.pathname === "/api/v1/operator/auth/session") {
+    if (request.method !== "GET") return methodNotAllowed("GET");
+    return operatorSessionStatus(request, env);
+  }
+  if (url.pathname === "/api/v1/operator/uploads/plan") {
+    if (request.method !== "POST") return methodNotAllowed("POST");
+    return planOperatorUploads(request, env);
+  }
+  if (url.pathname === "/api/v1/operator/uploads/create") {
+    if (request.method !== "POST") return methodNotAllowed("POST");
+    return createOperatorUpload(request, env);
+  }
+  if (url.pathname === "/api/v1/operator/uploads/part") {
+    if (request.method !== "PUT") return methodNotAllowed("PUT");
+    return uploadOperatorPart(request, env);
+  }
+  if (url.pathname === "/api/v1/operator/uploads/complete") {
+    if (request.method !== "POST") return methodNotAllowed("POST");
+    return completeOperatorUpload(request, env);
+  }
+  if (url.pathname === "/api/v1/operator/uploads/abort") {
+    if (request.method !== "POST") return methodNotAllowed("POST");
+    return abortOperatorUpload(request, env);
+  }
+  if (url.pathname === "/api/v1/operator/catalog/publish") {
+    if (request.method !== "POST") return methodNotAllowed("POST");
+    return publishOperatorCatalog(request, env);
   }
   if (url.pathname === "/api/v1/download-grants") {
     if (request.method !== "POST") return methodNotAllowed("POST");
@@ -161,6 +216,204 @@ async function exchangeInviteCode(request: Request, env: DavisWorkerEnv): Promis
   const headers = new Headers();
   if (client === "web") headers.set("Set-Cookie", sessionCookie(token, ttl));
   return json(responseBody, { headers });
+}
+
+async function exchangeOperatorCode(request: Request, env: DavisWorkerEnv): Promise<Response> {
+  const configurationError = validateOperatorConfiguration(env);
+  if (configurationError) return configurationError;
+  const body = await readJson(request);
+  const operatorCode = typeof body?.operator_code === "string" ? body.operator_code : "";
+  if (!operatorCode || operatorCode.length > 256) {
+    return errorResponse(400, "invalid_request", "operator_code is required");
+  }
+  if (!(await codesMatch(operatorCode, env.DAVIS_OPERATOR_CODE!))) {
+    return errorResponse(401, "invalid_operator_code", "Operator code is invalid");
+  }
+
+  const issuedAt = nowSeconds();
+  const ttl = boundedDuration(
+    env.DAVIS_OPERATOR_SESSION_TTL_SECONDS,
+    DEFAULT_OPERATOR_SESSION_TTL_SECONDS,
+    MAX_OPERATOR_SESSION_TTL_SECONDS,
+  );
+  const payload: OperatorSessionToken = {
+    kind: "operator-session",
+    version: 1,
+    revision: env.DAVIS_OPERATOR_ACCESS_REVISION!,
+    issued_at: issuedAt,
+    expires_at: issuedAt + ttl,
+    nonce: randomNonce(),
+  };
+  const token = await signToken(payload, env.DAVIS_TOKEN_SECRET!, "operator-session");
+  return json({
+    authenticated: true,
+    role: "operator",
+    access_revision: payload.revision,
+    expires_at: new Date(payload.expires_at * 1000).toISOString(),
+    token,
+  });
+}
+
+async function operatorSessionStatus(request: Request, env: DavisWorkerEnv): Promise<Response> {
+  const configurationError = validateOperatorConfiguration(env);
+  if (configurationError) return configurationError;
+  const session = await authenticateOperator(request, env);
+  if (!session) return errorResponse(401, "operator_authentication_required", "Operator authentication is required");
+  return json({
+    authenticated: true,
+    role: "operator",
+    access_revision: session.revision,
+    expires_at: new Date(session.expires_at * 1000).toISOString(),
+  });
+}
+
+type OperatorObject = { oid: string; size: number };
+
+async function planOperatorUploads(request: Request, env: DavisWorkerEnv): Promise<Response> {
+  const session = await requireOperator(request, env);
+  if (session instanceof Response) return session;
+  const body = await readJson(request);
+  const objects = parseOperatorObjects(body?.objects);
+  if (objects instanceof Response) return objects;
+  const results = await Promise.all(objects.map(async (object) => {
+    const stored = await env.DAVIS_DATA!.head(objectKey(object.oid));
+    if (stored && stored.size !== object.size) {
+      return { ...object, status: "size_mismatch", actual_size: stored.size };
+    }
+    return { ...object, status: stored ? "existing" : "missing" };
+  }));
+  if (results.some((result) => result.status === "size_mismatch")) {
+    return errorResponse(409, "object_size_mismatch", "One or more stored objects have an unexpected size", { objects: results });
+  }
+  return json({ objects: results });
+}
+
+async function createOperatorUpload(request: Request, env: DavisWorkerEnv): Promise<Response> {
+  const session = await requireOperator(request, env);
+  if (session instanceof Response) return session;
+  const body = await readJson(request);
+  const object = parseOperatorObject(body);
+  if (!object) return errorResponse(400, "invalid_request", "A valid oid and size are required");
+  const key = objectKey(object.oid);
+  const stored = await env.DAVIS_DATA!.head(key);
+  if (stored) {
+    if (stored.size !== object.size) {
+      return errorResponse(409, "object_size_mismatch", "Stored object has an unexpected size");
+    }
+    return json({ oid: object.oid, size: object.size, already_present: true });
+  }
+  if (object.size === 0) {
+    await env.DAVIS_DATA!.put(key, new ArrayBuffer(0));
+    return json({ oid: object.oid, size: object.size, already_present: true });
+  }
+  const upload = await env.DAVIS_DATA!.createMultipartUpload(key);
+  return json({
+    oid: object.oid,
+    size: object.size,
+    already_present: false,
+    upload_id: upload.uploadId,
+    part_size: MAX_MULTIPART_PART_BYTES,
+  });
+}
+
+async function uploadOperatorPart(request: Request, env: DavisWorkerEnv): Promise<Response> {
+  const session = await requireOperator(request, env);
+  if (session instanceof Response) return session;
+  const url = new URL(request.url);
+  const oid = url.searchParams.get("oid") ?? "";
+  const uploadId = url.searchParams.get("upload_id") ?? "";
+  const partNumber = Number.parseInt(url.searchParams.get("part_number") ?? "", 10);
+  if (!isObjectId(oid) || !isUploadId(uploadId) || !Number.isInteger(partNumber)
+    || partNumber < 1 || partNumber > 10_000) {
+    return errorResponse(400, "invalid_request", "Valid oid, upload_id, and part_number are required");
+  }
+  const contentLength = Number.parseInt(request.headers.get("Content-Length") ?? "", 10);
+  if (!Number.isInteger(contentLength) || contentLength <= 0 || contentLength > MAX_MULTIPART_PART_BYTES) {
+    return errorResponse(413, "invalid_part_size", `Each upload part must be between 1 and ${MAX_MULTIPART_PART_BYTES} bytes`);
+  }
+  if (!request.body) return errorResponse(400, "invalid_request", "Upload part body is required");
+  const upload = env.DAVIS_DATA!.resumeMultipartUpload(objectKey(oid), uploadId);
+  const part = await upload.uploadPart(partNumber, request.body);
+  return json({ part_number: part.partNumber, etag: part.etag, size: contentLength });
+}
+
+async function completeOperatorUpload(request: Request, env: DavisWorkerEnv): Promise<Response> {
+  const session = await requireOperator(request, env);
+  if (session instanceof Response) return session;
+  const body = await readJson(request);
+  const object = parseOperatorObject(body);
+  const uploadId = typeof body?.upload_id === "string" ? body.upload_id : "";
+  const parts = Array.isArray(body?.parts) ? body.parts : [];
+  if (!object || !isUploadId(uploadId) || parts.length === 0 || parts.length > 10_000
+    || !parts.every(isUploadedPart)
+    || parts.reduce((sum, part) => sum + part.size, 0) !== object.size) {
+    return errorResponse(400, "invalid_request", "Valid oid, size, upload_id, and parts are required");
+  }
+  const upload = env.DAVIS_DATA!.resumeMultipartUpload(objectKey(object.oid), uploadId);
+  await upload.complete(parts.map((part) => ({ partNumber: part.part_number, etag: part.etag })));
+  const stored = await env.DAVIS_DATA!.head(objectKey(object.oid));
+  if (!stored || stored.size !== object.size) {
+    return errorResponse(409, "object_size_mismatch", "Completed object size does not match the declared size");
+  }
+  return json({ oid: object.oid, size: object.size, uploaded: true });
+}
+
+async function abortOperatorUpload(request: Request, env: DavisWorkerEnv): Promise<Response> {
+  const session = await requireOperator(request, env);
+  if (session instanceof Response) return session;
+  const body = await readJson(request);
+  const oid = typeof body?.oid === "string" ? body.oid : "";
+  const uploadId = typeof body?.upload_id === "string" ? body.upload_id : "";
+  if (!isObjectId(oid) || !isUploadId(uploadId)) {
+    return errorResponse(400, "invalid_request", "Valid oid and upload_id are required");
+  }
+  await env.DAVIS_DATA!.resumeMultipartUpload(objectKey(oid), uploadId).abort();
+  return json({ aborted: true });
+}
+
+async function publishOperatorCatalog(request: Request, env: DavisWorkerEnv): Promise<Response> {
+  const session = await requireOperator(request, env);
+  if (session instanceof Response) return session;
+  const body = await readJson(request);
+  const revision = typeof body?.revision === "string" ? body.revision : "";
+  const documents = body?.documents && typeof body.documents === "object" && !Array.isArray(body.documents)
+    ? body.documents as Record<string, unknown>
+    : null;
+  if (!/^[0-9a-f]{64}$/u.test(revision) || !documents
+    || [...CATALOG_DOCUMENTS].some((name) => typeof documents[name] !== "string")) {
+    return errorResponse(400, "invalid_request", "A valid revision and complete catalog documents are required");
+  }
+  const parsed = new Map<string, unknown>();
+  try {
+    for (const name of CATALOG_DOCUMENTS) parsed.set(name, JSON.parse(documents[name] as string));
+  } catch {
+    return errorResponse(400, "invalid_catalog", "Every catalog document must contain valid JSON");
+  }
+  const files = parsed.get("files.json");
+  if (!Array.isArray(files) || !files.every(isCatalogFile)) {
+    return errorResponse(400, "invalid_catalog", "files.json is invalid");
+  }
+  const uniqueObjects = new Map<string, number>();
+  for (const file of files) uniqueObjects.set(file.object.oid, file.object.size);
+  const coverage = await Promise.all([...uniqueObjects].map(async ([oid, size]) => {
+    const stored = await env.DAVIS_DATA!.head(objectKey(oid));
+    return { oid, size, actual_size: stored?.size ?? null };
+  }));
+  const missing = coverage.filter((object) => object.actual_size !== object.size);
+  if (missing.length > 0) {
+    return errorResponse(409, "catalog_objects_missing", "Catalog references missing or invalid objects", { objects: missing });
+  }
+  await Promise.all([...CATALOG_DOCUMENTS].map((name) => env.DAVIS_DATA!.put(
+    `catalog/revisions/${revision}/${name}`,
+    documents[name] as string,
+    { httpMetadata: { contentType: "application/json; charset=utf-8" } },
+  )));
+  await env.DAVIS_DATA!.put(
+    "catalog/current.json",
+    JSON.stringify({ version: 1, revision }),
+    { httpMetadata: { contentType: "application/json; charset=utf-8" } },
+  );
+  return json({ published: true, revision });
 }
 
 async function sessionStatus(request: Request, env: DavisWorkerEnv): Promise<Response> {
@@ -296,6 +549,37 @@ async function authenticate(request: Request, env: DavisWorkerEnv): Promise<Sess
   return isValidSessionToken(payload, env) ? payload : null;
 }
 
+async function authenticateOperator(
+  request: Request,
+  env: DavisWorkerEnv,
+): Promise<OperatorSessionToken | null> {
+  if (validateOperatorConfiguration(env)) return null;
+  const authorization = request.headers.get("Authorization");
+  const token = authorization?.match(/^Bearer\s+(.+)$/iu)?.[1];
+  if (!token) return null;
+  const payload = await verifyToken<OperatorSessionToken>(
+    token,
+    env.DAVIS_TOKEN_SECRET!,
+    "operator-session",
+  );
+  return isValidOperatorSessionToken(payload, env) ? payload : null;
+}
+
+async function requireOperator(
+  request: Request,
+  env: DavisWorkerEnv,
+): Promise<OperatorSessionToken | Response> {
+  const configurationError = validateOperatorConfiguration(env);
+  if (configurationError) return configurationError;
+  if (!env.DAVIS_DATA) return errorResponse(503, "storage_unavailable", "R2 storage is not configured");
+  const session = await authenticateOperator(request, env);
+  return session ?? errorResponse(
+    401,
+    "operator_authentication_required",
+    "Operator authentication is required",
+  );
+}
+
 async function readCatalog(request: Request, env: DavisWorkerEnv): Promise<CatalogFile[] | Response> {
   try {
     const catalogUrl = new URL("/catalog/files.json", request.url);
@@ -333,6 +617,20 @@ function isValidSessionToken(payload: SessionToken | null, env: DavisWorkerEnv):
     && typeof payload.nonce === "string";
 }
 
+function isValidOperatorSessionToken(
+  payload: OperatorSessionToken | null,
+  env: DavisWorkerEnv,
+): payload is OperatorSessionToken {
+  return !!payload
+    && payload.kind === "operator-session"
+    && payload.version === 1
+    && payload.revision === env.DAVIS_OPERATOR_ACCESS_REVISION
+    && Number.isInteger(payload.issued_at)
+    && Number.isInteger(payload.expires_at)
+    && payload.expires_at > nowSeconds()
+    && typeof payload.nonce === "string";
+}
+
 function isValidDownloadToken(payload: DownloadToken | null, env: DavisWorkerEnv): payload is DownloadToken {
   return !!payload
     && payload.kind === "download"
@@ -355,6 +653,68 @@ function validateAuthConfiguration(env: DavisWorkerEnv): Response | null {
     return errorResponse(503, "authentication_unavailable", "Authentication secret is too short");
   }
   return null;
+}
+
+function validateOperatorConfiguration(env: DavisWorkerEnv): Response | null {
+  if (!env.DAVIS_OPERATOR_CODE || !env.DAVIS_TOKEN_SECRET || !env.DAVIS_OPERATOR_ACCESS_REVISION) {
+    return errorResponse(503, "operator_authentication_unavailable", "Operator authentication is not configured");
+  }
+  if (env.DAVIS_TOKEN_SECRET.length < 32) {
+    return errorResponse(503, "operator_authentication_unavailable", "Authentication secret is too short");
+  }
+  return null;
+}
+
+function parseOperatorObjects(value: unknown): OperatorObject[] | Response {
+  if (!Array.isArray(value) || value.length === 0 || value.length > MAX_OPERATOR_OBJECTS_PER_REQUEST) {
+    return errorResponse(
+      400,
+      "invalid_request",
+      `objects must contain between 1 and ${MAX_OPERATOR_OBJECTS_PER_REQUEST} entries`,
+    );
+  }
+  const objects = value.map(parseOperatorObject);
+  if (objects.some((object) => !object)) {
+    return errorResponse(400, "invalid_request", "Every object must have a valid oid and size");
+  }
+  const unique = new Map<string, OperatorObject>();
+  for (const object of objects as OperatorObject[]) {
+    const previous = unique.get(object.oid);
+    if (previous && previous.size !== object.size) {
+      return errorResponse(400, "conflicting_object_size", "An object ID has conflicting sizes");
+    }
+    unique.set(object.oid, object);
+  }
+  return [...unique.values()];
+}
+
+function parseOperatorObject(value: unknown): OperatorObject | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const object = value as { oid?: unknown; size?: unknown };
+  return typeof object.oid === "string" && isObjectId(object.oid)
+    && typeof object.size === "number" && Number.isSafeInteger(object.size) && object.size >= 0
+    ? { oid: object.oid, size: object.size }
+    : null;
+}
+
+function isObjectId(value: string): boolean {
+  return /^blake3:[0-9a-f]{64}$/u.test(value);
+}
+
+function isUploadId(value: string): boolean {
+  return value.length >= 16 && value.length <= 512 && /^[A-Za-z0-9._~+/=-]+$/u.test(value);
+}
+
+function isUploadedPart(value: unknown): value is { part_number: number; etag: string; size: number } {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const part = value as { part_number?: unknown; etag?: unknown };
+  return typeof part.part_number === "number" && Number.isInteger(part.part_number)
+    && part.part_number >= 1 && part.part_number <= 10_000
+    && typeof part.etag === "string" && part.etag.length > 0 && part.etag.length <= 256
+    && typeof (part as { size?: unknown }).size === "number"
+    && Number.isSafeInteger((part as { size: number }).size)
+    && (part as { size: number }).size > 0
+    && (part as { size: number }).size <= MAX_MULTIPART_PART_BYTES;
 }
 
 function objectKey(oid: string): string {
