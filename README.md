@@ -51,6 +51,8 @@ cargo run -p davis-cli -- ingest --all
 
 R2またはfilesystem remoteへの差分uploadには`davis-next push`を使用します．1 Datasetだけを指定できるほか，`davis-next push --all --dry-run`で全Datasetの差分を安全に確認できます．設定例は`.davis/config.example.toml`にあります．
 
+対話terminalでは，`push`のlocal検証・uploadと，remoteを指定した`get`のdownloadについて，処理済みObject数，処理済み容量，割合，残り時間をprogress barで表示します．pipeやCI等の非対話実行ではprogress barを自動的に非表示にし，既存の標準出力を維持します．
+
 ## Webカタログ
 
 Webが使用する静的indexは，すべての`schema.yaml`から生成します．

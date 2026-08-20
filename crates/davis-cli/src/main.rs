@@ -1,4 +1,6 @@
+use std::io::IsTerminal;
 use std::path::PathBuf;
+use std::time::Duration;
 
 use clap::{Parser, Subcommand};
 use davis_catalog::{
@@ -8,7 +10,9 @@ use davis_catalog::{
 use davis_core::{read_manifest, write_manifest, Dataset, LocalObjectStore, SchemaStatus};
 use davis_storage::{
     read_storage_configuration, ObjectStorage, RemoteConfig, S3Credentials, StorageError,
+    TransferProgress,
 };
+use indicatif::{ProgressBar, ProgressStyle};
 
 #[derive(Debug, Parser)]
 #[command(name = "davis-next", version, about = "Davis data catalog client")]
@@ -321,9 +325,22 @@ async fn handle_get(request: GetRequest) -> Result<(), Box<dyn std::error::Error
     let object_store = LocalObjectStore::new(resolve(&request.repository, &request.store));
     if let Some(config) = &request.config {
         let remote_store = open_remote(&request.repository, config, &request.remote)?;
-        let report = remote_store
-            .download_manifest(&object_store, &manifest)
-            .await?;
+        let progress_bar = transfer_progress_bar("Download");
+        let result = remote_store
+            .download_manifest_with_progress(&object_store, &manifest, |progress| {
+                update_transfer_progress(&progress_bar, "Download", progress);
+            })
+            .await;
+        let report = match result {
+            Ok(report) => {
+                progress_bar.finish_with_message("Download complete");
+                report
+            }
+            Err(error) => {
+                progress_bar.abandon_with_message("Download failed");
+                return Err(error.into());
+            }
+        };
         println!("Downloaded objects: {}", report.downloaded);
         println!("Cached objects: {}", report.cached);
     }
@@ -394,24 +411,50 @@ async fn handle_push(request: PushRequest) -> Result<(), Box<dyn std::error::Err
     }
     let remote_store = open_remote(&request.repository, &request.config, &request.remote)?;
     let local_store = LocalObjectStore::new(resolve(&request.repository, &request.store));
-    let plan = remote_store
-        .plan_upload_manifests(&local_store, &manifests)
-        .await?;
     if request.all {
         println!("Datasets: {}", manifests.len());
     } else {
         println!("Dataset: {}", dataset_ids[0]);
     }
     println!("Remote: {}", request.remote);
+    let check_bar = transfer_progress_bar("Check");
+    let plan_result = remote_store
+        .plan_upload_manifests_with_progress(&local_store, &manifests, |progress| {
+            update_transfer_progress(&check_bar, "Check", progress);
+        })
+        .await;
+    let plan = match plan_result {
+        Ok(plan) => {
+            check_bar.finish_with_message("Check complete");
+            plan
+        }
+        Err(error) => {
+            check_bar.abandon_with_message("Check failed");
+            return Err(error.into());
+        }
+    };
     println!("Missing objects: {}", plan.missing);
     println!("Existing objects: {}", plan.existing);
     println!("Upload size: {}", human_size(plan.missing_bytes));
     if request.dry_run {
         println!("Dry run: no objects were uploaded");
     } else {
-        let report = remote_store
-            .upload_manifests(&local_store, &manifests)
-            .await?;
+        let upload_bar = transfer_progress_bar("Push");
+        let upload_result = remote_store
+            .upload_manifests_with_progress(&local_store, &manifests, |progress| {
+                update_transfer_progress(&upload_bar, "Push", progress);
+            })
+            .await;
+        let report = match upload_result {
+            Ok(report) => {
+                upload_bar.finish_with_message("Push complete");
+                report
+            }
+            Err(error) => {
+                upload_bar.abandon_with_message("Push failed");
+                return Err(error.into());
+            }
+        };
         println!("Uploaded objects: {}", report.uploaded);
         println!("Skipped objects: {}", report.skipped);
     }
@@ -525,4 +568,30 @@ fn human_size(bytes: u64) -> String {
         let fraction = (bytes % divisor) * 100 / divisor;
         format!("{}.{fraction:02} {}", bytes / divisor, UNITS[unit])
     }
+}
+
+fn transfer_progress_bar(label: &'static str) -> ProgressBar {
+    let progress_bar = if std::io::stderr().is_terminal() {
+        ProgressBar::new(0)
+    } else {
+        ProgressBar::hidden()
+    };
+    let style = ProgressStyle::with_template(
+        "{spinner:.green} {msg:20} [{bar:36.cyan/blue}] {bytes}/{total_bytes} ({percent}%) {eta}",
+    )
+    .expect("the built-in progress template must be valid")
+    .progress_chars("=>-");
+    progress_bar.set_style(style);
+    progress_bar.set_message(label);
+    progress_bar.enable_steady_tick(Duration::from_millis(100));
+    progress_bar
+}
+
+fn update_transfer_progress(progress_bar: &ProgressBar, label: &str, progress: TransferProgress) {
+    progress_bar.set_length(progress.total_bytes);
+    progress_bar.set_position(progress.completed_bytes.min(progress.total_bytes));
+    progress_bar.set_message(format!(
+        "{label} {}/{}",
+        progress.completed_objects, progress.total_objects
+    ));
 }

@@ -82,6 +82,15 @@ pub struct DownloadReport {
     pub bytes: u64,
 }
 
+/// Aggregate progress for one storage operation.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct TransferProgress {
+    pub completed_bytes: u64,
+    pub total_bytes: u64,
+    pub completed_objects: usize,
+    pub total_objects: usize,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum UploadOutcome {
     Uploaded,
@@ -256,13 +265,44 @@ impl ObjectStorage {
         local: &LocalObjectStore,
         manifests: &[DatasetManifest],
     ) -> Result<UploadPlan, StorageError> {
+        self.plan_upload_manifests_with_progress(local, manifests, |_| {})
+            .await
+    }
+
+    /// Calculates missing objects and reports local verification progress.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when manifest validation, local verification, or remote
+    /// metadata access fails.
+    pub async fn plan_upload_manifests_with_progress<F>(
+        &self,
+        local: &LocalObjectStore,
+        manifests: &[DatasetManifest],
+        mut on_progress: F,
+    ) -> Result<UploadPlan, StorageError>
+    where
+        F: FnMut(TransferProgress),
+    {
+        let objects = unique_objects(manifests)?;
+        let total_bytes = total_object_bytes(&objects)?;
+        let mut progress = TransferProgress {
+            completed_bytes: 0,
+            total_bytes,
+            completed_objects: 0,
+            total_objects: objects.len(),
+        };
+        on_progress(progress);
         let mut plan = UploadPlan {
             missing: 0,
             existing: 0,
             missing_bytes: 0,
         };
-        for object in unique_objects(manifests)? {
-            local.verify_object(&object.oid, object.size)?;
+        for object in objects {
+            local.verify_object_with_progress(&object.oid, object.size, |bytes| {
+                progress.completed_bytes = progress.completed_bytes.saturating_add(bytes);
+                on_progress(progress);
+            })?;
             let key = object_key(&object.oid);
             match self.operator.stat(&key).await {
                 Ok(metadata) => {
@@ -284,6 +324,8 @@ impl ObjectStorage {
                 }
                 Err(error) => return Err(error.into()),
             }
+            progress.completed_objects += 1;
+            on_progress(progress);
         }
         Ok(plan)
     }
@@ -300,6 +342,29 @@ impl ObjectStorage {
         oid: &ObjectId,
         size: u64,
     ) -> Result<UploadOutcome, StorageError> {
+        self.upload_object_with_progress(local, oid, size, |_| {})
+            .await
+    }
+
+    /// Streams one verified object and reports bytes handled by the push.
+    ///
+    /// Existing objects report their full size immediately. Newly uploaded
+    /// objects report each chunk after it has been accepted by the backend.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when the local object is corrupt, reading fails, remote
+    /// storage fails, or an existing remote object has a different size.
+    pub async fn upload_object_with_progress<F>(
+        &self,
+        local: &LocalObjectStore,
+        oid: &ObjectId,
+        size: u64,
+        mut on_progress: F,
+    ) -> Result<UploadOutcome, StorageError>
+    where
+        F: FnMut(u64),
+    {
         local.verify_object(oid, size)?;
         let key = object_key(oid);
         match self.operator.stat(&key).await {
@@ -311,6 +376,7 @@ impl ObjectStorage {
                         actual: metadata.content_length(),
                     });
                 }
+                on_progress(size);
                 return Ok(UploadOutcome::AlreadyPresent);
             }
             Err(error) if error.kind() == ErrorKind::NotFound => {}
@@ -344,6 +410,7 @@ impl ObjectStorage {
                 break;
             }
             writer.write(buffer[..read].to_vec()).await?;
+            on_progress(u64::try_from(read).map_err(|_| StorageError::SizeOverflow)?);
         }
         writer.close().await?;
 
@@ -382,13 +449,45 @@ impl ObjectStorage {
         local: &LocalObjectStore,
         manifests: &[DatasetManifest],
     ) -> Result<UploadReport, StorageError> {
+        self.upload_manifests_with_progress(local, manifests, |_| {})
+            .await
+    }
+
+    /// Uploads distinct objects and reports aggregate handled bytes.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when manifest validation or any object upload fails.
+    pub async fn upload_manifests_with_progress<F>(
+        &self,
+        local: &LocalObjectStore,
+        manifests: &[DatasetManifest],
+        mut on_progress: F,
+    ) -> Result<UploadReport, StorageError>
+    where
+        F: FnMut(TransferProgress),
+    {
+        let objects = unique_objects(manifests)?;
+        let mut progress = TransferProgress {
+            completed_bytes: 0,
+            total_bytes: total_object_bytes(&objects)?,
+            completed_objects: 0,
+            total_objects: objects.len(),
+        };
+        on_progress(progress);
         let mut report = UploadReport {
             uploaded: 0,
             skipped: 0,
             bytes: 0,
         };
-        for object in unique_objects(manifests)? {
-            match self.upload_object(local, &object.oid, object.size).await? {
+        for object in objects {
+            let outcome = self
+                .upload_object_with_progress(local, &object.oid, object.size, |bytes| {
+                    progress.completed_bytes = progress.completed_bytes.saturating_add(bytes);
+                    on_progress(progress);
+                })
+                .await?;
+            match outcome {
                 UploadOutcome::Uploaded => report.uploaded += 1,
                 UploadOutcome::AlreadyPresent => report.skipped += 1,
             }
@@ -396,6 +495,8 @@ impl ObjectStorage {
                 .bytes
                 .checked_add(object.size)
                 .ok_or(StorageError::SizeOverflow)?;
+            progress.completed_objects += 1;
+            on_progress(progress);
         }
         Ok(report)
     }
@@ -411,7 +512,38 @@ impl ObjectStorage {
         local: &LocalObjectStore,
         manifest: &DatasetManifest,
     ) -> Result<DownloadReport, StorageError> {
+        self.download_manifest_with_progress(local, manifest, |_| {})
+            .await
+    }
+
+    /// Downloads missing objects and reports aggregate downloaded or cached bytes.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when a remote object is missing or has the wrong size,
+    /// streaming fails, or the downloaded BLAKE3 ID does not match the manifest.
+    pub async fn download_manifest_with_progress<F>(
+        &self,
+        local: &LocalObjectStore,
+        manifest: &DatasetManifest,
+        mut on_progress: F,
+    ) -> Result<DownloadReport, StorageError>
+    where
+        F: FnMut(TransferProgress),
+    {
         manifest.validate().map_err(davis_core::StoreError::from)?;
+        let total_bytes = manifest.files.iter().try_fold(0_u64, |total, file| {
+            total
+                .checked_add(file.object.size)
+                .ok_or(StorageError::SizeOverflow)
+        })?;
+        let mut progress = TransferProgress {
+            completed_bytes: 0,
+            total_bytes,
+            completed_objects: 0,
+            total_objects: manifest.files.len(),
+        };
+        on_progress(progress);
         let mut report = DownloadReport {
             downloaded: 0,
             cached: 0,
@@ -423,6 +555,10 @@ impl ObjectStorage {
                 .is_ok()
             {
                 report.cached += 1;
+                progress.completed_bytes =
+                    progress.completed_bytes.saturating_add(file.object.size);
+                progress.completed_objects += 1;
+                on_progress(progress);
                 continue;
             }
             let key = object_key(&file.object.oid);
@@ -442,12 +578,16 @@ impl ObjectStorage {
             let mut stream = self.operator.reader(&key).await?.into_stream(..).await?;
             while let Some(buffer) = stream.try_next().await? {
                 for bytes in buffer {
+                    let transferred =
+                        u64::try_from(bytes.len()).map_err(|_| StorageError::SizeOverflow)?;
                     temporary
                         .write_all(&bytes)
                         .map_err(|source| StorageError::DownloadWrite {
                             path: temporary.path().to_path_buf(),
                             source,
                         })?;
+                    progress.completed_bytes = progress.completed_bytes.saturating_add(transferred);
+                    on_progress(progress);
                 }
             }
             temporary
@@ -469,6 +609,8 @@ impl ObjectStorage {
                 .bytes
                 .checked_add(ingested.size)
                 .ok_or(StorageError::SizeOverflow)?;
+            progress.completed_objects += 1;
+            on_progress(progress);
         }
         Ok(report)
     }
@@ -501,6 +643,14 @@ fn unique_objects(manifests: &[DatasetManifest]) -> Result<Vec<ObjectRef>, Stora
         }
     }
     Ok(objects)
+}
+
+fn total_object_bytes(objects: &[ObjectRef]) -> Result<u64, StorageError> {
+    objects.iter().try_fold(0_u64, |total, object| {
+        total
+            .checked_add(object.size)
+            .ok_or(StorageError::SizeOverflow)
+    })
 }
 
 #[cfg(test)]
@@ -584,11 +734,17 @@ mod tests {
         assert_eq!(final_plan.existing, 1);
 
         let empty_cache = LocalObjectStore::new(temporary.path().join("empty-cache"));
+        let mut download_progress = Vec::new();
         let download = remote
-            .download_manifest(&empty_cache, &manifest)
+            .download_manifest_with_progress(&empty_cache, &manifest, |progress| {
+                download_progress.push(progress);
+            })
             .await
             .unwrap();
         assert_eq!(download.downloaded, 1);
+        let final_progress = download_progress.last().unwrap();
+        assert_eq!(final_progress.completed_bytes, object.size);
+        assert_eq!(final_progress.completed_objects, 1);
         empty_cache
             .verify_object(&manifest.files[0].object.oid, object.size)
             .unwrap();
@@ -623,17 +779,30 @@ mod tests {
             })
             .collect();
 
+        let mut plan_progress = Vec::new();
         let initial = remote
-            .plan_upload_manifests(&local, &manifests)
+            .plan_upload_manifests_with_progress(&local, &manifests, |progress| {
+                plan_progress.push(progress);
+            })
             .await
             .unwrap();
         assert_eq!(initial.missing, 1);
         assert_eq!(initial.missing_bytes, object.size);
+        assert_eq!(plan_progress.last().unwrap().completed_bytes, object.size);
+        assert_eq!(plan_progress.last().unwrap().completed_objects, 1);
 
-        let uploaded = remote.upload_manifests(&local, &manifests).await.unwrap();
+        let mut upload_progress = Vec::new();
+        let uploaded = remote
+            .upload_manifests_with_progress(&local, &manifests, |progress| {
+                upload_progress.push(progress);
+            })
+            .await
+            .unwrap();
         assert_eq!(uploaded.uploaded, 1);
         assert_eq!(uploaded.skipped, 0);
         assert_eq!(uploaded.bytes, object.size);
+        assert_eq!(upload_progress.last().unwrap().completed_bytes, object.size);
+        assert_eq!(upload_progress.last().unwrap().completed_objects, 1);
 
         let final_plan = remote
             .plan_upload_manifests(&local, &manifests)

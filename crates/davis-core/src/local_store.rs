@@ -134,11 +134,28 @@ impl LocalObjectStore {
     ///
     /// Returns an error for missing, unreadable, truncated, or corrupt objects.
     pub fn verify_object(&self, oid: &ObjectId, expected_size: u64) -> Result<(), StoreError> {
+        self.verify_object_with_progress(oid, expected_size, |_| {})
+    }
+
+    /// Verifies an object and reports each hashed byte chunk to the caller.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error for missing, unreadable, truncated, or corrupt objects.
+    pub fn verify_object_with_progress<F>(
+        &self,
+        oid: &ObjectId,
+        expected_size: u64,
+        on_progress: F,
+    ) -> Result<(), StoreError>
+    where
+        F: FnMut(u64),
+    {
         let path = self.object_path(oid);
         if !path.is_file() {
             return Err(StoreError::ObjectNotFound(oid.clone()));
         }
-        let (actual, size) = hash_file(&path)?;
+        let (actual, size) = hash_file_with_progress(&path, on_progress)?;
         if size != expected_size {
             return Err(StoreError::SizeMismatch {
                 expected: expected_size,
@@ -200,7 +217,13 @@ impl LocalObjectStore {
     }
 }
 
-fn hash_file(path: &Path) -> Result<(ObjectId, u64), StoreError> {
+fn hash_file_with_progress<F>(
+    path: &Path,
+    mut on_progress: F,
+) -> Result<(ObjectId, u64), StoreError>
+where
+    F: FnMut(u64),
+{
     let mut input = File::open(path).map_err(|source_error| io_error(path, source_error))?;
     let mut hasher = blake3::Hasher::new();
     let mut size = 0_u64;
@@ -214,6 +237,7 @@ fn hash_file(path: &Path) -> Result<(ObjectId, u64), StoreError> {
         }
         hasher.update(&buffer[..read]);
         size = add_read_size(size, read, path)?;
+        on_progress(u64::try_from(read).map_err(|_| StoreError::SizeOverflow(path.into()))?);
     }
     Ok((
         ObjectId::from_blake3_digest(hasher.finalize().to_hex().to_string()),
