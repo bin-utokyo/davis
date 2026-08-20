@@ -82,7 +82,7 @@ pnpm install
 pnpm dev
 ```
 
-Webカタログでは，名称・説明・地域・年・形式・license・schema状態・列情報による検索，Dataset・File詳細，Raw YAML表示，複数選択，合計容量表示，対応する`davis-next get` commandのcopyができます．Workerには，共通招待code，失効可能なsession，短寿命Download Grant，private R2 Object配信の共通APIがあります．CLIはこのAPIへ接続済みで，Web UIからのdownload接続が次の段階です．
+Webカタログでは，名称・説明・地域・年・形式・license・schema状態・列情報による検索，Dataset・File詳細，Raw YAML表示，複数選択，合計容量表示，対応する`davis-next get` commandのcopyができます．Workerには，共通招待code，失効可能なsession，短寿命Download Grant，private R2 Object配信の共通APIがあります．CLIとWeb UIの両方がこのAPIへ接続し，Webでは利用条件を確認して選択fileを個別にdownloadできます．
 
 ## 検証
 

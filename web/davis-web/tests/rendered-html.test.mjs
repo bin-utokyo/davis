@@ -33,6 +33,8 @@ test("server-renders the Davis catalog shell", async () => {
   assert.match(html, /交通データを/);
   assert.match(html, /研究のすぐそばに/);
   assert.match(html, /データセットを探す/);
+  assert.match(html, /Webから個別に保存できます/);
+  assert.match(html, /確認中/);
   assert.match(html, /property="og:image" content="http:\/\/localhost:3000\/og\.png"/);
   assert.match(html, /name="twitter:card" content="summary_large_image"/);
   assert.doesNotMatch(html, /codex-preview|SkeletonPreview|Your site is taking shape/);

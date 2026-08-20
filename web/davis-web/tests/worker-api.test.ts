@@ -141,6 +141,20 @@ test("creates grants only for catalogued File IDs", async () => {
   assert.equal(missing.status, 404);
 });
 
+test("creates download grants from the browser session cookie", async () => {
+  const { env } = createEnv();
+  const { response: login } = await exchange(env, "web");
+  const cookie = login.headers.get("Set-Cookie")?.split(";", 1)[0] ?? "";
+  const response = await handleApiRequest(apiRequest("/api/v1/download-grants", {
+    method: "POST",
+    headers: { Cookie: cookie, "Content-Type": "application/json" },
+    body: JSON.stringify({ file_ids: [sampleFile.id] }),
+  }), env);
+  assert.equal(response.status, 200);
+  const body = await response.json() as { grants: Array<{ file_id: string }> };
+  assert.deepEqual(body.grants.map((grant) => grant.file_id), [sampleFile.id]);
+});
+
 test("streams an authorized R2 object and supports byte ranges", async () => {
   const { env, requestedKeys } = createEnv();
   const { body } = await exchange(env);

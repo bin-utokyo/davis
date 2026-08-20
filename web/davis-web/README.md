@@ -30,7 +30,7 @@ pnpm test
 pnpm lint
 ```
 
-現段階では，検索，facet絞り込み，Dataset・File詳細，Raw YAML表示，複数選択，合計容量表示，`davis-next get` commandのcopyに対応しています．参加者認証とR2 downloadのWorker APIも実装済みで，CLIは接続済み，Web UIとのdownload接続は次の段階です．
+現段階では，検索，facet絞り込み，Dataset・File詳細，Raw YAML表示，複数選択，合計容量表示，`davis-next get` commandのcopyに対応しています．参加者認証とR2 downloadのWorker APIへCLIとWeb UIの両方を接続済みです．Web UIは共通招待codeをHttpOnly cookieへ交換し，利用条件の確認後に選択fileを個別downloadします．
 
 ## Download API
 

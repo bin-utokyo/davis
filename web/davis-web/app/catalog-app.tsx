@@ -37,6 +37,9 @@ type Facets = {
   licenses: LocalizedText[];
   schema_statuses: Array<"ready" | "missing" | "invalid">;
 };
+type SessionState = "checking" | "authenticated" | "anonymous";
+type DownloadGrant = { file_id: string; path: string; size: number; expires_at: string; url: string };
+type ApiErrorBody = { error?: { message?: string } };
 
 const emptyFacets: Facets = { cities: [], years: [], formats: [], licenses: [], schema_statuses: [] };
 
@@ -79,6 +82,11 @@ function datasetLabel(id: string) {
   return id.split("/").at(-1)?.replaceAll("-", " ") ?? id;
 }
 
+async function apiError(response: Response) {
+  const body = await response.json().catch(() => null) as ApiErrorBody | null;
+  return body?.error?.message ?? `Request failed (${response.status})`;
+}
+
 export function CatalogApp() {
   const [datasets, setDatasets] = useState<Dataset[]>([]);
   const [files, setFiles] = useState<CatalogFile[]>([]);
@@ -95,6 +103,15 @@ export function CatalogApp() {
   const [activeDataset, setActiveDataset] = useState<string | null>(null);
   const [activeFile, setActiveFile] = useState<CatalogFile | null>(null);
   const [copied, setCopied] = useState(false);
+  const [sessionState, setSessionState] = useState<SessionState>("checking");
+  const [sessionExpiresAt, setSessionExpiresAt] = useState("");
+  const [downloadDialogOpen, setDownloadDialogOpen] = useState(false);
+  const [inviteCode, setInviteCode] = useState("");
+  const [licenseConfirmed, setLicenseConfirmed] = useState(false);
+  const [authPending, setAuthPending] = useState(false);
+  const [downloadPending, setDownloadPending] = useState(false);
+  const [accessError, setAccessError] = useState("");
+  const [downloadMessage, setDownloadMessage] = useState("");
 
   useEffect(() => {
     Promise.all([
@@ -106,6 +123,18 @@ export function CatalogApp() {
       setFiles(nextFiles);
       setFacets(nextFacets);
     }).catch(() => setLoadingError("カタログを読み込めませんでした．もう一度ページを開き直してください．"));
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/v1/auth/session", { credentials: "same-origin" }).then(async (response) => {
+      if (!response.ok) {
+        setSessionState("anonymous");
+        return;
+      }
+      const body = await response.json() as { expires_at: string };
+      setSessionExpiresAt(body.expires_at);
+      setSessionState("authenticated");
+    }).catch(() => setSessionState("anonymous"));
   }, []);
 
   const normalizedQuery = query.trim().toLocaleLowerCase();
@@ -133,6 +162,7 @@ export function CatalogApp() {
   const activeDatasetFiles = activeDataset ? files.filter((file) => file.dataset_id === activeDataset) : [];
   const selectedFiles = files.filter((file) => selected.has(file.id));
   const selectedSize = selectedFiles.reduce((sum, file) => sum + file.size, 0);
+  const selectedHasMissingLicense = selectedFiles.some((file) => !file.license?.ja);
 
   function toggleFile(id: string) {
     setSelected((current) => {
@@ -177,14 +207,91 @@ export function CatalogApp() {
     window.setTimeout(() => setCopied(false), 1600);
   }
 
+  function openDownloadDialog() {
+    setAccessError("");
+    setDownloadMessage("");
+    setLicenseConfirmed(false);
+    setDownloadDialogOpen(true);
+  }
+
+  async function login(event: FormEvent) {
+    event.preventDefault();
+    setAuthPending(true);
+    setAccessError("");
+    try {
+      const response = await fetch("/api/v1/auth/exchange", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ invite_code: inviteCode, client: "web" }),
+      });
+      if (!response.ok) throw new Error(await apiError(response));
+      const body = await response.json() as { expires_at: string };
+      setInviteCode("");
+      setSessionExpiresAt(body.expires_at);
+      setSessionState("authenticated");
+    } catch (error) {
+      setAccessError(error instanceof Error ? error.message : "Loginに失敗しました．");
+    } finally {
+      setAuthPending(false);
+    }
+  }
+
+  async function logout() {
+    await fetch("/api/v1/auth/logout", { method: "POST", credentials: "same-origin" }).catch(() => null);
+    setSessionState("anonymous");
+    setSessionExpiresAt("");
+  }
+
+  async function downloadSelected() {
+    if (!licenseConfirmed || selectedFiles.length === 0 || sessionState !== "authenticated") return;
+    setDownloadPending(true);
+    setAccessError("");
+    setDownloadMessage("");
+    try {
+      const response = await fetch("/api/v1/download-grants", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ file_ids: selectedFiles.map((file) => file.id) }),
+      });
+      if (response.status === 401) {
+        setSessionState("anonymous");
+        throw new Error("Sessionの有効期限が切れました．もう一度招待codeを入力してください．");
+      }
+      if (!response.ok) throw new Error(await apiError(response));
+      const body = await response.json() as { grants: DownloadGrant[] };
+      for (const grant of body.grants) {
+        const link = document.createElement("a");
+        link.href = grant.url;
+        link.download = grant.path.split("/").at(-1) ?? "download";
+        link.rel = "noopener";
+        document.body.append(link);
+        link.click();
+        link.remove();
+        await new Promise((resolveDelay) => window.setTimeout(resolveDelay, 120));
+      }
+      setDownloadMessage(`${body.grants.length} fileのdownloadを開始しました．`);
+    } catch (error) {
+      setAccessError(error instanceof Error ? error.message : "Downloadを開始できませんでした．");
+    } finally {
+      setDownloadPending(false);
+    }
+  }
+
+  const selectedLicenses = [...new Set(selectedFiles.map((file) => file.license?.ja).filter(Boolean))] as string[];
+
   return (
     <main>
       <header className="site-header">
         <a className="brand" href="#top" aria-label="Davis catalog home"><span className="brand-mark">D</span><span>Davis</span></a>
         <nav aria-label="メインナビゲーション"><a className="active" href="#catalog">データを探す</a><a href="#guide">使い方</a><a href="#about">Davisについて</a></nav>
-        <button className="selection-button" type="button" onClick={() => selected.size && document.querySelector("#selection")?.scrollIntoView()}>
-          選択中 <span>{selected.size}</span>
-        </button>
+        <div className="header-actions">
+          {sessionState === "authenticated" ? <button className="auth-button" type="button" onClick={logout}>Logout</button> : <button className="auth-button" type="button" onClick={openDownloadDialog}>{sessionState === "checking" ? "確認中" : "Login"}</button>}
+          <button className="selection-button" type="button" onClick={() => selected.size && document.querySelector("#selection")?.scrollIntoView()}>
+            選択中 <span>{selected.size}</span>
+          </button>
+        </div>
       </header>
 
       <section className="hero" id="top">
@@ -229,7 +336,7 @@ export function CatalogApp() {
         </div>
       </section>
 
-      <section className="guide-section" id="guide"><p className="section-kicker">HOW TO USE</p><h2>見つけた後は，モデルへ．</h2><div className="guide-grid"><div><span>01</span><h3>schemaから探す</h3><p>名称だけでなく，地域，年，列名や説明から必要なファイルを探せます．</p></div><div><span>02</span><h3>必要なものを選ぶ</h3><p>dataset全体でも，ファイル単位でも選択できます．合計容量も確認できます．</p></div><div><span>03</span><h3>Davisで取得する</h3><p>現在はCLI commandをコピーします．R2接続後はWebからの取得も追加します．</p></div></div></section>
+      <section className="guide-section" id="guide"><p className="section-kicker">HOW TO USE</p><h2>見つけた後は，モデルへ．</h2><div className="guide-grid"><div><span>01</span><h3>schemaから探す</h3><p>名称だけでなく，地域，年，列名や説明から必要なファイルを探せます．</p></div><div><span>02</span><h3>必要なものを選ぶ</h3><p>dataset全体でも，ファイル単位でも選択できます．合計容量も確認できます．</p></div><div><span>03</span><h3>Davisで取得する</h3><p>Webから個別に保存できます．階層を保つ場合はCLI commandをコピーして取得します．</p></div></div></section>
       <footer id="about"><a className="brand" href="#top"><span className="brand-mark">D</span><span>Davis</span></a><p>交通データの取得から行動モデルの研究までを，一つの流れにつなぐためのplatformです．</p><a href="https://github.com/bin-utokyo/davis">GitHub</a></footer>
 
       {activeDataset && <div className="overlay"><button className="overlay-dismiss" type="button" aria-label="ファイル一覧を閉じる" onClick={() => setActiveDataset(null)}/><aside className="drawer" role="dialog" aria-modal="true" aria-label={`${activeDataset}のファイル`}>
@@ -247,7 +354,21 @@ export function CatalogApp() {
         {activeFile.raw_schema && <details className="raw-schema"><summary>Raw schema.yaml</summary><pre>{activeFile.raw_schema}</pre></details>}
       </aside></div>}
 
-      {selected.size > 0 && <aside className="selection-dock" id="selection" aria-label="選択内容"><div><strong>{selected.size} files</strong><span>{humanSize(selectedSize)}</span></div><p>{new Set(selectedFiles.map((file) => file.dataset_id)).size} datasetsから選択中</p><button type="button" className="clear-button" onClick={() => setSelected(new Set())}>すべて解除</button><button type="button" className="copy-button" onClick={copyCommands}>{copied ? "コピーしました" : "選択内容のgetをコピー"}</button></aside>}
+      {selected.size > 0 && <aside className="selection-dock" id="selection" aria-label="選択内容"><div><strong>{selected.size} files</strong><span>{humanSize(selectedSize)}</span></div><p>{new Set(selectedFiles.map((file) => file.dataset_id)).size} datasetsから選択中</p><button type="button" className="clear-button" onClick={() => setSelected(new Set())}>すべて解除</button><button type="button" className="clear-button" onClick={copyCommands}>{copied ? "コピーしました" : "CLI commandをコピー"}</button><button type="button" className="copy-button" onClick={openDownloadDialog}>Webでダウンロード</button></aside>}
+
+      {downloadDialogOpen && <div className="overlay access-overlay"><button className="overlay-dismiss" type="button" aria-label="Download画面を閉じる" disabled={downloadPending} onClick={() => setDownloadDialogOpen(false)}/><section className="access-dialog" role="dialog" aria-modal="true" aria-labelledby="download-title">
+        <div className="drawer-heading"><div><p className="dataset-id">{selectedFiles.length > 0 ? "DOWNLOAD" : "ACCESS"}</p><h2 id="download-title">{selectedFiles.length > 0 ? "選択内容を取得する" : "参加者Login"}</h2></div><button type="button" aria-label="閉じる" disabled={downloadPending} onClick={() => setDownloadDialogOpen(false)}>×</button></div>
+        {selectedFiles.length > 0 && <><div className="download-summary"><strong>{selectedFiles.length} files</strong><span>{humanSize(selectedSize)}</span></div>
+        <p className="download-note">Webでは各fileをbrowserのDownload folderへ保存します．Datasetの階層をそのまま作る場合は，CLI commandをコピーして取得してください．</p>
+        {selectedLicenses.length > 0 && <div className="license-list"><strong>利用条件</strong>{selectedLicenses.map((value) => <p key={value}>{value}</p>)}</div>}
+        {selectedHasMissingLicense && <div className="license-list warning"><strong>利用条件</strong><p>選択内容に利用条件が記載されていないfileがあります．利用前に運営へ確認してください．</p></div>}</>}
+        {sessionState !== "authenticated" && <form className="login-form" onSubmit={login}><label htmlFor="invite-code">参加者用招待code</label><div><input id="invite-code" type="password" autoComplete="off" required maxLength={256} value={inviteCode} onChange={(event) => setInviteCode(event.target.value)} placeholder="運営から案内されたcode"/><button type="submit" disabled={authPending}>{authPending ? "確認中" : "Login"}</button></div><p>一度loginすると，このbrowserではsession期限まで再入力不要です．</p></form>}
+        {sessionState === "authenticated" && <p className="session-status">Login済み{sessionExpiresAt && <> ・ session期限 {new Date(sessionExpiresAt).toLocaleDateString("ja-JP")}</>}</p>}
+        {selectedFiles.length > 0 && <label className="license-confirm"><input type="checkbox" checked={licenseConfirmed} onChange={(event) => setLicenseConfirmed(event.target.checked)}/><span>上記の利用条件と保存方法を確認しました．</span></label>}
+        {accessError && <p className="access-message error-message" role="alert">{accessError}</p>}
+        {downloadMessage && <p className="access-message success-message" role="status">{downloadMessage}</p>}
+        {selectedFiles.length > 0 && <button className="download-button" type="button" disabled={!licenseConfirmed || sessionState !== "authenticated" || downloadPending} onClick={downloadSelected}>{downloadPending ? "Downloadを準備中" : `${selectedFiles.length} fileをダウンロード`}</button>}
+      </section></div>}
     </main>
   );
 }
