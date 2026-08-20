@@ -6,7 +6,7 @@ license.workspace = true
 repository.workspace = true
 
 [[bin]]
-name = "davis-next"
+name = "davis"
 path = "src/main.rs"
 
 [dependencies]

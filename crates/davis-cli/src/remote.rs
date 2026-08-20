@@ -118,7 +118,7 @@ impl DavisService {
         let base_url = url.as_str().trim_end_matches('/').to_owned();
         Ok(Self {
             client: Client::builder()
-                .user_agent(concat!("davis-next/", env!("CARGO_PKG_VERSION")))
+                .user_agent(concat!("davis/", env!("CARGO_PKG_VERSION")))
                 .build()?,
             base_url,
             token,
@@ -261,7 +261,7 @@ impl DavisService {
     ) -> Result<HashMap<String, DownloadGrant>, RemoteError> {
         let token = self.token.as_deref().ok_or_else(|| RemoteError::Api {
             status: StatusCode::UNAUTHORIZED,
-            message: "login is required; run `davis-next login <URL>`".into(),
+            message: "login is required; run `davis login <URL>`".into(),
         })?;
         let request = GrantRequest {
             file_ids: missing

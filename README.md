@@ -33,23 +33,23 @@ cargo run -p davis-cli -- get network/matsuyama
 cargo run -p davis-cli -- get network/matsuyama --file link.csv
 ```
 
-既存Python CLIの`davis`と移行中のRust CLIが衝突しないように，Rust版の実行file名は当面`davis-next`としています．既存版を残したまま，次のcommandで導入できます．
+Rust版CLIの正式な実行file名は`davis`です．旧Python版を残す必要がある場合は，`davis-legacy`という名前へ退避できます．
 
 ```bash
 cargo install --path crates/davis-cli --locked --root ~/.local
-davis-next --help
+davis --help
 ```
 
-将来，Rust版が既存機能を置き換えられる段階で`davis-next`を`davis`へ昇格し，必要な場合だけ既存版を`davis-legacy`として残します．
+旧Python版から切り替えた後は，通常の操作には`davis`を使用してください．
 
 参加者は，運営から案内されたDavis WebのURLを指定して一度loginします．招待codeは画面に表示されない対話promptから入力し，sessionが有効な間は再入力不要です．以後の`list`，`info`，`get`は公開catalogと認証済みDownload APIを利用します．`get`はcurrent directory以下に`data/<Dataset root>/...`を再現し，取得済みObjectはlocal cacheから再利用します．
 
 ```bash
-davis-next login https://<配布されたURL>
-davis-next list
-davis-next info network/matsuyama
-davis-next get network/matsuyama
-davis-next logout
+davis login https://<配布されたURL>
+davis list
+davis info network/matsuyama
+davis get network/matsuyama
+davis logout
 ```
 
 Webカタログの「CLIコマンドをコピー」で得られるcommandには`--service-url`が含まれます．CLI側で未loginの場合は，任意のdirectoryから実行してもその場で招待codeを入力でき，login後に同じ処理のままdownloadを続行します．Web browserのlogin sessionとCLIのlogin sessionは別です．
@@ -57,7 +57,7 @@ Webカタログの「CLIコマンドをコピー」で得られるcommandには`
 非対話環境では，招待codeをcommand line引数やshell履歴へ残さず，標準入力から渡します．
 
 ```bash
-printf '%s\n' "$DAVIS_INVITE_CODE" | davis-next login https://<配布されたURL> --invite-code-stdin
+printf '%s\n' "$DAVIS_INVITE_CODE" | davis login https://<配布されたURL> --invite-code-stdin
 ```
 
 sessionはOSごとのuser設定directoryに権限を限定して保存します．これはMVPの暫定credential storageであり，release配布前にOS credential store adapterへ置き換えられる境界を維持します．operatorのR2 credentialとは独立しており，参加者sessionにはupload，削除，Object一覧の権限がありません．
@@ -84,7 +84,7 @@ pnpm install
 pnpm dev
 ```
 
-Webカタログでは，名称・説明・地域・年・形式・license・schema状態・列情報による検索，Dataset・File詳細，Raw YAML表示，複数選択，合計容量表示，対応する`davis-next get` commandのcopyができます．Workerには，共通招待code，失効可能なsession，短寿命Download Grant，private R2 Object配信の共通APIがあります．CLIとWeb UIの両方がこのAPIへ接続し，Webでは利用条件を確認して選択fileを個別にdownloadできます．
+Webカタログでは，名称・説明・地域・年・形式・license・schema状態・列情報による検索，Dataset・File詳細，Raw YAML表示，複数選択，合計容量表示，対応する`davis get` commandのcopyができます．Workerには，共通招待code，失効可能なsession，短寿命Download Grant，private R2 Object配信の共通APIがあります．CLIとWeb UIの両方がこのAPIへ接続し，Webでは利用条件を確認して選択fileを個別にdownloadできます．
 
 ## 検証
 

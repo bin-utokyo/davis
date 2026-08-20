@@ -30,7 +30,7 @@ pnpm test
 pnpm lint
 ```
 
-現段階では，検索，facet絞り込み，Dataset・File詳細，Raw YAML表示，複数選択，合計容量表示，`davis-next get` commandのcopyに対応しています．参加者認証とR2 downloadのWorker APIへCLIとWeb UIの両方を接続済みです．Web UIは共通招待codeをHttpOnly cookieへ交換し，利用条件の確認後に選択fileを個別downloadします．
+現段階では，検索，facet絞り込み，Dataset・File詳細，Raw YAML表示，複数選択，合計容量表示，`davis get` commandのcopyに対応しています．参加者認証とR2 downloadのWorker APIへCLIとWeb UIの両方を接続済みです．Web UIは共通招待codeをHttpOnly cookieへ交換し，利用条件の確認後に選択fileを個別downloadします．
 
 ## Download API
 
@@ -64,9 +64,9 @@ R2 binding名は`DAVIS_DATA`，既定bucket名は`davis-bmss`です．`DAVIS_ACC
 CLIからは，deployment URLと共通招待codeを使用します．
 
 ```bash
-davis-next login https://<deployment URL>
-davis-next list
-davis-next get network/matsuyama
+davis login https://<deployment URL>
+davis list
+davis get network/matsuyama
 ```
 
 CLIは`catalog/datasets.json`と`catalog/files.json`からDatasetManifestを再構成し，`POST /api/v1/download-grants`で不足Objectだけを取得します．したがって，参加者はrepositoryのclone，DVC，R2 credentialを必要としません．

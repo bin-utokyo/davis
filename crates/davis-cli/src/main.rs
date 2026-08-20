@@ -19,7 +19,7 @@ use indicatif::{ProgressBar, ProgressStyle};
 use remote::DavisService;
 
 #[derive(Debug, Parser)]
-#[command(name = "davis-next", version, about = "Davis data catalog client")]
+#[command(name = "davis", version, about = "Davis data catalog client")]
 struct Cli {
     /// Davis repository to read.
     #[arg(long, global = true, default_value = ".")]
@@ -492,7 +492,7 @@ async fn get_session(
     }
     if !std::io::stdin().is_terminal() {
         return Err(format!(
-            "no CLI session for {}; run `davis-next login {}` first",
+            "no CLI session for {}; run `davis login {}` first",
             service.base_url(),
             service.base_url()
         )

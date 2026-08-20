@@ -215,8 +215,8 @@ export function CatalogApp() {
     const commands = ids.map((id) => {
       const datasetFiles = files.filter((file) => file.dataset_id === id);
       const chosenFiles = selectedFiles.filter((file) => file.dataset_id === id);
-      if (datasetFiles.length === chosenFiles.length) return `davis-next get ${id}${serviceOption}`;
-      return `davis-next get ${id} ${chosenFiles.map((file) => `--file ${JSON.stringify(file.file_id)}`).join(" ")}${serviceOption}`;
+      if (datasetFiles.length === chosenFiles.length) return `davis get ${id}${serviceOption}`;
+      return `davis get ${id} ${chosenFiles.map((file) => `--file ${JSON.stringify(file.file_id)}`).join(" ")}${serviceOption}`;
     }).join("\n");
     await navigator.clipboard.writeText(commands);
     setCopied(true);
