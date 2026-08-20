@@ -24,9 +24,9 @@ description:
   ja: 各トリップのODを特定する処理の過程で生成されるファイルです。
 hash_: dc69c8f19cf8fe9f9b58da96e763c7b5c4eec6385dc05e99dc360e8a94cb60ee
 license_:
-  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+  en: Use is permitted only for the 2026 Summer Course on Behavior Modeling in Transportation
     Networks.
-  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+  ja: 2026年度の行動モデル夏の学校のための利用のみ許可します。
 name:
   en: Toyosu_2021_bus_result
   ja: Toyosu_2021_bus_result
