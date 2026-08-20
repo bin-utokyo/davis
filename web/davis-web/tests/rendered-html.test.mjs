@@ -57,3 +57,13 @@ test("generated catalog files agree on current coverage", async () => {
   assert.ok(facets.formats.includes("csv"));
   assert.ok(files.some((file) => file.raw_schema?.includes("columns:")));
 });
+
+test("deployment routes only API requests through the Worker first", async () => {
+  const config = await readFile(
+    new URL("../dist/server/wrangler.json", import.meta.url),
+    "utf8",
+  ).then(JSON.parse);
+
+  assert.equal(config.assets.binding, "ASSETS");
+  assert.deepEqual(config.assets.run_worker_first, ["/api/*"]);
+});

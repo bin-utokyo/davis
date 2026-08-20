@@ -19,7 +19,9 @@ const localBindingConfig = {
   preview_urls: false,
   assets: {
     binding: "ASSETS",
-    run_worker_first: true,
+    // API requests must reach our Worker, while generated CSS, JavaScript,
+    // catalog JSON, and images should be served by Cloudflare Assets.
+    run_worker_first: ["/api/*"],
   },
   compatibility_flags: ["nodejs_compat"],
   d1_databases: d1
