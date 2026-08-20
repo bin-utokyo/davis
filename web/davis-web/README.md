@@ -30,4 +30,27 @@ pnpm test
 pnpm lint
 ```
 
-現段階では，検索，facet絞り込み，Dataset・File詳細，Raw YAML表示，複数選択，合計容量表示，`davis-next get` commandのcopyに対応しています．実データのWeb downloadと参加者認証はR2・Worker接続後に追加します．
+現段階では，検索，facet絞り込み，Dataset・File詳細，Raw YAML表示，複数選択，合計容量表示，`davis-next get` commandのcopyに対応しています．参加者認証とR2 downloadのWorker APIも実装済みで，Web UIとの接続は次の段階です．
+
+## Download API
+
+Workerには，CLIとWebが共用するversion 1 APIがあります．Catalog metadataは公開したまま，実データだけを認証で保護します．
+
+| Endpoint | 用途 |
+| --- | --- |
+| `POST /api/v1/auth/exchange` | 共通招待codeをbrowser cookieまたはCLI tokenへ交換 |
+| `GET /api/v1/auth/session` | sessionの有効性と期限を確認 |
+| `POST /api/v1/auth/logout` | browser sessionを削除 |
+| `POST /api/v1/download-grants` | File ID集合を5分有効のdownload URLへ交換 |
+| `GET /api/v1/download?grant=...` | private R2 Objectをstreaming download |
+
+Download APIは公開CatalogのFile IDだけを受理し，任意のR2 key指定，Object一覧，PUT，DELETEを提供しません．Range requestにも対応します．
+
+local開発では`.dev.vars.example`を`.dev.vars`へcopyし，実際の値へ置き換えます．`DAVIS_TOKEN_SECRET`には32文字以上のrandom値を使用してください．productionでは値をsourceや通常の環境変数へ保存せず，Cloudflare Worker Secretとして登録します．
+
+```bash
+pnpm exec wrangler secret put DAVIS_INVITE_CODE
+pnpm exec wrangler secret put DAVIS_TOKEN_SECRET
+```
+
+R2 binding名は`DAVIS_DATA`，既定bucket名は`davis-bmss`です．`DAVIS_ACCESS_REVISION`を変更して再deployすると，旧招待codeで発行済みのsessionとdownload grantを一括失効できます．sessionは既定30日で最大180日，download grantは既定5分で最大15分です．

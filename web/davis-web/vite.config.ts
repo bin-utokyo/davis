@@ -27,10 +27,16 @@ const localBindingConfig = {
     ? [
         {
           binding: r2,
-          bucket_name: "site-creator-r2",
+          bucket_name: process.env.DAVIS_R2_BUCKET ?? "davis-bmss",
         },
       ]
     : [],
+  vars: {
+    DAVIS_ACCESS_REVISION: process.env.DAVIS_ACCESS_REVISION ?? "2026",
+  },
+  secrets: {
+    required: ["DAVIS_INVITE_CODE", "DAVIS_TOKEN_SECRET"],
+  },
 };
 
 export default defineConfig(async () => {

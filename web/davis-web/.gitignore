@@ -30,6 +30,8 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+.dev.vars*
+!.dev.vars.example
 
 # vercel
 .vercel
@@ -38,3 +40,4 @@ yarn-error.log*
 /.wrangler/
 /outputs/
 /work/
+*.tsbuildinfo

@@ -1,0 +1,169 @@
+openapi: 3.1.0
+info:
+  title: Davis Download API
+  version: 1.0.0
+  description: 共通招待codeを用いてprivate R2 Objectを取得するCLI・Web共通API
+servers:
+  - url: /
+paths:
+  /api/v1/health:
+    get:
+      operationId: getHealth
+      responses:
+        "200":
+          description: API is available
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, version]
+                properties:
+                  status: { const: ok }
+                  version: { const: 1 }
+  /api/v1/auth/exchange:
+    post:
+      operationId: exchangeInviteCode
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [invite_code]
+              properties:
+                invite_code: { type: string }
+                client: { type: string, enum: [web, cli], default: web }
+      responses:
+        "200":
+          description: Session issued. Web clients receive an HttpOnly cookie; CLI clients receive token.
+          headers:
+            Set-Cookie:
+              schema: { type: string }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Session" }
+        "401": { $ref: "#/components/responses/Error" }
+  /api/v1/auth/session:
+    get:
+      operationId: getSession
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Current session
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Session" }
+        "401": { $ref: "#/components/responses/Error" }
+  /api/v1/auth/logout:
+    post:
+      operationId: logout
+      responses:
+        "200":
+          description: Browser session cookie removed
+  /api/v1/download-grants:
+    post:
+      operationId: createDownloadGrants
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [file_ids]
+              properties:
+                file_ids:
+                  type: array
+                  minItems: 1
+                  maxItems: 256
+                  uniqueItems: true
+                  items: { type: string }
+      responses:
+        "200":
+          description: Short-lived download URLs
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [grants]
+                properties:
+                  grants:
+                    type: array
+                    items: { $ref: "#/components/schemas/DownloadGrant" }
+        "401": { $ref: "#/components/responses/Error" }
+        "404": { $ref: "#/components/responses/Error" }
+  /api/v1/download:
+    get:
+      operationId: downloadObject
+      parameters:
+        - name: grant
+          in: query
+          required: true
+          schema: { type: string }
+        - name: Range
+          in: header
+          required: false
+          schema: { type: string }
+      responses:
+        "200":
+          description: Complete file
+          content:
+            application/octet-stream:
+              schema: { type: string, format: binary }
+        "206":
+          description: Requested byte range
+          content:
+            application/octet-stream:
+              schema: { type: string, format: binary }
+        "401": { $ref: "#/components/responses/Error" }
+        "404": { $ref: "#/components/responses/Error" }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: davis_session
+  schemas:
+    Session:
+      type: object
+      required: [authenticated, access_revision, expires_at]
+      properties:
+        authenticated: { const: true }
+        access_revision: { type: string }
+        expires_at: { type: string, format: date-time }
+        token:
+          type: string
+          description: CLI client requests only
+    DownloadGrant:
+      type: object
+      required: [file_id, path, size, expires_at, url]
+      properties:
+        file_id: { type: string }
+        path: { type: string }
+        size: { type: integer, minimum: 0 }
+        expires_at: { type: string, format: date-time }
+        url: { type: string, format: uri }
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code: { type: string }
+            message: { type: string }
+            details: { type: object, additionalProperties: true }
+  responses:
+    Error:
+      description: Request failed
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
