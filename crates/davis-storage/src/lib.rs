@@ -68,11 +68,12 @@ pub struct UploadReport {
     pub bytes: u64,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct UploadPlan {
     pub missing: usize,
     pub existing: usize,
     pub missing_bytes: u64,
+    missing_objects: Vec<ObjectRef>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -297,6 +298,7 @@ impl ObjectStorage {
             missing: 0,
             existing: 0,
             missing_bytes: 0,
+            missing_objects: Vec::new(),
         };
         for object in objects {
             local.verify_object_with_progress(&object.oid, object.size, |bytes| {
@@ -321,6 +323,7 @@ impl ObjectStorage {
                         .missing_bytes
                         .checked_add(object.size)
                         .ok_or(StorageError::SizeOverflow)?;
+                    plan.missing_objects.push(object.clone());
                 }
                 Err(error) => return Err(error.into()),
             }
@@ -481,6 +484,68 @@ impl ObjectStorage {
             bytes: 0,
         };
         for object in objects {
+            let outcome = self
+                .upload_object_with_progress(local, &object.oid, object.size, |bytes| {
+                    progress.completed_bytes = progress.completed_bytes.saturating_add(bytes);
+                    on_progress(progress);
+                })
+                .await?;
+            match outcome {
+                UploadOutcome::Uploaded => report.uploaded += 1,
+                UploadOutcome::AlreadyPresent => report.skipped += 1,
+            }
+            report.bytes = report
+                .bytes
+                .checked_add(object.size)
+                .ok_or(StorageError::SizeOverflow)?;
+            progress.completed_objects += 1;
+            on_progress(progress);
+        }
+        Ok(report)
+    }
+
+    /// Uploads only the missing objects captured by a previous upload plan.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when a planned object is no longer valid locally or its
+    /// upload fails. Objects created remotely after planning are safely skipped.
+    pub async fn upload_plan(
+        &self,
+        local: &LocalObjectStore,
+        plan: &UploadPlan,
+    ) -> Result<UploadReport, StorageError> {
+        self.upload_plan_with_progress(local, plan, |_| {}).await
+    }
+
+    /// Uploads a prepared plan and reports progress over its missing objects only.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when a planned object is no longer valid locally or its
+    /// upload fails. Objects created remotely after planning are safely skipped.
+    pub async fn upload_plan_with_progress<F>(
+        &self,
+        local: &LocalObjectStore,
+        plan: &UploadPlan,
+        mut on_progress: F,
+    ) -> Result<UploadReport, StorageError>
+    where
+        F: FnMut(TransferProgress),
+    {
+        let mut progress = TransferProgress {
+            completed_bytes: 0,
+            total_bytes: plan.missing_bytes,
+            completed_objects: 0,
+            total_objects: plan.missing_objects.len(),
+        };
+        on_progress(progress);
+        let mut report = UploadReport {
+            uploaded: 0,
+            skipped: 0,
+            bytes: 0,
+        };
+        for object in &plan.missing_objects {
             let outcome = self
                 .upload_object_with_progress(local, &object.oid, object.size, |bytes| {
                     progress.completed_bytes = progress.completed_bytes.saturating_add(bytes);
@@ -793,7 +858,7 @@ mod tests {
 
         let mut upload_progress = Vec::new();
         let uploaded = remote
-            .upload_manifests_with_progress(&local, &manifests, |progress| {
+            .upload_plan_with_progress(&local, &initial, |progress| {
                 upload_progress.push(progress);
             })
             .await
@@ -810,5 +875,9 @@ mod tests {
             .unwrap();
         assert_eq!(final_plan.missing, 0);
         assert_eq!(final_plan.existing, 1);
+        let no_upload = remote.upload_plan(&local, &final_plan).await.unwrap();
+        assert_eq!(no_upload.uploaded, 0);
+        assert_eq!(no_upload.skipped, 0);
+        assert_eq!(no_upload.bytes, 0);
     }
 }

@@ -438,10 +438,12 @@ async fn handle_push(request: PushRequest) -> Result<(), Box<dyn std::error::Err
     println!("Upload size: {}", human_size(plan.missing_bytes));
     if request.dry_run {
         println!("Dry run: no objects were uploaded");
+    } else if plan.missing == 0 {
+        println!("Nothing to upload");
     } else {
         let upload_bar = transfer_progress_bar("Push");
         let upload_result = remote_store
-            .upload_manifests_with_progress(&local_store, &manifests, |progress| {
+            .upload_plan_with_progress(&local_store, &plan, |progress| {
                 update_transfer_progress(&upload_bar, "Push", progress);
             })
             .await;
