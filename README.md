@@ -123,6 +123,10 @@ pnpm test
 pnpm lint
 ```
 
+## ライセンス
+
+Davisのソフトウェア本体は，[MIT License](LICENSE)のもとで公開されています．データセットにはこのソフトウェアライセンスは適用されません．各データファイルの利用条件は，対応する`schema.yaml`の`license`を確認してください．
+
 ## Document
 
 - [参加者向け導入ガイド](docs/participant-installation.md) ([English](docs/participant-installation_en.md))

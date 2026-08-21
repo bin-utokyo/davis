@@ -109,6 +109,10 @@ pnpm test
 pnpm lint
 ```
 
+## License
+
+The Davis software is released under the [MIT License](LICENSE). This software license does not apply to the datasets. Refer to the `license` field in each data file's corresponding `schema.yaml` for its terms of use.
+
 ## Documentation
 
 - [Installation Guide for Participants](docs/participant-installation_en.md) ([日本語](docs/participant-installation.md))
