@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import {
@@ -8,6 +9,10 @@ import {
 } from "../worker/api.ts";
 
 const contents = new TextEncoder().encode("id,value\n1,example\n");
+const expectedRelease = JSON.parse(readFileSync(
+  new URL("../../../release/latest-version.json", import.meta.url),
+  "utf8",
+)) as { latest: string; minimum_supported: string };
 const sampleFile = {
   id: "sample/tiny:source.csv",
   path: "data/sample/tiny/source.csv",
@@ -138,8 +143,8 @@ test("publishes cacheable CLI release information without authentication", async
   assert.equal(response.status, 200);
   assert.equal(response.headers.get("Cache-Control"), "public, max-age=3600, must-revalidate");
   assert.equal(body.schema_version, 1);
-  assert.equal(body.latest, "0.2.0");
-  assert.equal(body.minimum_supported, "0.2.0");
+  assert.equal(body.latest, expectedRelease.latest);
+  assert.equal(body.minimum_supported, expectedRelease.minimum_supported);
   assert.ok(body.message.ja);
   assert.ok(body.message.en);
 });

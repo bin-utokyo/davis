@@ -56,6 +56,64 @@ git pull --ff-only
 
 `git status`に未commit変更が表示された場合は，削除，stash，強制更新をせず，作業内容を確認してから運営内で相談してください．
 
+## Git操作とDavis操作の違い
+
+Gitはrepository内のcodeとmetadataを管理し，Davisは交通データの取得，更新同期，検証，R2同期，Catalog公開を行います．Git commandで実データを取得することはできません．新規・選択取得には`davis get`，dataset全体の初回取得または最新版への同期には`davis pull`を使用します．
+
+### このガイドで使うGit command
+
+| command | 目的 | 実データへの影響 |
+| --- | --- | --- |
+| `git clone <URL>` | repositoryを初めてPCへ複製する | 実データは取得しません |
+| `git status` | 現在のbranchと未commit変更を確認する | 変更しません |
+| `git switch <branch>` | 作業branchを切り替える | Git管理外の実データは通常残ります |
+| `git pull --ff-only` | GitHubからcode・metadataの最新commitを取得する | 実データは取得しません |
+| `git add`・`git commit` | `.dvc`，YAML，PDF，Manifest等の変更を記録する | 実データそのものはcommitしません |
+| `git push` | 個人branchのcommitをGitHubへ送る | R2と公開Webは変更しません |
+
+`git push`はDavisの機能ではありませんが，`davis push`と名前が同じため，取り違え防止のために記載しています．
+
+### 運営で使うDavis command
+
+特に指定がない限り，repository root (`davis` directory)で実行します．
+
+| command | 目的 | 主な変更先 | 公開Webへの影響 |
+| --- | --- | --- | --- |
+| `davis --version` | インストール済みversionを確認する | なし | なし |
+| `davis update` | 最新releaseと更新方法を確認する | なし | なし |
+| `davis login <Web URL>` | download用の参加者sessionを保存する | PC内のsession | なし |
+| `davis logout` | 参加者sessionを削除する | PC内のsession | なし |
+| `davis operator login <Web URL>` | upload・publish用の運営sessionを保存する | PC内のsession | なし |
+| `davis operator status` | 運営sessionの有効性を確認する | なし | なし |
+| `davis operator logout` | 運営sessionを削除する | PC内のsession | なし |
+| `davis list` | 利用可能なdatasetを一覧表示する | なし | なし |
+| `davis info <dataset>` | file，容量，schema整備状況を確認する | なし | なし |
+| `davis get <dataset>` | dataset全体または選択したfileを取得する | PC内の`data/...` | なし |
+| `davis pull <dataset>` | dataset全体を初回取得するか，取得済みfileを最新Manifestへ同期する | PC内の`data/...` | なし |
+| `davis verify [dataset]` | local実データと`.dvc` metadataの整合性を検査する | なし | なし |
+| `davis push <dataset> --dry-run` | R2同期予定のObjectと容量を確認する | なし | なし |
+| `davis push <dataset>` | 担当datasetの不足ObjectをR2へ同期し，DatasetManifestを更新する | R2 Object・local Manifest | なし |
+| `davis publish` | 最新`main`のCatalogIndexを公開する | R2 Catalog revision | あり |
+
+`davis ingest`と`davis index`は開発・保守用です．通常の日常更新では，`davis push`が必要な取込みとManifest更新を内部で行うため，個別に実行しません．
+
+### `get`，`pull`，`push`の主なoption
+
+| command例 | 動作 |
+| --- | --- |
+| `davis get routes/Matsuyama` | dataset全体と`schema.yaml`を標準の階層へ取得します |
+| `davis get routes/Matsuyama --file <file-id-or-directory>` | 指定したfileまたはdirectory以下だけを取得します．複数指定する場合は`--file`を繰り返します |
+| `davis get routes/Matsuyama --pdf-ja --pdf-en` | 標準のschemaに加え，存在する日英PDFも取得します |
+| `davis get routes/Matsuyama --no-schema` | schemaを保存せず，実データだけを取得します |
+| `davis get routes/Matsuyama --out <directory>` | 指定directoryの下に`data/routes/Matsuyama/...`を再現します |
+| `davis pull routes/Matsuyama` | dataset全体を取得します．既存fileがある場合は現在のManifestの内容で更新します |
+| `davis pull routes/Matsuyama --pdf-ja --pdf-en` | 同期時にschemaと存在する日英PDFも保存・更新します |
+| `davis push routes/Matsuyama --dry-run` | uploadせず，差分と予定容量だけを確認します |
+| `davis push routes/Matsuyama --rehash` | 前回の記録を再利用せず，対象fileを読み直して検査します |
+| `davis push --all` | 全datasetを検査・同期します．通常の担当更新では使用しません |
+
+完全な引数一覧は`davis <command> --help`で確認できます．たとえば，`davis get --help`，`davis pull --help`，`davis push --help`を実行します．
+
 ## 参加者ログイン
 
 運営者がCLIからデータを取得する場合は，参加者共通コードでもloginします．
@@ -66,6 +124,16 @@ davis login https://davis-web.davis-bin.workers.dev
 
 参加者sessionはdownload専用です．
 
+担当datasetの実データを初めて取得する場合は，repository rootで次のどちらかを実行します．`git pull`では実データを取得できません．dataset全体を今後も同期する運営作業では`pull`が分かりやすく，fileを選んで取得する場合は`get`を使用します．
+
+```text
+davis get routes/Matsuyama
+# または
+davis pull routes/Matsuyama
+```
+
+取得先は標準では`./data/routes/Matsuyama/...`です．既にlocalへあるObjectはcacheから再利用されます．
+
 ## 運営者ログイン
 
 ```text
@@ -73,7 +141,7 @@ davis operator login https://davis-web.davis-bin.workers.dev
 davis operator status
 ```
 
-`Operator code:`に，運営者限定で案内された運営共通コードを入力します．コード自体は保存されず，権限を限定した運営sessionが保存されます．sessionは既定30日間有効で，期限内は何度pushしても再入力不要です．期限切れ時は，次の`push`中にコードを一度入力するとsessionが更新されます．
+`Operator code:`に，運営者限定で案内された運営共通コードを入力します．コード自体は保存されず，権限を限定した運営sessionが保存されます．sessionは既定30日間有効で，期限内は`push`や`publish`のたびに再入力する必要はありません．期限切れ時は，次の`push`または`publish`中にコードを一度入力するとsessionが更新されます．
 
 ## 接続確認
 
@@ -87,9 +155,9 @@ davis push routes/Matsuyama --dry-run
 
 ## 日常作業の原則
 
-### GitとDavisの役割
+### GitとDavisの保存先
 
-運営作業では，名前が似ている2種類の`push`を区別してください．
+運営作業では，名前が似ている2種類の`push`を区別してください．詳しいcommand一覧は前節を参照してください．
 
 | 操作 | 送信先 | 主な対象 | 公開Webへの影響 |
 | --- | --- | --- | --- |
@@ -125,7 +193,7 @@ git switch -c <個人作業branch名>
 ### 1件のdatasetを更新する標準手順
 
 1. `main`を更新し，個人作業branchへ移動します．
-2. 担当datasetの実データ，`.dvc`，`schema.yaml`を更新します．
+2. 担当datasetの実データがPCにない場合は，`davis pull <dataset>`または`davis get <dataset>`で取得します．既に取得済みでremoteの最新版から作業を始める場合は，local編集が残っていないことを確認してから`davis pull <dataset>`で同期します．その後，実データ，`.dvc`，`schema.yaml`を更新します．
 3. YAMLから日英PDFを生成し，YAMLとPDFを同じGit commitへ含めます．
 4. 対象datasetだけを検証します．
 

@@ -62,8 +62,11 @@ davis login https://<配布されたURL>
 davis list
 davis info network/matsuyama
 davis get network/matsuyama
+davis pull network/matsuyama
 davis logout
 ```
+
+`get`は初回取得とfile単位の選択取得，`pull`はdataset全体の初回取得または現在のManifestへの同期に使用します．`pull`は既存fileをremoteの内容で更新するため，local編集を残したまま実行しないでください．
 
 Webカタログの「CLIコマンドをコピー」で得られるcommandには`--service-url`が含まれます．CLI側で未loginの場合は，任意のdirectoryから実行してもその場で招待codeを入力でき，login後に同じ処理のままdownloadを続行します．Web browserのlogin sessionとCLIのlogin sessionは別です．
 
@@ -101,7 +104,7 @@ review済みmetadataをWebへ反映するときは，Pull Requestをmergeした�
 
 対話terminalでは，`push`のlocal検証・uploadと，remoteを指定した`get`のdownloadについて，処理済みObject数，処理済み容量，割合，残り時間をprogress barで表示します．pipeやCI等の非対話実行ではprogress barを自動的に非表示にし，既存の標準出力を維持します．
 
-`davis get`は，実データと対応する`schema.yaml`を標準で保存します．日本語・英語の説明PDFは任意で追加でき，schemaを保存しない場合は明示的なoptionが必要です．
+`davis get`と`davis pull`は，実データと対応する`schema.yaml`を標準で保存します．日本語・英語の説明PDFは任意で追加でき，schemaを保存しない場合は明示的なoptionが必要です．
 
 ```bash
 davis get routes/Matsuyama
@@ -109,6 +112,8 @@ davis get routes/Matsuyama --pdf-ja
 davis get routes/Matsuyama --pdf-en
 davis get routes/Matsuyama --pdf-ja --pdf-en
 davis get routes/Matsuyama --no-schema
+davis pull routes/Matsuyama
+davis pull routes/Matsuyama --pdf-ja --pdf-en
 ```
 
 `schema.yaml`と説明PDFはGitを正本とし，R2 Objectとしては重複保存しません．`schema.yaml`の内容とPDFのGitHub URLはCatalogIndexへ記録されます．CLIとWebはYAMLをCatalog APIから保存し，PDFをGitHubから取得します．実データだけがprivate R2 Objectとして配信されます．

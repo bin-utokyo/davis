@@ -56,6 +56,64 @@ git pull --ff-only
 
 If `git status` reports uncommitted changes, do not delete, stash, or force-update them. Review the work and consult the organizer team before proceeding.
 
+## Git operations and Davis operations
+
+Git manages repository code and metadata. Davis retrieves, updates, validates, synchronizes, and publishes transport data. Git commands cannot retrieve the real datasets. Use `davis get` for new or selective retrieval, and use `davis pull` either for the first full retrieval or to synchronize a whole dataset to its current Manifest.
+
+### Git commands used in this guide
+
+| Command | Purpose | Effect on real data |
+| --- | --- | --- |
+| `git clone <URL>` | Copy the repository to a PC for the first time | Does not retrieve real data |
+| `git status` | Show the current branch and uncommitted changes | Makes no changes |
+| `git switch <branch>` | Change the working branch | Git-untracked real data normally remains in place |
+| `git pull --ff-only` | Retrieve current code and metadata commits from GitHub | Does not retrieve real data |
+| `git add` and `git commit` | Record changes to `.dvc`, YAML, PDFs, Manifests, and related files | Do not commit the real data itself |
+| `git push` | Send personal-branch commits to GitHub | Does not change R2 or the public Web catalog |
+
+`git push` is not a Davis feature. It is documented because its name can otherwise be confused with `davis push`.
+
+### Davis commands used by organizers
+
+Run these commands from the repository root (the `davis` directory) unless stated otherwise.
+
+| Command | Purpose | Primary state changed | Effect on public Web |
+| --- | --- | --- | --- |
+| `davis --version` | Show the installed version | None | None |
+| `davis update` | Check the current release and update instructions | None | None |
+| `davis login <Web URL>` | Save a participant download session | Local session | None |
+| `davis logout` | Remove the participant session | Local session | None |
+| `davis operator login <Web URL>` | Save an organizer upload and publish session | Local session | None |
+| `davis operator status` | Check the organizer session | None | None |
+| `davis operator logout` | Remove the organizer session | Local session | None |
+| `davis list` | List available datasets | None | None |
+| `davis info <dataset>` | Show files, sizes, and schema coverage | None | None |
+| `davis get <dataset>` | Retrieve a whole dataset or selected files | Local `data/...` | None |
+| `davis pull <dataset>` | Retrieve a whole dataset for the first time or synchronize existing files to the current Manifest | Local `data/...` | None |
+| `davis verify [dataset]` | Validate local data against `.dvc` metadata | None | None |
+| `davis push <dataset> --dry-run` | Show objects and bytes planned for R2 synchronization | None | None |
+| `davis push <dataset>` | Synchronize missing dataset objects and update the DatasetManifest | R2 objects and local Manifest | None |
+| `davis publish` | Publish the current `main` CatalogIndex | R2 Catalog revision | Yes |
+
+`davis ingest` and `davis index` are development and maintenance commands. Routine updates do not run them separately because `davis push` performs the required ingestion and Manifest update internally.
+
+### Common `get`, `pull`, and `push` options
+
+| Example | Behavior |
+| --- | --- |
+| `davis get routes/Matsuyama` | Retrieve the whole dataset and its `schema.yaml` into the standard hierarchy |
+| `davis get routes/Matsuyama --file <file-id-or-directory>` | Retrieve only the specified file or directory prefix; repeat `--file` for multiple selections |
+| `davis get routes/Matsuyama --pdf-ja --pdf-en` | Retrieve available Japanese and English PDFs in addition to the default schema |
+| `davis get routes/Matsuyama --no-schema` | Retrieve only the real data without saving schemas |
+| `davis get routes/Matsuyama --out <directory>` | Recreate `data/routes/Matsuyama/...` below the specified directory |
+| `davis pull routes/Matsuyama` | Retrieve the whole dataset, replacing existing files with the current Manifest contents |
+| `davis pull routes/Matsuyama --pdf-ja --pdf-en` | Save or update schemas and available Japanese and English PDFs during synchronization |
+| `davis push routes/Matsuyama --dry-run` | Show differences and planned bytes without uploading |
+| `davis push routes/Matsuyama --rehash` | Re-read and validate the selected files instead of reusing the previous record |
+| `davis push --all` | Validate and synchronize every dataset; do not use this for routine assigned updates |
+
+Run `davis <command> --help` for the complete argument list, for example `davis get --help`, `davis pull --help`, or `davis push --help`.
+
 ## Participant login
 
 Organizers who retrieve data through the CLI also sign in with the participant code:
@@ -66,6 +124,16 @@ davis login https://davis-web.davis-bin.workers.dev
 
 The participant session is download-only.
 
+To retrieve the assigned real dataset for the first time, run either command below from the repository root. `git pull` cannot retrieve real data. `pull` is usually clearer when an organizer maintains and synchronizes the whole dataset; use `get` for selective retrieval.
+
+```text
+davis get routes/Matsuyama
+# or
+davis pull routes/Matsuyama
+```
+
+The default destination is `./data/routes/Matsuyama/...`. Objects already available locally are reused from the cache.
+
 ## Organizer login
 
 ```text
@@ -73,7 +141,7 @@ davis operator login https://davis-web.davis-bin.workers.dev
 davis operator status
 ```
 
-Enter the organizer-only shared code at `Operator code:`. Davis does not store the code itself. It stores a restricted organizer session that is valid for 30 days by default. You can push repeatedly without entering the code again during that period. After expiration, the next interactive `push` asks for the code once and renews the session.
+Enter the organizer-only shared code at `Operator code:`. Davis does not store the code itself. It stores a restricted organizer session that is valid for 30 days by default. You can run `push` and `publish` without entering the code again during that period. After expiration, the next interactive `push` or `publish` asks for the code once and renews the session.
 
 ## Checking connectivity
 
@@ -87,9 +155,9 @@ The setup is ready when the output shows `Remote: ... (operator session)` togeth
 
 ## Operating principles
 
-### Responsibilities of Git and Davis
+### Storage responsibilities of Git and Davis
 
-Organizer operations use two different commands named `push`. Keep their effects separate.
+Organizer operations use two different commands named `push`. Keep their effects separate; refer to the earlier command reference for details.
 
 | Operation | Destination | Main content | Effect on the public Web catalog |
 | --- | --- | --- | --- |
@@ -125,7 +193,7 @@ You may run `davis push` from a personal branch. It synchronizes only content-ad
 ### Standard workflow for one dataset update
 
 1. Update `main` and switch to your personal working branch.
-2. Update the assigned real data, `.dvc`, and `schema.yaml`.
+2. If the assigned real dataset is not on the PC, retrieve it with `davis pull <dataset>` or `davis get <dataset>`. If it is already present and work should start from the remote version, first confirm that no local edits remain, then synchronize it with `davis pull <dataset>`. Update the real data, `.dvc`, and `schema.yaml` afterward.
 3. Generate the Japanese and English PDFs from the YAML and include all three in the same Git commit.
 4. Validate only the affected dataset.
 

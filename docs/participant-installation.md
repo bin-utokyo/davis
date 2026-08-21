@@ -59,9 +59,12 @@ davis login https://davis-web.davis-bin.workers.dev
 davis list
 davis info routes/Matsuyama
 davis get routes/Matsuyama
+davis pull routes/Matsuyama
 ```
 
-`get`は，commandを実行したdirectory以下へ`data/...`の階層を再現します．Webで必要なファイルを選び，「CLIコマンドをコピー」から取得commandを作ることもできます．
+`get`は初回取得とfile単位の選択取得に使用します．`pull`はdataset全体を初回取得する場合にも，既に取得したdatasetを現在のManifestへ同期する場合にも使用できます．どちらも，commandを実行したdirectory以下へ`data/...`の階層を再現します．Webで必要なfileを選び，「CLIコマンドをコピー」から取得commandを作る場合は`get`を使用します．
+
+`pull`は既存fileをremoteの内容で置き換えます．編集途中のlocal fileがある場合は，退避または作業完了後に実行してください．
 
 ## 更新
 

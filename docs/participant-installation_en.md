@@ -59,9 +59,12 @@ When `Invite code:` appears, enter the shared participant code. The input is hid
 davis list
 davis info routes/Matsuyama
 davis get routes/Matsuyama
+davis pull routes/Matsuyama
 ```
 
-`get` recreates the `data/...` hierarchy below the directory where you run the command. You can also select files in Davis Web and use “Copy CLI command” to generate the corresponding command.
+Use `get` for a first retrieval or selective file retrieval. Use `pull` either to retrieve a whole dataset for the first time or to synchronize an existing dataset to the current Manifest. Both commands recreate the `data/...` hierarchy below the directory where you run them. Davis Web uses `get` when you select files and choose “Copy CLI command.”
+
+`pull` replaces existing files with the remote contents. If local files contain unfinished edits, preserve or finish that work before running it.
 
 ## Updating
 

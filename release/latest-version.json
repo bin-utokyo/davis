@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
-  "latest": "0.2.0",
-  "minimum_supported": "0.2.0",
+  "latest": "0.2.1",
+  "minimum_supported": "0.2.1",
   "released_at": "2026-08-21",
-  "release_url": "https://github.com/bin-utokyo/davis/releases/tag/v0.2.0",
+  "release_url": "https://github.com/bin-utokyo/davis/releases/tag/v0.2.1",
   "message": {
-    "ja": "schema・日英PDFの選択取得と，安全な`davis push`・`davis publish`分離を追加しました．運営者は更新してください．",
-    "en": "Added optional schema and bilingual PDF downloads and separated `davis push` from `davis publish` for safe organizer workflows. Organizers must update."
+    "ja": "初回取得と同期取得に使える`davis pull`，directory単位取得，取得前の利用条件表示を追加しました．更新してください．",
+    "en": "Added `davis pull` for initial and synchronized retrieval, directory-prefix selection, and terms display before download. Please update."
   }
 }

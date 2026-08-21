@@ -60,8 +60,11 @@ davis login https://davis-web.davis-bin.workers.dev
 davis list
 davis info network/matsuyama
 davis get network/matsuyama
+davis pull network/matsuyama
 davis logout
 ```
+
+Use `get` for a first retrieval or selective file retrieval. Use `pull` either for the first full retrieval of a dataset or to synchronize it to the current Manifest. Because `pull` updates existing files with remote contents, do not run it while local edits remain.
 
 Organizers use a separate organizer code. The restricted organizer session is valid for 30 days by default and removes the need to distribute R2 credentials.
 
@@ -87,7 +90,7 @@ Use `davis push` to synchronize differential objects to R2 or a filesystem remot
 
 After the metadata Pull Request has been reviewed and merged, run `davis publish` from a clean, current `main` to update the Web catalog. The command verifies the branch, its exact match with `origin/main`, the working tree, and R2 object coverage before writing a revisioned CatalogIndex and switching `catalog/current.json`. Personal branches can synchronize objects in advance but cannot publish the Catalog.
 
-By default, `davis get` saves each data file together with its corresponding `schema.yaml`. Japanese and English PDF documentation can be added independently, while omitting schemas requires an explicit option.
+By default, `davis get` and `davis pull` save each data file together with its corresponding `schema.yaml`. Japanese and English PDF documentation can be added independently, while omitting schemas requires an explicit option.
 
 ```bash
 davis get routes/Matsuyama
@@ -95,6 +98,8 @@ davis get routes/Matsuyama --pdf-ja
 davis get routes/Matsuyama --pdf-en
 davis get routes/Matsuyama --pdf-ja --pdf-en
 davis get routes/Matsuyama --no-schema
+davis pull routes/Matsuyama
+davis pull routes/Matsuyama --pdf-ja --pdf-en
 ```
 
 Git remains the source of truth for `schema.yaml` and the PDF documentation; these files are not duplicated as R2 objects. The CatalogIndex records the schema contents and GitHub URLs for available PDFs. CLI and Web clients save schemas from the Catalog API and retrieve PDFs from GitHub, while only the actual data is delivered as private R2 objects.

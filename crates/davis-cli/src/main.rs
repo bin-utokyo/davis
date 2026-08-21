@@ -8,13 +8,14 @@ use std::path::PathBuf;
 use std::process::Command as ProcessCommand;
 use std::time::Duration;
 
-use clap::{Parser, Subcommand};
+use clap::{Args, Parser, Subcommand};
 use davis_catalog::{
     audit_legacy_datasets, build_catalog_index, ingest_legacy_dataset, refresh_legacy_dataset,
     scan_legacy_repository, write_catalog_index,
 };
 use davis_core::{
-    read_manifest, write_manifest, Dataset, LocalObjectStore, ObjectRef, SchemaStatus,
+    read_manifest, write_manifest, Dataset, LocalObjectStore, LocalizedText, ObjectRef,
+    SchemaStatus,
 };
 use davis_storage::{
     read_storage_configuration, ObjectStorage, RemoteConfig, S3Credentials, StorageError,
@@ -92,7 +93,7 @@ enum Command {
         /// Davis Web service URL. When no matching CLI session exists, prompt for an invite code.
         #[arg(long)]
         service_url: Option<String>,
-        /// Materialize only these logical file IDs. Repeat for multiple files.
+        /// Materialize only these file IDs or directory prefixes. Repeat for multiple selections.
         #[arg(long = "file")]
         files: Vec<String>,
         /// Local object storage root.
@@ -122,6 +123,11 @@ enum Command {
         /// Named remote from the configuration.
         #[arg(long, default_value = "default")]
         remote: String,
+    },
+    /// Synchronize a dataset to the current Manifest, or retrieve it for the first time.
+    Pull {
+        #[command(flatten)]
+        args: PullArgs,
     },
     /// Verify local files against the size and MD5 recorded by DVC.
     Verify {
@@ -163,6 +169,38 @@ enum Command {
         #[arg(long, default_value = "default")]
         remote: String,
     },
+}
+
+#[derive(Debug, Args)]
+struct PullArgs {
+    dataset_id: String,
+    /// Davis Web service URL. When no matching CLI session exists, prompt for an invite code.
+    #[arg(long)]
+    service_url: Option<String>,
+    /// Local object storage root.
+    #[arg(long, default_value = ".davis/cache")]
+    store: PathBuf,
+    /// Directory containing `DatasetManifest` YAML files.
+    #[arg(long, default_value = ".davis/datasets")]
+    manifest_directory: PathBuf,
+    /// Output root. Dataset paths are recreated below this directory.
+    #[arg(short, long, default_value = ".")]
+    out: PathBuf,
+    /// Do not save the schema.yaml companion files.
+    #[arg(long)]
+    no_schema: bool,
+    /// Save Japanese PDF documentation when available.
+    #[arg(long)]
+    pdf_ja: bool,
+    /// Save English PDF documentation when available.
+    #[arg(long)]
+    pdf_en: bool,
+    /// Storage configuration used to fill missing cache objects.
+    #[arg(long)]
+    config: Option<PathBuf>,
+    /// Named remote from the configuration.
+    #[arg(long, default_value = "default")]
+    remote: String,
 }
 
 #[derive(Debug, Subcommand)]
@@ -255,6 +293,7 @@ async fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
             })
             .await?;
         }
+        Command::Pull { args } => handle_pull(PullRequest::new(cli.repository, args)).await?,
         Command::Verify { dataset_id } => handle_verify(&cli.repository, dataset_id.as_deref())?,
         Command::Push {
             dataset_id,
@@ -329,6 +368,38 @@ struct GetRequest {
     documents: DocumentSelection,
     config: Option<PathBuf>,
     remote: String,
+}
+
+struct PullRequest {
+    repository: PathBuf,
+    dataset_id: String,
+    service_url: Option<String>,
+    store: PathBuf,
+    manifest_directory: PathBuf,
+    out: PathBuf,
+    documents: DocumentSelection,
+    config: Option<PathBuf>,
+    remote: String,
+}
+
+impl PullRequest {
+    fn new(repository: PathBuf, args: PullArgs) -> Self {
+        Self {
+            repository,
+            dataset_id: args.dataset_id,
+            service_url: args.service_url,
+            store: args.store,
+            manifest_directory: args.manifest_directory,
+            out: args.out,
+            documents: DocumentSelection {
+                schema: !args.no_schema,
+                pdf_ja: args.pdf_ja,
+                pdf_en: args.pdf_en,
+            },
+            config: args.config,
+            remote: args.remote,
+        }
+    }
 }
 
 struct DocumentSelection {
@@ -546,6 +617,7 @@ async fn handle_get(request: GetRequest) -> Result<(), Box<dyn std::error::Error
         .into());
     }
     let manifest = select_download_files(&manifest, &request.files)?;
+    print_download_terms(&request, &manifest, stored_session.as_ref()).await?;
     if !request.documents.schema {
         eprintln!("Warning: schema.yaml will not be saved; future Davis formatting and modeling workflows may require it.");
     }
@@ -609,6 +681,71 @@ async fn handle_get(request: GetRequest) -> Result<(), Box<dyn std::error::Error
     Ok(())
 }
 
+async fn print_download_terms(
+    request: &GetRequest,
+    manifest: &davis_core::DatasetManifest,
+    stored_session: Option<&session::Session>,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let selected_ids = manifest
+        .files
+        .iter()
+        .map(|file| file.id.as_str())
+        .collect::<Vec<_>>();
+    let terms = if let Some(stored) = stored_session {
+        DavisService::new(&stored.service_url, Some(stored.token.clone()))?
+            .indexed_files(&manifest.dataset.id)
+            .await?
+            .into_iter()
+            .filter(|file| selected_ids.contains(&file.file_id.as_str()))
+            .filter_map(|file| file.license)
+            .collect::<Vec<_>>()
+    } else {
+        scan_legacy_repository(&request.repository)?
+            .dataset(&manifest.dataset.id)
+            .ok_or_else(|| format!("dataset was not found: {}", manifest.dataset.id))?
+            .files
+            .iter()
+            .filter(|file| selected_ids.contains(&file.id.as_str()))
+            .filter_map(|file| file.schema.as_ref()?.license.clone())
+            .collect::<Vec<_>>()
+    };
+    let unique_terms = terms.into_iter().fold(Vec::new(), |mut unique, terms| {
+        if !unique.contains(&terms) {
+            unique.push(terms);
+        }
+        unique
+    });
+    if unique_terms.is_empty() {
+        println!("Terms of use: not specified; confirm with the organizers before use");
+    } else {
+        println!("Terms of use:");
+        for LocalizedText { ja, en } in unique_terms {
+            println!("- {ja}");
+            if en != ja {
+                println!("  {en}");
+            }
+        }
+    }
+    Ok(())
+}
+
+async fn handle_pull(request: PullRequest) -> Result<(), Box<dyn std::error::Error>> {
+    handle_get(GetRequest {
+        repository: request.repository,
+        dataset_id: request.dataset_id,
+        service_url: request.service_url,
+        files: Vec::new(),
+        store: request.store,
+        manifest_directory: request.manifest_directory,
+        out: request.out,
+        force: true,
+        documents: request.documents,
+        config: request.config,
+        remote: request.remote,
+    })
+    .await
+}
+
 fn select_download_files(
     manifest: &davis_core::DatasetManifest,
     requested: &[String],
@@ -626,7 +763,35 @@ fn select_download_files(
     } else {
         requested.to_vec()
     };
-    let selected = primary_ids;
+    let selected = if requested.is_empty() {
+        primary_ids
+    } else {
+        let mut selected = Vec::new();
+        for selector in requested {
+            let directory_prefix = format!("{}/", selector.trim_end_matches('/'));
+            let matches = manifest
+                .files
+                .iter()
+                .filter(|file| {
+                    !is_document(&file.id)
+                        && (file.id == *selector
+                            || file.path == *selector
+                            || file.id.starts_with(&directory_prefix)
+                            || file.path.starts_with(&directory_prefix))
+                })
+                .map(|file| file.id.clone())
+                .collect::<Vec<_>>();
+            if matches.is_empty() {
+                return Err(format!("file or directory was not found: {selector}").into());
+            }
+            for file_id in matches {
+                if !selected.contains(&file_id) {
+                    selected.push(file_id);
+                }
+            }
+        }
+        selected
+    };
     manifest.select_files(&selected).map_err(Into::into)
 }
 
@@ -1286,4 +1451,86 @@ fn update_transfer_progress(progress_bar: &ProgressBar, label: &str, progress: T
         "{label} {}/{}",
         progress.completed_objects, progress.total_objects
     ));
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{Cli, Command};
+    use clap::Parser;
+    use std::path::PathBuf;
+
+    #[test]
+    fn pull_accepts_first_retrieval_and_companion_options() {
+        let cli = Cli::try_parse_from([
+            "davis",
+            "pull",
+            "routes/Matsuyama",
+            "--pdf-ja",
+            "--out",
+            "downloads",
+        ])
+        .expect("pull command should parse");
+
+        match cli.command {
+            Command::Pull { args } => {
+                assert_eq!(args.dataset_id, "routes/Matsuyama");
+                assert!(args.pdf_ja);
+                assert!(!args.pdf_en);
+                assert!(!args.no_schema);
+                assert_eq!(args.out, PathBuf::from("downloads"));
+            }
+            _ => panic!("expected pull command"),
+        }
+    }
+
+    #[test]
+    fn get_keeps_file_selection_for_one_time_retrieval() {
+        let cli = Cli::try_parse_from(["davis", "get", "routes/Matsuyama", "--file", "path.csv"])
+            .expect("get command should parse");
+
+        match cli.command {
+            Command::Get { files, force, .. } => {
+                assert_eq!(files, ["path.csv"]);
+                assert!(!force);
+            }
+            _ => panic!("expected get command"),
+        }
+    }
+
+    #[test]
+    fn download_selection_accepts_directory_prefixes() {
+        use davis_core::{DatasetManifest, ManifestDataset, ManifestFile, ObjectId, ObjectRef};
+
+        let object = ObjectRef {
+            oid: "blake3:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                .parse::<ObjectId>()
+                .expect("object ID should parse"),
+            size: 1,
+        };
+        let manifest = DatasetManifest {
+            version: 1,
+            dataset: ManifestDataset {
+                id: "sample/data".into(),
+                root: "data/sample/data".into(),
+            },
+            files: vec![
+                ManifestFile {
+                    id: "raw/first.csv".into(),
+                    path: "raw/first.csv".into(),
+                    object: object.clone(),
+                    schema_path: None,
+                },
+                ManifestFile {
+                    id: "raw/second.csv".into(),
+                    path: "raw/second.csv".into(),
+                    object,
+                    schema_path: None,
+                },
+            ],
+        };
+
+        let selected = super::select_download_files(&manifest, &["raw".into()])
+            .expect("directory prefix should select both files");
+        assert_eq!(selected.files.len(), 2);
+    }
 }
