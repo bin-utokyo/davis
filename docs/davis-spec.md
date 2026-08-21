@@ -2211,10 +2211,10 @@ davis info <dataset-id>
 davis get <dataset-id>
 davis get <dataset-id> --file <file-id>...
 davis get <dataset-id> -o <directory>
-davis pull <dataset-id>
+davis pull [dataset-id]
 ```
 
-`get`は初回取得とFile・directory単位の選択取得，`pull`はDataset全体の初回取得と現在のManifestへの同期取得に使用します．どちらも既定ではcurrent directoryを出力rootとし，その下にDataset内の相対pathを保って配置します．`-o`または`--out`で出力rootを変更できます．`pull`は既存Fileをremoteの内容で更新するため，local編集が残っていない状態で使用します．
+`get`は初回取得とFile・directory単位の選択取得，`pull`はDataset全体の初回取得と現在のManifestへの同期取得に使用します．`pull`でDataset IDを省略すると全Datasetを対象にします．どちらも既定ではcurrent directoryを出力rootとし，その下にDataset内の相対pathを保って配置します．`-o`または`--out`で出力rootを変更できます．`pull`は既存Fileをremoteの内容で更新するため，local編集が残っていない状態で使用します．
 
 `davis get`は，対象Objectと期待digestを含む内部Download Planを作り，storage adapterが取得します．Command自身にManifest解析，remote選択，copy処理を書きません．
 
@@ -2238,9 +2238,12 @@ P1のWeb公開に先立ち，運営者がDavisだけでlocalの変更を確認�
 davis status
 davis push --dry-run
 davis push
+davis push <dataset-id>
 davis publish
 davis verify --remote
 ```
+
+`push`でDataset IDを指定した場合は1 Datasetだけ，省略した場合は全Datasetを対象にします．`--all`は全件指定の互換表記として維持します．
 
 現行実装では，participantは`davis login`のterminal promptへ共通招待codeを入力し，CLI用session tokenを権限を限定したuser設定fileへ保存します．`davis get`と`davis pull`はP0-0のWorkerから対象Objectごとの短寿命DownloadGrantを取得します．operatorのR2 upload credentialとは別系統にし，participant sessionからPUT，DELETE，Object一覧を許可しません．この認証・DownloadGrant APIをP1のWebでも再利用します．browser起動loginとOS credential storeは将来差し替え可能なadapter候補です．
 
@@ -2370,7 +2373,7 @@ P0〜P2が安定した後，次を優先度と需要に応じて追加します�
 16. 現行の`data/<category>/<dataset>/...`を基本的に維持し，DatasetManifestでDataset境界と安定IDを明示します．
 17. metadataは公開可能とし，初期Webでは実データのdownloadだけを共通招待codeで保護します．
 18. 共通招待codeは年度ごとの更新と流出時の差替えを可能にし，必要に応じて既存sessionも失効させます．
-19. CLIの互換性は利用可能な機能で判定し，選択取得の`get`と同期取得の`pull`を提供します．どちらも初回取得に使用できます．
+19. CLIの互換性は利用可能な機能で判定し，選択取得の`get`と同期取得の`pull`を提供します．どちらも初回取得に使用でき，`pull`と`push`はDataset ID省略時に全Datasetを対象にします．
 20. P0のCLIはWindows，macOS，Linuxを対象とし，既定の取得先をcurrent directoryとします．
 21. 標準MNLは共通の意味上の列roleとmodel固有の追加要件を組み合わせ，他modelへ同じ入力形式を強制しません．
 22. GUIは線形効用をFormと対応構文のcodeから編集でき，非対応構文を使う場合は高度なcode modeへ一方向に移行します．任意codeをFormへ逆変換しません．

@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
-  "latest": "0.2.1",
-  "minimum_supported": "0.2.1",
+  "latest": "0.2.2",
+  "minimum_supported": "0.2.2",
   "released_at": "2026-08-21",
-  "release_url": "https://github.com/bin-utokyo/davis/releases/tag/v0.2.1",
+  "release_url": "https://github.com/bin-utokyo/davis/releases/tag/v0.2.2",
   "message": {
-    "ja": "初回取得と同期取得に使える`davis pull`，directory単位取得，取得前の利用条件表示を追加しました．更新してください．",
-    "en": "Added `davis pull` for initial and synchronized retrieval, directory-prefix selection, and terms display before download. Please update."
+    "ja": "Dataset IDを省略した`davis pull`と`davis push`が，全Datasetを処理するようになりました．更新してください．",
+    "en": "Running `davis pull` or `davis push` without a dataset ID now processes every dataset. Please update."
   }
 }

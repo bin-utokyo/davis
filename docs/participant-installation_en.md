@@ -66,6 +66,8 @@ Use `get` for a first retrieval or selective file retrieval. Use `pull` either t
 
 `pull` replaces existing files with the remote contents. If local files contain unfinished edits, preserve or finish that work before running it.
 
+Running `davis pull` without a dataset ID retrieves or synchronizes every dataset. Specify an ID when only one dataset is needed.
+
 ## Updating
 
 The CLI checks for a newer release once every 24 hours and displays a notice after a normal command when an update is available. A failed update check never interrupts catalog searches or downloads.

@@ -90,9 +90,11 @@ Run these commands from the repository root (the `davis` directory) unless state
 | `davis info <dataset>` | Show files, sizes, and schema coverage | None | None |
 | `davis get <dataset>` | Retrieve a whole dataset or selected files | Local `data/...` | None |
 | `davis pull <dataset>` | Retrieve a whole dataset for the first time or synchronize existing files to the current Manifest | Local `data/...` | None |
+| `davis pull` | Retrieve or synchronize every dataset | Local `data/...` | None |
 | `davis verify [dataset]` | Validate local data against `.dvc` metadata | None | None |
 | `davis push <dataset> --dry-run` | Show objects and bytes planned for R2 synchronization | None | None |
 | `davis push <dataset>` | Synchronize missing dataset objects and update the DatasetManifest | R2 objects and local Manifest | None |
+| `davis push` | Validate every dataset and synchronize all missing objects | R2 objects and local Manifests | None |
 | `davis publish` | Publish the current `main` CatalogIndex | R2 Catalog revision | Yes |
 
 `davis ingest` and `davis index` are development and maintenance commands. Routine updates do not run them separately because `davis push` performs the required ingestion and Manifest update internally.
@@ -108,9 +110,10 @@ Run these commands from the repository root (the `davis` directory) unless state
 | `davis get routes/Matsuyama --out <directory>` | Recreate `data/routes/Matsuyama/...` below the specified directory |
 | `davis pull routes/Matsuyama` | Retrieve the whole dataset, replacing existing files with the current Manifest contents |
 | `davis pull routes/Matsuyama --pdf-ja --pdf-en` | Save or update schemas and available Japanese and English PDFs during synchronization |
+| `davis pull` | Retrieve or synchronize every dataset |
 | `davis push routes/Matsuyama --dry-run` | Show differences and planned bytes without uploading |
 | `davis push routes/Matsuyama --rehash` | Re-read and validate the selected files instead of reusing the previous record |
-| `davis push --all` | Validate and synchronize every dataset; do not use this for routine assigned updates |
+| `davis push` or `davis push --all` | Validate and synchronize every dataset; do not use this for routine assigned updates |
 
 Run `davis <command> --help` for the complete argument list, for example `davis get --help`, `davis pull --help`, or `davis push --help`.
 
@@ -241,7 +244,7 @@ For every production publication:
 - Confirm that the working tree is clean.
 - Confirm that the relevant Pull Request has been merged.
 - Wait for any active publication to finish before starting another.
-- Normally specify the assigned dataset for object synchronization. Reserve `davis push --all` for explicit full validation or bulk synchronization.
+- Normally specify the assigned dataset for object synchronization. Reserve `davis push` without an ID, or `davis push --all`, for explicit full validation or bulk synchronization.
 
 When Pull Requests for several datasets are ready at nearly the same time, each organizer can synchronize objects independently from a personal branch. After all object synchronization and reviews are complete, merge the Pull Requests and have the designated publisher run `davis publish` once from the latest `main`.
 

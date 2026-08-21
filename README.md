@@ -68,6 +68,8 @@ davis logout
 
 `get`は初回取得とfile単位の選択取得，`pull`はdataset全体の初回取得または現在のManifestへの同期に使用します．`pull`は既存fileをremoteの内容で更新するため，local編集を残したまま実行しないでください．
 
+dataset IDを省略した`davis pull`は全datasetを取得・同期します．同様に，dataset IDを省略した`davis push`は全datasetを検査・同期します．担当datasetだけを扱う日常作業では，誤って全件を処理しないようIDを明示してください．既存の`davis push --all`も同じ全件指定として利用できます．
+
 Webカタログの「CLIコマンドをコピー」で得られるcommandには`--service-url`が含まれます．CLI側で未loginの場合は，任意のdirectoryから実行してもその場で招待codeを入力でき，login後に同じ処理のままdownloadを続行します．Web browserのlogin sessionとCLIのlogin sessionは別です．
 
 非対話環境では，招待codeをcommand line引数やshell履歴へ残さず，標準入力から渡します．
@@ -98,7 +100,7 @@ cargo run -p davis-cli -- verify
 cargo run -p davis-cli -- ingest --all
 ```
 
-R2またはfilesystem remoteへのObject差分同期には`davis push`を使用します．通常の`push`は，実データの変更を自動的に内容address形式へ取り込み，不足Objectだけをuploadしますが，公開Catalogは変更しません．未変更の実データはlocal cacheから再利用するため，運営者が通常の更新で`ingest`を別途実行する必要はありません．1 Datasetだけを指定できるほか，`davis push --all --dry-run`で全Datasetの差分を確認できます．実データをすべて読み直してDVC metadataとの整合性を厳密に再検査する場合は`--rehash`を指定します．
+R2またはfilesystem remoteへのObject差分同期には`davis push`を使用します．通常の`push`は，実データの変更を自動的に内容address形式へ取り込み，不足Objectだけをuploadしますが，公開Catalogは変更しません．未変更の実データはlocal cacheから再利用するため，運営者が通常の更新で`ingest`を別途実行する必要はありません．Dataset IDを指定すると1 Dataset，省略すると全Datasetを対象にします．`davis push --dry-run`または互換表記の`davis push --all --dry-run`で全Datasetの差分を確認できます．実データをすべて読み直してDVC metadataとの整合性を厳密に再検査する場合は`--rehash`を指定します．
 
 review済みmetadataをWebへ反映するときは，Pull Requestをmergeした後，最新かつcleanな`main`から`davis publish`を実行します．このcommandは`main`，`origin/main`との一致，working tree，R2 Objectの網羅性を検査してから，CatalogIndexをrevision単位で保存し，`catalog/current.json`を切り替えます．個人作業branchではObjectを先に同期できますが，Catalogは公開できません．設定例は`.davis/config.example.toml`にあります．
 
@@ -114,6 +116,7 @@ davis get routes/Matsuyama --pdf-ja --pdf-en
 davis get routes/Matsuyama --no-schema
 davis pull routes/Matsuyama
 davis pull routes/Matsuyama --pdf-ja --pdf-en
+davis pull
 ```
 
 `schema.yaml`と説明PDFはGitを正本とし，R2 Objectとしては重複保存しません．`schema.yaml`の内容とPDFのGitHub URLはCatalogIndexへ記録されます．CLIとWebはYAMLをCatalog APIから保存し，PDFをGitHubから取得します．実データだけがprivate R2 Objectとして配信されます．

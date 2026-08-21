@@ -136,9 +136,9 @@ enum Command {
     },
     /// Ingest local changes and synchronize missing objects without publishing.
     Push {
-        /// One dataset to upload.
+        /// One dataset to upload. Omit to upload every dataset.
         dataset_id: Option<String>,
-        /// Upload every dataset in the current catalog.
+        /// Explicitly upload every dataset (kept for compatibility).
         #[arg(long, conflicts_with = "dataset_id")]
         all: bool,
         /// Local content-addressed cache.
@@ -173,7 +173,8 @@ enum Command {
 
 #[derive(Debug, Args)]
 struct PullArgs {
-    dataset_id: String,
+    /// One dataset to synchronize. Omit to synchronize every dataset.
+    dataset_id: Option<String>,
     /// Davis Web service URL. When no matching CLI session exists, prompt for an invite code.
     #[arg(long)]
     service_url: Option<String>,
@@ -372,7 +373,7 @@ struct GetRequest {
 
 struct PullRequest {
     repository: PathBuf,
-    dataset_id: String,
+    dataset_id: Option<String>,
     service_url: Option<String>,
     store: PathBuf,
     manifest_directory: PathBuf,
@@ -402,6 +403,7 @@ impl PullRequest {
     }
 }
 
+#[derive(Clone, Copy)]
 struct DocumentSelection {
     schema: bool,
     pdf_ja: bool,
@@ -730,20 +732,63 @@ async fn print_download_terms(
 }
 
 async fn handle_pull(request: PullRequest) -> Result<(), Box<dyn std::error::Error>> {
-    handle_get(GetRequest {
-        repository: request.repository,
-        dataset_id: request.dataset_id,
-        service_url: request.service_url,
-        files: Vec::new(),
-        store: request.store,
-        manifest_directory: request.manifest_directory,
-        out: request.out,
-        force: true,
-        documents: request.documents,
-        config: request.config,
-        remote: request.remote,
-    })
-    .await
+    let catalog = if request.config.is_none() {
+        if let Some(stored) = get_session(request.service_url.as_deref()).await? {
+            DavisService::new(&stored.service_url, Some(stored.token))?
+                .catalog()
+                .await?
+        } else {
+            scan_legacy_repository(&request.repository)?
+        }
+    } else {
+        scan_legacy_repository(&request.repository)?
+    };
+    let dataset_ids = select_dataset_ids(&catalog, request.dataset_id.as_deref())?;
+    if request.dataset_id.is_none() {
+        println!("Datasets: {}", dataset_ids.len());
+    }
+    for (index, dataset_id) in dataset_ids.into_iter().enumerate() {
+        if request.dataset_id.is_none() {
+            println!(
+                "Dataset {}/{}: {dataset_id}",
+                index + 1,
+                catalog.datasets.len()
+            );
+        }
+        handle_get(GetRequest {
+            repository: request.repository.clone(),
+            dataset_id,
+            service_url: request.service_url.clone(),
+            files: Vec::new(),
+            store: request.store.clone(),
+            manifest_directory: request.manifest_directory.clone(),
+            out: request.out.clone(),
+            force: true,
+            documents: request.documents,
+            config: request.config.clone(),
+            remote: request.remote.clone(),
+        })
+        .await?;
+    }
+    Ok(())
+}
+
+fn select_dataset_ids(
+    catalog: &davis_core::Catalog,
+    dataset_id: Option<&str>,
+) -> Result<Vec<String>, Box<dyn std::error::Error>> {
+    if let Some(dataset_id) = dataset_id {
+        if catalog.dataset(dataset_id).is_none() {
+            return Err(format!("dataset was not found: {dataset_id}").into());
+        }
+        Ok(vec![dataset_id.to_owned()])
+    } else {
+        Ok(catalog
+            .datasets
+            .iter()
+            .map(|dataset| dataset.id.clone())
+            .collect())
+    }
 }
 
 fn select_download_files(
@@ -941,26 +986,8 @@ fn handle_verify(
 
 #[allow(clippy::too_many_lines)]
 async fn handle_push(request: PushRequest) -> Result<(), Box<dyn std::error::Error>> {
-    if request.dataset_id.is_none() && !request.all {
-        return Err("provide a dataset ID or use --all".into());
-    }
     let catalog = scan_legacy_repository(&request.repository)?;
-    let dataset_ids: Vec<String> = if request.all {
-        catalog
-            .datasets
-            .iter()
-            .map(|dataset| dataset.id.clone())
-            .collect()
-    } else {
-        let dataset_id = request
-            .dataset_id
-            .as_deref()
-            .ok_or("provide a dataset ID or use --all")?;
-        if catalog.dataset(dataset_id).is_none() {
-            return Err(format!("dataset was not found: {dataset_id}").into());
-        }
-        vec![dataset_id.to_owned()]
-    };
+    let dataset_ids = select_dataset_ids(&catalog, request.dataset_id.as_deref())?;
     let manifest_directory = resolve(&request.repository, &request.manifest_directory);
     let local_store = LocalObjectStore::new(resolve(&request.repository, &request.store));
     let manifests = prepare_push_manifests(
@@ -976,7 +1003,7 @@ async fn handle_push(request: PushRequest) -> Result<(), Box<dyn std::error::Err
         return handle_operator_push(&request, &manifests, &local_store, operator_session).await;
     }
     let remote_store = open_remote(&request.repository, &request.config, &request.remote)?;
-    if request.all {
+    if request.all || request.dataset_id.is_none() {
         println!("Datasets: {}", manifests.len());
     } else {
         println!("Dataset: {}", dataset_ids[0]);
@@ -1074,7 +1101,7 @@ async fn handle_operator_push(
         Some(operator_session.token.clone()),
     )?;
     let objects = unique_manifest_objects(manifests)?;
-    if request.all {
+    if request.all || request.dataset_id.is_none() {
         println!("Datasets: {}", manifests.len());
     } else if let Some(dataset_id) = &request.dataset_id {
         println!("Dataset: {dataset_id}");
@@ -1473,7 +1500,7 @@ mod tests {
 
         match cli.command {
             Command::Pull { args } => {
-                assert_eq!(args.dataset_id, "routes/Matsuyama");
+                assert_eq!(args.dataset_id.as_deref(), Some("routes/Matsuyama"));
                 assert!(args.pdf_ja);
                 assert!(!args.pdf_en);
                 assert!(!args.no_schema);
@@ -1481,6 +1508,44 @@ mod tests {
             }
             _ => panic!("expected pull command"),
         }
+    }
+
+    #[test]
+    fn pull_and_push_default_to_every_dataset() {
+        let pull = Cli::try_parse_from(["davis", "pull"]).expect("pull should allow omission");
+        assert!(matches!(
+            pull.command,
+            Command::Pull { args } if args.dataset_id.is_none()
+        ));
+
+        let push = Cli::try_parse_from(["davis", "push"]).expect("push should allow omission");
+        assert!(matches!(
+            push.command,
+            Command::Push {
+                dataset_id: None,
+                all: false,
+                ..
+            }
+        ));
+
+        let catalog = davis_core::Catalog {
+            datasets: vec![
+                davis_core::Dataset {
+                    id: "first/data".into(),
+                    root: "data/first/data".into(),
+                    files: Vec::new(),
+                },
+                davis_core::Dataset {
+                    id: "second/data".into(),
+                    root: "data/second/data".into(),
+                    files: Vec::new(),
+                },
+            ],
+        };
+        assert_eq!(
+            super::select_dataset_ids(&catalog, None).expect("all datasets should be selected"),
+            ["first/data", "second/data"]
+        );
     }
 
     #[test]

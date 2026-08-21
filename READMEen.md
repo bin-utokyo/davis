@@ -66,6 +66,8 @@ davis logout
 
 Use `get` for a first retrieval or selective file retrieval. Use `pull` either for the first full retrieval of a dataset or to synchronize it to the current Manifest. Because `pull` updates existing files with remote contents, do not run it while local edits remain.
 
+`davis pull` without a dataset ID retrieves or synchronizes every dataset. Likewise, `davis push` without an ID validates and synchronizes every dataset. Specify the assigned dataset during routine work to avoid processing the full catalog unintentionally. The existing `davis push --all` form remains available as an explicit compatibility spelling.
+
 Organizers use a separate organizer code. The restricted organizer session is valid for 30 days by default and removes the need to distribute R2 credentials.
 
 ```text
@@ -86,7 +88,7 @@ cargo run -p davis-cli -- verify
 cargo run -p davis-cli -- ingest --all
 ```
 
-Use `davis push` to synchronize differential objects to R2 or a filesystem remote. A normal push ingests changed source files into the content-addressed store automatically, reuses unchanged files from the local cache, and uploads only missing objects. It does not change the published Catalog. Operators therefore do not need to run `ingest` separately during routine updates. `davis push --all --dry-run` checks all datasets without uploading, while `--rehash` re-reads every source file and verifies it against the DVC metadata.
+Use `davis push` to synchronize differential objects to R2 or a filesystem remote. A normal push ingests changed source files into the content-addressed store automatically, reuses unchanged files from the local cache, and uploads only missing objects. It does not change the published Catalog. Operators therefore do not need to run `ingest` separately during routine updates. Omitting the dataset ID selects every dataset, so `davis push --dry-run` and the compatibility spelling `davis push --all --dry-run` both check the full catalog without uploading. `--rehash` re-reads every source file and verifies it against the DVC metadata.
 
 After the metadata Pull Request has been reviewed and merged, run `davis publish` from a clean, current `main` to update the Web catalog. The command verifies the branch, its exact match with `origin/main`, the working tree, and R2 object coverage before writing a revisioned CatalogIndex and switching `catalog/current.json`. Personal branches can synchronize objects in advance but cannot publish the Catalog.
 
@@ -100,6 +102,7 @@ davis get routes/Matsuyama --pdf-ja --pdf-en
 davis get routes/Matsuyama --no-schema
 davis pull routes/Matsuyama
 davis pull routes/Matsuyama --pdf-ja --pdf-en
+davis pull
 ```
 
 Git remains the source of truth for `schema.yaml` and the PDF documentation; these files are not duplicated as R2 objects. The CatalogIndex records the schema contents and GitHub URLs for available PDFs. CLI and Web clients save schemas from the Catalog API and retrieve PDFs from GitHub, while only the actual data is delivered as private R2 objects.

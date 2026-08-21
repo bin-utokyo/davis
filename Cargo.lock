@@ -388,7 +388,7 @@ dependencies = [
 
 [[package]]
 name = "davis-catalog"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "davis-core",
  "md-5 0.10.6",
@@ -402,7 +402,7 @@ dependencies = [
 
 [[package]]
 name = "davis-cli"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "blake3",
  "clap",
@@ -425,7 +425,7 @@ dependencies = [
 
 [[package]]
 name = "davis-core"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "blake3",
  "serde",
@@ -436,7 +436,7 @@ dependencies = [
 
 [[package]]
 name = "davis-storage"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "davis-core",
  "futures",

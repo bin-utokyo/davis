@@ -90,9 +90,11 @@ Gitはrepository内のcodeとmetadataを管理し，Davisは交通データの�
 | `davis info <dataset>` | file，容量，schema整備状況を確認する | なし | なし |
 | `davis get <dataset>` | dataset全体または選択したfileを取得する | PC内の`data/...` | なし |
 | `davis pull <dataset>` | dataset全体を初回取得するか，取得済みfileを最新Manifestへ同期する | PC内の`data/...` | なし |
+| `davis pull` | 全datasetを初回取得または同期する | PC内の`data/...` | なし |
 | `davis verify [dataset]` | local実データと`.dvc` metadataの整合性を検査する | なし | なし |
 | `davis push <dataset> --dry-run` | R2同期予定のObjectと容量を確認する | なし | なし |
 | `davis push <dataset>` | 担当datasetの不足ObjectをR2へ同期し，DatasetManifestを更新する | R2 Object・local Manifest | なし |
+| `davis push` | 全datasetを検査し，不足ObjectをR2へ同期する | R2 Object・local Manifest | なし |
 | `davis publish` | 最新`main`のCatalogIndexを公開する | R2 Catalog revision | あり |
 
 `davis ingest`と`davis index`は開発・保守用です．通常の日常更新では，`davis push`が必要な取込みとManifest更新を内部で行うため，個別に実行しません．
@@ -108,9 +110,10 @@ Gitはrepository内のcodeとmetadataを管理し，Davisは交通データの�
 | `davis get routes/Matsuyama --out <directory>` | 指定directoryの下に`data/routes/Matsuyama/...`を再現します |
 | `davis pull routes/Matsuyama` | dataset全体を取得します．既存fileがある場合は現在のManifestの内容で更新します |
 | `davis pull routes/Matsuyama --pdf-ja --pdf-en` | 同期時にschemaと存在する日英PDFも保存・更新します |
+| `davis pull` | 全datasetを取得・同期します |
 | `davis push routes/Matsuyama --dry-run` | uploadせず，差分と予定容量だけを確認します |
 | `davis push routes/Matsuyama --rehash` | 前回の記録を再利用せず，対象fileを読み直して検査します |
-| `davis push --all` | 全datasetを検査・同期します．通常の担当更新では使用しません |
+| `davis push`／`davis push --all` | 全datasetを検査・同期します．通常の担当更新では使用しません |
 
 完全な引数一覧は`davis <command> --help`で確認できます．たとえば，`davis get --help`，`davis pull --help`，`davis push --help`を実行します．
 
@@ -241,7 +244,7 @@ CatalogIndexはDavis全体の現在状態を表し，`catalog/current.json`は�
 - working treeがcleanであることを確認する
 - 対象Pull Requestがmerge済みであることを確認する
 - 別の公開作業が終わるまで次の公開を始めない
-- Object同期では通常は担当datasetだけを指定し，`davis push --all`は全体検査や明示的な一括同期に限定する
+- Object同期では通常は担当datasetだけを指定し，dataset IDを省略した`davis push`または`davis push --all`は全体検査や明示的な一括同期に限定する
 
 複数datasetのPull Requestをほぼ同時に進める場合，担当者はそれぞれの個人branchからObjectを先に同期できます．すべてのObject同期とreviewが完了した後にPull Requestをmergeし，公開担当者が最新`main`から一度だけ`davis publish`を実行できます．
 

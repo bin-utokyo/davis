@@ -66,6 +66,8 @@ davis pull routes/Matsuyama
 
 `pull`は既存fileをremoteの内容で置き換えます．編集途中のlocal fileがある場合は，退避または作業完了後に実行してください．
 
+dataset IDを省略して`davis pull`だけを実行すると，全datasetを取得・同期します．全件ではなく必要なdatasetだけでよい場合は，IDを指定してください．
+
 ## 更新
 
 CLIは24時間に1回だけ最新版を確認し，新しいreleaseがある場合は通常commandの完了後に案内します．更新確認に失敗しても，データの検索や取得には影響しません．
