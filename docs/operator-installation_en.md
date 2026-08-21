@@ -68,6 +68,8 @@ Git manages repository code and metadata. Davis retrieves, updates, validates, s
 | `git status` | Show the current branch and uncommitted changes | Makes no changes |
 | `git switch <branch>` | Change the working branch | Git-untracked real data normally remains in place |
 | `git pull --ff-only` | Retrieve current code and metadata commits from GitHub | Does not retrieve real data |
+| `git fetch origin` | Retrieve current commit information without changing branches | Does not retrieve real data |
+| `git merge --ff-only origin/main` | Safely fast-forward a personal branch to current `main` | Does not retrieve real data |
 | `git add` and `git commit` | Record changes to `.dvc`, YAML, PDFs, Manifests, and related files | Do not commit the real data itself |
 | `git push` | Send personal-branch commits to GitHub | Does not change R2 or the public Web catalog |
 
@@ -170,18 +172,32 @@ Organizer operations use two different commands named `push`. Keep their effects
 
 Treat Git as the source of truth for metadata and documentation, and R2 as the object store for real data. `schema.yaml` and both PDFs remain only in Git and are not duplicated in R2. The CatalogIndex contains the YAML content needed for search and GitHub references to the PDFs.
 
-### Personal working branches
+### One persistent working branch per organizer
 
-Each organizer edits data on a personal working branch rather than committing directly to `main`.
+Each organizer maintains one personal working branch and reuses it instead of creating a new branch for every update. Do not commit directly to `main`. The recommended name is `operator/<GitHub-username>`.
+
+Create and register the branch from current `main` once during initial setup:
 
 ```bash
 git status
 git switch main
 git pull --ff-only
-git switch -c <personal-working-branch>
+git switch -c operator/<GitHub-username>
+git push -u origin operator/<GitHub-username>
 ```
 
-An organizer may continue using an established working branch instead of creating a new branch for every update, according to the team's policy. Before starting new work, check its difference from `main` and any uncommitted changes.
+For every later update, fast-forward the same personal branch to current `main` before editing. Run `davis pull` only after switching to the personal branch. Because `davis pull` may update Git-managed schemas or PDFs, running it on `main` could leave uncommitted changes there.
+
+```bash
+git status
+git switch operator/<GitHub-username>
+git fetch origin
+git merge --ff-only origin/main
+```
+
+If `git status` shows uncommitted work or `git merge --ff-only origin/main` fails, do not force a merge, rebase, reset, or stash the work. Preserve it and consult the organizer team.
+
+To make this persistent-branch workflow safe, merge these Pull Requests with a **merge commit**. Do not use squash merge or rebase merge: they do not retain the personal branch commits as ancestors of `main`, so the next `--ff-only` update would fail. Do not delete the personal branch after merge.
 
 On a personal branch, you may:
 
@@ -195,8 +211,8 @@ You may run `davis push` from a personal branch. It synchronizes only content-ad
 
 ### Standard workflow for one dataset update
 
-1. Update `main` and switch to your personal working branch.
-2. If the assigned real dataset is not on the PC, retrieve it with `davis pull <dataset>` or `davis get <dataset>`. If it is already present and work should start from the remote version, first confirm that no local edits remain, then synchronize it with `davis pull <dataset>`. Update the real data, `.dvc`, and `schema.yaml` afterward.
+1. Follow the preceding steps to switch to the persistent personal branch and fast-forward it to current `main`.
+2. On the personal branch, run `davis pull <dataset>` to retrieve the assigned dataset for the first time or synchronize it to the current version. Use `davis get <dataset>` when selectively retrieving new files. If local edits may remain, inspect them before allowing synchronization to overwrite anything. Then update the real data, `.dvc`, and `schema.yaml`.
 3. Generate the Japanese and English PDFs from the YAML and include all three in the same Git commit.
 4. Validate only the affected dataset.
 
@@ -213,11 +229,25 @@ git status
 davis push routes/Matsuyama
 ```
 
-7. Confirm `Objects synchronized: yes` and `Catalog published: no`. Commit the DatasetManifest updated by `davis push` together with the metadata and documentation, run `git push`, and open a Pull Request. Do not add the real data itself to Git.
-8. Another organizer reviews the column definitions, terms of use, year, filenames, moves or removals, DatasetManifest, and expected upload size.
-9. Merge the Pull Request into `main`.
-10. Assign one publisher and confirm that no other publication is running. The publisher does not need the real data locally because step 6 has already synchronized the required objects.
-11. On the publisher's machine, switch to the latest `main`.
+7. Confirm `Objects synchronized: yes` and `Catalog published: no`. Commit only the changed Git-managed files, including the DatasetManifest updated by `davis push`, and send them to GitHub. Do not use `git add .` or `git add data/`, because either can accidentally stage real data or unrelated work. Name each file explicitly. The following is an example; omit files that did not change.
+
+```bash
+git status
+git add .davis/datasets/routes/Matsuyama.yaml
+git add data/routes/Matsuyama/path.csv.dvc
+git add data/routes/Matsuyama/path.csv.schema.yaml
+git add data/routes/Matsuyama/path.csv.ja.pdf
+git add data/routes/Matsuyama/path.csv.en.pdf
+git status
+git commit -m "data: update routes/Matsuyama"
+git push
+```
+
+8. Open a Pull Request from the personal branch to `main` on GitHub.
+9. Another organizer reviews the column definitions, terms of use, year, filenames, moves or removals, DatasetManifest, and expected upload size.
+10. Merge the Pull Request into `main` with a merge commit, not a squash or rebase merge. Keep the personal branch for the next update.
+11. Assign one publisher and confirm that no other publication is running. The publisher does not need the real data locally because step 6 has already synchronized the required objects.
+12. On the publisher's machine, switch to the latest `main`.
 
 ```bash
 git switch main
@@ -225,13 +255,13 @@ git pull --ff-only
 git status
 ```
 
-12. Confirm that the working tree is clean, then publish. `davis publish` independently requires `main`, a clean working tree, and an exact match with `origin/main`. It also refuses publication if any Catalog object is missing from R2.
+13. Confirm that the working tree is clean, then publish. `davis publish` independently requires `main`, a clean working tree, and an exact match with `origin/main`. It also refuses publication if any Catalog object is missing from R2.
 
 ```bash
 davis publish
 ```
 
-13. Confirm `Catalog published: yes`, force-refresh the Web catalog, and verify the name, schema, license, file count, and download.
+14. Confirm `Catalog published: yes`, force-refresh the Web catalog, and verify the name, schema, license, file count, and download.
 
 ### Why production publications are serialized
 

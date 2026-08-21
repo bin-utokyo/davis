@@ -68,6 +68,8 @@ Gitはrepository内のcodeとmetadataを管理し，Davisは交通データの�
 | `git status` | 現在のbranchと未commit変更を確認する | 変更しません |
 | `git switch <branch>` | 作業branchを切り替える | Git管理外の実データは通常残ります |
 | `git pull --ff-only` | GitHubからcode・metadataの最新commitを取得する | 実データは取得しません |
+| `git fetch origin` | branchを切り替えずにGitHubの最新commit情報を取得する | 実データは取得しません |
+| `git merge --ff-only origin/main` | 個人branchを最新`main`まで安全に早送りする | 実データは取得しません |
 | `git add`・`git commit` | `.dvc`，YAML，PDF，Manifest等の変更を記録する | 実データそのものはcommitしません |
 | `git push` | 個人branchのcommitをGitHubへ送る | R2と公開Webは変更しません |
 
@@ -170,18 +172,32 @@ davis push routes/Matsuyama --dry-run
 
 Gitをmetadataと説明資料の正本，R2を実データのObject storageとして扱います．`schema.yaml`と日英PDFはGitだけに保存し，R2へ重複保存しません．CatalogIndexには検索に必要なYAML内容とPDFのGitHub参照が含まれます．
 
-### 個人作業branchの原則
+### 1人1本の固定作業branch
 
-運営者はそれぞれ個人作業branchで編集します．`main`へ直接commitせず，次の状態から作業を始めます．
+運営者は1人につき1本の個人作業branchを持ち，更新のたびに新しいbranchを作らず，同じbranchを継続利用します．`main`へ直接commitしません．branch名は`operator/<GitHubユーザー名>`を推奨します．
+
+初回だけ，最新`main`から個人branchを作成してGitHubへ登録します．
 
 ```bash
 git status
 git switch main
 git pull --ff-only
-git switch -c <個人作業branch名>
+git switch -c operator/<GitHubユーザー名>
+git push -u origin operator/<GitHubユーザー名>
 ```
 
-既にその人の継続作業branchがある場合は，新しいbranchを更新のたびに増やさず，運営内の方針に従って同じ作業branchを継続利用して構いません．ただし，新しい作業へ入る前に`main`との差分と未commit変更を確認してください．
+2回目以降は，個人branchを最新`main`まで早送りしてから作業します．この順序で，必ず個人branchへ切り替えた後に`davis pull`を実行してください．`davis pull`はGit管理対象のschemaやPDFを更新する場合があるため，`main`上で実行すると`main`に未commit変更を残す可能性があります．
+
+```bash
+git status
+git switch operator/<GitHubユーザー名>
+git fetch origin
+git merge --ff-only origin/main
+```
+
+`git status`に未commit変更がある場合，または`git merge --ff-only origin/main`が失敗した場合は，強制merge，rebase，reset，stashをせず，作業内容を保ったまま運営内で相談してください．
+
+固定branchを安全に再利用できるように，この運用のPull Requestは原則として**merge commit**で`main`へmergeします．squash mergeやrebase mergeでは個人branchのcommitが`main`の祖先として残らず，次回の`--ff-only`更新ができなくなるため使用しません．merge後に個人branchを削除する必要はありません．
 
 個人作業branchでは，次を行えます．
 
@@ -195,8 +211,8 @@ git switch -c <個人作業branch名>
 
 ### 1件のdatasetを更新する標準手順
 
-1. `main`を更新し，個人作業branchへ移動します．
-2. 担当datasetの実データがPCにない場合は，`davis pull <dataset>`または`davis get <dataset>`で取得します．既に取得済みでremoteの最新版から作業を始める場合は，local編集が残っていないことを確認してから`davis pull <dataset>`で同期します．その後，実データ，`.dvc`，`schema.yaml`を更新します．
+1. 前節の手順で固定の個人作業branchへ切り替え，最新`main`まで早送りします．
+2. 個人branch上で`davis pull <dataset>`を実行し，担当datasetを初回取得または最新版へ同期します．必要なfileだけを新規取得するときは`davis get <dataset>`も使用できます．local編集が残っている可能性がある場合は，上書きする前に内容を確認してください．その後，実データ，`.dvc`，`schema.yaml`を更新します．
 3. YAMLから日英PDFを生成し，YAMLとPDFを同じGit commitへ含めます．
 4. 対象datasetだけを検証します．
 
@@ -213,11 +229,25 @@ git status
 davis push routes/Matsuyama
 ```
 
-7. `Objects synchronized: yes`と`Catalog published: no`を確認します．`davis push`が更新したDatasetManifestを含め，metadataと説明資料をcommitし，GitHubへ`git push`してPull Requestを作ります．実データそのものはGitへ追加しません．
-8. 他の運営者が，列定義，利用条件，対象年，file名，削除・移動，DatasetManifest，予定容量をreviewします．
-9. Pull Requestを`main`へmergeします．
-10. 公開担当者を1人決め，他の公開作業が進行中でないことを運営内で確認します．公開担当者は実データをローカルに持つ必要はありません．必要なObjectは手順6で既にR2へ同期されています．
-11. 公開担当者の端末で最新`main`へ移動します．
+7. `Objects synchronized: yes`と`Catalog published: no`を確認します．`davis push`が更新したDatasetManifestを含め，変更したGit管理対象だけをcommitし，GitHubへ送ります．実データそのものや無関係な変更を誤って追加しないよう，`git add .`や`git add data/`は使用せず，fileを明示します．次は一例であり，変更していないfileは省略します．
+
+```bash
+git status
+git add .davis/datasets/routes/Matsuyama.yaml
+git add data/routes/Matsuyama/path.csv.dvc
+git add data/routes/Matsuyama/path.csv.schema.yaml
+git add data/routes/Matsuyama/path.csv.ja.pdf
+git add data/routes/Matsuyama/path.csv.en.pdf
+git status
+git commit -m "data: update routes/Matsuyama"
+git push
+```
+
+8. GitHubで個人branchから`main`へのPull Requestを作ります．
+9. 他の運営者が，列定義，利用条件，対象年，file名，削除・移動，DatasetManifest，予定容量をreviewします．
+10. Pull Requestをsquashやrebaseではなくmerge commitで`main`へmergeします．個人branchは削除せず，次回も再利用します．
+11. 公開担当者を1人決め，他の公開作業が進行中でないことを運営内で確認します．公開担当者は実データをローカルに持つ必要はありません．必要なObjectは手順6で既にR2へ同期されています．
+12. 公開担当者の端末で最新`main`へ移動します．
 
 ```bash
 git switch main
@@ -225,13 +255,13 @@ git pull --ff-only
 git status
 ```
 
-12. `git status`がcleanであることを確認してから，公開します．`davis publish`自身も`main`，cleanなworking tree，`origin/main`との完全一致を検査します．Catalogが参照するObjectがR2に不足している場合も公開せず終了します．
+13. `git status`がcleanであることを確認してから，公開します．`davis publish`自身も`main`，cleanなworking tree，`origin/main`との完全一致を検査します．Catalogが参照するObjectがR2に不足している場合も公開せず終了します．
 
 ```bash
 davis publish
 ```
 
-13. `Catalog published: yes`を確認し，Webを強制再読み込みして名称，schema，license，file数，downloadを確認します．
+14. `Catalog published: yes`を確認し，Webを強制再読み込みして名称，schema，license，file数，downloadを確認します．
 
 ### なぜ公開作業を1人ずつ行うのか
 
