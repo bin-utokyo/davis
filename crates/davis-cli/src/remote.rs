@@ -554,6 +554,14 @@ impl DavisService {
         )
     }
 
+    pub async fn indexed_files(&self, dataset_id: &str) -> Result<Vec<IndexedFile>, RemoteError> {
+        let files: Vec<IndexedFile> = self.get_json("catalog/files.json").await?;
+        Ok(files
+            .into_iter()
+            .filter(|file| file.dataset_id == dataset_id)
+            .collect())
+    }
+
     pub async fn download_manifest<F>(
         &self,
         store: &LocalObjectStore,
@@ -646,25 +654,31 @@ impl DavisService {
             status: StatusCode::UNAUTHORIZED,
             message: "login is required; run `davis login <URL>`".into(),
         })?;
-        let request = GrantRequest {
-            file_ids: missing
-                .iter()
-                .map(|file| format!("{}:{}", manifest.dataset.id, file.id))
-                .collect(),
-        };
-        let response = self
-            .client
-            .post(self.endpoint("api/v1/download-grants"))
-            .bearer_auth(token)
-            .json(&request)
-            .send()
-            .await?;
-        let response: GrantResponse = decode(response).await?;
-        Ok(response
-            .grants
-            .into_iter()
-            .map(|grant| (grant.file_id.clone(), grant))
-            .collect())
+        let file_ids = missing
+            .iter()
+            .map(|file| format!("{}:{}", manifest.dataset.id, file.id))
+            .collect::<Vec<_>>();
+        let mut grants = HashMap::new();
+        for chunk in file_ids.chunks(256) {
+            let request = GrantRequest {
+                file_ids: chunk.to_vec(),
+            };
+            let response = self
+                .client
+                .post(self.endpoint("api/v1/download-grants"))
+                .bearer_auth(token)
+                .json(&request)
+                .send()
+                .await?;
+            let response: GrantResponse = decode(response).await?;
+            grants.extend(
+                response
+                    .grants
+                    .into_iter()
+                    .map(|grant| (grant.file_id.clone(), grant)),
+            );
+        }
+        Ok(grants)
     }
 
     #[allow(clippy::too_many_arguments)]

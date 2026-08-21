@@ -5,6 +5,8 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 type LocalizedText = { ja: string; en: string };
 type Language = "ja" | "en";
 type Column = { name: string; data_type: string; description: LocalizedText | null };
+type CatalogDocument = { id: string; path: string; size: number };
+type ExternalDocument = { id: string; path: string; size: number; url: string };
 type CatalogFile = {
   id: string;
   dataset_id: string;
@@ -23,6 +25,11 @@ type CatalogFile = {
   license: LocalizedText | null;
   columns: Column[];
   raw_schema: string | null;
+  documents?: {
+    schema?: CatalogDocument | null;
+    pdf_ja?: ExternalDocument | null;
+    pdf_en?: ExternalDocument | null;
+  };
 };
 type Dataset = {
   id: string;
@@ -113,6 +120,9 @@ export function CatalogApp() {
   const [downloadPending, setDownloadPending] = useState(false);
   const [accessError, setAccessError] = useState<"login" | "session" | "download" | "">("");
   const [downloadCount, setDownloadCount] = useState(0);
+  const [includeSchema, setIncludeSchema] = useState(true);
+  const [includePdfJa, setIncludePdfJa] = useState(false);
+  const [includePdfEn, setIncludePdfEn] = useState(false);
   const tr = (ja: string, en: string) => language === "ja" ? ja : en;
 
   useEffect(() => {
@@ -177,6 +187,21 @@ export function CatalogApp() {
   const activeDatasetFiles = activeDataset ? files.filter((file) => file.dataset_id === activeDataset) : [];
   const selectedFiles = files.filter((file) => selected.has(file.id));
   const selectedSize = selectedFiles.reduce((sum, file) => sum + file.size, 0);
+  const selectedSchemaDocuments = selectedFiles.flatMap((file) => [
+    includeSchema ? file.documents?.schema : null,
+  ].filter((document): document is CatalogDocument => Boolean(document))
+    .map((document) => ({ ...document, contents: file.raw_schema ?? "" })));
+  const selectedPdfDocuments = selectedFiles.flatMap((file) => [
+    includePdfJa ? file.documents?.pdf_ja : null,
+    includePdfEn ? file.documents?.pdf_en : null,
+  ].filter((document): document is ExternalDocument => Boolean(document)));
+  const selectedDownloadIds = [
+    ...selectedFiles.map((file) => file.id),
+  ];
+  const selectedDownloadCount = selectedDownloadIds.length + selectedPdfDocuments.length;
+  const selectedDownloadSize = selectedSize
+    + selectedSchemaDocuments.reduce((sum, document) => sum + document.size, 0)
+    + selectedPdfDocuments.reduce((sum, document) => sum + document.size, 0);
   const selectedHasMissingLicense = selectedFiles.some((file) => !localized(file.license, language));
 
   function toggleFile(id: string) {
@@ -265,19 +290,23 @@ export function CatalogApp() {
     setAccessError("");
     setDownloadCount(0);
     try {
-      const response = await fetch("/api/v1/download-grants", {
-        method: "POST",
-        credentials: "same-origin",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ file_ids: selectedFiles.map((file) => file.id) }),
-      });
-      if (response.status === 401) {
-        setSessionState("anonymous");
-        throw new Error("session");
+      const grants: DownloadGrant[] = [];
+      for (let offset = 0; offset < selectedDownloadIds.length; offset += 256) {
+        const response = await fetch("/api/v1/download-grants", {
+          method: "POST",
+          credentials: "same-origin",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ file_ids: selectedDownloadIds.slice(offset, offset + 256) }),
+        });
+        if (response.status === 401) {
+          setSessionState("anonymous");
+          throw new Error("session");
+        }
+        if (!response.ok) throw new Error("download");
+        const body = await response.json() as { grants: DownloadGrant[] };
+        grants.push(...body.grants);
       }
-      if (!response.ok) throw new Error("download");
-      const body = await response.json() as { grants: DownloadGrant[] };
-      for (const grant of body.grants) {
+      for (const grant of grants) {
         const link = document.createElement("a");
         link.href = grant.url;
         link.download = grant.path.split("/").at(-1) ?? "download";
@@ -287,7 +316,32 @@ export function CatalogApp() {
         link.remove();
         await new Promise((resolveDelay) => window.setTimeout(resolveDelay, 120));
       }
-      setDownloadCount(body.grants.length);
+      for (const schemaDocument of selectedSchemaDocuments) {
+        const url = URL.createObjectURL(new Blob([schemaDocument.contents], { type: "application/yaml;charset=utf-8" }));
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = schemaDocument.path.split("/").at(-1) ?? "schema.yaml";
+        document.body.append(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
+        await new Promise((resolveDelay) => window.setTimeout(resolveDelay, 120));
+      }
+      for (const pdfDocument of selectedPdfDocuments) {
+        const response = await fetch(pdfDocument.url);
+        if (!response.ok) throw new Error("download");
+        const url = URL.createObjectURL(await response.blob());
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = pdfDocument.path.split("/").at(-1) ?? "document.pdf";
+        link.rel = "noopener";
+        document.body.append(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
+        await new Promise((resolveDelay) => window.setTimeout(resolveDelay, 120));
+      }
+      setDownloadCount(grants.length + selectedSchemaDocuments.length + selectedPdfDocuments.length);
     } catch (error) {
       setAccessError(error instanceof Error && error.message === "session" ? "session" : "download");
     } finally {
@@ -375,8 +429,15 @@ export function CatalogApp() {
 
       {downloadDialogOpen && <div className="overlay access-overlay"><button className="overlay-dismiss" type="button" aria-label={tr("ダウンロード画面を閉じる", "Close download dialog")} disabled={downloadPending} onClick={() => setDownloadDialogOpen(false)}/><section className="access-dialog" role="dialog" aria-modal="true" aria-labelledby="download-title">
         <div className="drawer-heading"><div><p className="dataset-id">{selectedFiles.length > 0 ? "DOWNLOAD" : "ACCESS"}</p><h2 id="download-title">{selectedFiles.length > 0 ? tr("選択内容を取得する", "Download your selection") : tr("参加者ログイン", "Participant login")}</h2></div><button type="button" aria-label={tr("閉じる", "Close")} disabled={downloadPending} onClick={() => setDownloadDialogOpen(false)}>×</button></div>
-        {selectedFiles.length > 0 && <><div className="download-summary"><strong>{selectedFiles.length} files</strong><span>{humanSize(selectedSize)}</span></div>
+        {selectedFiles.length > 0 && <><div className="download-summary"><strong>{selectedDownloadCount} files</strong><span>{humanSize(selectedDownloadSize)}</span></div>
         <p className="download-note">{tr("Webでは各ファイルをブラウザのダウンロードフォルダへ保存します．データセットの階層をそのまま作る場合は，CLIコマンドをコピーして取得してください．", "On the web, each file is saved to your browser's Downloads folder. To preserve the dataset directory structure, copy the CLI command and download with Davis.")}</p>
+        <fieldset className="document-options"><legend>{tr("付属資料", "Companion documents")}</legend>
+          <label><input type="checkbox" checked={includeSchema} onChange={(event) => setIncludeSchema(event.target.checked)}/><span>schema.yaml</span></label>
+          {!includeSchema && <p className="document-warning">{tr("schema.yamlを含めない場合，列定義や利用条件が保存されず，将来Davisの整形・推定機能へ接続するときに再取得が必要になることがあります．", "Without schema.yaml, column definitions and terms of use are not saved locally, and you may need to download them again for future Davis formatting and modeling workflows.")}</p>}
+          <label><input type="checkbox" checked={includePdfJa} onChange={(event) => setIncludePdfJa(event.target.checked)}/><span>{tr("日本語説明PDF", "Japanese PDF")}</span></label>
+          <label><input type="checkbox" checked={includePdfEn} onChange={(event) => setIncludePdfEn(event.target.checked)}/><span>{tr("英語説明PDF", "English PDF")}</span></label>
+          <p>{tr(`実データ${selectedFiles.length}件 + 付属資料${selectedSchemaDocuments.length + selectedPdfDocuments.length}件`, `${selectedFiles.length} data files + ${selectedSchemaDocuments.length + selectedPdfDocuments.length} companion documents`)}</p>
+        </fieldset>
         {selectedLicenses.length > 0 && <div className="license-list"><strong>{tr("利用条件", "Terms of use")}</strong>{selectedLicenses.map((value) => <p key={value}>{value}</p>)}</div>}
         {selectedHasMissingLicense && <div className="license-list warning"><strong>{tr("利用条件", "Terms of use")}</strong><p>{tr("選択内容に利用条件が記載されていないファイルがあります．利用前に運営へ確認してください．", "Some selected files do not specify terms of use. Please check with the organizers before using them.")}</p></div>}</>}
         {sessionState !== "authenticated" && <form className="login-form" onSubmit={login}><label htmlFor="invite-code">{tr("参加者用招待コード", "Participant invitation code")}</label><div><input id="invite-code" type="password" autoComplete="off" required maxLength={256} value={inviteCode} onChange={(event) => setInviteCode(event.target.value)} placeholder={tr("運営から案内されたコード", "Code provided by the organizers")}/><button type="submit" disabled={authPending}>{authPending ? tr("確認中", "Checking") : tr("ログイン", "Log in")}</button></div><p>{tr("一度ログインすると，このブラウザではセッション期限まで再入力不要です．", "After logging in once, you will not need to enter the code again in this browser until the session expires.")}</p></form>}
@@ -384,7 +445,7 @@ export function CatalogApp() {
         {selectedFiles.length > 0 && <label className="license-confirm"><input type="checkbox" checked={licenseConfirmed} onChange={(event) => setLicenseConfirmed(event.target.checked)}/><span>{tr("上記の利用条件と保存方法を確認しました．", "I have reviewed the terms of use and download method above.")}</span></label>}
         {accessError && <p className="access-message error-message" role="alert">{accessError === "login" ? tr("ログインに失敗しました．招待コードを確認してください．", "Login failed. Please check the invitation code.") : accessError === "session" ? tr("セッションの有効期限が切れました．もう一度招待コードを入力してください．", "Your session has expired. Please enter the invitation code again.") : tr("ダウンロードを開始できませんでした．もう一度お試しください．", "The download could not be started. Please try again.")}</p>}
         {downloadCount > 0 && <p className="access-message success-message" role="status">{tr(`${downloadCount}ファイルのダウンロードを開始しました．`, `Started downloading ${downloadCount} files.`)}</p>}
-        {selectedFiles.length > 0 && <button className="download-button" type="button" disabled={!licenseConfirmed || sessionState !== "authenticated" || downloadPending} onClick={downloadSelected}>{downloadPending ? tr("ダウンロードを準備中", "Preparing download") : tr(`${selectedFiles.length}ファイルをダウンロード`, `Download ${selectedFiles.length} files`)}</button>}
+        {selectedFiles.length > 0 && <button className="download-button" type="button" disabled={!licenseConfirmed || sessionState !== "authenticated" || downloadPending} onClick={downloadSelected}>{downloadPending ? tr("ダウンロードを準備中", "Preparing download") : tr(`${selectedDownloadCount}ファイルをダウンロード`, `Download ${selectedDownloadCount} files`)}</button>}
       </section></div>}
     </main>
   );

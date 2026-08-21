@@ -5,6 +5,7 @@ mod update;
 use std::collections::HashMap;
 use std::io::{IsTerminal, Read};
 use std::path::PathBuf;
+use std::process::Command as ProcessCommand;
 use std::time::Duration;
 
 use clap::{Parser, Subcommand};
@@ -106,6 +107,15 @@ enum Command {
         /// Replace files that already exist.
         #[arg(long)]
         force: bool,
+        /// Do not save the schema.yaml companion files.
+        #[arg(long)]
+        no_schema: bool,
+        /// Save Japanese PDF documentation when available.
+        #[arg(long)]
+        pdf_ja: bool,
+        /// Save English PDF documentation when available.
+        #[arg(long)]
+        pdf_en: bool,
         /// Storage configuration used to fill missing cache objects.
         #[arg(long)]
         config: Option<PathBuf>,
@@ -118,7 +128,7 @@ enum Command {
         /// Verify only one dataset. All datasets are checked when omitted.
         dataset_id: Option<String>,
     },
-    /// Ingest local changes, upload missing objects, and publish the catalog.
+    /// Ingest local changes and synchronize missing objects without publishing.
     Push {
         /// One dataset to upload.
         dataset_id: Option<String>,
@@ -143,6 +153,15 @@ enum Command {
         /// Re-read and verify every source file instead of reusing unchanged local objects.
         #[arg(long)]
         rehash: bool,
+    },
+    /// Publish the reviewed `CatalogIndex` from the current main branch.
+    Publish {
+        /// Versioned storage configuration used without an operator session.
+        #[arg(long, default_value = ".davis/config.toml")]
+        config: PathBuf,
+        /// Named remote from the configuration.
+        #[arg(long, default_value = "default")]
+        remote: String,
     },
 }
 
@@ -211,6 +230,9 @@ async fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
             manifest_directory,
             out,
             force,
+            no_schema,
+            pdf_ja,
+            pdf_en,
             config,
             remote,
         } => {
@@ -223,6 +245,11 @@ async fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
                 manifest_directory,
                 out,
                 force,
+                documents: DocumentSelection {
+                    schema: !no_schema,
+                    pdf_ja,
+                    pdf_en,
+                },
                 config,
                 remote,
             })
@@ -251,6 +278,9 @@ async fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
                 rehash,
             })
             .await?;
+        }
+        Command::Publish { config, remote } => {
+            handle_publish(&cli.repository, &config, &remote).await?;
         }
     }
 
@@ -296,8 +326,15 @@ struct GetRequest {
     manifest_directory: PathBuf,
     out: PathBuf,
     force: bool,
+    documents: DocumentSelection,
     config: Option<PathBuf>,
     remote: String,
+}
+
+struct DocumentSelection {
+    schema: bool,
+    pdf_ja: bool,
+    pdf_en: bool,
 }
 
 const CATALOG_DOCUMENTS: [&str; 5] = [
@@ -508,11 +545,10 @@ async fn handle_get(request: GetRequest) -> Result<(), Box<dyn std::error::Error
         )
         .into());
     }
-    let manifest = if request.files.is_empty() {
-        manifest
-    } else {
-        manifest.select_files(&request.files)?
-    };
+    let manifest = select_download_files(&manifest, &request.files)?;
+    if !request.documents.schema {
+        eprintln!("Warning: schema.yaml will not be saved; future Davis formatting and modeling workflows may require it.");
+    }
     let object_store = LocalObjectStore::new(resolve(&request.repository, &request.store));
     if let Some(config) = &request.config {
         let remote_store = open_remote(&request.repository, config, &request.remote)?;
@@ -534,8 +570,8 @@ async fn handle_get(request: GetRequest) -> Result<(), Box<dyn std::error::Error
         };
         println!("Downloaded objects: {}", report.downloaded);
         println!("Cached objects: {}", report.cached);
-    } else if let Some(stored) = stored_session {
-        let service = DavisService::new(&stored.service_url, Some(stored.token))?;
+    } else if let Some(stored) = &stored_session {
+        let service = DavisService::new(&stored.service_url, Some(stored.token.clone()))?;
         let progress_bar = transfer_progress_bar("Download");
         let result = service
             .download_manifest(
@@ -564,11 +600,121 @@ async fn handle_get(request: GetRequest) -> Result<(), Box<dyn std::error::Error
     }
     let output = resolve(&request.repository, &request.out);
     object_store.materialize(&manifest, &output, request.force)?;
+    materialize_companion_documents(&request, &manifest, stored_session.as_ref(), &output).await?;
     println!(
         "Materialized {} files under {}",
         manifest.files.len(),
         output.join(&manifest.dataset.root).display()
     );
+    Ok(())
+}
+
+fn select_download_files(
+    manifest: &davis_core::DatasetManifest,
+    requested: &[String],
+) -> Result<davis_core::DatasetManifest, Box<dyn std::error::Error>> {
+    let is_document = |id: &str| {
+        id.ends_with(".schema.yaml") || id.ends_with(".ja.pdf") || id.ends_with(".en.pdf")
+    };
+    let primary_ids = if requested.is_empty() {
+        manifest
+            .files
+            .iter()
+            .filter(|file| !is_document(&file.id))
+            .map(|file| file.id.clone())
+            .collect::<Vec<_>>()
+    } else {
+        requested.to_vec()
+    };
+    let selected = primary_ids;
+    manifest.select_files(&selected).map_err(Into::into)
+}
+
+async fn materialize_companion_documents(
+    request: &GetRequest,
+    manifest: &davis_core::DatasetManifest,
+    stored_session: Option<&session::Session>,
+    output: &std::path::Path,
+) -> Result<(), Box<dyn std::error::Error>> {
+    if !request.documents.schema && !request.documents.pdf_ja && !request.documents.pdf_en {
+        return Ok(());
+    }
+    let destination_root = output.join(&manifest.dataset.root);
+    if let Some(stored) = stored_session {
+        let service = DavisService::new(&stored.service_url, Some(stored.token.clone()))?;
+        let indexed = service.indexed_files(&manifest.dataset.id).await?;
+        for primary in &manifest.files {
+            let Some(file) = indexed.iter().find(|file| file.file_id == primary.id) else {
+                continue;
+            };
+            if request.documents.schema {
+                if let (Some(document), Some(contents)) =
+                    (&file.documents.schema, file.raw_schema.as_deref())
+                {
+                    write_companion(
+                        &destination_root.join(&document.id),
+                        contents.as_bytes(),
+                        request.force,
+                    )?;
+                }
+            }
+            for document in [
+                request
+                    .documents
+                    .pdf_ja
+                    .then_some(file.documents.pdf_ja.as_ref())
+                    .flatten(),
+                request
+                    .documents
+                    .pdf_en
+                    .then_some(file.documents.pdf_en.as_ref())
+                    .flatten(),
+            ]
+            .into_iter()
+            .flatten()
+            {
+                let response = reqwest::get(&document.url).await?.error_for_status()?;
+                let bytes = response.bytes().await?;
+                write_companion(&destination_root.join(&document.id), &bytes, request.force)?;
+            }
+        }
+    } else {
+        for primary in &manifest.files {
+            for (enabled, suffix) in [
+                (request.documents.schema, ".schema.yaml"),
+                (request.documents.pdf_ja, ".ja.pdf"),
+                (request.documents.pdf_en, ".en.pdf"),
+            ] {
+                if !enabled {
+                    continue;
+                }
+                let id = format!("{}{suffix}", primary.id);
+                let source = request.repository.join(&manifest.dataset.root).join(&id);
+                if source.is_file() {
+                    write_companion(
+                        &destination_root.join(id),
+                        &std::fs::read(source)?,
+                        request.force,
+                    )?;
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
+fn write_companion(
+    destination: &std::path::Path,
+    contents: &[u8],
+    force: bool,
+) -> Result<(), Box<dyn std::error::Error>> {
+    if destination.exists() && !force {
+        return Ok(());
+    }
+    if let Some(parent) = destination.parent() {
+        std::fs::create_dir_all(parent)?;
+    }
+    std::fs::write(destination, contents)?;
     Ok(())
 }
 
@@ -662,14 +808,7 @@ async fn handle_push(request: PushRequest) -> Result<(), Box<dyn std::error::Err
     )?;
     if let Some(operator_session) = session::load_operator()? {
         let operator_session = ensure_operator_session(operator_session).await?;
-        return handle_operator_push(
-            &request,
-            &catalog,
-            &manifests,
-            &local_store,
-            operator_session,
-        )
-        .await;
+        return handle_operator_push(&request, &manifests, &local_store, operator_session).await;
     }
     let remote_store = open_remote(&request.repository, &request.config, &request.remote)?;
     if request.all {
@@ -721,18 +860,9 @@ async fn handle_push(request: PushRequest) -> Result<(), Box<dyn std::error::Err
         println!("Uploaded objects: {}", report.uploaded);
         println!("Skipped objects: {}", report.skipped);
     }
-    let revision = publish_catalog(
-        &request.repository,
-        &catalog,
-        &remote_store,
-        request.dry_run,
-    )
-    .await?;
-    if request.dry_run {
-        println!("Catalog revision: {revision} (dry run, not published)");
-    } else {
-        println!("Catalog revision: {revision}");
-        println!("Catalog published: yes");
+    if !request.dry_run {
+        println!("Objects synchronized: yes");
+        println!("Catalog published: no (run `davis publish` from the latest main branch)");
     }
     Ok(())
 }
@@ -770,7 +900,6 @@ async fn ensure_operator_session(
 
 async fn handle_operator_push(
     request: &PushRequest,
-    catalog: &davis_core::Catalog,
     manifests: &[davis_core::DatasetManifest],
     local_store: &LocalObjectStore,
     operator_session: session::Session,
@@ -821,15 +950,86 @@ async fn handle_operator_push(
     } else {
         println!("Uploaded objects: {}", report.uploaded);
     }
-    let (revision, documents) = build_catalog_publication(&request.repository, catalog)?;
-    if request.dry_run {
-        println!("Catalog revision: {revision} (dry run, not published)");
-    } else {
+    if !request.dry_run {
+        println!("Objects synchronized: yes");
+        println!("Catalog published: no (run `davis publish` from the latest main branch)");
+    }
+    Ok(())
+}
+
+async fn handle_publish(
+    repository: &std::path::Path,
+    config: &std::path::Path,
+    remote: &str,
+) -> Result<(), Box<dyn std::error::Error>> {
+    verify_publish_git_state(repository)?;
+    let catalog = scan_legacy_repository(repository)?;
+    let revision = if let Some(operator_session) = session::load_operator()? {
+        let operator_session = ensure_operator_session(operator_session).await?;
+        let service =
+            DavisService::new(&operator_session.service_url, Some(operator_session.token))?;
+        let (revision, documents) = build_catalog_publication(repository, &catalog)?;
         service
             .publish_operator_catalog(&revision, &documents)
             .await?;
-        println!("Catalog revision: {revision}");
-        println!("Catalog published: yes");
+        revision
+    } else {
+        let remote_store = open_remote(repository, config, remote)?;
+        publish_catalog(repository, &catalog, &remote_store, false).await?
+    };
+    println!("Catalog revision: {revision}");
+    println!("Catalog published: yes");
+    Ok(())
+}
+
+fn verify_publish_git_state(
+    repository: &std::path::Path,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let branch = git_output(repository, &["branch", "--show-current"])?;
+    if branch != "main" {
+        return Err(format!(
+            "catalog publication is allowed only from main; current branch is {branch}"
+        )
+        .into());
+    }
+    if !git_output(repository, &["status", "--porcelain"])?.is_empty() {
+        return Err("catalog publication requires a clean Git working tree".into());
+    }
+    git_run(repository, &["fetch", "origin", "main"])?;
+    let head = git_output(repository, &["rev-parse", "HEAD"])?;
+    let origin_main = git_output(repository, &["rev-parse", "origin/main"])?;
+    if head != origin_main {
+        return Err(
+            "local main does not match origin/main; run `git pull --ff-only` and retry".into(),
+        );
+    }
+    Ok(())
+}
+
+fn git_output(
+    repository: &std::path::Path,
+    arguments: &[&str],
+) -> Result<String, Box<dyn std::error::Error>> {
+    let output = ProcessCommand::new("git")
+        .args(arguments)
+        .current_dir(repository)
+        .output()?;
+    if !output.status.success() {
+        return Err(format!("git {} failed", arguments.join(" ")).into());
+    }
+    Ok(String::from_utf8(output.stdout)?.trim().to_owned())
+}
+
+fn git_run(
+    repository: &std::path::Path,
+    arguments: &[&str],
+) -> Result<(), Box<dyn std::error::Error>> {
+    let status = ProcessCommand::new("git")
+        .args(arguments)
+        .current_dir(repository)
+        .status()?;
+    if !status.success() {
+        return Err(format!("git {} failed", arguments.join(" ")).into());
     }
     Ok(())
 }

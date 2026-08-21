@@ -87,14 +87,130 @@ The setup is ready when the output shows `Remote: ... (operator session)` togeth
 
 ## Operating principles
 
-- Update `main` before creating a personal working branch.
-- You do not need to retrieve real data for datasets outside your assignment.
-- Review schemas and metadata through Git, and send real data to R2 through Davis.
-- A production `davis push` updates the Web catalog, so complete the dry run and review first.
-- Never place the organizer code in the repository, an issue, a Pull Request, or a message with public recipients.
-- If the code leaks, rotate the shared code and organizer access revision to invalidate all existing organizer sessions.
+### Responsibilities of Git and Davis
 
-Until the DatasetManifest-first workflow is finalized, follow the organizer team's current update procedure for adding, moving, or removing data files. Do not run a production push only to test installation.
+Organizer operations use two different commands named `push`. Keep their effects separate.
+
+| Operation | Destination | Main content | Effect on the public Web catalog |
+| --- | --- | --- | --- |
+| `git push` | GitHub | Code, `.dvc`, `schema.yaml`, PDF documentation, and DatasetManifests | Opening a Pull Request does not change the public catalog |
+| `davis push` | R2 | Immutable data objects for the assigned dataset | Does not change the public Web catalog |
+| `davis publish` | Davis Web API | A CatalogIndex generated from reviewed `main` | Switches the public Web catalog |
+
+Treat Git as the source of truth for metadata and documentation, and R2 as the object store for real data. `schema.yaml` and both PDFs remain only in Git and are not duplicated in R2. The CatalogIndex contains the YAML content needed for search and GitHub references to the PDFs.
+
+### Personal working branches
+
+Each organizer edits data on a personal working branch rather than committing directly to `main`.
+
+```bash
+git status
+git switch main
+git pull --ff-only
+git switch -c <personal-working-branch>
+```
+
+An organizer may continue using an established working branch instead of creating a new branch for every update, according to the team's policy. Before starting new work, check its difference from `main` and any uncommitted changes.
+
+On a personal branch, you may:
+
+- Retrieve and edit the dataset assigned to you.
+- Update `.dvc`, `schema.yaml`, the Japanese and English PDFs, and DatasetManifests.
+- Run `davis verify`.
+- Inspect planned changes with `davis push <dataset> --dry-run`.
+- Commit the Git-managed files, run `git push`, and open a Pull Request.
+
+You may run `davis push` from a personal branch. It synchronizes only content-addressed objects to R2 and does not change the public Catalog. Always specify the assigned dataset and inspect it with `--dry-run` first. `davis publish`, which changes participant-visible state, cannot run from a personal branch. The CLI rejects it unless the branch, working tree, and `origin/main` state are valid.
+
+### Standard workflow for one dataset update
+
+1. Update `main` and switch to your personal working branch.
+2. Update the assigned real data, `.dvc`, and `schema.yaml`.
+3. Generate the Japanese and English PDFs from the YAML and include all three in the same Git commit.
+4. Validate only the affected dataset.
+
+```bash
+davis verify routes/Matsuyama
+davis push routes/Matsuyama --dry-run
+git status
+```
+
+5. Confirm that no unintended dataset or file is included, review the planned upload size, and check that the schema and PDFs agree.
+6. Synchronize the assigned dataset objects from the personal branch. This does not change the participant-facing Web catalog.
+
+```bash
+davis push routes/Matsuyama
+```
+
+7. Confirm `Objects synchronized: yes` and `Catalog published: no`. Commit the DatasetManifest updated by `davis push` together with the metadata and documentation, run `git push`, and open a Pull Request. Do not add the real data itself to Git.
+8. Another organizer reviews the column definitions, terms of use, year, filenames, moves or removals, DatasetManifest, and expected upload size.
+9. Merge the Pull Request into `main`.
+10. Assign one publisher and confirm that no other publication is running. The publisher does not need the real data locally because step 6 has already synchronized the required objects.
+11. On the publisher's machine, switch to the latest `main`.
+
+```bash
+git switch main
+git pull --ff-only
+git status
+```
+
+12. Confirm that the working tree is clean, then publish. `davis publish` independently requires `main`, a clean working tree, and an exact match with `origin/main`. It also refuses publication if any Catalog object is missing from R2.
+
+```bash
+davis publish
+```
+
+13. Confirm `Catalog published: yes`, force-refresh the Web catalog, and verify the name, schema, license, file count, and download.
+
+### Why production publications are serialized
+
+The CatalogIndex represents the current state of all Davis datasets, and `catalog/current.json` points to exactly one revision. If two organizers publish concurrently from different branches or stale copies of `main`, the operation that finishes last can replace the earlier catalog and make another dataset update disappear from the Web interface. Content-addressed R2 objects are normally not lost, but the published catalog may stop referring to them.
+
+For every production publication:
+
+- Assign exactly one publisher.
+- Publish only from the latest `main`.
+- Confirm that the working tree is clean.
+- Confirm that the relevant Pull Request has been merged.
+- Wait for any active publication to finish before starting another.
+- Normally specify the assigned dataset for object synchronization. Reserve `davis push --all` for explicit full validation or bulk synchronization.
+
+When Pull Requests for several datasets are ready at nearly the same time, each organizer can synchronize objects independently from a personal branch. After all object synchronization and reviews are complete, merge the Pull Requests and have the designated publisher run `davis publish` once from the latest `main`.
+
+### Why `push` and `publish` are separate
+
+A multi-organizer workflow requires separate object synchronization and publication operations:
+
+```text
+davis push <dataset>   # Synchronize immutable objects from a personal branch
+davis publish          # Publish only the CatalogIndex from reviewed, current main
+```
+
+Content-addressed object uploads are deduplicated and remain invisible to participants until a catalog refers to them. They can therefore be performed safely from a personal branch. Publication changes participant-visible state and must be restricted to the current `main` and the designated publisher.
+
+Davis separates these operations. `davis push` is safe to use on a personal branch, while `davis publish` is restricted to reviewed, current `main`. The publisher can use the organizer session and does not need R2 credentials.
+
+### Recovering from an incorrect publication
+
+If someone publishes from a personal branch or stale `main`, do not delete R2 objects. Notify the organizer team, then republish from one machine holding the correct, current `main`.
+
+```bash
+git switch main
+git pull --ff-only
+git status
+davis publish
+```
+
+If incorrect metadata has already been merged into `main`, review and merge a corrective or revert Pull Request before republishing. Deleting R2 objects is not a recovery operation. Clean up unreferenced objects later under the separate retention and deletion-approval procedure.
+
+### Credentials and secrets
+
+- Never place the organizer code in the repository, a commit, an issue, a Pull Request, a command-line argument, or a message with public recipients.
+- Never add session information under `.davis` to Git.
+- If the organizer code leaks, rotate both the shared code and organizer access revision to invalidate all existing organizer sessions.
+- Do not distribute R2 credentials to routine organizer machines.
+
+Adding, moving, renaming, or deleting a data file affects Catalog IDs and reproducibility. Do not treat these changes as routine content edits. Explain their purpose and impact in the Pull Request and obtain review. Never upload objects or publish the Catalog only to test installation.
 
 ## Updating
 

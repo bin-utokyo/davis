@@ -2222,12 +2222,13 @@ P1のWeb公開に先立ち，運営者がDavisだけでlocalの変更を確認�
 davis status
 davis push --dry-run
 davis push
+davis publish
 davis verify --remote
 ```
 
 participantは`davis login`からbrowserを開いて共通招待codeを入力し，CLI用session tokenをOS credential storeへ保存します．`davis get`はP0-0のWorkerから対象Objectごとの短寿命GET URLを取得します．operatorのR2 upload credentialとは別系統にし，participant sessionからPUT，DELETE，Object一覧を許可しません．この認証・DownloadGrant APIをP1のWebでも再利用します．
 
-`status`はlocalのManifest・FileSchema・実データと公開中revisionとの差分を表示します．`push`はcontent-addressed Objectの存在を確認し，不足Objectだけをuploadします．既存Objectの上書き，remote Objectの自動削除，GC，競合mergeは行いません．公開順序は次のとおりです．
+`status`はlocalのManifest・FileSchema・実データと公開中revisionとの差分を表示します．`push`はcontent-addressed Objectの存在を確認し，不足Objectだけをuploadします．既存Objectの上書き，remote Objectの自動削除，GC，競合merge，Catalog公開は行いません．`publish`はreview済みの最新`main`だけからCatalogを公開します．公開順序は次のとおりです．
 
 ```text
 Manifest候補と差分を作成
@@ -2236,9 +2237,11 @@ Manifest候補と差分を作成
         ↓
 sizeとdigestを検証
         ↓
-Git上のManifestとFileSchemaを確定
+Git上のManifestとFileSchemaをPull Requestでreview・merge
         ↓
-CatalogIndexを生成・公開
+最新mainからdavis publish
+        ↓
+R2 Objectの網羅性を検証してCatalogIndexを公開
 ```
 
 途中で失敗した場合は新revisionをCatalogへ公開しません．R2 credentialと公開操作はoperatorだけが利用でき，participant向けCLIやWebへ渡しません．

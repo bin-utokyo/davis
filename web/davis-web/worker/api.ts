@@ -75,6 +75,7 @@ export type DavisWorkerEnv = {
 
 type CatalogFile = {
   id: string;
+  dataset_id: string;
   path: string;
   size: number;
   object: { oid: string; size: number };

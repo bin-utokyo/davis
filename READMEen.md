@@ -70,6 +70,7 @@ davis operator login https://davis-web.davis-bin.workers.dev
 davis operator status
 davis push network/matsuyama --dry-run
 davis push network/matsuyama
+davis publish
 davis operator logout
 ```
 
@@ -82,7 +83,21 @@ cargo run -p davis-cli -- verify
 cargo run -p davis-cli -- ingest --all
 ```
 
-Use `davis push` to publish differential updates to R2 or a filesystem remote. A normal push ingests changed source files into the content-addressed store automatically, reuses unchanged files from the local cache, uploads missing objects, writes a revisioned CatalogIndex, and then switches `catalog/current.json`. Operators therefore do not need to run `ingest` separately during routine updates. `davis push --all --dry-run` checks all datasets without uploading or publishing, while `--rehash` re-reads every source file and verifies it against the DVC metadata.
+Use `davis push` to synchronize differential objects to R2 or a filesystem remote. A normal push ingests changed source files into the content-addressed store automatically, reuses unchanged files from the local cache, and uploads only missing objects. It does not change the published Catalog. Operators therefore do not need to run `ingest` separately during routine updates. `davis push --all --dry-run` checks all datasets without uploading, while `--rehash` re-reads every source file and verifies it against the DVC metadata.
+
+After the metadata Pull Request has been reviewed and merged, run `davis publish` from a clean, current `main` to update the Web catalog. The command verifies the branch, its exact match with `origin/main`, the working tree, and R2 object coverage before writing a revisioned CatalogIndex and switching `catalog/current.json`. Personal branches can synchronize objects in advance but cannot publish the Catalog.
+
+By default, `davis get` saves each data file together with its corresponding `schema.yaml`. Japanese and English PDF documentation can be added independently, while omitting schemas requires an explicit option.
+
+```bash
+davis get routes/Matsuyama
+davis get routes/Matsuyama --pdf-ja
+davis get routes/Matsuyama --pdf-en
+davis get routes/Matsuyama --pdf-ja --pdf-en
+davis get routes/Matsuyama --no-schema
+```
+
+Git remains the source of truth for `schema.yaml` and the PDF documentation; these files are not duplicated as R2 objects. The CatalogIndex records the schema contents and GitHub URLs for available PDFs. CLI and Web clients save schemas from the Catalog API and retrieve PDFs from GitHub, while only the actual data is delivered as private R2 objects.
 
 ## Web catalog
 
@@ -95,7 +110,7 @@ pnpm install
 pnpm dev
 ```
 
-The catalog supports text and column search, faceted filtering, Dataset and File details, raw YAML inspection, multi-selection, total-size calculation, and copying the corresponding `davis get` command. The Worker provides shared-code authentication, revocable sessions, short-lived download grants, private R2 delivery, organizer authentication, multipart uploads, and catalog publication APIs.
+The catalog supports text and column search, faceted filtering, Dataset and File details, raw YAML inspection, multi-selection, total-size calculation, and copying the corresponding `davis get` command. The download dialog selects `schema.yaml` by default and lets users add Japanese and English PDFs independently. An inline warning explains the effect of omitting schemas from future formatting and modeling workflows. The Worker provides shared-code authentication, revocable sessions, short-lived download grants, private R2 delivery, organizer authentication, multipart uploads, and catalog publication APIs.
 
 ## Validation
 

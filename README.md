@@ -75,13 +75,14 @@ printf '%s\n' "$DAVIS_INVITE_CODE" | davis login https://<配布されたURL> --
 
 sessionはOSごとのuser設定directoryに権限を限定して保存します．これはMVPの暫定credential storageであり，release配布前にOS credential store adapterへ置き換えられる境界を維持します．operatorのR2 credentialとは独立しており，参加者sessionにはupload，削除，Object一覧の権限がありません．
 
-運営者は，参加者codeとは別の運営共通codeを使用して一度loginします．運営sessionは既定30日で，期限内は再入力不要です．期限切れ後の`push`では対話的にcodeを再入力してsessionを更新できます．運営sessionはObjectのuploadとcatalog公開だけに使用され，R2秘密鍵を各端末へ配布する必要はありません．
+運営者は，参加者codeとは別の運営共通codeを使用して一度loginします．運営sessionは既定30日で，期限内は再入力不要です．期限切れ後の`push`または`publish`では対話的にcodeを再入力してsessionを更新できます．運営sessionはObjectのuploadとcatalog公開だけに使用され，R2秘密鍵を各端末へ配布する必要はありません．
 
 ```bash
 davis operator login https://davis-web.davis-bin.workers.dev
 davis operator status
 davis push network/matsuyama --dry-run
 davis push network/matsuyama
+davis publish
 davis operator logout
 ```
 
@@ -94,9 +95,23 @@ cargo run -p davis-cli -- verify
 cargo run -p davis-cli -- ingest --all
 ```
 
-R2またはfilesystem remoteへの差分公開には`davis push`を使用します．通常の`push`は，実データの変更を自動的に内容アドレス形式へ取り込み，不足Objectのupload後に最新の`schema.yaml`からCatalogIndexを生成し，revision単位で保存してから`catalog/current.json`を切り替えます．未変更の実データはlocal cacheから再利用するため，運営者が通常の更新で`ingest`を別途実行する必要はありません．Objectの差分がなくschemaだけが変わった場合もWebへ反映されます．1 Datasetだけを指定できるほか，`davis push --all --dry-run`で全Datasetの差分を確認できます．実データをすべて読み直してDVC metadataとの整合性を厳密に再検査する場合は`--rehash`を指定します．設定例は`.davis/config.example.toml`にあります．
+R2またはfilesystem remoteへのObject差分同期には`davis push`を使用します．通常の`push`は，実データの変更を自動的に内容address形式へ取り込み，不足Objectだけをuploadしますが，公開Catalogは変更しません．未変更の実データはlocal cacheから再利用するため，運営者が通常の更新で`ingest`を別途実行する必要はありません．1 Datasetだけを指定できるほか，`davis push --all --dry-run`で全Datasetの差分を確認できます．実データをすべて読み直してDVC metadataとの整合性を厳密に再検査する場合は`--rehash`を指定します．
+
+review済みmetadataをWebへ反映するときは，Pull Requestをmergeした後，最新かつcleanな`main`から`davis publish`を実行します．このcommandは`main`，`origin/main`との一致，working tree，R2 Objectの網羅性を検査してから，CatalogIndexをrevision単位で保存し，`catalog/current.json`を切り替えます．個人作業branchではObjectを先に同期できますが，Catalogは公開できません．設定例は`.davis/config.example.toml`にあります．
 
 対話terminalでは，`push`のlocal検証・uploadと，remoteを指定した`get`のdownloadについて，処理済みObject数，処理済み容量，割合，残り時間をprogress barで表示します．pipeやCI等の非対話実行ではprogress barを自動的に非表示にし，既存の標準出力を維持します．
+
+`davis get`は，実データと対応する`schema.yaml`を標準で保存します．日本語・英語の説明PDFは任意で追加でき，schemaを保存しない場合は明示的なoptionが必要です．
+
+```bash
+davis get routes/Matsuyama
+davis get routes/Matsuyama --pdf-ja
+davis get routes/Matsuyama --pdf-en
+davis get routes/Matsuyama --pdf-ja --pdf-en
+davis get routes/Matsuyama --no-schema
+```
+
+`schema.yaml`と説明PDFはGitを正本とし，R2 Objectとしては重複保存しません．`schema.yaml`の内容とPDFのGitHub URLはCatalogIndexへ記録されます．CLIとWebはYAMLをCatalog APIから保存し，PDFをGitHubから取得します．実データだけがprivate R2 Objectとして配信されます．
 
 ## Webカタログ
 
@@ -109,7 +124,7 @@ pnpm install
 pnpm dev
 ```
 
-Webカタログでは，名称・説明・地域・年・形式・license・schema状態・列情報による検索，Dataset・File詳細，Raw YAML表示，複数選択，合計容量表示，対応する`davis get` commandのcopyができます．Workerには，共通招待code，失効可能なsession，短寿命Download Grant，private R2 Object配信の共通APIがあります．CLIとWeb UIの両方がこのAPIへ接続し，Webでは利用条件を確認して選択fileを個別にdownloadできます．
+Webカタログでは，名称・説明・地域・年・形式・license・schema状態・列情報による検索，Dataset・File詳細，Raw YAML表示，複数選択，合計容量表示，対応する`davis get` commandのcopyができます．download確認画面では，`schema.yaml`を初期選択し，日本語PDFと英語PDFを任意で追加できます．schemaの選択を外すと，将来の整形・推定機能との接続に再取得が必要になる可能性を画面内で警告します．Workerには，共通招待code，失効可能なsession，短寿命Download Grant，private R2 Object配信の共通APIがあります．
 
 ## 検証
 

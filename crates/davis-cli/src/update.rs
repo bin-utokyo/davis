@@ -298,11 +298,11 @@ mod tests {
             UpdateStatus::Current
         );
         assert_eq!(
-            classify(&release("0.2.0", "0.1.0")).unwrap(),
+            classify(&release("0.2.1", "0.1.0")).unwrap(),
             UpdateStatus::Available
         );
         assert_eq!(
-            classify(&release("0.2.0", "0.2.0")).unwrap(),
+            classify(&release("0.2.1", "0.2.1")).unwrap(),
             UpdateStatus::Required
         );
     }

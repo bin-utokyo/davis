@@ -87,14 +87,130 @@ davis push routes/Matsuyama --dry-run
 
 ## 日常作業の原則
 
-- `main`を最新にしてから個人作業branchを作ります．
-- 担当dataset以外の実データを取得する必要はありません．
-- schemaとmetadataはGitでreviewし，実データはDavisを通じてR2へ送ります．
-- 本番の`davis push`はWeb catalogを更新するため，dry runとreviewを済ませてから実行します．
-- 運営共通コードをrepository，issue，Pull Request，メールの公開宛先へ記載しないでください．
-- コード流出時は，共通コードと運営access revisionを差し替え，既存sessionを一括失効します．
+### GitとDavisの役割
 
-データファイルの追加・移動・削除を含む更新手順は，DatasetManifest中心のworkflowが確定するまで運営内の更新手順に従ってください．導入確認だけを目的として本番`push`を実行しないでください．
+運営作業では，名前が似ている2種類の`push`を区別してください．
+
+| 操作 | 送信先 | 主な対象 | 公開Webへの影響 |
+| --- | --- | --- | --- |
+| `git push` | GitHub | code，`.dvc`，`schema.yaml`，説明PDF，DatasetManifest | Pull Requestを作るだけでは公開Webは変わりません |
+| `davis push` | R2 | 担当datasetのimmutableな実データObject | 公開Webは変わりません |
+| `davis publish` | Davis Web API | review済み`main`から生成したCatalogIndex | 公開Webのcatalogを切り替えます |
+
+Gitをmetadataと説明資料の正本，R2を実データのObject storageとして扱います．`schema.yaml`と日英PDFはGitだけに保存し，R2へ重複保存しません．CatalogIndexには検索に必要なYAML内容とPDFのGitHub参照が含まれます．
+
+### 個人作業branchの原則
+
+運営者はそれぞれ個人作業branchで編集します．`main`へ直接commitせず，次の状態から作業を始めます．
+
+```bash
+git status
+git switch main
+git pull --ff-only
+git switch -c <個人作業branch名>
+```
+
+既にその人の継続作業branchがある場合は，新しいbranchを更新のたびに増やさず，運営内の方針に従って同じ作業branchを継続利用して構いません．ただし，新しい作業へ入る前に`main`との差分と未commit変更を確認してください．
+
+個人作業branchでは，次を行えます．
+
+- 担当する実データを取得・編集する
+- `.dvc`，`schema.yaml`，日英PDF，DatasetManifestを更新する
+- `davis verify`を実行する
+- `davis push <dataset> --dry-run`で予定差分を確認する
+- Gitへcommitし，`git push`してPull Requestを作る
+
+個人作業branchから`davis push`を実行して構いません．このcommandは内容address形式のObjectだけをR2へ同期し，公開Catalogを変更しません．ただし，対象datasetを明示し，先に`--dry-run`で対象と容量を確認してください．公開状態を変更する`davis publish`は個人作業branchから実行できません．CLIがbranch，working tree，`origin/main`との一致を検査して拒否します．
+
+### 1件のdatasetを更新する標準手順
+
+1. `main`を更新し，個人作業branchへ移動します．
+2. 担当datasetの実データ，`.dvc`，`schema.yaml`を更新します．
+3. YAMLから日英PDFを生成し，YAMLとPDFを同じGit commitへ含めます．
+4. 対象datasetだけを検証します．
+
+```bash
+davis verify routes/Matsuyama
+davis push routes/Matsuyama --dry-run
+git status
+```
+
+5. 意図しないdatasetやfileが差分へ含まれていないこと，予定upload容量，schemaとPDFの対応を確認します．
+6. 個人作業branchから担当datasetのObjectをR2へ同期します．この時点では参加者向けWebは変わりません．
+
+```bash
+davis push routes/Matsuyama
+```
+
+7. `Objects synchronized: yes`と`Catalog published: no`を確認します．`davis push`が更新したDatasetManifestを含め，metadataと説明資料をcommitし，GitHubへ`git push`してPull Requestを作ります．実データそのものはGitへ追加しません．
+8. 他の運営者が，列定義，利用条件，対象年，file名，削除・移動，DatasetManifest，予定容量をreviewします．
+9. Pull Requestを`main`へmergeします．
+10. 公開担当者を1人決め，他の公開作業が進行中でないことを運営内で確認します．公開担当者は実データをローカルに持つ必要はありません．必要なObjectは手順6で既にR2へ同期されています．
+11. 公開担当者の端末で最新`main`へ移動します．
+
+```bash
+git switch main
+git pull --ff-only
+git status
+```
+
+12. `git status`がcleanであることを確認してから，公開します．`davis publish`自身も`main`，cleanなworking tree，`origin/main`との完全一致を検査します．Catalogが参照するObjectがR2に不足している場合も公開せず終了します．
+
+```bash
+davis publish
+```
+
+13. `Catalog published: yes`を確認し，Webを強制再読み込みして名称，schema，license，file数，downloadを確認します．
+
+### なぜ公開作業を1人ずつ行うのか
+
+CatalogIndexはDavis全体の現在状態を表し，`catalog/current.json`はそのrevisionを1つだけ指します．2人が別々のbranchや古い`main`から同時に公開すると，後から完了したほうが先の公開内容を上書きし，別datasetの更新をWeb上から消す可能性があります．R2の実データObjectは内容address形式で保存されるため通常は失われませんが，公開catalogから参照されなくなります．
+
+本番公開時は，次を守ってください．
+
+- 公開担当者を1人に限定する
+- 最新の`main`だけから公開する
+- working treeがcleanであることを確認する
+- 対象Pull Requestがmerge済みであることを確認する
+- 別の公開作業が終わるまで次の公開を始めない
+- Object同期では通常は担当datasetだけを指定し，`davis push --all`は全体検査や明示的な一括同期に限定する
+
+複数datasetのPull Requestをほぼ同時に進める場合，担当者はそれぞれの個人branchからObjectを先に同期できます．すべてのObject同期とreviewが完了した後にPull Requestをmergeし，公開担当者が最新`main`から一度だけ`davis publish`を実行できます．
+
+### `push`と`publish`を分離する理由
+
+複数人運用では，次の2操作を分けることが重要です．
+
+```text
+davis push <dataset>   # 個人branchからimmutable ObjectだけをR2へ同期
+davis publish          # review・merge後，最新mainからCatalogIndexだけを公開
+```
+
+Objectのuploadは内容address形式であり，同じ内容は重複uploadされず，Catalogから参照されるまで参加者には現れません．そのため個人branchから先に実行しても安全にできます．一方，`publish`は参加者が見る状態を変更するため，最新`main`と公開担当者の確認が必要です．
+
+Davisはこの2操作を分離しています．`davis push`は個人branchでも利用できますが，`davis publish`はreview済みの最新`main`専用です．公開担当者はR2秘密鍵を持つ必要がなく，運営sessionで公開できます．
+
+### 誤って公開した場合
+
+個人branchや古い`main`から公開したことに気づいた場合は，R2 Objectを削除しないでください．まず運営内へ共有し，正しい最新`main`を持つ1台から対象datasetを検証して再公開します．
+
+```bash
+git switch main
+git pull --ff-only
+git status
+davis publish
+```
+
+誤ったmetadata自体が`main`へmerge済みの場合は，Git上で修正またはrevertするPull Requestをreview・mergeしてから再公開します．R2 Objectの削除は復旧操作ではありません．参照されていないObjectの整理は，保持期間と削除承認の手順に従う別の保守作業として行います．
+
+### credentialと秘密情報
+
+- 運営共通コードをrepository，commit，issue，Pull Request，terminalのcommand引数，メールの公開宛先へ記載しないでください．
+- `.davis`内のsession情報をGitへ追加しないでください．
+- 運営共通コード流出時は，共通コードと運営access revisionを差し替え，既存sessionを一括失効します．
+- R2秘密鍵を通常の運営端末へ配布しません．
+
+データfileの追加，移動，名称変更，削除は，Catalog上のIDや既存利用者の再現性にも影響します．通常の内容更新と同じ扱いで済ませず，Pull Requestに変更理由と影響範囲を記載してreviewしてください．導入確認だけを目的としてObjectをuploadしたり，Catalogを公開したりしないでください．
 
 ## 更新
 

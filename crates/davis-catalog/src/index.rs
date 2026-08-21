@@ -56,6 +56,30 @@ pub struct IndexedFile {
     pub license: Option<LocalizedText>,
     pub columns: Vec<ColumnSchema>,
     pub raw_schema: Option<String>,
+    #[serde(default)]
+    pub documents: FileDocuments,
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct FileDocuments {
+    pub schema: Option<SchemaDocument>,
+    pub pdf_ja: Option<ExternalDocument>,
+    pub pdf_en: Option<ExternalDocument>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SchemaDocument {
+    pub id: String,
+    pub path: String,
+    pub size: u64,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ExternalDocument {
+    pub id: String,
+    pub path: String,
+    pub size: u64,
+    pub url: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -149,6 +173,7 @@ pub fn build_catalog_index(
                     |item| item.object.clone(),
                 );
             files.push(index_file(
+                repository_root,
                 dataset.id.as_str(),
                 file,
                 object,
@@ -204,6 +229,7 @@ pub fn write_catalog_index(
 }
 
 fn index_file(
+    repository_root: &Path,
     dataset_id: &str,
     file: &davis_core::CatalogFile,
     object: ObjectRef,
@@ -211,6 +237,8 @@ fn index_file(
     raw_schema: Option<String>,
 ) -> IndexedFile {
     let schema = file.schema.as_ref();
+    let schema_document =
+        schema_document(repository_root, dataset_id, &file.id, raw_schema.as_deref());
     IndexedFile {
         id: format!("{dataset_id}:{}", file.id),
         dataset_id: dataset_id.to_owned(),
@@ -229,7 +257,47 @@ fn index_file(
         license: schema.and_then(|value| value.license.clone()),
         columns: schema.map_or_else(Vec::new, |value| value.columns.clone()),
         raw_schema,
+        documents: FileDocuments {
+            schema: schema_document,
+            pdf_ja: external_document(repository_root, dataset_id, &file.id, ".ja.pdf"),
+            pdf_en: external_document(repository_root, dataset_id, &file.id, ".en.pdf"),
+        },
     }
+}
+
+fn external_document(
+    repository_root: &Path,
+    dataset_id: &str,
+    file_id: &str,
+    suffix: &str,
+) -> Option<ExternalDocument> {
+    let id = format!("{file_id}{suffix}");
+    let path = format!("data/{dataset_id}/{id}");
+    let metadata = std::fs::metadata(repository_root.join(&path)).ok()?;
+    Some(ExternalDocument {
+        id,
+        url: format!("https://raw.githubusercontent.com/bin-utokyo/davis/main/{path}"),
+        path,
+        size: metadata.len(),
+    })
+}
+
+fn schema_document(
+    repository_root: &Path,
+    dataset_id: &str,
+    file_id: &str,
+    raw_schema: Option<&str>,
+) -> Option<SchemaDocument> {
+    let id = format!("{file_id}.schema.yaml");
+    let path = format!("data/{dataset_id}/{id}");
+    repository_root
+        .join(&path)
+        .is_file()
+        .then(|| SchemaDocument {
+            id,
+            path,
+            size: u64::try_from(raw_schema.unwrap_or_default().len()).unwrap_or(u64::MAX),
+        })
 }
 
 fn collect_schema_facets(

@@ -138,8 +138,8 @@ test("publishes cacheable CLI release information without authentication", async
   assert.equal(response.status, 200);
   assert.equal(response.headers.get("Cache-Control"), "public, max-age=3600, must-revalidate");
   assert.equal(body.schema_version, 1);
-  assert.equal(body.latest, "0.1.1");
-  assert.equal(body.minimum_supported, "0.1.0");
+  assert.equal(body.latest, "0.2.0");
+  assert.equal(body.minimum_supported, "0.2.0");
   assert.ok(body.message.ja);
   assert.ok(body.message.en);
 });
