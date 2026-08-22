@@ -25,3 +25,8 @@ files:
   object:
     oid: blake3:792442c88a0635e17584be18df3e681752f494cbbf3374485d93c09026bc5a52
     size: 76022293
+- id: ネットワークデータ概要.pdf
+  path: ネットワークデータ概要.pdf
+  object:
+    oid: blake3:e8262bfcf58a7a9c2109b5c5483d3cf6adc15e5e844e40b15db38cc3db0ca13b
+    size: 173935
