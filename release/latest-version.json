@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
-  "latest": "0.3.0",
+  "latest": "0.3.1",
   "minimum_supported": "0.2.2",
   "released_at": "2026-08-23",
-  "release_url": "https://github.com/bin-utokyo/davis/releases/tag/v0.3.0",
+  "release_url": "https://github.com/bin-utokyo/davis/releases/tag/v0.3.1",
   "message": {
-    "ja": "multipart uploadを修正し，DVC非依存の差分push，PDF生成，公式運営branchのGit同期に対応しました．運営者は更新してください．",
-    "en": "Davis fixes multipart uploads and adds incremental DVC-free pushes, PDF generation, and Git synchronization for official operator branches. Organizers should update."
+    "ja": "新規・変更Objectがlocal cacheにない場合でも，dry runで差分を確認できるよう修正しました．運営者は更新してください．",
+    "en": "Davis now supports dry-run planning before new or changed objects enter the local cache. Organizers should update."
   }
 }
