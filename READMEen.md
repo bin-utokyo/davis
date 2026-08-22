@@ -11,6 +11,8 @@ Normal use does not require Rust, Cargo, or Python. The installer selects a preb
 - [Installation Guide for Participants](docs/participant-installation_en.md) ([日本語](docs/participant-installation.md))
 - [Installation Guide for Organizers](docs/operator-installation_en.md) ([日本語](docs/operator-installation.md))
 
+For organizers, the guide's first five sections cover installation, repository, session and personal-branch setup, dataset updates, review, and publication. Both terminal and VS Code procedures are included.
+
 Rust and Cargo are required only when developing or building Davis itself.
 
 After a normal command completes, the CLI checks for a newer release at most once every 24 hours. When an update is available, it prints guidance without interrupting the command or corrupting JSON output. Run `davis update` to check explicitly and display the update command for the current operating system.

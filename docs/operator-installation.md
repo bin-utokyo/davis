@@ -4,15 +4,25 @@
 
 このガイドは，Davisのmetadataを管理し，実データとcatalogをR2へ公開する運営者向けです．データを取得するだけの場合は，[参加者向け導入ガイド](participant-installation.md)を参照してください．
 
-## 必要なもの
+## まず読む5節
+
+通常の運営作業は，次の5節だけで完結します．初めて担当する方は，上から順に読んでください．GitとDavisの詳しい仕組み，例外対応，公開事故からの復旧は後半にまとめています．
+
+1. [Davis CLIのインストール](#1-davis-cliのインストール)
+2. [repositoryの準備](#2-repositoryの準備)
+3. [運営sessionの準備](#3-運営sessionの準備)
+4. [個人作業branchの準備](#4-個人作業branchの準備)
+5. [1件のdatasetを更新する標準手順](#5-1件のdatasetを更新する標準手順)
+
+## 1. Davis CLIのインストール
+
+### 必要なもの
 
 - Git
 - Davis repositoryへのGitHub access
 - 運営者限定で共有された運営共通コード
 
 通常の運営作業にRust，Cargo，Python，DVC，Google Drive，R2秘密鍵は必要ありません．Davis本体を開発・buildする場合だけRustとCargoが必要です．
-
-## Davis CLIのインストール
 
 ### macOS・Linux
 
@@ -30,6 +40,8 @@ irm https://raw.githubusercontent.com/bin-utokyo/davis/main/scripts/install.ps1 
 
 installerはOSとCPUを自動判定し，macOS・Windows・Linuxの対応する実行ファイルを導入します．旧Python版が`uv`で導入されている場合は，旧版を削除してから`davis`を新版へ置き換えます．
 
+このcommandはDavisの実行fileをGitHub Releasesから取得して，`davis` commandとして使える場所へ配置します．RustやCargoをPCへインストールする処理ではありません．
+
 新しいターミナルを開き，確認します．
 
 ```text
@@ -37,7 +49,7 @@ davis --version
 davis operator --help
 ```
 
-## repositoryの準備
+## 2. repositoryの準備
 
 初めて導入する場合は，repositoryをcloneします．
 
@@ -56,7 +68,19 @@ git pull --ff-only
 
 `git status`に未commit変更が表示された場合は，削除，stash，強制更新をせず，作業内容を確認してから運営内で相談してください．
 
-## 運営sessionの準備
+各commandの意味は次のとおりです．
+
+- `git status`: 現在のbranchと未commit変更を表示します．fileは変更しません．`working tree clean`なら未commit変更はありません．
+- `git switch main`: 作業対象を公式履歴の基点である`main`へ切り替えます．
+- `git pull --ff-only`: GitHubの最新`main`を取得し，履歴が一直線の場合だけlocalを進めます．localとGitHubが分岐している場合は，自動mergeせず停止します．これが「早送り」です．
+
+### VS Codeでrepositoryを準備する場合
+
+初回はCommand Paletteから`Git: Clone`を選び，repository URLを入力し，保存先を選んでclone後のfolderを開きます．既にclone済みの場合は，VS Codeでその`davis` folderを開きます．
+
+左下のbranch名を選択して`main`へ切り替えます．続いてSource Control viewの`…`から`Pull`を選びます．変更fileが表示されている場合や，conflict・mergeを求められた場合は操作を進めず，運営内で相談してください．terminal版の`git pull --ff-only`のほうが，「分岐時に何も変更せず停止する」条件を厳密に保証できます．
+
+## 3. 運営sessionの準備
 
 運営から案内されたDavis WebのURLを指定し，運営共通コードを対話promptへ入力します．コードをcommand引数やshell履歴へ残す必要はありません．
 
@@ -66,6 +90,94 @@ davis operator status
 ```
 
 運営共通コード自体は保存されず，失効可能な運営sessionだけが端末へ保存されます．通常は有効期間中に再認証する必要はありません．`push`と`publish`には運営sessionを使いますが，`get`と`pull`にはdownload専用の参加者sessionが必要です．運営者が実データを取得する場合は，別途`davis login <Davis Web URL>`を一度実行してください．
+
+VS Codeを使用する場合は，メニューのTerminalから新しいterminalを開き，同じcommandを入力します．sessionはVS CodeではなくPCのuser設定directoryへ保存されるため，通常のterminalとVS Codeのterminalで共通して利用できます．
+
+## 4. 個人作業branchの準備
+
+運営者は`main`ではなく，個人作業branchで更新します．Davisはbranch名のprefixやGitHubユーザー名との一致を要求しません．運営内で識別できる任意の名前を使用できます．同じ個人branchの継続利用を推奨しますが，新しいbranchを作る運用も可能です．
+
+### 初回だけ行う操作
+
+最新`main`から個人作業branchを作ります．
+
+```bash
+git status
+git switch main
+git pull --ff-only
+git switch -c <個人作業branch名>
+```
+
+- `git switch -c <名前>`: 現在の`main`と同じ内容から新しいbranchを作り，そのbranchへ切り替えます．
+- この時点で`git push`する必要はありません．最初の`davis push`がbranchをGitHubへ登録します．
+
+VS Codeでは，左下のbranch名を選択して`main`へ切り替え，Source Control viewの`…`から`Pull`を実行します．もう一度左下のbranch名を選択し，`Create new branch...`から任意の名前を入力します．作成元を尋ねられた場合は`main`を選択します．
+
+### 2回目以降，編集前に行う操作
+
+前回の更新がPull Requestで`main`へmerge済みであることを確認してから，個人branchを最新`main`まで早送りします．
+
+```bash
+git status
+git switch <個人作業branch名>
+git fetch origin
+git merge --ff-only origin/main
+```
+
+- `git fetch origin`: GitHubの最新履歴を取得しますが，現在のbranchや作業fileは変更しません．
+- `git merge --ff-only origin/main`: 個人branchをGitHub上の最新`main`と同じ位置まで進めます．履歴が分岐している場合はmerge commitを作らず停止します．
+
+VS Codeでは，左下のbranch名から個人branchへ切り替え，Source Control viewの`…`から`Fetch`を実行します．その後Command Paletteの`Git: Merge Branch...`で`origin/main`を選択できます．ただし，VS Codeの通常のMerge操作は`--ff-only`を明示しないため，Source Control Graphで一直線に早送りできる状態と確認できる場合だけ使用してください．conflict，merge commit，未commit変更が表示された場合は確定せず停止してください．確実なのは上記terminal commandです．
+
+`davis push`は，名前の付いた`main`以外のbranchで実行できます．detached HEADと`main`からの実行は拒否されます．branch名の形式は問いません．
+
+## 5. 1件のdatasetを更新する標準手順
+
+1. 前節の手順で個人branchへ切り替え，最新`main`まで早送りします．
+2. 公開中の実データを持っていない場合だけ，編集前に次を実行します．`pull`は現在公開中のManifestに合わせて実データを取得・更新します．編集後に実行するとlocal変更を上書きするため，編集後には実行しません．
+
+```bash
+davis pull routes/Matsuyama
+```
+
+3. 取得直後の実データが現在のManifestと一致するか確認する場合は，編集前に次を実行します．`verify`は検査だけを行い，fileを変更しません．編集後はManifestと一致しなくなるため，失敗するのが正常です．
+
+```bash
+davis verify routes/Matsuyama
+```
+
+4. 担当datasetの実データと`schema.yaml`を編集します．PDFとDatasetManifestは手作業で編集しません．
+5. 実際には変更せず，予定だけを確認します．`--dry-run`は新規・変更fileをhashして不足Object数とupload容量を表示しますが，cache，PDF，R2，Gitを変更しません．
+
+```bash
+davis push routes/Matsuyama --dry-run
+```
+
+6. `Missing objects`，`Existing objects`，`Upload size`を確認します．意図しないfileや容量が表示された場合は通常の`push`へ進みません．
+7. 問題がなければ本pushを実行します．`-m`はGitへ記録する変更説明です．省略時は`data: update <dataset>`になります．
+
+```bash
+davis push routes/Matsuyama -m "data: update routes/Matsuyama"
+```
+
+この1 commandが，ObjectとManifestの作成，不足ObjectのR2 upload，日英PDF生成，対象fileのGit commit，現在の個人branchのGitHubへのpushまで行います．VS Codeでstage，commit，pushを追加実行する必要はありません．Source Control viewがcleanになり，左下の同期表示に未送信commitがなければ完了です．
+
+8. GitHubで個人branchから`main`へのPull Requestを作り，他の運営者にreviewを依頼します．VS CodeにGitHub Pull Requests and Issues拡張機能がある場合は，Source Control viewの`Create Pull Request`から作成できます．拡張機能がなければGitHub Webを使用します．
+9. review後，Pull Requestをmerge commitで`main`へmergeします．個人branchを継続利用する場合は削除しません．
+10. 公開担当者を1人決め，最新`main`へ切り替えて公開します．
+
+```bash
+git switch main
+git pull --ff-only
+git status
+davis publish
+```
+
+ここでの`git status`は，公開前に未commit変更がないことを確認するための検査です．`davis publish`も最新`origin/main`とcleanなworking treeを再検査し，条件を満たさなければ公開しません．VS Codeでは左下のbranch名から`main`へ切り替え，Source Control viewの`…`から`Pull`を選べます．その後，VS Codeのterminalで`davis publish`を実行します．
+
+11. `Catalog published: yes`を確認し，Webを強制再読み込みして名称，schema，license，file数，PDF，downloadを確認します．
+
+ここまでが通常作業です．以降は，commandの役割，安全設計，例外時の対応を詳しく知りたい場合に参照してください．
 
 ## Git操作とDavis操作の違い
 
@@ -83,6 +195,21 @@ Gitはcode，schema，PDF，DatasetManifestの履歴を管理し，R2は実デ�
 | `git merge --ff-only origin/main` | 個人branchを最新`main`まで安全に早送りする | なし |
 
 通常のデータ更新では，`git add`，`git commit`，`git push`を個別に実行しません．公式運営sessionを使う`davis push`が，対象datasetに限定してこれらを実行します．Git commandだけでは実データを取得・upload・公開できません．
+
+### VS Codeで対応する操作
+
+| Git操作 | VS Codeでの操作 | 通常作業での注意 |
+| --- | --- | --- |
+| branch確認・切替 | 左下のbranch名を選択 | 変更中fileがある場合は切り替えないでください |
+| branch作成 | 左下のbranch名から`Create new branch...` | 作成元は最新`main`にします |
+| fetch | Source Control viewの`…`→`Fetch` | 履歴だけを取得し，fileは変更しません |
+| pull | Source Control viewの`…`→`Pull` | `main`を最新化するときに使います |
+| push | Source Control viewの`…`→`Push` | 通常は`davis push`が自動実行するため不要です |
+| pullとpush | `Sync Changes`または左下の同期icon | 両方を連続実行するため，通常のDavis更新手順では使用しません |
+
+VS CodeのSource Control操作とterminalのGit commandは，同じrepository状態を変更します．片方で行った操作はもう片方にも反映されます．
+
+画面名称や詳細は，VS Code公式文書の[Branches and Worktrees](https://code.visualstudio.com/docs/sourcecontrol/branches-worktrees)と[Repositories and Remotes](https://code.visualstudio.com/docs/sourcecontrol/repos-remotes)も参照してください．
 
 ### 運営で使用するDavis command
 
@@ -124,65 +251,6 @@ Gitはcode，schema，PDF，DatasetManifestの履歴を管理し，R2は実デ�
 7. commitし，現在の個人branchをGitHubへpushする
 
 途中で失敗した場合は，後続処理へ進みません．R2へ保存済みのObjectは内容address形式でimmutableなため，Git処理が失敗しても既存公開を壊しません．公開Catalogは`davis publish`まで変わりません．
-
-### 個人作業branch
-
-運営者は`main`ではなく，個人作業branchで更新します．Davisはbranch名のprefixやGitHubユーザー名との一致を要求しません．運営内で識別できる任意の名前を使用できます．branch一覧を増やしすぎないため，同じ個人branchの継続利用を推奨しますが，新しいbranchを作る運用も可能です．
-
-初回だけ，最新`main`から個人branchを作成します．
-
-```bash
-git status
-git switch main
-git pull --ff-only
-git switch -c <個人作業branch名>
-git push -u origin <個人作業branch名>
-```
-
-2回目以降は，編集を始める前に個人branchを最新`main`まで早送りします．
-
-```bash
-git status
-git switch <個人作業branch名>
-git fetch origin
-git merge --ff-only origin/main
-```
-
-未commit変更がある場合や`--ff-only`が失敗した場合は，reset，stash，rebase，強制mergeをせず，作業を保ったまま運営内で相談してください．Pull Requestはmerge commitで`main`へmergeし，個人branchを削除しません．squash mergeとrebase mergeは，次回の`--ff-only`更新を妨げるため使用しません．
-
-`davis push`は，名前の付いた`main`以外のbranchで実行できます．detached HEADと`main`からの実行は拒否されます．個人branchから`davis publish`は実行できません．
-
-### 1件のdatasetを更新する標準手順
-
-1. 固定の個人branchへ切り替え，最新`main`まで早送りします．
-2. 公開中の実データを持っていない場合だけ，編集前に`davis pull <dataset>`を実行します．編集後に`pull`すると変更を上書きするため実行しません．
-3. 担当datasetの実データと`schema.yaml`を編集します．fileを追加，移動，名前変更，削除する場合は，Pull Requestへ意図を記載します．
-4. dry runを実行します．dry runは未変更fileを再利用し，必要なfileだけを読みます．repository，cache，PDF，R2，Gitを変更しません．
-
-```bash
-davis push routes/Matsuyama --dry-run
-```
-
-5. `Missing objects`，`Existing objects`，`Upload size`を確認します．意図と異なる場合は通常の`push`へ進みません．
-6. commit messageを指定して通常の`push`を実行します．messageを省略した場合は`data: update <dataset>`が使われます．
-
-```bash
-davis push routes/Matsuyama -m "data: update routes/Matsuyama"
-```
-
-7. `Objects synchronized: yes`，`Git branch pushed: operator/...`，`Catalog published: no`を確認します．失敗した場合は再実行せず，表示されたerror全体を運営内で共有します．
-8. GitHubで個人branchから`main`へのPull Requestを作ります．他の運営者がschema，PDF，file構成，DatasetManifest，予定容量をreviewします．
-9. Pull Requestをmerge commitで`main`へmergeします．個人branchは削除しません．
-10. 公開担当者を1人決め，最新`main`へ移動して公開します．公開担当者は実データをlocalに持つ必要はありません．
-
-```bash
-git switch main
-git pull --ff-only
-git status
-davis publish
-```
-
-11. `Catalog published: yes`を確認し，Webを強制再読み込みして名称，schema，license，file数，PDF，downloadを確認します．
 
 ### なぜ公開作業を1人ずつ行うのか
 

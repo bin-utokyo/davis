@@ -11,6 +11,8 @@ Davisは，交通データの取得から行動モデルの実行までを，一
 - [参加者向け導入ガイド](docs/participant-installation.md) ([English](docs/participant-installation_en.md))
 - [運営者向け導入ガイド](docs/operator-installation.md) ([English](docs/operator-installation_en.md))
 
+運営者は，運営者向け導入ガイド冒頭の「まず読む5節」だけで，インストール，repository・session・個人branchの準備，dataset更新，review，公開まで進められます．terminalとVS Codeの操作を併記しています．
+
 Davis本体の開発・buildを行う場合だけ，RustとCargoが必要です．
 
 CLIは，通常commandの完了後に24時間に1回だけ最新版を確認します．新しいreleaseがある場合は，通常処理やJSON出力を妨げずに更新案内を表示します．`davis update`を実行すると，最新版の確認とOSに対応する更新commandを確認できます．

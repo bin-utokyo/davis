@@ -4,15 +4,25 @@
 
 This guide is for organizers who manage Davis metadata and publish data and catalogs to R2. If you only retrieve data, use the [Installation Guide for Participants](participant-installation_en.md).
 
-## Requirements
+## Read these five sections first
+
+Routine organizer work is fully covered by the following five sections. A first-time organizer should read them in order. Detailed command references, safety rationale, exceptional cases, and publication recovery follow afterward.
+
+1. [Install the Davis CLI](#1-install-the-davis-cli)
+2. [Prepare the repository](#2-prepare-the-repository)
+3. [Prepare an organizer session](#3-prepare-an-organizer-session)
+4. [Prepare a personal working branch](#4-prepare-a-personal-working-branch)
+5. [Update one dataset](#5-standard-procedure-for-updating-one-dataset)
+
+## 1. Install the Davis CLI
+
+### Requirements
 
 - Git
 - GitHub access to the Davis repository
 - The shared organizer code distributed through an organizer-only channel
 
 Routine organizer operations do not require Rust, Cargo, Python, DVC, Google Drive, or R2 credentials. Rust and Cargo are required only when developing or building Davis itself.
-
-## Installing the Davis CLI
 
 ### macOS and Linux
 
@@ -30,6 +40,8 @@ irm https://raw.githubusercontent.com/bin-utokyo/davis/main/scripts/install.ps1 
 
 The installer detects the operating system and CPU architecture and installs the matching macOS, Windows, or Linux executable. If the legacy Python CLI was installed through `uv`, the installer removes it before replacing `davis` with the current CLI.
 
+This command downloads the Davis executable from GitHub Releases and places it where the `davis` command can run. It does not install Rust or Cargo.
+
 Open a new terminal and verify the installation:
 
 ```text
@@ -37,7 +49,7 @@ davis --version
 davis operator --help
 ```
 
-## Preparing the repository
+## 2. Prepare the repository
 
 Clone the repository for a first-time setup:
 
@@ -56,7 +68,19 @@ git pull --ff-only
 
 If `git status` reports uncommitted changes, do not delete, stash, or force-update them. Review the work and consult the organizer team before proceeding.
 
-## Preparing an organizer session
+Each command has the following purpose:
+
+- `git status`: Displays the current branch and uncommitted changes without modifying files. `working tree clean` means there are no uncommitted changes.
+- `git switch main`: Changes the working directory to `main`, the base of the official history.
+- `git pull --ff-only`: Downloads the latest `main` from GitHub and advances the local branch only when the history remains a straight line. If local and remote history have diverged, it stops without merging. This is a fast-forward.
+
+### Preparing the repository in VS Code
+
+For a first clone, run `Git: Clone` from the Command Palette, enter the repository URL, choose a destination, and open the cloned folder. If the repository is already cloned, open its `davis` folder in VS Code.
+
+Select the branch name in the lower-left Status Bar and switch to `main`. Then open the Source Control view, select `…`, and choose `Pull`. If changed files appear or VS Code requests a conflict resolution or merge, stop and consult the organizer team. The terminal form `git pull --ff-only` provides the strict guarantee that divergence stops without modifying history.
+
+## 3. Prepare an organizer session
 
 Specify the Davis Web URL provided by the organizer team and enter the shared organizer code at the interactive prompt. The code does not need to appear in a command argument or shell history.
 
@@ -66,6 +90,94 @@ davis operator status
 ```
 
 Davis does not store the shared code itself. It stores only a revocable organizer session, so authentication normally does not need to be repeated while that session remains valid. `push` and `publish` use the organizer session, while `get` and `pull` require a separate download-only participant session. An organizer who retrieves real data should also run `davis login <Davis Web URL>` once.
+
+In VS Code, open a terminal from the Terminal menu and enter the same commands. The session is stored in the PC's user configuration directory rather than in VS Code, so it is shared between a regular terminal and the VS Code terminal.
+
+## 4. Prepare a personal working branch
+
+Organizers update data on a personal working branch rather than `main`. Davis does not require a branch prefix or a match with a GitHub username; use any name your team can identify. Reusing one personal branch is recommended, but creating a new branch is also supported.
+
+### First-time setup
+
+Create the personal working branch from current `main`.
+
+```bash
+git status
+git switch main
+git pull --ff-only
+git switch -c <personal-working-branch>
+```
+
+- `git switch -c <name>`: Creates a branch with the same contents as the current `main` and switches to it.
+- A separate `git push` is not required here. The first `davis push` publishes the branch to GitHub.
+
+In VS Code, select the branch name in the lower-left Status Bar, switch to `main`, and choose `Pull` from the Source Control view's `…` menu. Select the branch name again, choose `Create new branch...`, and enter any identifiable name. If VS Code asks for the source, select `main`.
+
+### Before every later edit
+
+Confirm that the previous Pull Request has been merged into `main`, then fast-forward the personal branch to current `main`.
+
+```bash
+git status
+git switch <personal-working-branch>
+git fetch origin
+git merge --ff-only origin/main
+```
+
+- `git fetch origin`: Downloads current GitHub history without changing the current branch or working files.
+- `git merge --ff-only origin/main`: Advances the personal branch to GitHub's current `main`. If history has diverged, it stops without creating a merge commit.
+
+In VS Code, switch to the personal branch from the lower-left branch indicator and choose `Fetch` from the Source Control view's `…` menu. You can then run `Git: Merge Branch...` from the Command Palette and select `origin/main`. However, the normal VS Code Merge action does not explicitly enforce `--ff-only`. Use it only when the Source Control Graph confirms a straight fast-forward path. If VS Code shows conflicts, a merge commit, or uncommitted changes, do not complete the operation. The terminal command above is the reliable option.
+
+`davis push` accepts any named branch other than `main`. It rejects `main` and a detached HEAD but does not prescribe a name format.
+
+## 5. Standard procedure for updating one dataset
+
+1. Follow the preceding section to switch to the personal branch and fast-forward it to current `main`.
+2. If the published real data is not already available locally, retrieve it before editing. `pull` obtains or updates real data to the currently published Manifest. Do not run it after editing because it can overwrite local changes.
+
+```bash
+davis pull routes/Matsuyama
+```
+
+3. To confirm the starting data against the current Manifest, run `verify` before editing. It only inspects files. After the data is edited, failure is expected because the old Manifest no longer matches.
+
+```bash
+davis verify routes/Matsuyama
+```
+
+4. Edit the assigned dataset's real data and `schema.yaml`. Do not edit PDFs or DatasetManifests manually.
+5. Inspect the planned update without changing anything. `--dry-run` hashes new and changed files and reports missing objects and upload bytes without changing the cache, PDFs, R2, or Git.
+
+```bash
+davis push routes/Matsuyama --dry-run
+```
+
+6. Check `Missing objects`, `Existing objects`, and `Upload size`. Do not continue if the files or size are unexpected.
+7. Run the real push. `-m` supplies the description recorded in Git; omitting it uses `data: update <dataset>`.
+
+```bash
+davis push routes/Matsuyama -m "data: update routes/Matsuyama"
+```
+
+This single command creates Objects and the Manifest, uploads missing Objects to R2, generates Japanese and English PDFs, commits the selected files, and pushes the current personal branch to GitHub. Do not stage, commit, or push again in VS Code. Completion is reflected by a clean Source Control view with no outgoing commit in the lower-left sync indicator.
+
+8. Open a Pull Request from the personal branch to `main` on GitHub and request review from another organizer. With the GitHub Pull Requests and Issues extension installed, VS Code can create it from `Create Pull Request` in the Source Control view. Otherwise, use GitHub Web.
+9. After review, merge the Pull Request into `main` with a merge commit. Do not delete the personal branch if it will be reused.
+10. Designate one publisher, switch to current `main`, and publish.
+
+```bash
+git switch main
+git pull --ff-only
+git status
+davis publish
+```
+
+Here, `git status` confirms that publication starts from a clean working tree. `davis publish` independently checks the current `origin/main` and clean working tree and refuses publication if either condition fails. In VS Code, switch to `main` from the lower-left branch indicator and choose `Pull` from the Source Control view's `…` menu, then run `davis publish` in the VS Code terminal.
+
+11. Confirm `Catalog published: yes`, force-refresh the Web catalog, and inspect names, schemas, licenses, file counts, PDFs, and downloads.
+
+Routine work ends here. Read the remaining sections when you need detailed command roles, safety rationale, or exceptional-case recovery.
 
 ## Git operations and Davis operations
 
@@ -83,6 +195,21 @@ Git records the history of code, schemas, PDFs, and DatasetManifests. R2 stores 
 | `git merge --ff-only origin/main` | Safely fast-forward the personal branch to current `main` | None |
 
 Routine data updates do not require separate `git add`, `git commit`, or `git push` commands. With an official organizer session, `davis push` performs them for only the selected dataset. Git commands alone do not retrieve, upload, or publish real data.
+
+### Equivalent VS Code actions
+
+| Git operation | VS Code action | Routine-work note |
+| --- | --- | --- |
+| Inspect or switch branches | Select the branch name in the lower-left Status Bar | Do not switch while files have pending changes |
+| Create a branch | Select the branch name, then `Create new branch...` | Use current `main` as the source |
+| Fetch | Source Control `…` → `Fetch` | Downloads history without changing files |
+| Pull | Source Control `…` → `Pull` | Use it to update `main` |
+| Push | Source Control `…` → `Push` | Normally unnecessary because `davis push` performs it |
+| Pull and push | `Sync Changes` or the lower-left sync icon | Runs both operations, so it is not used in the standard Davis workflow |
+
+VS Code Source Control actions and terminal Git commands modify the same repository state. An operation performed through either interface is visible in the other.
+
+For current interface names and details, see the official VS Code documentation for [Branches and Worktrees](https://code.visualstudio.com/docs/sourcecontrol/branches-worktrees) and [Repositories and Remotes](https://code.visualstudio.com/docs/sourcecontrol/repos-remotes).
 
 ### Davis commands used by organizers
 
@@ -124,65 +251,6 @@ A normal `davis push` performs these steps in order:
 7. Commit and push the current personal branch to GitHub.
 
 If a step fails, later steps do not run. R2 objects are immutable and content-addressed, so an object uploaded before a Git failure does not damage the current publication. The public Catalog remains unchanged until `davis publish`.
-
-### Personal working branches
-
-Organizers update data on personal working branches rather than `main`. Davis does not require a branch prefix or a match with a GitHub username; use any name your team can identify. Reusing one personal branch is recommended to avoid clutter, but creating a new branch is also supported.
-
-Create the personal branch from current `main` once:
-
-```bash
-git status
-git switch main
-git pull --ff-only
-git switch -c <personal-working-branch>
-git push -u origin <personal-working-branch>
-```
-
-Before every later edit, fast-forward the personal branch to current `main`:
-
-```bash
-git status
-git switch <personal-working-branch>
-git fetch origin
-git merge --ff-only origin/main
-```
-
-If uncommitted changes exist or `--ff-only` fails, do not reset, stash, rebase, or force a merge. Preserve the work and consult the organizer team. Merge Pull Requests with a merge commit and retain the personal branch. Do not use squash or rebase merge because either prevents the next `--ff-only` update.
-
-`davis push` accepts any named branch other than `main`. It rejects a detached HEAD and direct execution from `main`. `davis publish` cannot run from a personal branch.
-
-### Standard workflow for one dataset update
-
-1. Switch to the persistent personal branch and fast-forward it to current `main`.
-2. Only when the published real data is not already available locally, run `davis pull <dataset>` before editing. Do not run `pull` after editing because it overwrites local changes.
-3. Edit the assigned dataset's real data and `schema.yaml`. Describe the intent in the Pull Request when adding, moving, renaming, or removing files.
-4. Run a dry run. It reuses unchanged files and reads only the files that require hashing. It does not modify the repository, cache, PDFs, R2, or Git.
-
-```bash
-davis push routes/Matsuyama --dry-run
-```
-
-5. Review `Missing objects`, `Existing objects`, and `Upload size`. Do not continue when they differ from the intended update.
-6. Run the normal push with a commit message. When omitted, the message defaults to `data: update <dataset>`.
-
-```bash
-davis push routes/Matsuyama -m "data: update routes/Matsuyama"
-```
-
-7. Confirm `Objects synchronized: yes`, `Git branch pushed: operator/...`, and `Catalog published: no`. If the command fails, do not repeatedly retry it. Share the complete displayed error with the organizer team.
-8. Open a Pull Request from the personal branch to `main`. Another organizer reviews the schemas, PDFs, file layout, DatasetManifest, and expected size.
-9. Merge the Pull Request with a merge commit and retain the personal branch.
-10. Assign one publisher, switch to current `main`, and publish. The publisher does not need the real data locally.
-
-```bash
-git switch main
-git pull --ff-only
-git status
-davis publish
-```
-
-11. Confirm `Catalog published: yes`, force-refresh the Web catalog, and verify the name, schema, license, file count, PDFs, and download.
 
 ### Why production publications are serialized
 
