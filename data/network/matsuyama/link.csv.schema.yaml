@@ -21,15 +21,15 @@ columns:
   type_:
     name: Int64
 - description:
-    en: Link path distance
-    ja: リンク経路の距離
-  name: Length
+    en: Link path distance (m)
+    ja: リンク経路の距離 (m)
+  name: length
   type_:
     name: Int64
 - description:
     en: movement speed
     ja: 旅行速度
-  name: Speed
+  name: speed
   type_:
     name: Int64
 description:
@@ -37,9 +37,9 @@ description:
   ja: 松山市内道路ネットワークのlinkデータです。
 hash_: b26ffceb61ad2f28f863fc209261fe228e729f09a393104835a79640f487ef1d
 license_:
-  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+  en: Use is permitted only for the 2026 Summer Course on Behavior Modeling in Transportation
     Networks.
-  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+  ja: 2026年度の行動モデル夏の学校のための利用のみ許可します。
 name:
   en: link
   ja: link
