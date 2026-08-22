@@ -121,6 +121,8 @@ davis pull routes/Matsuyama --pdf-ja --pdf-en
 davis pull
 ```
 
+`get`の取得先に選択対象の既存fileがある場合は，上書きするか確認します．`y`で一括上書き，`N`またはEnterで無変更のまま中止します．自動実行など確認を省く場合は`--force`を指定します．非対話環境では，意図しない上書きを避けるため`--force`なしでは停止します．
+
 `schema.yaml`と説明PDFはGitを正本とし，R2 Objectとしては重複保存しません．`schema.yaml`の内容とPDFのGitHub URLはCatalogIndexへ記録されます．CLIとWebはYAMLをCatalog APIから保存し，PDFをGitHubから取得します．実データだけがprivate R2 Objectとして配信されます．
 
 ## Webカタログ

@@ -64,6 +64,8 @@ davis pull routes/Matsuyama
 
 Use `get` for a first retrieval or selective file retrieval. Use `pull` either to retrieve a whole dataset for the first time or to synchronize an existing dataset to the current Manifest. Both commands recreate the `data/...` hierarchy below the directory where you run them. Davis Web uses `get` when you select files and choose “Copy CLI command.”
 
+When files already exist at the `get` destination, Davis asks whether to replace them. Enter `y` to replace all selected existing files, or enter `N` (or press Enter) to cancel without changing them. Use `davis get <dataset> --force` to replace them without confirmation.
+
 `pull` replaces existing files with the remote contents. If local files contain unfinished edits, preserve or finish that work before running it.
 
 Running `davis pull` without a dataset ID retrieves or synchronizes every dataset. Specify an ID when only one dataset is needed.

@@ -109,6 +109,8 @@ davis pull routes/Matsuyama --pdf-ja --pdf-en
 davis pull
 ```
 
+When selected files already exist at the `get` destination, Davis asks whether to replace them. Enter `y` to replace them all, or enter `N` (or press Enter) to cancel without changing them. Use `--force` to skip the confirmation in automated use. In a non-interactive environment, Davis stops unless `--force` is specified to prevent unintended replacement.
+
 Git remains the source of truth for `schema.yaml` and the PDF documentation; these files are not duplicated as R2 objects. The CatalogIndex records the schema contents and GitHub URLs for available PDFs. CLI and Web clients save schemas from the Catalog API and retrieve PDFs from GitHub, while only the actual data is delivered as private R2 objects.
 
 ## Web catalog

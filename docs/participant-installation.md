@@ -64,6 +64,8 @@ davis pull routes/Matsuyama
 
 `get`は初回取得とfile単位の選択取得に使用します．`pull`はdataset全体を初回取得する場合にも，既に取得したdatasetを現在のManifestへ同期する場合にも使用できます．どちらも，commandを実行したdirectory以下へ`data/...`の階層を再現します．Webで必要なfileを選び，「CLIコマンドをコピー」から取得commandを作る場合は`get`を使用します．
 
+`get`の取得先に既存fileがある場合は，上書きするか確認します．`y`を入力すると，選択した既存fileをまとめて置き換えます．`N`またはEnterだけを入力すると，既存fileを変更せず中止します．確認なしで置き換える場合は`davis get <dataset> --force`を使用します．
+
 `pull`は既存fileをremoteの内容で置き換えます．編集途中のlocal fileがある場合は，退避または作業完了後に実行してください．
 
 dataset IDを省略して`davis pull`だけを実行すると，全datasetを取得・同期します．全件ではなく必要なdatasetだけでよい場合は，IDを指定してください．

@@ -4,7 +4,7 @@ mod session;
 mod update;
 
 use std::collections::{HashMap, HashSet};
-use std::io::{IsTerminal, Read};
+use std::io::{BufRead, IsTerminal, Read, Write};
 use std::path::PathBuf;
 use std::time::Duration;
 
@@ -118,7 +118,7 @@ enum Command {
         /// Output root. Dataset paths are recreated below this directory.
         #[arg(short, long, default_value = ".")]
         out: PathBuf,
-        /// Replace files that already exist.
+        /// Replace files that already exist without prompting.
         #[arg(long)]
         force: bool,
         /// Do not save the schema.yaml companion files.
@@ -618,7 +618,7 @@ fn handle_ingest(
     Ok(())
 }
 
-async fn handle_get(request: GetRequest) -> Result<(), Box<dyn std::error::Error>> {
+async fn handle_get(mut request: GetRequest) -> Result<(), Box<dyn std::error::Error>> {
     let stored_session = if request.config.is_none() {
         get_session(request.service_url.as_deref()).await?
     } else {
@@ -641,6 +641,11 @@ async fn handle_get(request: GetRequest) -> Result<(), Box<dyn std::error::Error
         .into());
     }
     let manifest = select_download_files(&manifest, &request.files)?;
+    let output = resolve(&request.repository, &request.out);
+    if !confirm_get_overwrite(&mut request, &manifest, &output)? {
+        println!("Get cancelled; existing files were not changed");
+        return Ok(());
+    }
     print_download_terms(&request, &manifest, stored_session.as_ref()).await?;
     if !request.documents.schema {
         eprintln!("Warning: schema.yaml will not be saved; future Davis formatting and modeling workflows may require it.");
@@ -694,7 +699,6 @@ async fn handle_get(request: GetRequest) -> Result<(), Box<dyn std::error::Error
         println!("Downloaded objects: {}", report.downloaded);
         println!("Cached objects: {}", report.cached);
     }
-    let output = resolve(&request.repository, &request.out);
     object_store.materialize(&manifest, &output, request.force)?;
     materialize_companion_documents(&request, &manifest, stored_session.as_ref(), &output).await?;
     println!(
@@ -703,6 +707,77 @@ async fn handle_get(request: GetRequest) -> Result<(), Box<dyn std::error::Error
         output.join(&manifest.dataset.root).display()
     );
     Ok(())
+}
+
+fn confirm_get_overwrite(
+    request: &mut GetRequest,
+    manifest: &davis_core::DatasetManifest,
+    output: &std::path::Path,
+) -> Result<bool, Box<dyn std::error::Error>> {
+    if request.force {
+        return Ok(true);
+    }
+    let existing_destinations = existing_manifest_destinations(manifest, output);
+    if existing_destinations.is_empty() {
+        return Ok(true);
+    }
+    eprintln!(
+        "{} selected file(s) already exist:",
+        existing_destinations.len()
+    );
+    for destination in existing_destinations.iter().take(5) {
+        eprintln!("- {}", destination.display());
+    }
+    if existing_destinations.len() > 5 {
+        eprintln!("- ... and {} more", existing_destinations.len() - 5);
+    }
+    if !std::io::stdin().is_terminal() {
+        return Err("cannot ask whether to replace existing files because standard input is not a terminal; rerun with --force to replace them".into());
+    }
+    let stdin = std::io::stdin();
+    let stdout = std::io::stdout();
+    let replace = prompt_to_replace(
+        &mut stdin.lock(),
+        &mut stdout.lock(),
+        existing_destinations.len(),
+    )?;
+    request.force = replace;
+    Ok(replace)
+}
+
+fn existing_manifest_destinations(
+    manifest: &davis_core::DatasetManifest,
+    output: &std::path::Path,
+) -> Vec<PathBuf> {
+    manifest
+        .files
+        .iter()
+        .map(|file| output.join(&manifest.dataset.root).join(&file.path))
+        .filter(|destination| destination.exists())
+        .collect()
+}
+
+fn prompt_to_replace(
+    input: &mut impl BufRead,
+    output: &mut impl Write,
+    existing_count: usize,
+) -> std::io::Result<bool> {
+    loop {
+        write!(
+            output,
+            "Replace all {existing_count} existing file(s)? [y/N] "
+        )?;
+        output.flush()?;
+        let mut answer = String::new();
+        if input.read_line(&mut answer)? == 0 {
+            return Ok(false);
+        }
+        match answer.trim().to_ascii_lowercase().as_str() {
+            "y" | "yes" => return Ok(true),
+            "" | "n" | "no" => return Ok(false),
+            _ => writeln!(output, "Please answer y or n.")?,
+        }
+    }
 }
 
 async fn print_download_terms(
@@ -1584,6 +1659,7 @@ fn update_transfer_progress(progress_bar: &ProgressBar, label: &str, progress: T
 mod tests {
     use super::{Cli, Command};
     use clap::Parser;
+    use std::io::Cursor;
     use std::path::PathBuf;
 
     #[test]
@@ -1660,6 +1736,40 @@ mod tests {
             }
             _ => panic!("expected get command"),
         }
+    }
+
+    #[test]
+    fn overwrite_prompt_accepts_yes() {
+        let mut input = Cursor::new(b"yes\n");
+        let mut output = Vec::new();
+
+        assert!(super::prompt_to_replace(&mut input, &mut output, 2)
+            .expect("prompt should accept input"));
+        assert_eq!(
+            String::from_utf8(output).expect("prompt should be UTF-8"),
+            "Replace all 2 existing file(s)? [y/N] "
+        );
+    }
+
+    #[test]
+    fn overwrite_prompt_defaults_to_no() {
+        let mut input = Cursor::new(b"\n");
+        let mut output = Vec::new();
+
+        assert!(!super::prompt_to_replace(&mut input, &mut output, 1)
+            .expect("prompt should accept input"));
+    }
+
+    #[test]
+    fn overwrite_prompt_retries_invalid_input() {
+        let mut input = Cursor::new(b"maybe\ny\n");
+        let mut output = Vec::new();
+
+        assert!(super::prompt_to_replace(&mut input, &mut output, 1)
+            .expect("prompt should accept input"));
+        assert!(String::from_utf8(output)
+            .expect("prompt should be UTF-8")
+            .contains("Please answer y or n."));
     }
 
     #[test]

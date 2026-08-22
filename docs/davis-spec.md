@@ -2190,12 +2190,15 @@ davis info <dataset-id>
 davis get <dataset-id>
 davis get <dataset-id> --file <file-id>...
 davis get <dataset-id> -o <directory>
+davis get <dataset-id> --force
 davis pull [dataset-id]
 ```
 
 `get`は初回取得とFile・directory単位の選択取得，`pull`はDataset全体の初回取得と現在のManifestへの同期取得に使用します．`pull`でDataset IDを省略すると全Datasetを対象にします．どちらも既定ではcurrent directoryを出力rootとし，その下にDataset内の相対pathを保って配置します．`-o`または`--out`で出力rootを変更できます．`pull`は既存Fileをremoteの内容で更新するため，local編集が残っていない状態で使用します．
 
 `davis get`は，対象Objectと期待digestを含む内部Download Planを作り，storage adapterが取得します．Command自身にManifest解析，remote選択，copy処理を書きません．
+
+取得対象の実データが出力先に既に存在する場合，対話terminalでは対象数とpathを表示し，一括上書きするか確認します．利用者が拒否した場合は既存fileを変更せず中止します．`--force`指定時は確認せず上書きします．pipeやCI等の非対話環境では，意図しない上書きを避けるため，既存fileがあり`--force`がなければ処理を停止します．
 
 ### 完了条件
 
