@@ -145,29 +145,29 @@ VS Codeでは，左下のbranch名から個人branchへ切り替え，Source Con
    `git status`で未commit変更がないことを確認してから進みます．最後のcommandが失敗した場合は履歴が分岐しているため，編集を始めず運営内で相談してください．
 2. 公開中の実データを持っていない場合だけ，編集前に次を実行します．`pull`は現在公開中のManifestに合わせて実データを取得・更新します．編集後に実行するとlocal変更を上書きするため，編集後には実行しません．
 
-```bash
-davis pull routes/Matsuyama
-```
+    ```bash
+    davis pull routes/Matsuyama
+    ```
 
 3. 取得直後の実データが現在のManifestと一致するか確認する場合は，編集前に次を実行します．`verify`は検査だけを行い，fileを変更しません．編集後はManifestと一致しなくなるため，失敗するのが正常です．
 
-```bash
-davis verify routes/Matsuyama
-```
+    ```bash
+    davis verify routes/Matsuyama
+    ```
 
 4. 担当datasetの実データと`schema.yaml`を編集します．PDFとDatasetManifestは手作業で編集しません．
 5. 実際には変更せず，予定だけを確認します．`--dry-run`は新規・変更fileをhashして不足Object数とupload容量を表示しますが，cache，PDF，R2，Gitを変更しません．
 
-```bash
-davis push routes/Matsuyama --dry-run
-```
+    ```bash
+    davis push routes/Matsuyama --dry-run
+    ```
 
 6. `Missing objects`，`Existing objects`，`Upload size`を確認します．意図しないfileや容量が表示された場合は通常の`push`へ進みません．
 7. 問題がなければ本pushを実行します．`-m`はGitへ記録する変更説明です．省略時は`data: update <dataset>`になります．
 
-```bash
-davis push routes/Matsuyama -m "data: update routes/Matsuyama"
-```
+    ```bash
+    davis push routes/Matsuyama -m "data: update routes/Matsuyama"
+    ```
 
 この1 commandが，ObjectとManifestの作成，不足ObjectのR2 upload，日英PDF生成，対象fileのGit commit，現在の個人branchのGitHubへのpushまで行います．VS Codeでstage，commit，pushを追加実行する必要はありません．Source Control viewがcleanになり，左下の同期表示に未送信commitがなければ完了です．
 
@@ -175,12 +175,12 @@ davis push routes/Matsuyama -m "data: update routes/Matsuyama"
 9. review後，Pull Requestをmerge commitで`main`へmergeします．個人branchを継続利用する場合は削除しません．
 10. 公開担当者を1人決め，最新`main`へ切り替えて公開します．
 
-```bash
-git switch main
-git pull --ff-only
-git status
-davis publish
-```
+    ```bash
+    git switch main
+    git pull --ff-only
+    git status
+    davis publish
+    ```
 
 ここでの`git status`は，公開前に未commit変更がないことを確認するための検査です．`davis publish`も最新`origin/main`とcleanなworking treeを再検査し，条件を満たさなければ公開しません．VS Codeでは左下のbranch名から`main`へ切り替え，Source Control viewの`…`から`Pull`を選べます．その後，VS Codeのterminalで`davis publish`を実行します．
 
