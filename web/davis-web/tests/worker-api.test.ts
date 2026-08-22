@@ -280,6 +280,73 @@ test("plans, uploads, and completes an operator multipart object", async () => {
   assert.deepEqual(stored.get(`objects/blake3/aa/${"a".repeat(62)}`), payload);
 });
 
+test("rejects undersized non-final multipart parts before R2 completion", async () => {
+  const { env } = createEnv();
+  const { body } = await exchangeOperator(env);
+  const oid = `blake3:${"c".repeat(64)}`;
+  const authorization = { Authorization: `Bearer ${body.token}` };
+  const created = await handleApiRequest(apiRequest("/api/v1/operator/uploads/create", {
+    method: "POST",
+    headers: { ...authorization, "Content-Type": "application/json" },
+    body: JSON.stringify({ oid, size: 4 }),
+  }), env);
+  const upload = await created.json() as { upload_id: string };
+
+  const completed = await handleApiRequest(apiRequest("/api/v1/operator/uploads/complete", {
+    method: "POST",
+    headers: { ...authorization, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      oid,
+      size: 4,
+      upload_id: upload.upload_id,
+      parts: [
+        { part_number: 1, etag: "etag-1", size: 2 },
+        { part_number: 2, etag: "etag-2", size: 2 },
+      ],
+    }),
+  }), env);
+  assert.equal(completed.status, 400);
+  assert.equal((await completed.json() as { error: { code: string } }).error.code, "invalid_multipart_parts");
+});
+
+test("returns the multipart phase and safe details when R2 rejects a part", async () => {
+  const { env } = createEnv();
+  const { body } = await exchangeOperator(env);
+  const oid = `blake3:${"d".repeat(64)}`;
+  const authorization = { Authorization: `Bearer ${body.token}` };
+  const created = await handleApiRequest(apiRequest("/api/v1/operator/uploads/create", {
+    method: "POST",
+    headers: { ...authorization, "Content-Type": "application/json" },
+    body: JSON.stringify({ oid, size: 4 }),
+  }), env);
+  const upload = await created.json() as { upload_id: string };
+  const bucket = env.DAVIS_DATA!;
+  env.DAVIS_DATA = {
+    ...bucket,
+    resumeMultipartUpload(key, uploadId) {
+      const resumed = bucket.resumeMultipartUpload(key, uploadId);
+      return {
+        ...resumed,
+        async uploadPart() {
+          throw new Error("internal provider detail must not be returned");
+        },
+      };
+    },
+  };
+
+  const response = await handleApiRequest(apiRequest(
+    `/api/v1/operator/uploads/part?oid=${encodeURIComponent(oid)}&upload_id=${upload.upload_id}&part_number=1`,
+    { method: "PUT", headers: { ...authorization, "Content-Length": "4" }, body: new Uint8Array(4) },
+  ), env);
+  const error = await response.json() as {
+    error: { code: string; message: string; details: { part_number: number; part_size: number } };
+  };
+  assert.equal(response.status, 502);
+  assert.equal(error.error.code, "r2_multipart_part_failed");
+  assert.equal(error.error.message, "R2 failed to store the multipart upload part");
+  assert.deepEqual(error.error.details, { part_number: 1, part_size: 4 });
+});
+
 test("publishes a complete catalog only with operator authentication", async () => {
   const { env, stored } = createEnv();
   const { body } = await exchangeOperator(env);

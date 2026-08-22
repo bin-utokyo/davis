@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::fmt::Write as _;
 
 use davis_catalog::{IndexedDataset, IndexedFile};
 use davis_core::{
@@ -128,7 +129,16 @@ struct DownloadGrant {
 #[derive(Debug, Deserialize)]
 struct ApiError {
     #[serde(default)]
+    code: String,
+    #[serde(default)]
     message: String,
+    #[serde(default)]
+    details: Option<serde_json::Value>,
+}
+
+#[derive(Debug, Deserialize)]
+struct ApiErrorEnvelope {
+    error: ApiError,
 }
 
 #[derive(Debug, Serialize)]
@@ -186,6 +196,22 @@ struct PublishCatalogRequest<'a> {
 
 fn default_upload_part_size() -> usize {
     DEFAULT_UPLOAD_PART_SIZE
+}
+
+async fn read_upload_chunk(
+    input: &mut tokio::fs::File,
+    buffer: &mut [u8],
+    remaining: u64,
+) -> Result<usize, RemoteError> {
+    let buffer_size = u64::try_from(buffer.len())
+        .map_err(|_| RemoteError::InvalidUploadResponse("multipart chunk is too large".into()))?;
+    let read = usize::try_from(remaining.min(buffer_size))
+        .map_err(|_| RemoteError::InvalidUploadResponse("multipart chunk is too large".into()))?;
+    // Tokio may return a short read (commonly around 2 MiB) even when the
+    // supplied buffer is larger. R2 rejects such non-final multipart parts,
+    // so fill each declared part completely before uploading it.
+    input.read_exact(&mut buffer[..read]).await?;
+    Ok(read)
 }
 
 impl DavisService {
@@ -474,11 +500,9 @@ impl DavisService {
         let mut input = tokio::fs::File::open(store.object_path(&object.oid)).await?;
         let mut buffer = vec![0_u8; created.part_size];
         let mut parts = Vec::new();
-        loop {
-            let read = input.read(&mut buffer).await?;
-            if read == 0 {
-                break;
-            }
+        let mut remaining = object.size;
+        while remaining > 0 {
+            let read = read_upload_chunk(&mut input, &mut buffer, remaining).await?;
             let part_number = u32::try_from(parts.len() + 1).map_err(|_| {
                 RemoteError::InvalidUploadResponse("too many multipart parts".into())
             })?;
@@ -515,6 +539,7 @@ impl DavisService {
             let read = u64::try_from(read).map_err(|_| {
                 RemoteError::InvalidUploadResponse("multipart chunk is too large".into())
             })?;
+            remaining -= read;
             *completed_bytes = completed_bytes.saturating_add(read);
             on_progress(
                 *completed_bytes,
@@ -839,17 +864,82 @@ async fn ensure_success(response: reqwest::Response) -> Result<reqwest::Response
     if status.is_success() {
         return Ok(response);
     }
+    let request_id = response
+        .headers()
+        .get("x-davis-request-id")
+        .or_else(|| response.headers().get("cf-ray"))
+        .and_then(|value| value.to_str().ok())
+        .map(str::to_owned);
     let body = response.text().await.unwrap_or_default();
-    let message = serde_json::from_str::<ApiError>(&body)
-        .map(|error| error.message)
-        .unwrap_or(body);
+    let message = format_api_error(&body, request_id.as_deref());
     Err(RemoteError::Api { status, message })
+}
+
+fn format_api_error(body: &str, request_id: Option<&str>) -> String {
+    let parsed = serde_json::from_str::<ApiErrorEnvelope>(body)
+        .map(|envelope| envelope.error)
+        .or_else(|_| serde_json::from_str::<ApiError>(body));
+    let mut message = match parsed {
+        Ok(error) => {
+            let mut message = if error.message.trim().is_empty() {
+                "The service returned an error without a message".to_owned()
+            } else {
+                error.message.trim().to_owned()
+            };
+            if !error.code.trim().is_empty() {
+                write!(message, " [code: {}]", error.code.trim())
+                    .expect("writing to a String cannot fail");
+            }
+            if let Some(details) = error.details.filter(|value| !value.is_null()) {
+                write!(
+                    message,
+                    "; details: {}",
+                    truncate_message(&details.to_string())
+                )
+                .expect("writing to a String cannot fail");
+            }
+            message
+        }
+        Err(_) if body.trim().is_empty() => "The service returned no error details".to_owned(),
+        Err(_) => truncate_message(&body.split_whitespace().collect::<Vec<_>>().join(" ")),
+    };
+    if let Some(request_id) = request_id.filter(|value| !value.trim().is_empty()) {
+        write!(message, " [request ID: {}]", request_id.trim())
+            .expect("writing to a String cannot fail");
+    }
+    message
+}
+
+fn truncate_message(message: &str) -> String {
+    const LIMIT: usize = 800;
+    let mut characters = message.chars();
+    let truncated = characters.by_ref().take(LIMIT).collect::<String>();
+    if characters.next().is_some() {
+        format!("{truncated}…")
+    } else {
+        truncated
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::build_manifest;
+    use super::{build_manifest, format_api_error, read_upload_chunk};
     use davis_catalog::{IndexedDataset, IndexedFile};
+
+    #[test]
+    fn formats_structured_and_empty_service_errors_actionably() {
+        assert_eq!(
+            format_api_error(
+                r#"{"error":{"code":"invalid_request","message":"objects must not be empty","details":{"field":"objects"}}}"#,
+                Some("request-123"),
+            ),
+            "objects must not be empty [code: invalid_request]; details: {\"field\":\"objects\"} [request ID: request-123]"
+        );
+        assert_eq!(
+            format_api_error("", Some("request-456")),
+            "The service returned no error details [request ID: request-456]"
+        );
+    }
 
     #[test]
     fn remote_catalog_recreates_relative_manifest_paths() {
@@ -864,5 +954,28 @@ mod tests {
         let manifest = build_manifest(&dataset, [file]).unwrap();
         assert_eq!(manifest.dataset.root, "data/network/sample");
         assert_eq!(manifest.files[0].path, "link.csv");
+    }
+
+    #[tokio::test]
+    async fn multipart_reader_fills_every_non_final_chunk() {
+        const PART_SIZE: usize = 5 * 1024 * 1024;
+        let source = tempfile::NamedTempFile::new().expect("temporary source should be created");
+        std::fs::write(source.path(), vec![7_u8; PART_SIZE + 17])
+            .expect("temporary source should be written");
+        let mut input = tokio::fs::File::open(source.path())
+            .await
+            .expect("temporary source should open");
+        let mut buffer = vec![0_u8; PART_SIZE];
+
+        let total_size = u64::try_from(PART_SIZE + 17).expect("test size should fit in u64");
+        let first = read_upload_chunk(&mut input, &mut buffer, total_size)
+            .await
+            .expect("first chunk should be read");
+        let final_part = read_upload_chunk(&mut input, &mut buffer, 17)
+            .await
+            .expect("final chunk should be read");
+
+        assert_eq!(first, PART_SIZE);
+        assert_eq!(final_part, 17);
     }
 }

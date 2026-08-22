@@ -19,6 +19,7 @@ const DEFAULT_OPERATOR_SESSION_TTL_SECONDS = 30 * 24 * 60 * 60;
 const MAX_OPERATOR_SESSION_TTL_SECONDS = 90 * 24 * 60 * 60;
 const MAX_OPERATOR_OBJECTS_PER_REQUEST = 512;
 const MAX_MULTIPART_PART_BYTES = 32 * 1024 * 1024;
+const MIN_MULTIPART_PART_BYTES = 5 * 1024 * 1024;
 const CATALOG_DOCUMENTS = new Set([
   "index.json",
   "datasets.json",
@@ -282,13 +283,18 @@ async function planOperatorUploads(request: Request, env: DavisWorkerEnv): Promi
   const body = await readJson(request);
   const objects = parseOperatorObjects(body?.objects);
   if (objects instanceof Response) return objects;
-  const results = await Promise.all(objects.map(async (object) => {
-    const stored = await env.DAVIS_DATA!.head(objectKey(object.oid));
-    if (stored && stored.size !== object.size) {
-      return { ...object, status: "size_mismatch", actual_size: stored.size };
-    }
-    return { ...object, status: stored ? "existing" : "missing" };
-  }));
+  let results: Array<OperatorObject & { status: string; actual_size?: number }>;
+  try {
+    results = await Promise.all(objects.map(async (object) => {
+      const stored = await env.DAVIS_DATA!.head(objectKey(object.oid));
+      if (stored && stored.size !== object.size) {
+        return { ...object, status: "size_mismatch", actual_size: stored.size };
+      }
+      return { ...object, status: stored ? "existing" : "missing" };
+    }));
+  } catch {
+    return errorResponse(502, "r2_object_check_failed", "R2 failed while checking existing objects");
+  }
   if (results.some((result) => result.status === "size_mismatch")) {
     return errorResponse(409, "object_size_mismatch", "One or more stored objects have an unexpected size", { objects: results });
   }
@@ -302,7 +308,12 @@ async function createOperatorUpload(request: Request, env: DavisWorkerEnv): Prom
   const object = parseOperatorObject(body);
   if (!object) return errorResponse(400, "invalid_request", "A valid oid and size are required");
   const key = objectKey(object.oid);
-  const stored = await env.DAVIS_DATA!.head(key);
+  let stored: R2ObjectMetadata | null;
+  try {
+    stored = await env.DAVIS_DATA!.head(key);
+  } catch {
+    return errorResponse(502, "r2_object_check_failed", "R2 failed while checking the upload object");
+  }
   if (stored) {
     if (stored.size !== object.size) {
       return errorResponse(409, "object_size_mismatch", "Stored object has an unexpected size");
@@ -310,10 +321,19 @@ async function createOperatorUpload(request: Request, env: DavisWorkerEnv): Prom
     return json({ oid: object.oid, size: object.size, already_present: true });
   }
   if (object.size === 0) {
-    await env.DAVIS_DATA!.put(key, new ArrayBuffer(0));
+    try {
+      await env.DAVIS_DATA!.put(key, new ArrayBuffer(0));
+    } catch {
+      return errorResponse(502, "r2_object_write_failed", "R2 failed while storing the empty object");
+    }
     return json({ oid: object.oid, size: object.size, already_present: true });
   }
-  const upload = await env.DAVIS_DATA!.createMultipartUpload(key);
+  let upload: R2MultipartUpload;
+  try {
+    upload = await env.DAVIS_DATA!.createMultipartUpload(key);
+  } catch {
+    return errorResponse(502, "r2_multipart_create_failed", "R2 failed to create the multipart upload");
+  }
   return json({
     oid: object.oid,
     size: object.size,
@@ -339,8 +359,18 @@ async function uploadOperatorPart(request: Request, env: DavisWorkerEnv): Promis
     return errorResponse(413, "invalid_part_size", `Each upload part must be between 1 and ${MAX_MULTIPART_PART_BYTES} bytes`);
   }
   if (!request.body) return errorResponse(400, "invalid_request", "Upload part body is required");
-  const upload = env.DAVIS_DATA!.resumeMultipartUpload(objectKey(oid), uploadId);
-  const part = await upload.uploadPart(partNumber, request.body);
+  let part: R2UploadedPart;
+  try {
+    const upload = env.DAVIS_DATA!.resumeMultipartUpload(objectKey(oid), uploadId);
+    part = await upload.uploadPart(partNumber, request.body);
+  } catch {
+    return errorResponse(
+      502,
+      "r2_multipart_part_failed",
+      "R2 failed to store the multipart upload part",
+      { part_number: partNumber, part_size: contentLength },
+    );
+  }
   return json({ part_number: part.partNumber, etag: part.etag, size: contentLength });
 }
 
@@ -356,9 +386,28 @@ async function completeOperatorUpload(request: Request, env: DavisWorkerEnv): Pr
     || parts.reduce((sum, part) => sum + part.size, 0) !== object.size) {
     return errorResponse(400, "invalid_request", "Valid oid, size, upload_id, and parts are required");
   }
-  const upload = env.DAVIS_DATA!.resumeMultipartUpload(objectKey(object.oid), uploadId);
-  await upload.complete(parts.map((part) => ({ partNumber: part.part_number, etag: part.etag })));
-  const stored = await env.DAVIS_DATA!.head(objectKey(object.oid));
+  const orderedParts = [...parts].sort((left, right) => left.part_number - right.part_number);
+  if (orderedParts.some((part, index) => part.part_number !== index + 1)
+    || orderedParts.slice(0, -1).some((part) => part.size < MIN_MULTIPART_PART_BYTES)) {
+    return errorResponse(
+      400,
+      "invalid_multipart_parts",
+      `Every non-final part must be at least ${MIN_MULTIPART_PART_BYTES} bytes`,
+    );
+  }
+  let stored: R2ObjectMetadata | null;
+  try {
+    const upload = env.DAVIS_DATA!.resumeMultipartUpload(objectKey(object.oid), uploadId);
+    await upload.complete(orderedParts.map((part) => ({ partNumber: part.part_number, etag: part.etag })));
+    stored = await env.DAVIS_DATA!.head(objectKey(object.oid));
+  } catch {
+    return errorResponse(
+      502,
+      "r2_multipart_complete_failed",
+      "R2 failed to complete the multipart upload",
+      { parts: orderedParts.length, declared_size: object.size },
+    );
+  }
   if (!stored || stored.size !== object.size) {
     return errorResponse(409, "object_size_mismatch", "Completed object size does not match the declared size");
   }
@@ -374,7 +423,11 @@ async function abortOperatorUpload(request: Request, env: DavisWorkerEnv): Promi
   if (!isObjectId(oid) || !isUploadId(uploadId)) {
     return errorResponse(400, "invalid_request", "Valid oid and upload_id are required");
   }
-  await env.DAVIS_DATA!.resumeMultipartUpload(objectKey(oid), uploadId).abort();
+  try {
+    await env.DAVIS_DATA!.resumeMultipartUpload(objectKey(oid), uploadId).abort();
+  } catch {
+    return errorResponse(502, "r2_multipart_abort_failed", "R2 failed to cancel the multipart upload");
+  }
   return json({ aborted: true });
 }
 
