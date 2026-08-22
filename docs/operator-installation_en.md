@@ -133,7 +133,16 @@ In VS Code, switch to the personal branch from the lower-left branch indicator a
 
 ## 5. Standard procedure for updating one dataset
 
-1. Follow the preceding section to switch to the personal branch and fast-forward it to current `main`.
+1. Before editing, switch to the personal branch and fast-forward it to the current `main` on GitHub.
+
+   ```bash
+   git status
+   git switch <personal-working-branch>
+   git fetch origin
+   git merge --ff-only origin/main
+   ```
+
+   Confirm with `git status` that there are no uncommitted changes before continuing. If the final command fails, the histories have diverged. Do not start editing; consult the operations team.
 2. If the published real data is not already available locally, retrieve it before editing. `pull` obtains or updates real data to the currently published Manifest. Do not run it after editing because it can overwrite local changes.
 
 ```bash

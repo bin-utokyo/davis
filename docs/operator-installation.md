@@ -133,7 +133,16 @@ VS Codeでは，左下のbranch名から個人branchへ切り替え，Source Con
 
 ## 5. 1件のdatasetを更新する標準手順
 
-1. 前節の手順で個人branchへ切り替え，最新`main`まで早送りします．
+1. 編集を始める前に，個人branchへ切り替え，GitHub上の最新`main`まで早送りします．
+
+   ```bash
+   git status
+   git switch <個人作業branch名>
+   git fetch origin
+   git merge --ff-only origin/main
+   ```
+
+   `git status`で未commit変更がないことを確認してから進みます．最後のcommandが失敗した場合は履歴が分岐しているため，編集を始めず運営内で相談してください．
 2. 公開中の実データを持っていない場合だけ，編集前に次を実行します．`pull`は現在公開中のManifestに合わせて実データを取得・更新します．編集後に実行するとlocal変更を上書きするため，編集後には実行しません．
 
 ```bash
