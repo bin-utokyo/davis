@@ -333,7 +333,7 @@ impl DavisService {
             match item.status.as_str() {
                 "existing" => existing += 1,
                 "missing" => {
-                    store.verify_object(&object.oid, object.size)?;
+                    verify_operator_upload_source(store, object, dry_run)?;
                     missing_bytes = missing_bytes.checked_add(object.size).ok_or_else(|| {
                         RemoteError::InvalidUploadResponse("byte counter overflow".into())
                     })?;
@@ -775,6 +775,18 @@ impl DavisService {
     }
 }
 
+fn verify_operator_upload_source(
+    store: &LocalObjectStore,
+    object: &ObjectRef,
+    dry_run: bool,
+) -> Result<(), RemoteError> {
+    if dry_run {
+        return Ok(());
+    }
+    store.verify_object(&object.oid, object.size)?;
+    Ok(())
+}
+
 fn build_catalog(
     datasets: Vec<IndexedDataset>,
     files: &[IndexedFile],
@@ -923,8 +935,11 @@ fn truncate_message(message: &str) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::{build_manifest, format_api_error, read_upload_chunk};
+    use super::{
+        build_manifest, format_api_error, read_upload_chunk, verify_operator_upload_source,
+    };
     use davis_catalog::{IndexedDataset, IndexedFile};
+    use davis_core::{hash_file, LocalObjectStore};
 
     #[test]
     fn formats_structured_and_empty_service_errors_actionably() {
@@ -977,5 +992,19 @@ mod tests {
 
         assert_eq!(first, PART_SIZE);
         assert_eq!(final_part, 17);
+    }
+
+    #[test]
+    fn dry_run_does_not_require_a_new_object_in_the_local_cache() {
+        let temporary = tempfile::tempdir().expect("temporary directory should be created");
+        let source = temporary.path().join("changed.csv");
+        std::fs::write(&source, b"id,value\n1,changed\n")
+            .expect("temporary source should be written");
+        let object = hash_file(&source).expect("source should be hashed");
+        let empty_store = LocalObjectStore::new(temporary.path().join("empty-cache"));
+
+        verify_operator_upload_source(&empty_store, &object, true)
+            .expect("dry run should use the source hash without requiring a cache object");
+        assert!(verify_operator_upload_source(&empty_store, &object, false).is_err());
     }
 }

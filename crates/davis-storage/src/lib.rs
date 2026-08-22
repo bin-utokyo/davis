@@ -338,6 +338,39 @@ impl ObjectStorage {
         &self,
         local: &LocalObjectStore,
         manifests: &[DatasetManifest],
+        on_progress: F,
+    ) -> Result<UploadPlan, StorageError>
+    where
+        F: FnMut(TransferProgress),
+    {
+        self.plan_upload_manifests_internal(Some(local), manifests, on_progress)
+            .await
+    }
+
+    /// Calculates missing objects using remote metadata only.
+    ///
+    /// This read-only variant is intended for dry runs that hash changed source
+    /// files without writing them into the local object cache.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when manifest validation or remote metadata access fails.
+    pub async fn plan_remote_upload_manifests_with_progress<F>(
+        &self,
+        manifests: &[DatasetManifest],
+        on_progress: F,
+    ) -> Result<UploadPlan, StorageError>
+    where
+        F: FnMut(TransferProgress),
+    {
+        self.plan_upload_manifests_internal(None, manifests, on_progress)
+            .await
+    }
+
+    async fn plan_upload_manifests_internal<F>(
+        &self,
+        local: Option<&LocalObjectStore>,
+        manifests: &[DatasetManifest],
         mut on_progress: F,
     ) -> Result<UploadPlan, StorageError>
     where
@@ -373,10 +406,16 @@ impl ObjectStorage {
                     progress.completed_bytes = progress.completed_bytes.saturating_add(object.size);
                 }
                 Err(error) if error.kind() == ErrorKind::NotFound => {
-                    local.verify_object_with_progress(&object.oid, object.size, |bytes| {
-                        progress.completed_bytes = progress.completed_bytes.saturating_add(bytes);
-                        on_progress(progress);
-                    })?;
+                    if let Some(local) = local {
+                        local.verify_object_with_progress(&object.oid, object.size, |bytes| {
+                            progress.completed_bytes =
+                                progress.completed_bytes.saturating_add(bytes);
+                            on_progress(progress);
+                        })?;
+                    } else {
+                        progress.completed_bytes =
+                            progress.completed_bytes.saturating_add(object.size);
+                    }
                     plan.missing += 1;
                     plan.missing_bytes = plan
                         .missing_bytes
@@ -801,7 +840,9 @@ fn total_object_bytes(objects: &[ObjectRef]) -> Result<u64, StorageError> {
 mod tests {
     use std::fs;
 
-    use davis_core::{DatasetManifest, LocalObjectStore, ManifestDataset, ManifestFile, ObjectRef};
+    use davis_core::{
+        hash_file, DatasetManifest, LocalObjectStore, ManifestDataset, ManifestFile, ObjectRef,
+    };
     use tempfile::tempdir;
 
     use super::{ObjectStorage, StorageError, UploadOutcome};
@@ -923,6 +964,42 @@ mod tests {
         empty_cache
             .verify_object(&manifest.files[0].object.oid, object.size)
             .unwrap();
+    }
+
+    #[tokio::test]
+    async fn remote_only_plan_supports_a_dry_run_without_cache_objects() {
+        let temporary = tempdir().unwrap();
+        let source = temporary.path().join("changed.csv");
+        fs::write(&source, b"id,value\n1,changed\n").unwrap();
+        let object = hash_file(&source).unwrap();
+        let manifest = DatasetManifest {
+            version: 1,
+            dataset: ManifestDataset {
+                id: "sample/changed".into(),
+                root: "data/sample/changed".into(),
+            },
+            files: vec![ManifestFile {
+                id: "changed.csv".into(),
+                path: "changed.csv".into(),
+                object: object.clone(),
+                schema_path: None,
+            }],
+        };
+        let remote = ObjectStorage::filesystem(&temporary.path().join("remote")).unwrap();
+        let mut progress = Vec::new();
+
+        let plan = remote
+            .plan_remote_upload_manifests_with_progress(&[manifest], |state| {
+                progress.push(state);
+            })
+            .await
+            .unwrap();
+
+        assert_eq!(plan.missing, 1);
+        assert_eq!(plan.existing, 0);
+        assert_eq!(plan.missing_bytes, object.size);
+        assert_eq!(progress.last().unwrap().completed_bytes, object.size);
+        assert_eq!(progress.last().unwrap().completed_objects, 1);
     }
 
     #[tokio::test]

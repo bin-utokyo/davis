@@ -1009,7 +1009,7 @@ fn handle_verify(
 #[allow(clippy::too_many_lines)]
 async fn handle_push(request: PushRequest) -> Result<(), Box<dyn std::error::Error>> {
     if request.rehash {
-        println!("All Davis pushes hash every source file; --rehash is retained for compatibility");
+        println!("Rehashing every selected source file");
     }
     let catalog = scan_repository(&request.repository)?;
     let dataset_ids = select_dataset_ids(&catalog, request.dataset_id.as_deref())?;
@@ -1050,11 +1050,19 @@ async fn handle_push(request: PushRequest) -> Result<(), Box<dyn std::error::Err
     }
     println!("Remote: {}", request.remote);
     let check_bar = transfer_progress_bar("Check");
-    let plan_result = remote_store
-        .plan_upload_manifests_with_progress(&local_store, &manifests, |progress| {
-            update_transfer_progress(&check_bar, "Check", progress);
-        })
-        .await;
+    let plan_result = if request.dry_run {
+        remote_store
+            .plan_remote_upload_manifests_with_progress(&manifests, |progress| {
+                update_transfer_progress(&check_bar, "Check", progress);
+            })
+            .await
+    } else {
+        remote_store
+            .plan_upload_manifests_with_progress(&local_store, &manifests, |progress| {
+                update_transfer_progress(&check_bar, "Check", progress);
+            })
+            .await
+    };
     let plan = match plan_result {
         Ok(plan) => {
             check_bar.finish_with_message("Check complete");
