@@ -11,8 +11,8 @@ files:
 - id: bus_link.csv
   path: bus_link.csv
   object:
-    oid: blake3:49f6d3402f14ffdedb2ee5138338da3633f38087e2b5c3a1670027fffc6caa25
-    size: 39668346
+    oid: blake3:1124fb98d670c01257856b5693a91b71efb78297573c496b94beb9355ffeb7f4
+    size: 39668316
   schema_path: data/network/tokyo-metropolitan-area/bus_link.csv.schema.yaml
 - id: bus_node.csv
   path: bus_node.csv
@@ -52,8 +52,8 @@ files:
 - id: rail_link.csv
   path: rail_link.csv
   object:
-    oid: blake3:d96664ba5b184950016cbb7b915c5421f6cc6987709cd193b9bf2dc155cf0762
-    size: 794420
+    oid: blake3:8672302952ced2286742deab6a2319dbde28d3e785e18a134c302f091c3122a0
+    size: 794390
   schema_path: data/network/tokyo-metropolitan-area/rail_link.csv.schema.yaml
 - id: rail_node.csv
   path: rail_node.csv
@@ -71,6 +71,11 @@ files:
   object:
     oid: blake3:a43fa1f17a9917cac74782155cabcbceda0fb54ba1f41235c142ef208b207c85
     size: 8767366
+- id: readme.txt
+  path: readme.txt
+  object:
+    oid: blake3:2c5e603c86bd3605a9f0cb25af4345a7263c30767b7161958541343707eae8d1
+    size: 1015
 - id: shapefile/bus_link.dbf
   path: shapefile/bus_link.dbf
   object:
@@ -229,8 +234,8 @@ files:
 - id: walk_link.csv
   path: walk_link.csv
   object:
-    oid: blake3:e56f91d36df1f3a9e6ef26c8117a1fad93f9a046bf722c8f8a860a2b781f3bbf
-    size: 55742622
+    oid: blake3:21470c6d62849ecfbe5a7e9203dcdce8caec9a0e2cadda43233d2d3d31776591
+    size: 55742592
   schema_path: data/network/tokyo-metropolitan-area/walk_link.csv.schema.yaml
 - id: walk_node.csv
   path: walk_node.csv
@@ -238,3 +243,8 @@ files:
     oid: blake3:c7c680ec3f61438bd22da682208f52fc99d4690ad7847977d50199315049c24b
     size: 6326647
   schema_path: data/network/tokyo-metropolitan-area/walk_node.csv.schema.yaml
+- id: ネットワークデータ作成業務報告書.docx
+  path: ネットワークデータ作成業務報告書.docx
+  object:
+    oid: blake3:094c2725e20855b0d172a151d34e304b0f189b1a59b448efdc861dfc83e8dac4
+    size: 2261599

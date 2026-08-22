@@ -97,9 +97,9 @@ description:
   ja: 東京の歩行者、鉄道、バス路線ネットワークのnodeデータです。
 hash_: bf900dead59ace9360517ba92930f77c3acd912b9e0ff1f16c603479b7b28198
 license_:
-  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+  en: Use is permitted only for the 2026 Summer Course on Behavior Modeling in Transportation
     Networks.
-  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+  ja: 2026年度の行動モデル夏の学校のための利用のみ許可します。
 name:
   en: public_node
   ja: public_node
