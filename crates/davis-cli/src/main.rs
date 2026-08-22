@@ -169,7 +169,7 @@ enum Command {
         /// Show missing objects without uploading them.
         #[arg(long)]
         dry_run: bool,
-        /// Compatibility option; Davis now hashes every source file.
+        /// Re-read every selected source file instead of reusing unchanged Manifest entries.
         #[arg(long)]
         rehash: bool,
         /// Git commit message. Defaults to `data: update <dataset>`.
