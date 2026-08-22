@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
-  "latest": "0.3.1",
+  "latest": "0.3.2",
   "minimum_supported": "0.2.2",
   "released_at": "2026-08-23",
-  "release_url": "https://github.com/bin-utokyo/davis/releases/tag/v0.3.1",
+  "release_url": "https://github.com/bin-utokyo/davis/releases/tag/v0.3.2",
   "message": {
-    "ja": "新規・変更Objectがlocal cacheにない場合でも，dry runで差分を確認できるよう修正しました．運営者は更新してください．",
-    "en": "Davis now supports dry-run planning before new or changed objects enter the local cache. Organizers should update."
+    "ja": "新規・変更Objectのdry runを修正し，個人作業branchの命名規則を撤廃しました．運営者は更新してください．",
+    "en": "Davis fixes dry runs for new and changed objects and removes the prescribed naming format for personal working branches. Organizers should update."
   }
 }
