@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
-  "latest": "0.2.2",
+  "latest": "0.3.0",
   "minimum_supported": "0.2.2",
-  "released_at": "2026-08-21",
-  "release_url": "https://github.com/bin-utokyo/davis/releases/tag/v0.2.2",
+  "released_at": "2026-08-23",
+  "release_url": "https://github.com/bin-utokyo/davis/releases/tag/v0.3.0",
   "message": {
-    "ja": "Dataset IDを省略した`davis pull`と`davis push`が，全Datasetを処理するようになりました．更新してください．",
-    "en": "Running `davis pull` or `davis push` without a dataset ID now processes every dataset. Please update."
+    "ja": "multipart uploadを修正し，DVC非依存の差分push，PDF生成，公式運営branchのGit同期に対応しました．運営者は更新してください．",
+    "en": "Davis fixes multipart uploads and adds incremental DVC-free pushes, PDF generation, and Git synchronization for official operator branches. Organizers should update."
   }
 }
