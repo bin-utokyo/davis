@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use davis_catalog::{build_catalog_index, scan_legacy_repository, write_catalog_index};
+use davis_catalog::{build_catalog_index, scan_repository, write_catalog_index};
 use davis_core::{read_manifest, SchemaStatus};
 
 fn repository_root() -> PathBuf {
@@ -12,7 +12,7 @@ fn repository_root() -> PathBuf {
 
 #[test]
 fn current_repository_has_no_catalog_coverage_regression() {
-    let catalog = scan_legacy_repository(&repository_root()).unwrap();
+    let catalog = scan_repository(&repository_root()).unwrap();
 
     assert_eq!(catalog.file_count(), 255);
     assert_eq!(catalog.schema_ready_count(), 176);
@@ -33,7 +33,7 @@ fn current_repository_has_no_catalog_coverage_regression() {
 #[test]
 fn generated_manifests_cover_the_current_catalog() {
     let root = repository_root();
-    let catalog = scan_legacy_repository(&root).unwrap();
+    let catalog = scan_repository(&root).unwrap();
     let mut manifest_files = 0_usize;
     let mut schema_references = 0_usize;
 
@@ -64,7 +64,7 @@ fn generated_manifests_cover_the_current_catalog() {
 #[test]
 fn static_index_covers_every_file_and_schema() {
     let root = repository_root();
-    let catalog = scan_legacy_repository(&root).unwrap();
+    let catalog = scan_repository(&root).unwrap();
     let index = build_catalog_index(&root, &catalog).unwrap();
 
     assert_eq!(index.summary.dataset_count, 15);

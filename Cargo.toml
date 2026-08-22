@@ -2,13 +2,14 @@
 members = [
     "crates/davis-core",
     "crates/davis-catalog",
+    "crates/davis-document",
     "crates/davis-cli",
     "crates/davis-storage",
 ]
 resolver = "2"
 
 [workspace.package]
-version = "0.2.2"
+version = "0.3.0"
 edition = "2021"
 license = "MIT"
 repository = "https://github.com/bin-utokyo/davis"
@@ -16,9 +17,9 @@ repository = "https://github.com/bin-utokyo/davis"
 [workspace.dependencies]
 blake3 = "1"
 clap = { version = "4.5", features = ["derive"] }
+fullbleed = "2.3.1"
 futures = "0.3"
 indicatif = "0.18"
-md-5 = "0.10"
 opendal = { version = "0.58", default-features = false, features = ["http-transport-reqwest", "services-fs", "services-s3"] }
 reqwest = { version = "0.13", default-features = false, features = ["json", "rustls", "stream"] }
 rpassword = "7"

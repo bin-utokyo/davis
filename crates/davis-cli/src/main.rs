@@ -1,25 +1,30 @@
+mod git_workflow;
 mod remote;
 mod session;
 mod update;
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::io::{IsTerminal, Read};
 use std::path::PathBuf;
-use std::process::Command as ProcessCommand;
 use std::time::Duration;
 
 use clap::{Args, Parser, Subcommand};
 use davis_catalog::{
-    audit_legacy_datasets, build_catalog_index, ingest_legacy_dataset, refresh_legacy_dataset,
-    scan_legacy_repository, write_catalog_index,
+    audit_datasets, build_catalog_index, ingest_dataset, read_file_schema, refresh_dataset,
+    scan_repository, write_catalog_index,
 };
 use davis_core::{
     read_manifest, write_manifest, Dataset, LocalObjectStore, LocalizedText, ObjectRef,
     SchemaStatus,
 };
+use davis_document::{render_schema_pdf, write_pdf_if_changed, Language};
 use davis_storage::{
     read_storage_configuration, ObjectStorage, RemoteConfig, S3Credentials, StorageError,
     TransferProgress,
+};
+use git_workflow::{
+    commit_and_push_operator_changes, git_output, verify_operator_worktree,
+    verify_publish_git_state,
 };
 use indicatif::{ProgressBar, ProgressStyle};
 use remote::{DavisService, RemoteError};
@@ -73,7 +78,7 @@ enum Command {
         #[arg(short, long, default_value = "web/davis-web/public/catalog")]
         out: PathBuf,
     },
-    /// Verify legacy files and ingest them into a local content-addressed store.
+    /// Hash local files and ingest them into the Davis content-addressed store.
     Ingest {
         /// One dataset to ingest.
         dataset_id: Option<String>,
@@ -86,6 +91,14 @@ enum Command {
         /// Directory where `DatasetManifest` YAML files are written.
         #[arg(long, default_value = ".davis/datasets")]
         manifest_directory: PathBuf,
+    },
+    /// Regenerate schema PDFs without uploading or changing Git history (maintainers only).
+    Documents {
+        /// One dataset whose documents are regenerated.
+        dataset_id: Option<String>,
+        /// Regenerate documents for every dataset.
+        #[arg(long, conflicts_with = "dataset_id")]
+        all: bool,
     },
     /// Materialize a dataset from its Manifest and local object storage.
     Get {
@@ -129,16 +142,16 @@ enum Command {
         #[command(flatten)]
         args: PullArgs,
     },
-    /// Verify local files against the size and MD5 recorded by DVC.
+    /// Verify local files against the BLAKE3 IDs recorded by Davis.
     Verify {
         /// Verify only one dataset. All datasets are checked when omitted.
         dataset_id: Option<String>,
     },
-    /// Ingest local changes and synchronize missing objects without publishing.
+    /// Prepare, upload, commit, and push dataset updates from a personal branch.
     Push {
-        /// One dataset to upload. Omit to upload every dataset.
+        /// One dataset to upload. Every dataset is selected when omitted.
         dataset_id: Option<String>,
-        /// Explicitly upload every dataset (kept for compatibility).
+        /// Explicitly upload every dataset (compatibility alias for omitting the ID).
         #[arg(long, conflicts_with = "dataset_id")]
         all: bool,
         /// Local content-addressed cache.
@@ -156,9 +169,12 @@ enum Command {
         /// Show missing objects without uploading them.
         #[arg(long)]
         dry_run: bool,
-        /// Re-read and verify every source file instead of reusing unchanged local objects.
+        /// Compatibility option; Davis now hashes every source file.
         #[arg(long)]
         rehash: bool,
+        /// Git commit message. Defaults to `data: update <dataset>`.
+        #[arg(short, long)]
+        message: Option<String>,
     },
     /// Publish the reviewed `CatalogIndex` from the current main branch.
     Publish {
@@ -261,6 +277,9 @@ async fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
                 &manifest_directory,
             )?;
         }
+        Command::Documents { dataset_id, all } => {
+            handle_documents(&cli.repository, dataset_id.as_deref(), all)?;
+        }
         Command::Get {
             dataset_id,
             service_url,
@@ -305,6 +324,7 @@ async fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
             remote,
             dry_run,
             rehash,
+            message,
         } => {
             handle_push(PushRequest {
                 repository: cli.repository,
@@ -316,6 +336,7 @@ async fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
                 remote,
                 dry_run,
                 rehash,
+                message,
             })
             .await?;
         }
@@ -355,6 +376,7 @@ struct PushRequest {
     remote: String,
     dry_run: bool,
     rehash: bool,
+    message: Option<String>,
 }
 
 struct GetRequest {
@@ -501,7 +523,7 @@ async fn handle_list(
             .catalog()
             .await?
     } else {
-        scan_legacy_repository(repository)?
+        scan_repository(repository)?
     };
     if json {
         println!("{}", serde_json::to_string_pretty(&catalog)?);
@@ -521,7 +543,7 @@ async fn handle_info(
             .catalog()
             .await?
     } else {
-        scan_legacy_repository(repository)?
+        scan_repository(repository)?
     };
     let dataset = catalog
         .dataset(dataset_id)
@@ -538,7 +560,7 @@ fn handle_index(
     repository: &std::path::Path,
     output_directory: &std::path::Path,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let catalog = scan_legacy_repository(repository)?;
+    let catalog = scan_repository(repository)?;
     let index = build_catalog_index(repository, &catalog)?;
     let output_directory = resolve(repository, output_directory);
     write_catalog_index(&output_directory, &index)?;
@@ -559,7 +581,7 @@ fn handle_ingest(
     if dataset_id.is_none() && !all {
         return Err("provide a dataset ID or use --all".into());
     }
-    let catalog = scan_legacy_repository(repository)?;
+    let catalog = scan_repository(repository)?;
     let object_store = LocalObjectStore::new(resolve(repository, store));
     let selected: Vec<&Dataset> = if all {
         catalog.datasets.iter().collect()
@@ -572,7 +594,7 @@ fn handle_ingest(
     let mut total_files = 0_usize;
     let mut total_bytes = 0_u64;
     for dataset in selected {
-        let report = ingest_legacy_dataset(repository, dataset, &object_store)?;
+        let report = ingest_dataset(repository, dataset, &object_store)?;
         let manifest_path =
             resolve(repository, manifest_directory).join(format!("{}.yaml", dataset.id));
         write_manifest(&manifest_path, &report.manifest)?;
@@ -702,7 +724,7 @@ async fn print_download_terms(
             .filter_map(|file| file.license)
             .collect::<Vec<_>>()
     } else {
-        scan_legacy_repository(&request.repository)?
+        scan_repository(&request.repository)?
             .dataset(&manifest.dataset.id)
             .ok_or_else(|| format!("dataset was not found: {}", manifest.dataset.id))?
             .files
@@ -738,10 +760,10 @@ async fn handle_pull(request: PullRequest) -> Result<(), Box<dyn std::error::Err
                 .catalog()
                 .await?
         } else {
-            scan_legacy_repository(&request.repository)?
+            scan_repository(&request.repository)?
         }
     } else {
-        scan_legacy_repository(&request.repository)?
+        scan_repository(&request.repository)?
     };
     let dataset_ids = select_dataset_ids(&catalog, request.dataset_id.as_deref())?;
     if request.dataset_id.is_none() {
@@ -967,7 +989,7 @@ fn handle_verify(
     repository: &std::path::Path,
     dataset_id: Option<&str>,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let catalog = scan_legacy_repository(repository)?;
+    let catalog = scan_repository(repository)?;
     let selected: Vec<&Dataset> = if let Some(dataset_id) = dataset_id {
         vec![catalog
             .dataset(dataset_id)
@@ -975,9 +997,9 @@ fn handle_verify(
     } else {
         catalog.datasets.iter().collect()
     };
-    let report = audit_legacy_datasets(repository, &selected)?;
+    let report = audit_datasets(repository, &selected)?;
     println!(
-        "Verified {} files ({}) against DVC metadata",
+        "Verified {} files ({}) against Davis BLAKE3 metadata",
         report.files,
         human_size(report.bytes)
     );
@@ -986,8 +1008,15 @@ fn handle_verify(
 
 #[allow(clippy::too_many_lines)]
 async fn handle_push(request: PushRequest) -> Result<(), Box<dyn std::error::Error>> {
-    let catalog = scan_legacy_repository(&request.repository)?;
+    if request.rehash {
+        println!("All Davis pushes hash every source file; --rehash is retained for compatibility");
+    }
+    let catalog = scan_repository(&request.repository)?;
     let dataset_ids = select_dataset_ids(&catalog, request.dataset_id.as_deref())?;
+    let operator_session = session::load_operator()?;
+    if operator_session.is_some() {
+        verify_operator_worktree(&request.repository, &dataset_ids)?;
+    }
     let manifest_directory = resolve(&request.repository, &request.manifest_directory);
     let local_store = LocalObjectStore::new(resolve(&request.repository, &request.store));
     let manifests = prepare_push_manifests(
@@ -997,10 +1026,21 @@ async fn handle_push(request: PushRequest) -> Result<(), Box<dyn std::error::Err
         &manifest_directory,
         &local_store,
         request.rehash,
+        !request.dry_run,
     )?;
-    if let Some(operator_session) = session::load_operator()? {
+    if let Some(operator_session) = operator_session {
         let operator_session = ensure_operator_session(operator_session).await?;
-        return handle_operator_push(&request, &manifests, &local_store, operator_session).await;
+        handle_operator_push(&request, &manifests, &local_store, operator_session).await?;
+        if !request.dry_run {
+            prepare_changed_pdfs(&request.repository, &manifests)?;
+            commit_and_push_operator_changes(
+                &request.repository,
+                &dataset_ids,
+                request.dataset_id.as_deref(),
+                request.message.as_deref(),
+            )?;
+        }
+        return Ok(());
     }
     let remote_store = open_remote(&request.repository, &request.config, &request.remote)?;
     if request.all || request.dataset_id.is_none() {
@@ -1057,6 +1097,102 @@ async fn handle_push(request: PushRequest) -> Result<(), Box<dyn std::error::Err
         println!("Catalog published: no (run `davis publish` from the latest main branch)");
     }
     Ok(())
+}
+
+fn prepare_pdfs(
+    repository: &std::path::Path,
+    manifests: &[davis_core::DatasetManifest],
+    changed_inputs: Option<&HashSet<String>>,
+    write_changes: bool,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let mut generated = 0_usize;
+    let mut changed = 0_usize;
+    for manifest in manifests {
+        for file in &manifest.files {
+            let Some(schema_path) = &file.schema_path else {
+                continue;
+            };
+            let base = repository.join(&manifest.dataset.root).join(&file.path);
+            let manifest_path = format!(".davis/datasets/{}.yaml", manifest.dataset.id);
+            let pdf_missing = [Language::Japanese, Language::English]
+                .iter()
+                .any(|language| {
+                    !std::path::PathBuf::from(format!("{}{}", base.display(), language.suffix()))
+                        .is_file()
+                });
+            if changed_inputs.is_some_and(|paths| {
+                !paths.contains(&manifest_path) && !paths.contains(schema_path) && !pdf_missing
+            }) {
+                continue;
+            }
+            let schema = read_file_schema(&repository.join(schema_path))?;
+            for language in [Language::Japanese, Language::English] {
+                let contents = render_schema_pdf(&schema, &file.object, language)?;
+                let destination =
+                    std::path::PathBuf::from(format!("{}{}", base.display(), language.suffix()));
+                let differs =
+                    std::fs::read(&destination).map_or(true, |current| current != contents);
+                if differs {
+                    changed += 1;
+                    if write_changes {
+                        write_pdf_if_changed(&destination, &contents)?;
+                    }
+                }
+                generated += 1;
+            }
+        }
+    }
+    println!("PDF documents checked: {generated}");
+    if write_changes {
+        println!("PDF documents updated: {changed}");
+    } else {
+        println!("PDF documents to update: {changed}");
+    }
+    Ok(())
+}
+
+fn prepare_changed_pdfs(
+    repository: &std::path::Path,
+    manifests: &[davis_core::DatasetManifest],
+) -> Result<(), Box<dyn std::error::Error>> {
+    let tracked = git_output(
+        repository,
+        &["diff", "--name-only", "-z", "--no-renames", "HEAD", "--"],
+    )?;
+    let untracked = git_output(
+        repository,
+        &["ls-files", "--others", "--exclude-standard", "-z", "--"],
+    )?;
+    let changed_inputs = tracked
+        .split('\0')
+        .chain(untracked.split('\0'))
+        .filter(|path| !path.is_empty())
+        .map(str::to_owned)
+        .collect();
+    prepare_pdfs(repository, manifests, Some(&changed_inputs), true)
+}
+
+fn handle_documents(
+    repository: &std::path::Path,
+    dataset_id: Option<&str>,
+    all: bool,
+) -> Result<(), Box<dyn std::error::Error>> {
+    if dataset_id.is_none() && !all {
+        return Err("provide a dataset ID or explicitly use --all".into());
+    }
+    let catalog = scan_repository(repository)?;
+    let dataset_ids = select_dataset_ids(&catalog, dataset_id)?;
+    let manifests = dataset_ids
+        .iter()
+        .map(|id| {
+            read_manifest(
+                &repository
+                    .join(".davis/datasets")
+                    .join(format!("{id}.yaml")),
+            )
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    prepare_pdfs(repository, &manifests, None, true)
 }
 
 async fn ensure_operator_session(
@@ -1155,7 +1291,7 @@ async fn handle_publish(
     remote: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
     verify_publish_git_state(repository)?;
-    let catalog = scan_legacy_repository(repository)?;
+    let catalog = scan_repository(repository)?;
     let revision = if let Some(operator_session) = session::load_operator()? {
         let operator_session = ensure_operator_session(operator_session).await?;
         let service =
@@ -1171,58 +1307,6 @@ async fn handle_publish(
     };
     println!("Catalog revision: {revision}");
     println!("Catalog published: yes");
-    Ok(())
-}
-
-fn verify_publish_git_state(
-    repository: &std::path::Path,
-) -> Result<(), Box<dyn std::error::Error>> {
-    let branch = git_output(repository, &["branch", "--show-current"])?;
-    if branch != "main" {
-        return Err(format!(
-            "catalog publication is allowed only from main; current branch is {branch}"
-        )
-        .into());
-    }
-    if !git_output(repository, &["status", "--porcelain"])?.is_empty() {
-        return Err("catalog publication requires a clean Git working tree".into());
-    }
-    git_run(repository, &["fetch", "origin", "main"])?;
-    let head = git_output(repository, &["rev-parse", "HEAD"])?;
-    let origin_main = git_output(repository, &["rev-parse", "origin/main"])?;
-    if head != origin_main {
-        return Err(
-            "local main does not match origin/main; run `git pull --ff-only` and retry".into(),
-        );
-    }
-    Ok(())
-}
-
-fn git_output(
-    repository: &std::path::Path,
-    arguments: &[&str],
-) -> Result<String, Box<dyn std::error::Error>> {
-    let output = ProcessCommand::new("git")
-        .args(arguments)
-        .current_dir(repository)
-        .output()?;
-    if !output.status.success() {
-        return Err(format!("git {} failed", arguments.join(" ")).into());
-    }
-    Ok(String::from_utf8(output.stdout)?.trim().to_owned())
-}
-
-fn git_run(
-    repository: &std::path::Path,
-    arguments: &[&str],
-) -> Result<(), Box<dyn std::error::Error>> {
-    let status = ProcessCommand::new("git")
-        .args(arguments)
-        .current_dir(repository)
-        .status()?;
-    if !status.success() {
-        return Err(format!("git {} failed", arguments.join(" ")).into());
-    }
     Ok(())
 }
 
@@ -1255,6 +1339,7 @@ fn prepare_push_manifests(
     manifest_directory: &std::path::Path,
     local_store: &LocalObjectStore,
     rehash: bool,
+    write_changes: bool,
 ) -> Result<Vec<davis_core::DatasetManifest>, Box<dyn std::error::Error>> {
     let mut manifests = Vec::with_capacity(dataset_ids.len());
     for dataset_id in dataset_ids {
@@ -1266,13 +1351,20 @@ fn prepare_push_manifests(
         let dataset = catalog
             .dataset(dataset_id)
             .ok_or_else(|| format!("dataset was not found: {dataset_id}"))?;
-        let report =
-            refresh_legacy_dataset(repository, dataset, local_store, previous.as_ref(), rehash)?;
-        if previous.as_ref() != Some(&report.manifest) {
+        let report = refresh_dataset(
+            repository,
+            &dataset.id,
+            &dataset.root,
+            local_store,
+            previous.as_ref(),
+            rehash,
+            write_changes,
+        )?;
+        if write_changes && previous.as_ref() != Some(&report.manifest) {
             write_manifest(&manifest_path, &report.manifest)?;
         }
         println!(
-            "Prepared {dataset_id}: {} ingested, {} unchanged",
+            "Prepared {dataset_id}: {} hashed, {} unchanged",
             report.added_objects + report.existing_objects,
             report.reused_files
         );
@@ -1511,7 +1603,7 @@ mod tests {
     }
 
     #[test]
-    fn pull_and_push_default_to_every_dataset() {
+    fn pull_and_push_select_all_datasets_when_the_id_is_omitted() {
         let pull = Cli::try_parse_from(["davis", "pull"]).expect("pull should allow omission");
         assert!(matches!(
             pull.command,

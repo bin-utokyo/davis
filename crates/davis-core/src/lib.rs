@@ -6,7 +6,7 @@ mod manifest;
 use std::fmt;
 use std::str::FromStr;
 
-pub use local_store::{IngestedObject, LocalObjectStore, StoreError};
+pub use local_store::{hash_file, IngestedObject, LocalObjectStore, StoreError};
 pub use manifest::{
     read_manifest, write_manifest, DatasetManifest, ManifestDataset, ManifestError, ManifestFile,
     ObjectRef,

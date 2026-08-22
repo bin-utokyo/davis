@@ -9,6 +9,37 @@ use crate::{object_key, DatasetManifest, ObjectId};
 
 const BUFFER_SIZE: usize = 1024 * 1024;
 
+/// Reads a source file and returns its storage-independent BLAKE3 reference
+/// without writing to a local object store.
+///
+/// # Errors
+///
+/// Returns an error when the source cannot be read or its size cannot be
+/// represented.
+pub fn hash_file(source: &Path) -> Result<crate::ObjectRef, StoreError> {
+    if !source.is_file() {
+        return Err(StoreError::SourceNotFound(source.to_path_buf()));
+    }
+    let mut input = File::open(source).map_err(|source_error| io_error(source, source_error))?;
+    let mut hasher = blake3::Hasher::new();
+    let mut size = 0_u64;
+    let mut buffer = vec![0_u8; BUFFER_SIZE];
+    loop {
+        let read = input
+            .read(&mut buffer)
+            .map_err(|source_error| io_error(source, source_error))?;
+        if read == 0 {
+            break;
+        }
+        hasher.update(&buffer[..read]);
+        size = add_read_size(size, read, source)?;
+    }
+    Ok(crate::ObjectRef {
+        oid: ObjectId::from_blake3_digest(hasher.finalize().to_hex().to_string()),
+        size,
+    })
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct IngestedObject {
     pub oid: ObjectId,
