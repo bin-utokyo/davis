@@ -20,15 +20,13 @@ CLIは，通常commandの完了後に24時間に1回だけ最新版を確認し�
 ```text
 crates/
   davis-core/       # DatasetManifest，内容アドレス，ローカルcache
-  davis-catalog/    # DVC・schema.yaml読込み，静的index生成
+  davis-catalog/    # Davis Manifest・schema.yaml読込み，静的index生成
+  davis-document/   # schemaから決定的な日英PDFを生成
   davis-storage/    # filesystem・S3互換storage
   davis-cli/        # list，info，index，verify，ingest，push，get
 
 web/
   davis-web/        # schema検索・絞り込み・複数選択Webカタログ
-
-packages/
-  dataset_cli/      # 既存Python CLI
 
 src/
   specific_model/  # 行動モデルの推定・simulation code
@@ -46,14 +44,14 @@ cargo run -p davis-cli -- get network/matsuyama
 cargo run -p davis-cli -- get network/matsuyama --file link.csv
 ```
 
-Rust版CLIの正式な実行file名は`davis`です．旧Python版を残す必要がある場合は，`davis-legacy`という名前へ退避できます．
+Rust版CLIの正式な実行file名は`davis`です．
+
+旧Python CLIは現行releaseへ同梱しません．調査や復元が必要な場合は，[`legacy-python-final` tag](https://github.com/bin-utokyo/davis/tree/legacy-python-final/packages/dataset_cli)または`legacy/python-cli-v0` branchを参照できます．
 
 ```bash
 cargo install --path crates/davis-cli --locked --root ~/.local
 davis --help
 ```
-
-旧Python版から切り替えた後は，通常の操作には`davis`を使用してください．
 
 参加者は，運営から案内されたDavis WebのURLを指定して一度loginします．招待codeは画面に表示されない対話promptから入力し，sessionが有効な間は再入力不要です．以後の`list`，`info`，`get`は公開catalogと認証済みDownload APIを利用します．`get`はcurrent directory以下に`data/<Dataset root>/...`を再現し，取得済みObjectはlocal cacheから再利用します．
 
@@ -68,7 +66,7 @@ davis logout
 
 `get`は初回取得とfile単位の選択取得，`pull`はdataset全体の初回取得または現在のManifestへの同期に使用します．`pull`は既存fileをremoteの内容で更新するため，local編集を残したまま実行しないでください．
 
-dataset IDを省略した`davis pull`は全datasetを取得・同期します．同様に，dataset IDを省略した`davis push`は全datasetを検査・同期します．担当datasetだけを扱う日常作業では，誤って全件を処理しないようIDを明示してください．既存の`davis push --all`も同じ全件指定として利用できます．
+dataset IDを省略した無印`davis pull`と`davis push`は，全datasetを対象にします．dataset IDを指定すると，その1件だけを対象にします．`davis push --all`も互換性のため同じ全件操作として使用できます．
 
 Webカタログの「CLIコマンドをコピー」で得られるcommandには`--service-url`が含まれます．CLI側で未loginの場合は，任意のdirectoryから実行してもその場で招待codeを入力でき，login後に同じ処理のままdownloadを続行します．Web browserのlogin sessionとCLIのlogin sessionは別です．
 
@@ -93,14 +91,16 @@ davis operator logout
 
 大容量Objectは32 MiBごとのmultipart uploadとしてR2へ送信します．運営共通code自体は端末へ保存せず，失効可能な運営sessionだけを権限を限定して保存します．
 
-現行DVC metadataと実データの整合性確認，BLAKE3 objectの生成，DatasetManifestの更新には次を使用します．
+現在のDavis Manifestと実データのBLAKE3整合性確認には次を使用します．
 
 ```bash
 cargo run -p davis-cli -- verify
 cargo run -p davis-cli -- ingest --all
 ```
 
-R2またはfilesystem remoteへのObject差分同期には`davis push`を使用します．通常の`push`は，実データの変更を自動的に内容address形式へ取り込み，不足Objectだけをuploadしますが，公開Catalogは変更しません．未変更の実データはlocal cacheから再利用するため，運営者が通常の更新で`ingest`を別途実行する必要はありません．Dataset IDを指定すると1 Dataset，省略すると全Datasetを対象にします．`davis push --dry-run`または互換表記の`davis push --all --dry-run`で全Datasetの差分を確認できます．実データをすべて読み直してDVC metadataとの整合性を厳密に再検査する場合は`--rehash`を指定します．
+公式operator sessionを使い，個人の`operator/<GitHubユーザー名>` branchから`davis push <dataset>`を実行すると，新規・変更・cache欠落fileのBLAKE3を計算し，未変更fileは前回Manifestとlocal cacheから再利用します．不足ObjectのR2 uploadに成功した後，変更されたschemaまたはObject IDに関係する日英PDFだけを生成し，対象datasetのschema，PDF，Manifestだけをstage・commitして，現在の個人branchをGitHubへpushします．公開Catalogは変更しません．事前確認には`--dry-run`を使用します．dry runはrepository，cache，R2，Gitを変更しません．全fileを読み直す場合だけ`--rehash`を指定します．DVCと`.dvc`は通常経路で使用しません．
+
+operator sessionを使わず，`.davis/config.toml`でfilesystemまたはS3互換remoteへ直接接続する場合，`davis push`はObjectとlocal Manifestを同期しますが，公式branch名，`origin/main`，GitHubを要求せず，Git commit・pushも行いません．これにより別組織のrepository，MinIO，S3，local storageでも同じManifestとObject形式を利用できます．
 
 review済みmetadataをWebへ反映するときは，Pull Requestをmergeした後，最新かつcleanな`main`から`davis publish`を実行します．このcommandは`main`，`origin/main`との一致，working tree，R2 Objectの網羅性を検査してから，CatalogIndexをrevision単位で保存し，`catalog/current.json`を切り替えます．個人作業branchではObjectを先に同期できますが，Catalogは公開できません．設定例は`.davis/config.example.toml`にあります．
 
@@ -139,7 +139,6 @@ Webカタログでは，名称・説明・地域・年・形式・license・sche
 ```bash
 cargo test --workspace
 cargo clippy --workspace --all-targets -- -D warnings
-uv run pytest -q
 
 cd web/davis-web
 pnpm test
@@ -156,7 +155,6 @@ Davisのソフトウェア本体は，[MIT License](LICENSE)のもとで公開�
 - [運営者向け導入ガイド](docs/operator-installation.md) ([English](docs/operator-installation_en.md))
 - [Davis仕様書](docs/davis-spec.md)
 - [Platform構想](docs/davis-platform-concept.md)
-- [既存dataset CLI](packages/dataset_cli/README.md)
 - [Base model](src/base_model/README.md)
 
 ## 文書更新方針

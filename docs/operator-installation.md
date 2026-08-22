@@ -56,127 +56,80 @@ git pull --ff-only
 
 `git status`に未commit変更が表示された場合は，削除，stash，強制更新をせず，作業内容を確認してから運営内で相談してください．
 
-## Git操作とDavis操作の違い
+## 運営sessionの準備
 
-Gitはrepository内のcodeとmetadataを管理し，Davisは交通データの取得，更新同期，検証，R2同期，Catalog公開を行います．Git commandで実データを取得することはできません．新規・選択取得には`davis get`，dataset全体の初回取得または最新版への同期には`davis pull`を使用します．
-
-### このガイドで使うGit command
-
-| command | 目的 | 実データへの影響 |
-| --- | --- | --- |
-| `git clone <URL>` | repositoryを初めてPCへ複製する | 実データは取得しません |
-| `git status` | 現在のbranchと未commit変更を確認する | 変更しません |
-| `git switch <branch>` | 作業branchを切り替える | Git管理外の実データは通常残ります |
-| `git pull --ff-only` | GitHubからcode・metadataの最新commitを取得する | 実データは取得しません |
-| `git fetch origin` | branchを切り替えずにGitHubの最新commit情報を取得する | 実データは取得しません |
-| `git merge --ff-only origin/main` | 個人branchを最新`main`まで安全に早送りする | 実データは取得しません |
-| `git add`・`git commit` | `.dvc`，YAML，PDF，Manifest等の変更を記録する | 実データそのものはcommitしません |
-| `git push` | 個人branchのcommitをGitHubへ送る | R2と公開Webは変更しません |
-
-`git push`はDavisの機能ではありませんが，`davis push`と名前が同じため，取り違え防止のために記載しています．
-
-### 運営で使うDavis command
-
-特に指定がない限り，repository root (`davis` directory)で実行します．
-
-| command | 目的 | 主な変更先 | 公開Webへの影響 |
-| --- | --- | --- | --- |
-| `davis --version` | インストール済みversionを確認する | なし | なし |
-| `davis update` | 最新releaseと更新方法を確認する | なし | なし |
-| `davis login <Web URL>` | download用の参加者sessionを保存する | PC内のsession | なし |
-| `davis logout` | 参加者sessionを削除する | PC内のsession | なし |
-| `davis operator login <Web URL>` | upload・publish用の運営sessionを保存する | PC内のsession | なし |
-| `davis operator status` | 運営sessionの有効性を確認する | なし | なし |
-| `davis operator logout` | 運営sessionを削除する | PC内のsession | なし |
-| `davis list` | 利用可能なdatasetを一覧表示する | なし | なし |
-| `davis info <dataset>` | file，容量，schema整備状況を確認する | なし | なし |
-| `davis get <dataset>` | dataset全体または選択したfileを取得する | PC内の`data/...` | なし |
-| `davis pull <dataset>` | dataset全体を初回取得するか，取得済みfileを最新Manifestへ同期する | PC内の`data/...` | なし |
-| `davis pull` | 全datasetを初回取得または同期する | PC内の`data/...` | なし |
-| `davis verify [dataset]` | local実データと`.dvc` metadataの整合性を検査する | なし | なし |
-| `davis push <dataset> --dry-run` | R2同期予定のObjectと容量を確認する | なし | なし |
-| `davis push <dataset>` | 担当datasetの不足ObjectをR2へ同期し，DatasetManifestを更新する | R2 Object・local Manifest | なし |
-| `davis push` | 全datasetを検査し，不足ObjectをR2へ同期する | R2 Object・local Manifest | なし |
-| `davis publish` | 最新`main`のCatalogIndexを公開する | R2 Catalog revision | あり |
-
-`davis ingest`と`davis index`は開発・保守用です．通常の日常更新では，`davis push`が必要な取込みとManifest更新を内部で行うため，個別に実行しません．
-
-### `get`，`pull`，`push`の主なoption
-
-| command例 | 動作 |
-| --- | --- |
-| `davis get routes/Matsuyama` | dataset全体と`schema.yaml`を標準の階層へ取得します |
-| `davis get routes/Matsuyama --file <file-id-or-directory>` | 指定したfileまたはdirectory以下だけを取得します．複数指定する場合は`--file`を繰り返します |
-| `davis get routes/Matsuyama --pdf-ja --pdf-en` | 標準のschemaに加え，存在する日英PDFも取得します |
-| `davis get routes/Matsuyama --no-schema` | schemaを保存せず，実データだけを取得します |
-| `davis get routes/Matsuyama --out <directory>` | 指定directoryの下に`data/routes/Matsuyama/...`を再現します |
-| `davis pull routes/Matsuyama` | dataset全体を取得します．既存fileがある場合は現在のManifestの内容で更新します |
-| `davis pull routes/Matsuyama --pdf-ja --pdf-en` | 同期時にschemaと存在する日英PDFも保存・更新します |
-| `davis pull` | 全datasetを取得・同期します |
-| `davis push routes/Matsuyama --dry-run` | uploadせず，差分と予定容量だけを確認します |
-| `davis push routes/Matsuyama --rehash` | 前回の記録を再利用せず，対象fileを読み直して検査します |
-| `davis push`／`davis push --all` | 全datasetを検査・同期します．通常の担当更新では使用しません |
-
-完全な引数一覧は`davis <command> --help`で確認できます．たとえば，`davis get --help`，`davis pull --help`，`davis push --help`を実行します．
-
-## 参加者ログイン
-
-運営者がCLIからデータを取得する場合は，参加者共通コードでもloginします．
+運営から案内されたDavis WebのURLを指定し，運営共通コードを対話promptへ入力します．コードをcommand引数やshell履歴へ残す必要はありません．
 
 ```text
-davis login https://davis-web.davis-bin.workers.dev
-```
-
-参加者sessionはdownload専用です．
-
-担当datasetの実データを初めて取得する場合は，repository rootで次のどちらかを実行します．`git pull`では実データを取得できません．dataset全体を今後も同期する運営作業では`pull`が分かりやすく，fileを選んで取得する場合は`get`を使用します．
-
-```text
-davis get routes/Matsuyama
-# または
-davis pull routes/Matsuyama
-```
-
-取得先は標準では`./data/routes/Matsuyama/...`です．既にlocalへあるObjectはcacheから再利用されます．
-
-## 運営者ログイン
-
-```text
-davis operator login https://davis-web.davis-bin.workers.dev
+davis operator login <Davis Web URL>
 davis operator status
 ```
 
-`Operator code:`に，運営者限定で案内された運営共通コードを入力します．コード自体は保存されず，権限を限定した運営sessionが保存されます．sessionは既定30日間有効で，期限内は`push`や`publish`のたびに再入力する必要はありません．期限切れ時は，次の`push`または`publish`中にコードを一度入力するとsessionが更新されます．
+運営共通コード自体は保存されず，失効可能な運営sessionだけが端末へ保存されます．通常は有効期間中に再認証する必要はありません．`push`と`publish`には運営sessionを使いますが，`get`と`pull`にはdownload専用の参加者sessionが必要です．運営者が実データを取得する場合は，別途`davis login <Davis Web URL>`を一度実行してください．
 
-## 接続確認
+## Git操作とDavis操作の違い
 
-repository rootで，担当datasetを指定してdry runします．
+Gitはcode，schema，PDF，DatasetManifestの履歴を管理し，R2は実データのimmutable Objectを保存します．実データはGitへcommitしません．Davisは両者を安全な順序で同期します．
 
-```text
-davis push routes/Matsuyama --dry-run
-```
+### このガイドで使用するGit command
 
-`Remote: ... (operator session)`と表示され，Object数とupload予定容量が確認できれば準備完了です．`--dry-run`ではR2と公開catalogを変更しません．
+| command | 目的 | 実データ・R2への影響 |
+| --- | --- | --- |
+| `git clone <URL>` | repositoryを初めてPCへ複製する | なし |
+| `git status` | branchと未commit変更を確認する | なし |
+| `git switch <branch>` | `main`と個人作業branchを切り替える | なし |
+| `git pull --ff-only` | 現在のbranchをGitHubの状態へ安全に早送りする | なし |
+| `git fetch origin` | branchを変更せずGitHubの最新履歴を取得する | なし |
+| `git merge --ff-only origin/main` | 個人branchを最新`main`まで安全に早送りする | なし |
 
-## 日常作業の原則
+通常のデータ更新では，`git add`，`git commit`，`git push`を個別に実行しません．公式運営sessionを使う`davis push`が，対象datasetに限定してこれらを実行します．Git commandだけでは実データを取得・upload・公開できません．
 
-### GitとDavisの保存先
+### 運営で使用するDavis command
 
-運営作業では，名前が似ている2種類の`push`を区別してください．詳しいcommand一覧は前節を参照してください．
+| command | 目的 | 公開Webへの影響 |
+| --- | --- | --- |
+| `davis --version` | インストール済みversionを確認する | なし |
+| `davis update` | 最新releaseと更新方法を確認する | なし |
+| `davis login <URL>`・`logout` | download用の参加者sessionを保存・削除する | なし |
+| `davis operator login <URL>`・`status`・`logout` | upload・公開用の運営sessionを管理する | なし |
+| `davis list` | 利用可能なdatasetを一覧表示する | なし |
+| `davis info <dataset>` | file，容量，schema整備状況を確認する | なし |
+| `davis get <dataset>` | datasetまたは選択fileを初回取得する | なし |
+| `davis pull <dataset>` | dataset全体を公開中Manifestへ同期する | なし |
+| `davis pull` | 全datasetを初回取得または同期する | なし |
+| `davis verify [dataset]` | local実データを現在のDavis ManifestのBLAKE3と照合する | なし |
+| `davis push <dataset> --dry-run` | 更新予定のObjectと容量を確認する | なし |
+| `davis push <dataset> [-m <message>]` | 担当datasetを準備し，R2と個人branchへ送る | なし |
+| `davis push`・`davis push --all` | 全datasetを検査し，R2と個人branchへ送る | なし |
+| `davis publish` | review済みの最新`main`を公開する | あり |
 
-| 操作 | 送信先 | 主な対象 | 公開Webへの影響 |
-| --- | --- | --- | --- |
-| `git push` | GitHub | code，`.dvc`，`schema.yaml`，説明PDF，DatasetManifest | Pull Requestを作るだけでは公開Webは変わりません |
-| `davis push` | R2 | 担当datasetのimmutableな実データObject | 公開Webは変わりません |
-| `davis publish` | Davis Web API | review済み`main`から生成したCatalogIndex | 公開Webのcatalogを切り替えます |
+`davis ingest`，`davis documents`，`davis index`は開発・保守用です．通常の更新では使用しません．通常の`push`は前回Manifestとlocal cacheが一致する未変更fileを再利用し，新規・変更・cache欠落fileだけをhashします．全fileを読み直す場合だけ`--rehash`を指定します．
 
-Gitをmetadataと説明資料の正本，R2を実データのObject storageとして扱います．`schema.yaml`と日英PDFはGitだけに保存し，R2へ重複保存しません．CatalogIndexには検索に必要なYAML内容とPDFのGitHub参照が含まれます．
+`get`では`--file`を繰り返してfile・directoryを選択でき，`--pdf-ja`と`--pdf-en`で説明PDFを追加できます．schemaは標準で保存され，`--no-schema`を指定した場合だけ省略します．`pull`にも同じ文書optionがあります．完全な引数一覧は`davis <command> --help`で確認してください．
+
+### 正本と自動生成物
+
+個人作業者が編集するのは，担当datasetの実データと`schema.yaml`です．Davisはdataset rootにある実fileを直接検出するため，`.dvc`は使用しません．fileの追加，変更，名前変更，移動，削除は，次の`push`でDatasetManifestへ反映されます．
+
+日英PDFとDatasetManifestは派生物です．通常の`davis push`は，R2 upload成功後に，変更されたschemaまたはBLAKE3 Object IDに関係するPDFだけを決定的に生成します．個人作業者はPDFやManifestを手作業で編集せず，`git add`，`git commit`，`git push`も個別に実行しません．
+
+通常の`davis push`は次を順に行います．
+
+1. 個人branchと`origin/main`の状態を検査する
+2. 対象dataset外の未commit変更がないことを検査する
+3. 未変更fileを前回Manifestとlocal cacheから再利用し，必要なfileのBLAKE3 ObjectとDatasetManifestを生成する
+4. 不足ObjectをR2へuploadする
+5. upload成功後，変更されたschemaまたはObject IDに関係する日英PDFだけを生成する
+6. 対象datasetのschema，PDF，Manifestだけをstageする
+7. commitし，現在の個人branchをGitHubへpushする
+
+途中で失敗した場合は，後続処理へ進みません．R2へ保存済みのObjectは内容address形式でimmutableなため，Git処理が失敗しても既存公開を壊しません．公開Catalogは`davis publish`まで変わりません．
 
 ### 1人1本の固定作業branch
 
-運営者は1人につき1本の個人作業branchを持ち，更新のたびに新しいbranchを作らず，同じbranchを継続利用します．`main`へ直接commitしません．branch名は`operator/<GitHubユーザー名>`を推奨します．
+運営者は1人につき1本の`operator/<GitHubユーザー名>` branchを持ち，同じbranchを継続利用します．`main`へ直接commitしません．
 
-初回だけ，最新`main`から個人branchを作成してGitHubへ登録します．
+初回だけ，最新`main`から個人branchを作成します．
 
 ```bash
 git status
@@ -186,7 +139,7 @@ git switch -c operator/<GitHubユーザー名>
 git push -u origin operator/<GitHubユーザー名>
 ```
 
-2回目以降は，個人branchを最新`main`まで早送りしてから作業します．この順序で，必ず個人branchへ切り替えた後に`davis pull`を実行してください．`davis pull`はGit管理対象のschemaやPDFを更新する場合があるため，`main`上で実行すると`main`に未commit変更を残す可能性があります．
+2回目以降は，編集を始める前に個人branchを最新`main`まで早送りします．
 
 ```bash
 git status
@@ -195,73 +148,41 @@ git fetch origin
 git merge --ff-only origin/main
 ```
 
-`git status`に未commit変更がある場合，または`git merge --ff-only origin/main`が失敗した場合は，強制merge，rebase，reset，stashをせず，作業内容を保ったまま運営内で相談してください．
+未commit変更がある場合や`--ff-only`が失敗した場合は，reset，stash，rebase，強制mergeをせず，作業を保ったまま運営内で相談してください．Pull Requestはmerge commitで`main`へmergeし，個人branchを削除しません．squash mergeとrebase mergeは，次回の`--ff-only`更新を妨げるため使用しません．
 
-固定branchを安全に再利用できるように，この運用のPull Requestは原則として**merge commit**で`main`へmergeします．squash mergeやrebase mergeでは個人branchのcommitが`main`の祖先として残らず，次回の`--ff-only`更新ができなくなるため使用しません．merge後に個人branchを削除する必要はありません．
-
-個人作業branchでは，次を行えます．
-
-- 担当する実データを取得・編集する
-- `.dvc`，`schema.yaml`，日英PDF，DatasetManifestを更新する
-- `davis verify`を実行する
-- `davis push <dataset> --dry-run`で予定差分を確認する
-- Gitへcommitし，`git push`してPull Requestを作る
-
-個人作業branchから`davis push`を実行して構いません．このcommandは内容address形式のObjectだけをR2へ同期し，公開Catalogを変更しません．ただし，対象datasetを明示し，先に`--dry-run`で対象と容量を確認してください．公開状態を変更する`davis publish`は個人作業branchから実行できません．CLIがbranch，working tree，`origin/main`との一致を検査して拒否します．
+`davis push`は`operator/<GitHubユーザー名>`と完全一致する形式のbranch以外では拒否されます．`operator/team/name`のような共有・多段branchも使用できません．個人branchから`davis publish`は実行できません．
 
 ### 1件のdatasetを更新する標準手順
 
-1. 前節の手順で固定の個人作業branchへ切り替え，最新`main`まで早送りします．
-2. 個人branch上で`davis pull <dataset>`を実行し，担当datasetを初回取得または最新版へ同期します．必要なfileだけを新規取得するときは`davis get <dataset>`も使用できます．local編集が残っている可能性がある場合は，上書きする前に内容を確認してください．その後，実データ，`.dvc`，`schema.yaml`を更新します．
-3. YAMLから日英PDFを生成し，YAMLとPDFを同じGit commitへ含めます．
-4. 対象datasetだけを検証します．
+1. 固定の個人branchへ切り替え，最新`main`まで早送りします．
+2. 公開中の実データを持っていない場合だけ，編集前に`davis pull <dataset>`を実行します．編集後に`pull`すると変更を上書きするため実行しません．
+3. 担当datasetの実データと`schema.yaml`を編集します．fileを追加，移動，名前変更，削除する場合は，Pull Requestへ意図を記載します．
+4. dry runを実行します．dry runは未変更fileを再利用し，必要なfileだけを読みます．repository，cache，PDF，R2，Gitを変更しません．
 
 ```bash
-davis verify routes/Matsuyama
 davis push routes/Matsuyama --dry-run
-git status
 ```
 
-5. 意図しないdatasetやfileが差分へ含まれていないこと，予定upload容量，schemaとPDFの対応を確認します．
-6. 個人作業branchから担当datasetのObjectをR2へ同期します．この時点では参加者向けWebは変わりません．
+5. `Missing objects`，`Existing objects`，`Upload size`を確認します．意図と異なる場合は通常の`push`へ進みません．
+6. commit messageを指定して通常の`push`を実行します．messageを省略した場合は`data: update <dataset>`が使われます．
 
 ```bash
-davis push routes/Matsuyama
+davis push routes/Matsuyama -m "data: update routes/Matsuyama"
 ```
 
-7. `Objects synchronized: yes`と`Catalog published: no`を確認します．`davis push`が更新したDatasetManifestを含め，変更したGit管理対象だけをcommitし，GitHubへ送ります．実データそのものや無関係な変更を誤って追加しないよう，`git add .`や`git add data/`は使用せず，fileを明示します．次は一例であり，変更していないfileは省略します．
-
-```bash
-git status
-git add .davis/datasets/routes/Matsuyama.yaml
-git add data/routes/Matsuyama/path.csv.dvc
-git add data/routes/Matsuyama/path.csv.schema.yaml
-git add data/routes/Matsuyama/path.csv.ja.pdf
-git add data/routes/Matsuyama/path.csv.en.pdf
-git status
-git commit -m "data: update routes/Matsuyama"
-git push
-```
-
-8. GitHubで個人branchから`main`へのPull Requestを作ります．
-9. 他の運営者が，列定義，利用条件，対象年，file名，削除・移動，DatasetManifest，予定容量をreviewします．
-10. Pull Requestをsquashやrebaseではなくmerge commitで`main`へmergeします．個人branchは削除せず，次回も再利用します．
-11. 公開担当者を1人決め，他の公開作業が進行中でないことを運営内で確認します．公開担当者は実データをローカルに持つ必要はありません．必要なObjectは手順6で既にR2へ同期されています．
-12. 公開担当者の端末で最新`main`へ移動します．
+7. `Objects synchronized: yes`，`Git branch pushed: operator/...`，`Catalog published: no`を確認します．失敗した場合は再実行せず，表示されたerror全体を運営内で共有します．
+8. GitHubで個人branchから`main`へのPull Requestを作ります．他の運営者がschema，PDF，file構成，DatasetManifest，予定容量をreviewします．
+9. Pull Requestをmerge commitで`main`へmergeします．個人branchは削除しません．
+10. 公開担当者を1人決め，最新`main`へ移動して公開します．公開担当者は実データをlocalに持つ必要はありません．
 
 ```bash
 git switch main
 git pull --ff-only
 git status
-```
-
-13. `git status`がcleanであることを確認してから，公開します．`davis publish`自身も`main`，cleanなworking tree，`origin/main`との完全一致を検査します．Catalogが参照するObjectがR2に不足している場合も公開せず終了します．
-
-```bash
 davis publish
 ```
 
-14. `Catalog published: yes`を確認し，Webを強制再読み込みして名称，schema，license，file数，downloadを確認します．
+11. `Catalog published: yes`を確認し，Webを強制再読み込みして名称，schema，license，file数，PDF，downloadを確認します．
 
 ### なぜ公開作業を1人ずつ行うのか
 
@@ -274,7 +195,7 @@ CatalogIndexはDavis全体の現在状態を表し，`catalog/current.json`は�
 - working treeがcleanであることを確認する
 - 対象Pull Requestがmerge済みであることを確認する
 - 別の公開作業が終わるまで次の公開を始めない
-- Object同期では通常は担当datasetだけを指定し，dataset IDを省略した`davis push`または`davis push --all`は全体検査や明示的な一括同期に限定する
+- 1件だけを同期する場合はdataset IDを指定し，全件同期では無印`davis push`または互換aliasの`davis push --all`を使用する
 
 複数datasetのPull Requestをほぼ同時に進める場合，担当者はそれぞれの個人branchからObjectを先に同期できます．すべてのObject同期とreviewが完了した後にPull Requestをmergeし，公開担当者が最新`main`から一度だけ`davis publish`を実行できます．
 
@@ -283,7 +204,7 @@ CatalogIndexはDavis全体の現在状態を表し，`catalog/current.json`は�
 複数人運用では，次の2操作を分けることが重要です．
 
 ```text
-davis push <dataset>   # 個人branchからimmutable ObjectだけをR2へ同期
+davis push <dataset>   # 個人branchでPDF・Manifest・R2・Gitを同期
 davis publish          # review・merge後，最新mainからCatalogIndexだけを公開
 ```
 
@@ -293,7 +214,7 @@ Davisはこの2操作を分離しています．`davis push`は個人branchで�
 
 ### 誤って公開した場合
 
-個人branchや古い`main`から公開したことに気づいた場合は，R2 Objectを削除しないでください．まず運営内へ共有し，正しい最新`main`を持つ1台から対象datasetを検証して再公開します．
+保護を無効化した旧CLI等により，個人branchや古い`main`から公開したことに気づいた場合は，R2 Objectを削除しないでください．現在のCLIはこの操作を拒否しますが，まず運営内へ共有し，正しい最新`main`を持つ1台から対象datasetを検証して再公開します．
 
 ```bash
 git switch main
@@ -316,6 +237,10 @@ davis publish
 ## 更新
 
 CLIは24時間に1回だけ最新版を確認し，新しいreleaseがある場合は通常commandの完了後に案内します．`davis update`を実行すると，現在のversionと最新版を比較し，OSに対応する更新commandを表示します．表示されたinstallerを実行すると最新版へ更新できます．repository，実データ，login session，運営sessionは維持されます．
+
+## 公式環境以外のstorageを利用する場合
+
+このガイドの個人branch，`origin/main`，Pull Requestに関する規則は，Davis公式Catalogを複数人で安全に更新するための運用方針です．運営sessionを使わず，`.davis/config.toml`でfilesystemまたはS3互換remoteへ直接接続する`davis push`では，公式branch名やGitHubを要求せず，Git commit・pushも自動実行しません．別組織で利用する場合は，ObjectとManifestの共通形式を保ったまま，その組織のreview・公開方針を定めてください．
 
 ## 困ったとき
 

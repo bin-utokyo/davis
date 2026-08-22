@@ -20,15 +20,13 @@ After a normal command completes, the CLI checks for a newer release at most onc
 ```text
 crates/
   davis-core/       # DatasetManifest, content addressing, local cache
-  davis-catalog/    # DVC and schema.yaml readers, catalog index generation
+  davis-catalog/    # Davis Manifest and schema.yaml readers, catalog index generation
+  davis-document/   # Deterministic Japanese and English PDFs from schemas
   davis-storage/    # Filesystem and S3-compatible storage
   davis-cli/        # list, info, index, verify, ingest, push, get
 
 web/
   davis-web/        # Searchable Web catalog with schema filters and multi-selection
-
-packages/
-  dataset_cli/      # Legacy Python CLI
 
 src/
   specific_model/  # Behavioral-model estimation and simulation code
@@ -48,6 +46,8 @@ cargo run -p davis-cli -- get network/matsuyama --file link.csv
 
 The official executable name is `davis`.
 
+The legacy Python CLI is no longer shipped in current releases. For investigation or recovery, see the [`legacy-python-final` tag](https://github.com/bin-utokyo/davis/tree/legacy-python-final/packages/dataset_cli) or the `legacy/python-cli-v0` branch.
+
 ```bash
 cargo install --path crates/davis-cli --locked --root ~/.local
 davis --help
@@ -66,7 +66,7 @@ davis logout
 
 Use `get` for a first retrieval or selective file retrieval. Use `pull` either for the first full retrieval of a dataset or to synchronize it to the current Manifest. Because `pull` updates existing files with remote contents, do not run it while local edits remain.
 
-`davis pull` without a dataset ID retrieves or synchronizes every dataset. Likewise, `davis push` without an ID validates and synchronizes every dataset. Specify the assigned dataset during routine work to avoid processing the full catalog unintentionally. The existing `davis push --all` form remains available as an explicit compatibility spelling.
+Plain `davis pull` and `davis push` without a dataset ID select every dataset. Supplying a dataset ID selects only that dataset. `davis push --all` remains available as a compatibility alias for the same full operation.
 
 Organizers use a separate organizer code. The restricted organizer session is valid for 30 days by default and removes the need to distribute R2 credentials.
 
@@ -81,14 +81,16 @@ davis operator logout
 
 Large objects are sent to R2 through 32 MiB multipart uploads. Davis stores the revocable session, not the shared organizer code.
 
-To verify current DVC metadata, create BLAKE3 objects, and update DatasetManifests during development:
+To verify local real data against the BLAKE3 IDs in the current Davis Manifests:
 
 ```bash
 cargo run -p davis-cli -- verify
 cargo run -p davis-cli -- ingest --all
 ```
 
-Use `davis push` to synchronize differential objects to R2 or a filesystem remote. A normal push ingests changed source files into the content-addressed store automatically, reuses unchanged files from the local cache, and uploads only missing objects. It does not change the published Catalog. Operators therefore do not need to run `ingest` separately during routine updates. Omitting the dataset ID selects every dataset, so `davis push --dry-run` and the compatibility spelling `davis push --all --dry-run` both check the full catalog without uploading. `--rehash` re-reads every source file and verifies it against the DVC metadata.
+With an official operator session, `davis push <dataset>` from a personal `operator/<GitHub-username>` branch hashes new, changed, or uncached files and reuses unchanged files from the previous Manifest and local cache. After missing R2 objects upload successfully, it generates only the Japanese and English PDFs affected by a changed schema or object ID, stages and commits the selected dataset's schemas, PDFs, and Manifest, then pushes the current personal branch to GitHub. It does not publish the Catalog. Use `--dry-run` first; it does not change the repository, cache, PDFs, R2, or Git. Use `--rehash` only to re-read every selected file. The normal path does not use DVC or `.dvc` files.
+
+Without an operator session, a direct filesystem or S3-compatible remote configured in `.davis/config.toml` synchronizes objects and local Manifests without requiring the official branch name, `origin/main`, or GitHub. It does not create or push a Git commit. This preserves the same Manifest and object format for independent repositories, MinIO, S3, and local storage.
 
 After the metadata Pull Request has been reviewed and merged, run `davis publish` from a clean, current `main` to update the Web catalog. The command verifies the branch, its exact match with `origin/main`, the working tree, and R2 object coverage before writing a revisioned CatalogIndex and switching `catalog/current.json`. Personal branches can synchronize objects in advance but cannot publish the Catalog.
 
@@ -125,7 +127,6 @@ The catalog supports text and column search, faceted filtering, Dataset and File
 ```bash
 cargo test --workspace
 cargo clippy --workspace --all-targets -- -D warnings
-uv run pytest -q
 
 cd web/davis-web
 pnpm test
@@ -142,7 +143,6 @@ The Davis software is released under the [MIT License](LICENSE). This software l
 - [Installation Guide for Organizers](docs/operator-installation_en.md) ([日本語](docs/operator-installation.md))
 - [Davis specification](docs/davis-spec.md)
 - [Platform concept](docs/davis-platform-concept.md)
-- [Legacy dataset CLI](packages/dataset_cli/README_en.md)
 - [Base model](src/base_model/README.md)
 
 ## Documentation update policy

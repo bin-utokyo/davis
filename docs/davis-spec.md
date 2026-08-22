@@ -2,7 +2,7 @@
 
 > 状態: Draft 0.12
 >
-> 最終更新日: 2026-08-20
+> 最終更新日: 2026-08-23
 >
 > 1〜50節は受領したGit-nativeデータ基盤仕様を本文の土台とし，51節以降で交通行動モデル研究プラットフォームとしての拡張を定義します．
 >
@@ -18,7 +18,7 @@ Davis は，大容量データを Git とオブジェクトストレージを組
 
 Git にはデータそのものを格納せず，データセットのメタデータ，manifest，およびバージョン履歴を格納する．大容量ファイルの実体は Cloudflare R2，Amazon S3，MinIO，ローカルストレージ等の外部ストレージに保存する．
 
-Davis は DVC の全面的な再実装を目的としません．Git，オブジェクトストレージ，ハッシュ計算，並列処理等の低レベル機能は成熟した Rust ライブラリを利用し，Davis 自身は「データセットの意味論」「Git 上のメタデータとストレージ上のデータ実体の対応関係」「同期・キャッシュ・カタログ機能」に責任を持ちます．研究実行層はこの責務を置き換えず，版付きデータ参照を通じて上位から利用します．
+DavisのCoreと現在の公式運用経路は，DVCを実行時依存，metadataの正本，storage形式のいずれにも使用しません．Git，Object Storage，hash計算，並列処理等の低level機能は成熟したRust libraryを利用し，Davis自身は「datasetの意味論」「Git上のmetadataとstorage上のデータ実体の対応関係」「同期・cache・catalog機能」に責任を持ちます．研究実行層はこの責務を置き換えず，版付きデータ参照を通じて上位から利用します．別組織で既存資産との変換が必要な場合は，Core contractを変更しない外部import・export adapterとして追加できます．
 
 ---
 
@@ -81,7 +81,6 @@ Git は以下を管理する．
 * Garbage Collection
 * データカタログ向けメタデータ
 * Storage backend の設定
-* 将来的な DVC metadata import/export
 
 ### 3.2 davis-core が実装しないもの
 
@@ -231,9 +230,6 @@ davis remote add
 
 davis remote list
 
-davis import dvc
-
-davis export dvc
 ```
 
 ---
@@ -1327,27 +1323,11 @@ Object Storage
 
 ---
 
-# 40. DVC Compatibility
+# 40. DVC非依存
 
-Davis を DVC の fork または完全互換実装とはしない．
+DavisはDVCのforkまたは互換実装ではありません．Coreと現在の公式運用経路は，`.dvc`，`dvc.yaml`，`dvc.lock`，DVC cache，DVC remoteを読み書きせず，DatasetManifestをGit上の正本，BLAKE3 ObjectをObject Storage上の正本とします．旧DVC資産からの一回限りの移行は完了しており，通常運用とreleaseはDVCを必要としません．
 
-ただし migration のため，将来的に以下を検討する．
-
-```bash
-davis import dvc
-
-davis export dvc
-```
-
-対応候補:
-
-* `.dvc`
-* `dvc.yaml`
-* `dvc.lock`
-
-初期段階では `.dvc` metadata import を優先する．
-
-DVC cache layout との完全互換は目標としない．
+別組織への導入や過去資産の移行で必要になった場合は，歴史的なDVC metadataをDatasetManifestへ取り込む，または相互運用用metadataを書き出す任意adapterを追加できます．このadapterはCoreの必須依存や通常経路にはせず，BLAKE3 ObjectとDatasetManifestのcontractを制約してはなりません．
 
 ---
 
@@ -1527,7 +1507,7 @@ Object identity は storage backend に依存しない．
 
 # 48. davis-coreの長期機能範囲
 
-本節は，受領した仕様に基づくCoreと周辺機能の到達範囲を示します．記載順を直近の実装順序とはしません．実際には既存DVC資産を活用して読取経路から着手し，CLI，Web，推定器の順に実装します．優先順位と各releaseの完了条件は59節を正とします．
+本節は，受領した仕様に基づくCoreと周辺機能の到達範囲を示します．記載順を直近の実装順序とはしません．現行の公式運用はDavis ManifestとBLAKE3 Objectを唯一の通常経路とし，CLI，Web，推定器の順に拡張します．優先順位と各releaseの完了条件は59節を正とします．
 
 ## 機能群1
 
@@ -1756,17 +1736,17 @@ davis-runtime ─X─▶ 特定モデルの内部実装
 | `FileSchema` | Git上の原本 | 実データファイル | 列名，型，説明，地域，年，利用条件 |
 | `CatalogIndex` | 公開時に生成する派生物 | カタログ全体 | Web検索，facet，ダウンロード参照 |
 
-現行CLIの`dist/manifest.json`は，CLI版，bootstrap package，データ群と`.dvc`ファイル一覧をまとめたリリース索引です．移行中は互換入力として読み，新仕様では`DatasetManifest`と`FileSchema`から`CatalogIndex`を生成します．
+現行CLIは`.davis/datasets/`の`DatasetManifest`と各実fileの`FileSchema`から`CatalogIndex`を生成します．旧`dist/manifest.json`や`.dvc`を入力には使用しません．
 
-metadataの正本はGit上の`DatasetManifest`と`FileSchema`，実データの正本はR2等のObject Storageとします．`CatalogIndex`は正本から生成する派生物とし，直接編集しません．`.dvc`は移行期間中の互換入力として扱います．
+metadataの正本はGit上の`DatasetManifest`と`FileSchema`，実データの正本はR2等のObject Storageとします．`CatalogIndex`，日英PDFは正本から生成する派生物とし，直接編集しません．
 
-新しいR2環境への取込みでは，運営者が用意する実データと対応する`schema.yaml`を入力とします．Davisが実データをstreamingで読みながらBLAKE3を計算し，content-addressed Object，DatasetManifest，CatalogIndexを生成します．実データObjectはR2，`schema.yaml`とDatasetManifestはGitへ保存します．新環境の正本として`.dvc`を作り直す必要はありません．既存`.dvc`は移行元Objectの取得にだけ利用し，将来必要になった場合は互換出力として生成します．
+R2への取込みでは，運営者が用意する実データと対応する`schema.yaml`を入力とします．Davisが実データをstreamingで読みながらBLAKE3を計算し，content-addressed Object，DatasetManifest，CatalogIndexを生成します．実データObjectはR2，`schema.yaml`，日英PDF，DatasetManifestはGitへ保存します．`.dvc`は生成しません．
 
 ## 52.2 現行directoryとDataset境界
 
 現行の`data/`は，概ね`data/<category>/<dataset>/...`の構造を持つため，この物理階層を移行時にも維持します．例えば`PP/Matsuyama`，`routes/Shibuya-2021`，`network/yokohama`を1 Datasetの候補とします．一方，`PT_data`と`Tohoku_History`は直下に主要Fileを持つため，top-level directory自体を1 Datasetとして扱います．Dataset内の`raw`，`shapefile`，交通手段，年等の下位directoryは，原則としてDataset内の論理的なFile groupingです．
 
-現行Manifestは各DVC管理対象の相対pathを実質的なIDとし，CLIのprefix一致によってdirectory単位の取得を実現しています．新仕様ではpathの深さだけからDataset境界を恒久的に推測せず，`.davis/datasets/`内の`DatasetManifest`から各Dataset rootを明示します．P0移行toolは現行directoryからManifest候補を生成し，例外を運営が確認できるようにします．
+Dataset境界はpathの深さから推測せず，`.davis/datasets/`内の`DatasetManifest`で各Dataset rootを明示します．File IDはDataset内相対pathとして保存し，CLIのprefix一致によってdirectory単位の取得を実現します．
 
 Dataset IDは人間が読めるglobalに一意な値とし，初回移行時は`<category>/<dataset>`を候補にします．IDはManifestへ保存し，以後categoryやpathを変更しても自動変更しません．`category`は別のgroup・facetとして保持します．File IDも初回登録時に保存し，pathを変更しても維持します．既存の相対pathはaliasとして残し，現行CLI相当のprefix指定も互換adapterで解決します．
 
@@ -1774,7 +1754,7 @@ Dataset IDは人間が読めるglobalに一意な値とし，初回移行時は`
 
 ## 52.3 既存FileSchemaの利用
 
-2026-08-20時点のcurrent revisionには，255個のDVC管理対象と176個の`*.schema.yaml`があります．Webでは実データファイルごとの`<filename>.schema.yaml`を表示・検索します．データセット単位のYAMLだけで列情報を代替しません．件数は固定値として実装へ埋め込まず，対象Git revisionから生成して全件性を試験します．
+2026-08-22時点のcurrent revisionには，DatasetManifestで参照する255個の実fileと176個の`*.schema.yaml`があります．Webでは実データfileごとの`<filename>.schema.yaml`を表示・検索します．dataset単位のYAMLだけで列情報を代替しません．件数は固定値として実装へ埋め込まず，対象Git revisionから生成して全件性を試験します．
 
 初期索引は，主に次を扱います．
 
@@ -1865,7 +1845,7 @@ ListCatalog／SearchCatalog／ResolveDownload／RunModel
         │
         ▼
 Adapters
-CLI／HTTP／Pages／Local FS／R2／DVC compatibility
+CLI／HTTP／Pages／Local FS／R2／任意の移行adapter
 ```
 
 次の規則を守ります．
@@ -2160,15 +2140,15 @@ P3  その他の拡張
 
 各段階は，後続componentが未実装でも単独でreleaseできる状態を完了条件とします．同時に，後続段階が既存処理を再実装せず接続できるcontractを残します．
 
-## 59.1.1 実装状況 (2026-08-21監査)
+## 59.1.1 実装状況 (2026-08-22監査)
 
 本節以降の「実装対象」と「完了条件」は目標仕様です．記載されているcommandや構成要素がすべて実装済みであることを意味しません．実repositoryとreleaseを照合した現在の状況は次のとおりです．
 
 | 段階 | 状況 | 実装済み | 主な未実装・設計差分 |
 | --- | --- | --- | --- |
-| P0-0 | 完了 | BLAKE3 Object，DatasetManifest，R2，参加者認証，DownloadGrant，全255 FileのCatalog生成 | 旧DVC remoteの停止判断は運用事項です |
+| P0-0 | 完了 | DVC非依存のBLAKE3 Object，DatasetManifest，R2，参加者認証，DownloadGrant，全255 FileのCatalog生成 | なし |
 | P0-A | 完了 | `list`，`info`，`get`，`pull`，File・directory単位取得，取得前license表示，schema・日英PDF取得，3 OS向けrelease | loginはbrowser起動ではなくterminal入力，sessionはOS credential storeではなく権限を限定したuser設定fileへ保存します |
-| P0-B | 一部完了 | `verify`，差分Objectだけの`push`，review済み`main`限定の`publish`，運営session | 公開revisionとの差分をまとめる`status`と`verify --remote`は未実装です |
+| P0-B | 一部完了 | `verify`，公式運営session利用時の個人`operator/<username>` branch限定`push`，filesystem・S3互換storageへの独立した直接`push`，決定的PDF生成，R2同期，Git commit・push，review済み`main`限定の`publish`，運営session | 公開revisionとの差分をまとめる`status`と`verify --remote`は未実装です |
 | P1 | ほぼ完了 | 日英Web，schema検索・filter，複数選択，利用条件確認，200並列認証test，認証付きdownload | D1は使わず署名済みstateless sessionを採用し，R2署名URLの直接返却ではなく短寿命DownloadGrantをWorkerが検証してstreamします |
 | P2 | 未着手 | なし | Runtime，Model API，MNL，format adapter，RunResultは未実装です |
 | P3 | 未着手 | 低頻度のCLI更新通知だけを先行実装 | GUI，汎用fmt・viz，GC，履歴通知等は未実装です |
@@ -2177,30 +2157,29 @@ P3  その他の拡張
 
 ## 59.2 P0-0: R2 bootstrap取込み
 
-最初の利用者向けreleaseはCLIですが，その前提として新しいR2取得経路を一度成立させます．現行DVC remoteから必要な実データを復元し，実データと`schema.yaml`をDavisへ入力します．DavisはBLAKE3，Object，DatasetManifest，CatalogIndexを生成し，全ObjectをR2へstreaming uploadします．この段階でDVC repositoryを作り直しません．
+最初の利用者向けreleaseはCLIですが，その前提としてR2取得経路を成立させます．運営が管理する実データと`schema.yaml`をDavisへ入力し，BLAKE3 Object，DatasetManifest，CatalogIndexを生成して，全ObjectをR2へstreaming uploadします．DVC repositoryは使用しません．
 
 同時に，共通招待codeをCLI用sessionへ交換し，短寿命GET URLを返す最小Workerを用意します．P0-0は移行用bootstrapでもよく，反復利用しやすい運営者UXと差分同期はP0-Bで完成させます．
 
 ### 完了条件
 
-1. 対象Git revisionの全DVC管理対象を実データとして復元できます．
+1. 対象Git revisionの全DatasetManifest参照を実データとして復元できます．
 2. 全実データへBLAKE3 Object IDを付与し，R2でsizeとdigestを検証できます．
 3. 全FileSchemaとschema未整備FileからCatalogIndexを生成できます．
 4. 最小Worker経由で認証済みのtest clientがR2 Objectを取得できます．
-5. 旧DVC remoteを停止しても利用できる新経路のcopyを確保します．
+5. DVCなしで取得，更新，公開できる経路を確保します．
 
 ## 59.3 P0-A: CLIによるカタログ閲覧とget
 
-最初のreleaseでは，1〜50節のCore仕様全体を完成させません．P0-0で構築したR2経路を第一経路とし，既存DVC資産を読む互換adapterをfallbackとして残して，読取専用の縦断経路を最短で安定させます．
+最初のreleaseでは，1〜50節のCore仕様全体を完成させません．P0-0で構築したDatasetManifestとR2の経路を唯一の経路として，読取専用の縦断経路を安定させます．
 
 ### 実装対象
 
 1. `davis-core`のManifest読取，Object参照解決，hash・size検証，cache，download
-2. 現行`manifest.json`，`.dvc`，`*.schema.yaml`の互換adapter
-3. 現行directoryからDatasetManifest候補を生成・確認する移行tool
-4. `davis-catalog`のDataset・File一覧，詳細，基本filter，CatalogIndex生成
-5. 薄い`davis-cli`
-6. Windows，macOS，Linux向けbinaryと全件互換test
+2. `DatasetManifest`，`*.schema.yaml`のreader
+3. `davis-catalog`のDataset・File一覧，詳細，基本filter，CatalogIndex生成
+4. 薄い`davis-cli`
+5. Windows，macOS，Linux向けbinaryと全件test
 
 ### 初期command
 
@@ -2221,7 +2200,7 @@ davis pull [dataset-id]
 ### 完了条件
 
 1. 現行CLIで取得できる全Datasetと関連文書を取得できます．
-2. 対象Git revisionの全DVC管理対象が一覧とdownload対象から欠落しません．current revisionでは255個です．
+2. 対象Git revisionの全DatasetManifest参照が一覧とdownload対象から欠落しません．current revisionでは255個です．
 3. 対象Git revisionの全FileSchemaを詳細表示に利用できます．current revisionでは176個です．
 4. schema未整備のファイルも`schema-missing`として取得できます．
 5. CLI以外から同じuse caseを呼ぶunit testを用意します．
@@ -2243,7 +2222,11 @@ davis publish
 davis verify --remote
 ```
 
-`push`でDataset IDを指定した場合は1 Datasetだけ，省略した場合は全Datasetを対象にします．`--all`は全件指定の互換表記として維持します．
+`push`の中核は，接続先に依存しないObject・DatasetManifest同期です．Dataset IDを指定した場合はその1件，省略した無印`push`は全Datasetを対象にし，`--all`も互換aliasとして同じ全件操作を行います．通常は前回Manifestとlocal cacheを使って未変更fileを再利用し，新規・変更・cache欠落fileだけのBLAKE3を計算します．`--rehash`を指定した場合だけ全対象fileを読み直します．不足Objectだけを接続先へuploadし，既存Objectを上書きしません．
+
+公式運営sessionを利用する場合は，この中核処理へ公式運用adapterを加えます．個人の`operator/<GitHubユーザー名>` branchであることと最新`origin/main`を基点としていることを検証し，不足ObjectのR2 upload成功後に，変更されたschemaまたはObject IDに関係する日英PDFだけを生成します．その後，対象Datasetのmetadataだけをstage・commitし，現在の個人branchをGitHubへpushします．Catalog公開は行いません．
+
+運営sessionを使わず，`.davis/config.toml`でfilesystemまたはS3互換remoteへ直接接続する場合は，公式branch名，`origin/main`，GitHubを要求しません．Objectとlocal Manifestを同期しますが，Git commit・pushや公式Catalog公開は行いません．これにより，他組織は同じCore contractを保ったまま独自のreview・公開方針を採用できます．
 
 現行実装では，participantは`davis login`のterminal promptへ共通招待codeを入力し，CLI用session tokenを権限を限定したuser設定fileへ保存します．`davis get`と`davis pull`はP0-0のWorkerから対象Objectごとの短寿命DownloadGrantを取得します．operatorのR2 upload credentialとは別系統にし，participant sessionからPUT，DELETE，Object一覧を許可しません．この認証・DownloadGrant APIをP1のWebでも再利用します．browser起動loginとOS credential storeは将来差し替え可能なadapter候補です．
 
@@ -2373,12 +2356,12 @@ P0〜P2が安定した後，次を優先度と需要に応じて追加します�
 16. 現行の`data/<category>/<dataset>/...`を基本的に維持し，DatasetManifestでDataset境界と安定IDを明示します．
 17. metadataは公開可能とし，初期Webでは実データのdownloadだけを共通招待codeで保護します．
 18. 共通招待codeは年度ごとの更新と流出時の差替えを可能にし，必要に応じて既存sessionも失効させます．
-19. CLIの互換性は利用可能な機能で判定し，選択取得の`get`と同期取得の`pull`を提供します．どちらも初回取得に使用でき，`pull`と`push`はDataset ID省略時に全Datasetを対象にします．
+19. CLIの互換性は利用可能な機能で判定し，選択取得の`get`と同期取得の`pull`を提供します．どちらも初回取得に使用でき，`pull`と`push`はDataset ID省略時に全Datasetを対象にします．`push --all`は無印`push`と同じ全件操作の互換aliasです．
 20. P0のCLIはWindows，macOS，Linuxを対象とし，既定の取得先をcurrent directoryとします．
 21. 標準MNLは共通の意味上の列roleとmodel固有の追加要件を組み合わせ，他modelへ同じ入力形式を強制しません．
 22. GUIは線形効用をFormと対応構文のcodeから編集でき，非対応構文を使う場合は高度なcode modeへ一方向に移行します．任意codeをFormへ逆変換しません．
 23. Model出力は状態，来歴，成果物参照だけを共通必須とし，係数等は任意標準成果物とします．
-24. 新R2環境は実データと`schema.yaml`を取込入力とし，DavisがBLAKE3，DatasetManifest，CatalogIndexを生成します．`.dvc`は移行時の互換入力に限定します．
+24. 現在の公式R2環境は実データと`schema.yaml`を取込入力とし，DavisがBLAKE3，DatasetManifest，日英PDF，CatalogIndexを生成します．通常経路では`.dvc`を読み書きしません．
 25. P0-0で共通招待codeによるCLI login，DownloadGrant API，認証済みObject streamを提供する最小Workerを導入します．
 26. 誤った公開は新revisionで訂正します．旧revisionの状態管理と緊急削除のaudit機能は未実装であり，P3の保持・削除policy実装時に追加します．
 27. `davis`基本binaryはGitHub Releasesとinstall scriptから配布し，Runtime，model，GUIを必要時に追加します．

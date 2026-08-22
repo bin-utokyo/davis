@@ -56,127 +56,80 @@ git pull --ff-only
 
 If `git status` reports uncommitted changes, do not delete, stash, or force-update them. Review the work and consult the organizer team before proceeding.
 
-## Git operations and Davis operations
+## Preparing an organizer session
 
-Git manages repository code and metadata. Davis retrieves, updates, validates, synchronizes, and publishes transport data. Git commands cannot retrieve the real datasets. Use `davis get` for new or selective retrieval, and use `davis pull` either for the first full retrieval or to synchronize a whole dataset to its current Manifest.
-
-### Git commands used in this guide
-
-| Command | Purpose | Effect on real data |
-| --- | --- | --- |
-| `git clone <URL>` | Copy the repository to a PC for the first time | Does not retrieve real data |
-| `git status` | Show the current branch and uncommitted changes | Makes no changes |
-| `git switch <branch>` | Change the working branch | Git-untracked real data normally remains in place |
-| `git pull --ff-only` | Retrieve current code and metadata commits from GitHub | Does not retrieve real data |
-| `git fetch origin` | Retrieve current commit information without changing branches | Does not retrieve real data |
-| `git merge --ff-only origin/main` | Safely fast-forward a personal branch to current `main` | Does not retrieve real data |
-| `git add` and `git commit` | Record changes to `.dvc`, YAML, PDFs, Manifests, and related files | Do not commit the real data itself |
-| `git push` | Send personal-branch commits to GitHub | Does not change R2 or the public Web catalog |
-
-`git push` is not a Davis feature. It is documented because its name can otherwise be confused with `davis push`.
-
-### Davis commands used by organizers
-
-Run these commands from the repository root (the `davis` directory) unless stated otherwise.
-
-| Command | Purpose | Primary state changed | Effect on public Web |
-| --- | --- | --- | --- |
-| `davis --version` | Show the installed version | None | None |
-| `davis update` | Check the current release and update instructions | None | None |
-| `davis login <Web URL>` | Save a participant download session | Local session | None |
-| `davis logout` | Remove the participant session | Local session | None |
-| `davis operator login <Web URL>` | Save an organizer upload and publish session | Local session | None |
-| `davis operator status` | Check the organizer session | None | None |
-| `davis operator logout` | Remove the organizer session | Local session | None |
-| `davis list` | List available datasets | None | None |
-| `davis info <dataset>` | Show files, sizes, and schema coverage | None | None |
-| `davis get <dataset>` | Retrieve a whole dataset or selected files | Local `data/...` | None |
-| `davis pull <dataset>` | Retrieve a whole dataset for the first time or synchronize existing files to the current Manifest | Local `data/...` | None |
-| `davis pull` | Retrieve or synchronize every dataset | Local `data/...` | None |
-| `davis verify [dataset]` | Validate local data against `.dvc` metadata | None | None |
-| `davis push <dataset> --dry-run` | Show objects and bytes planned for R2 synchronization | None | None |
-| `davis push <dataset>` | Synchronize missing dataset objects and update the DatasetManifest | R2 objects and local Manifest | None |
-| `davis push` | Validate every dataset and synchronize all missing objects | R2 objects and local Manifests | None |
-| `davis publish` | Publish the current `main` CatalogIndex | R2 Catalog revision | Yes |
-
-`davis ingest` and `davis index` are development and maintenance commands. Routine updates do not run them separately because `davis push` performs the required ingestion and Manifest update internally.
-
-### Common `get`, `pull`, and `push` options
-
-| Example | Behavior |
-| --- | --- |
-| `davis get routes/Matsuyama` | Retrieve the whole dataset and its `schema.yaml` into the standard hierarchy |
-| `davis get routes/Matsuyama --file <file-id-or-directory>` | Retrieve only the specified file or directory prefix; repeat `--file` for multiple selections |
-| `davis get routes/Matsuyama --pdf-ja --pdf-en` | Retrieve available Japanese and English PDFs in addition to the default schema |
-| `davis get routes/Matsuyama --no-schema` | Retrieve only the real data without saving schemas |
-| `davis get routes/Matsuyama --out <directory>` | Recreate `data/routes/Matsuyama/...` below the specified directory |
-| `davis pull routes/Matsuyama` | Retrieve the whole dataset, replacing existing files with the current Manifest contents |
-| `davis pull routes/Matsuyama --pdf-ja --pdf-en` | Save or update schemas and available Japanese and English PDFs during synchronization |
-| `davis pull` | Retrieve or synchronize every dataset |
-| `davis push routes/Matsuyama --dry-run` | Show differences and planned bytes without uploading |
-| `davis push routes/Matsuyama --rehash` | Re-read and validate the selected files instead of reusing the previous record |
-| `davis push` or `davis push --all` | Validate and synchronize every dataset; do not use this for routine assigned updates |
-
-Run `davis <command> --help` for the complete argument list, for example `davis get --help`, `davis pull --help`, or `davis push --help`.
-
-## Participant login
-
-Organizers who retrieve data through the CLI also sign in with the participant code:
+Specify the Davis Web URL provided by the organizer team and enter the shared organizer code at the interactive prompt. The code does not need to appear in a command argument or shell history.
 
 ```text
-davis login https://davis-web.davis-bin.workers.dev
-```
-
-The participant session is download-only.
-
-To retrieve the assigned real dataset for the first time, run either command below from the repository root. `git pull` cannot retrieve real data. `pull` is usually clearer when an organizer maintains and synchronizes the whole dataset; use `get` for selective retrieval.
-
-```text
-davis get routes/Matsuyama
-# or
-davis pull routes/Matsuyama
-```
-
-The default destination is `./data/routes/Matsuyama/...`. Objects already available locally are reused from the cache.
-
-## Organizer login
-
-```text
-davis operator login https://davis-web.davis-bin.workers.dev
+davis operator login <Davis Web URL>
 davis operator status
 ```
 
-Enter the organizer-only shared code at `Operator code:`. Davis does not store the code itself. It stores a restricted organizer session that is valid for 30 days by default. You can run `push` and `publish` without entering the code again during that period. After expiration, the next interactive `push` or `publish` asks for the code once and renews the session.
+Davis does not store the shared code itself. It stores only a revocable organizer session, so authentication normally does not need to be repeated while that session remains valid. `push` and `publish` use the organizer session, while `get` and `pull` require a separate download-only participant session. An organizer who retrieves real data should also run `davis login <Davis Web URL>` once.
 
-## Checking connectivity
+## Git operations and Davis operations
 
-Run a dry run for the dataset you maintain from the repository root:
+Git records the history of code, schemas, PDFs, and DatasetManifests. R2 stores immutable real-data objects. Real data is not committed to Git. Davis synchronizes both systems in a safe order.
 
-```text
-davis push routes/Matsuyama --dry-run
-```
+### Git commands used in this guide
 
-The setup is ready when the output shows `Remote: ... (operator session)` together with the object counts and planned upload size. `--dry-run` does not modify R2 or the published catalog.
+| Command | Purpose | Effect on real data or R2 |
+| --- | --- | --- |
+| `git clone <URL>` | Copy the repository to a PC for the first time | None |
+| `git status` | Inspect the branch and uncommitted changes | None |
+| `git switch <branch>` | Switch between `main` and the personal working branch | None |
+| `git pull --ff-only` | Safely fast-forward the current branch to GitHub | None |
+| `git fetch origin` | Retrieve current GitHub history without switching branches | None |
+| `git merge --ff-only origin/main` | Safely fast-forward the personal branch to current `main` | None |
 
-## Operating principles
+Routine data updates do not require separate `git add`, `git commit`, or `git push` commands. With an official organizer session, `davis push` performs them for only the selected dataset. Git commands alone do not retrieve, upload, or publish real data.
 
-### Storage responsibilities of Git and Davis
+### Davis commands used by organizers
 
-Organizer operations use two different commands named `push`. Keep their effects separate; refer to the earlier command reference for details.
+| Command | Purpose | Effect on the public Web catalog |
+| --- | --- | --- |
+| `davis --version` | Show the installed version | None |
+| `davis update` | Check the latest release and update method | None |
+| `davis login <URL>` / `logout` | Store or remove the participant download session | None |
+| `davis operator login <URL>` / `status` / `logout` | Manage the organizer upload and publication session | None |
+| `davis list` | List available datasets | None |
+| `davis info <dataset>` | Inspect files, sizes, and schema coverage | None |
+| `davis get <dataset>` | Retrieve a dataset or selected files for the first time | None |
+| `davis pull <dataset>` | Synchronize a whole dataset to its published Manifest | None |
+| `davis pull` | Retrieve or synchronize every dataset | None |
+| `davis verify [dataset]` | Compare local real data with the BLAKE3 IDs in the current Davis Manifest | None |
+| `davis push <dataset> --dry-run` | Inspect planned objects and bytes | None |
+| `davis push <dataset> [-m <message>]` | Prepare and send one assigned dataset to R2 and the personal branch | None |
+| `davis push` / `davis push --all` | Inspect and send every dataset to R2 and the personal branch | None |
+| `davis publish` | Publish reviewed, current `main` | Yes |
 
-| Operation | Destination | Main content | Effect on the public Web catalog |
-| --- | --- | --- | --- |
-| `git push` | GitHub | Code, `.dvc`, `schema.yaml`, PDF documentation, and DatasetManifests | Opening a Pull Request does not change the public catalog |
-| `davis push` | R2 | Immutable data objects for the assigned dataset | Does not change the public Web catalog |
-| `davis publish` | Davis Web API | A CatalogIndex generated from reviewed `main` | Switches the public Web catalog |
+`davis ingest`, `davis documents`, and `davis index` are development and maintenance commands. Routine updates do not use them. A normal `push` reuses unchanged files when their previous Manifest entry and local cache object remain valid, and hashes only new, changed, or uncached files. Use `--rehash` only to read every selected file again.
 
-Treat Git as the source of truth for metadata and documentation, and R2 as the object store for real data. `schema.yaml` and both PDFs remain only in Git and are not duplicated in R2. The CatalogIndex contains the YAML content needed for search and GitHub references to the PDFs.
+For `get`, repeat `--file` to select files or directories and use `--pdf-ja` and `--pdf-en` to include documentation PDFs. Schemas are saved by default and omitted only with `--no-schema`. `pull` provides the same document options. Run `davis <command> --help` for the complete option list.
+
+### Sources of truth and generated artifacts
+
+The personal contributor edits only the assigned dataset's real data and `schema.yaml`. Davis detects real files directly below the dataset root and does not use `.dvc`. Additions, modifications, renames, moves, and removals are reflected in the DatasetManifest by the next `push`.
+
+The Japanese and English PDFs and the DatasetManifest are derived artifacts. After the R2 upload succeeds, a normal `davis push` deterministically generates only the PDFs affected by a changed schema or BLAKE3 object ID. The contributor does not edit PDFs or Manifests manually and does not run `git add`, `git commit`, or `git push` separately.
+
+A normal `davis push` performs these steps in order:
+
+1. Validate the personal branch and its relationship to `origin/main`.
+2. Reject uncommitted changes outside the selected dataset.
+3. Reuse unchanged files from the previous Manifest and local cache, then generate the required BLAKE3 objects and DatasetManifest.
+4. Upload missing objects to R2.
+5. After upload succeeds, generate only the Japanese and English PDFs affected by a changed schema or object ID.
+6. Stage only the selected dataset's schemas, PDFs, and Manifest.
+7. Commit and push the current personal branch to GitHub.
+
+If a step fails, later steps do not run. R2 objects are immutable and content-addressed, so an object uploaded before a Git failure does not damage the current publication. The public Catalog remains unchanged until `davis publish`.
 
 ### One persistent working branch per organizer
 
-Each organizer maintains one personal working branch and reuses it instead of creating a new branch for every update. Do not commit directly to `main`. The recommended name is `operator/<GitHub-username>`.
+Each organizer maintains one `operator/<GitHub-username>` branch and reuses it. Do not commit directly to `main`.
 
-Create and register the branch from current `main` once during initial setup:
+Create the personal branch from current `main` once:
 
 ```bash
 git status
@@ -186,7 +139,7 @@ git switch -c operator/<GitHub-username>
 git push -u origin operator/<GitHub-username>
 ```
 
-For every later update, fast-forward the same personal branch to current `main` before editing. Run `davis pull` only after switching to the personal branch. Because `davis pull` may update Git-managed schemas or PDFs, running it on `main` could leave uncommitted changes there.
+Before every later edit, fast-forward the personal branch to current `main`:
 
 ```bash
 git status
@@ -195,73 +148,41 @@ git fetch origin
 git merge --ff-only origin/main
 ```
 
-If `git status` shows uncommitted work or `git merge --ff-only origin/main` fails, do not force a merge, rebase, reset, or stash the work. Preserve it and consult the organizer team.
+If uncommitted changes exist or `--ff-only` fails, do not reset, stash, rebase, or force a merge. Preserve the work and consult the organizer team. Merge Pull Requests with a merge commit and retain the personal branch. Do not use squash or rebase merge because either prevents the next `--ff-only` update.
 
-To make this persistent-branch workflow safe, merge these Pull Requests with a **merge commit**. Do not use squash merge or rebase merge: they do not retain the personal branch commits as ancestors of `main`, so the next `--ff-only` update would fail. Do not delete the personal branch after merge.
-
-On a personal branch, you may:
-
-- Retrieve and edit the dataset assigned to you.
-- Update `.dvc`, `schema.yaml`, the Japanese and English PDFs, and DatasetManifests.
-- Run `davis verify`.
-- Inspect planned changes with `davis push <dataset> --dry-run`.
-- Commit the Git-managed files, run `git push`, and open a Pull Request.
-
-You may run `davis push` from a personal branch. It synchronizes only content-addressed objects to R2 and does not change the public Catalog. Always specify the assigned dataset and inspect it with `--dry-run` first. `davis publish`, which changes participant-visible state, cannot run from a personal branch. The CLI rejects it unless the branch, working tree, and `origin/main` state are valid.
+`davis push` requires a branch whose complete name is exactly `operator/<GitHub-username>`. Shared or nested names such as `operator/team/name` are rejected. `davis publish` cannot run from a personal branch.
 
 ### Standard workflow for one dataset update
 
-1. Follow the preceding steps to switch to the persistent personal branch and fast-forward it to current `main`.
-2. On the personal branch, run `davis pull <dataset>` to retrieve the assigned dataset for the first time or synchronize it to the current version. Use `davis get <dataset>` when selectively retrieving new files. If local edits may remain, inspect them before allowing synchronization to overwrite anything. Then update the real data, `.dvc`, and `schema.yaml`.
-3. Generate the Japanese and English PDFs from the YAML and include all three in the same Git commit.
-4. Validate only the affected dataset.
+1. Switch to the persistent personal branch and fast-forward it to current `main`.
+2. Only when the published real data is not already available locally, run `davis pull <dataset>` before editing. Do not run `pull` after editing because it overwrites local changes.
+3. Edit the assigned dataset's real data and `schema.yaml`. Describe the intent in the Pull Request when adding, moving, renaming, or removing files.
+4. Run a dry run. It reuses unchanged files and reads only the files that require hashing. It does not modify the repository, cache, PDFs, R2, or Git.
 
 ```bash
-davis verify routes/Matsuyama
 davis push routes/Matsuyama --dry-run
-git status
 ```
 
-5. Confirm that no unintended dataset or file is included, review the planned upload size, and check that the schema and PDFs agree.
-6. Synchronize the assigned dataset objects from the personal branch. This does not change the participant-facing Web catalog.
+5. Review `Missing objects`, `Existing objects`, and `Upload size`. Do not continue when they differ from the intended update.
+6. Run the normal push with a commit message. When omitted, the message defaults to `data: update <dataset>`.
 
 ```bash
-davis push routes/Matsuyama
+davis push routes/Matsuyama -m "data: update routes/Matsuyama"
 ```
 
-7. Confirm `Objects synchronized: yes` and `Catalog published: no`. Commit only the changed Git-managed files, including the DatasetManifest updated by `davis push`, and send them to GitHub. Do not use `git add .` or `git add data/`, because either can accidentally stage real data or unrelated work. Name each file explicitly. The following is an example; omit files that did not change.
-
-```bash
-git status
-git add .davis/datasets/routes/Matsuyama.yaml
-git add data/routes/Matsuyama/path.csv.dvc
-git add data/routes/Matsuyama/path.csv.schema.yaml
-git add data/routes/Matsuyama/path.csv.ja.pdf
-git add data/routes/Matsuyama/path.csv.en.pdf
-git status
-git commit -m "data: update routes/Matsuyama"
-git push
-```
-
-8. Open a Pull Request from the personal branch to `main` on GitHub.
-9. Another organizer reviews the column definitions, terms of use, year, filenames, moves or removals, DatasetManifest, and expected upload size.
-10. Merge the Pull Request into `main` with a merge commit, not a squash or rebase merge. Keep the personal branch for the next update.
-11. Assign one publisher and confirm that no other publication is running. The publisher does not need the real data locally because step 6 has already synchronized the required objects.
-12. On the publisher's machine, switch to the latest `main`.
+7. Confirm `Objects synchronized: yes`, `Git branch pushed: operator/...`, and `Catalog published: no`. If the command fails, do not repeatedly retry it. Share the complete displayed error with the organizer team.
+8. Open a Pull Request from the personal branch to `main`. Another organizer reviews the schemas, PDFs, file layout, DatasetManifest, and expected size.
+9. Merge the Pull Request with a merge commit and retain the personal branch.
+10. Assign one publisher, switch to current `main`, and publish. The publisher does not need the real data locally.
 
 ```bash
 git switch main
 git pull --ff-only
 git status
-```
-
-13. Confirm that the working tree is clean, then publish. `davis publish` independently requires `main`, a clean working tree, and an exact match with `origin/main`. It also refuses publication if any Catalog object is missing from R2.
-
-```bash
 davis publish
 ```
 
-14. Confirm `Catalog published: yes`, force-refresh the Web catalog, and verify the name, schema, license, file count, and download.
+11. Confirm `Catalog published: yes`, force-refresh the Web catalog, and verify the name, schema, license, file count, PDFs, and download.
 
 ### Why production publications are serialized
 
@@ -274,7 +195,7 @@ For every production publication:
 - Confirm that the working tree is clean.
 - Confirm that the relevant Pull Request has been merged.
 - Wait for any active publication to finish before starting another.
-- Normally specify the assigned dataset for object synchronization. Reserve `davis push` without an ID, or `davis push --all`, for explicit full validation or bulk synchronization.
+- Supply a dataset ID to synchronize one dataset. Use plain `davis push` or its compatibility alias `davis push --all` for all datasets.
 
 When Pull Requests for several datasets are ready at nearly the same time, each organizer can synchronize objects independently from a personal branch. After all object synchronization and reviews are complete, merge the Pull Requests and have the designated publisher run `davis publish` once from the latest `main`.
 
@@ -283,7 +204,7 @@ When Pull Requests for several datasets are ready at nearly the same time, each 
 A multi-organizer workflow requires separate object synchronization and publication operations:
 
 ```text
-davis push <dataset>   # Synchronize immutable objects from a personal branch
+davis push <dataset>   # Synchronize PDFs, Manifest, R2, and Git on a personal branch
 davis publish          # Publish only the CatalogIndex from reviewed, current main
 ```
 
@@ -293,7 +214,7 @@ Davis separates these operations. `davis push` is safe to use on a personal bran
 
 ### Recovering from an incorrect publication
 
-If someone publishes from a personal branch or stale `main`, do not delete R2 objects. Notify the organizer team, then republish from one machine holding the correct, current `main`.
+If an old CLI or disabled guard allows publication from a personal branch or stale `main`, do not delete R2 objects. The current CLI rejects this operation. Notify the organizer team, then republish from one machine holding the correct, current `main`.
 
 ```bash
 git switch main
@@ -316,6 +237,10 @@ Adding, moving, renaming, or deleting a data file affects Catalog IDs and reprod
 ## Updating
 
 The CLI checks for a newer release once every 24 hours and displays a notice after a normal command when an update is available. Run `davis update` to compare the installed version with the latest release and display the update command for the current operating system. Run the displayed installer to update. The installer preserves the repository, real data, participant session, and organizer session.
+
+## Using storage outside the official deployment
+
+The personal-branch, `origin/main`, and Pull Request rules in this guide are the operating policy for safely maintaining the official Davis Catalog as a team. When no organizer session is active, `davis push` to a filesystem or S3-compatible remote configured in `.davis/config.toml` does not require the official branch name or GitHub and does not create or push a Git commit. Another organization can retain the common Object and Manifest formats while defining its own review and publication policy.
 
 ## Troubleshooting
 
