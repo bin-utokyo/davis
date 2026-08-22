@@ -107,6 +107,9 @@ target/
 # Local remote configuration (use config.example.toml as the tracked template)
 .davis/config.toml
 
+# Local state left by legacy DVC installations
+.dvc/
+
 # Logs
 *.log
 logs/
