@@ -5,7 +5,8 @@ The operator-facing `davis push [dataset]` command scans the selected dataset
 roots directly and computes BLAKE3 object IDs. Omitting the dataset selects all
 datasets. After missing immutable objects upload successfully, Davis regenerates
 only affected schema PDFs, then commits and pushes the selected metadata on the
-current personal `operator/<GitHub-username>` branch. DVC metadata is not used.
+current personal working branch. Davis does not prescribe a branch-name format,
+and DVC metadata is not used.
 
 The separate `ingest` command remains available for offline diagnostics.
 A normal push reuses unchanged files whose previous Manifest entry and local

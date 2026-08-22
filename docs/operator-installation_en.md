@@ -125,9 +125,9 @@ A normal `davis push` performs these steps in order:
 
 If a step fails, later steps do not run. R2 objects are immutable and content-addressed, so an object uploaded before a Git failure does not damage the current publication. The public Catalog remains unchanged until `davis publish`.
 
-### One persistent working branch per organizer
+### Personal working branches
 
-Each organizer maintains one `operator/<GitHub-username>` branch and reuses it. Do not commit directly to `main`.
+Organizers update data on personal working branches rather than `main`. Davis does not require a branch prefix or a match with a GitHub username; use any name your team can identify. Reusing one personal branch is recommended to avoid clutter, but creating a new branch is also supported.
 
 Create the personal branch from current `main` once:
 
@@ -135,22 +135,22 @@ Create the personal branch from current `main` once:
 git status
 git switch main
 git pull --ff-only
-git switch -c operator/<GitHub-username>
-git push -u origin operator/<GitHub-username>
+git switch -c <personal-working-branch>
+git push -u origin <personal-working-branch>
 ```
 
 Before every later edit, fast-forward the personal branch to current `main`:
 
 ```bash
 git status
-git switch operator/<GitHub-username>
+git switch <personal-working-branch>
 git fetch origin
 git merge --ff-only origin/main
 ```
 
 If uncommitted changes exist or `--ff-only` fails, do not reset, stash, rebase, or force a merge. Preserve the work and consult the organizer team. Merge Pull Requests with a merge commit and retain the personal branch. Do not use squash or rebase merge because either prevents the next `--ff-only` update.
 
-`davis push` requires a branch whose complete name is exactly `operator/<GitHub-username>`. Shared or nested names such as `operator/team/name` are rejected. `davis publish` cannot run from a personal branch.
+`davis push` accepts any named branch other than `main`. It rejects a detached HEAD and direct execution from `main`. `davis publish` cannot run from a personal branch.
 
 ### Standard workflow for one dataset update
 

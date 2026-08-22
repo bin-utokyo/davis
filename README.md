@@ -98,7 +98,7 @@ cargo run -p davis-cli -- verify
 cargo run -p davis-cli -- ingest --all
 ```
 
-公式operator sessionを使い，個人の`operator/<GitHubユーザー名>` branchから`davis push <dataset>`を実行すると，新規・変更・cache欠落fileのBLAKE3を計算し，未変更fileは前回Manifestとlocal cacheから再利用します．不足ObjectのR2 uploadに成功した後，変更されたschemaまたはObject IDに関係する日英PDFだけを生成し，対象datasetのschema，PDF，Manifestだけをstage・commitして，現在の個人branchをGitHubへpushします．公開Catalogは変更しません．事前確認には`--dry-run`を使用します．dry runはrepository，cache，R2，Gitを変更しません．全fileを読み直す場合だけ`--rehash`を指定します．DVCと`.dvc`は通常経路で使用しません．
+公式operator sessionを使い，`main`以外の個人作業branchから`davis push <dataset>`を実行すると，新規・変更・cache欠落fileのBLAKE3を計算し，未変更fileは前回Manifestとlocal cacheから再利用します．branch名の形式はDavisでは指定しません．不足ObjectのR2 uploadに成功した後，変更されたschemaまたはObject IDに関係する日英PDFだけを生成し，対象datasetのschema，PDF，Manifestだけをstage・commitして，現在の個人branchをGitHubへpushします．公開Catalogは変更しません．事前確認には`--dry-run`を使用します．dry runはrepository，cache，R2，Gitを変更しません．全fileを読み直す場合だけ`--rehash`を指定します．DVCと`.dvc`は通常経路で使用しません．
 
 operator sessionを使わず，`.davis/config.toml`でfilesystemまたはS3互換remoteへ直接接続する場合，`davis push`はObjectとlocal Manifestを同期しますが，公式branch名，`origin/main`，GitHubを要求せず，Git commit・pushも行いません．これにより別組織のrepository，MinIO，S3，local storageでも同じManifestとObject形式を利用できます．
 

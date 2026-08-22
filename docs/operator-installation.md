@@ -125,9 +125,9 @@ Gitはcode，schema，PDF，DatasetManifestの履歴を管理し，R2は実デ�
 
 途中で失敗した場合は，後続処理へ進みません．R2へ保存済みのObjectは内容address形式でimmutableなため，Git処理が失敗しても既存公開を壊しません．公開Catalogは`davis publish`まで変わりません．
 
-### 1人1本の固定作業branch
+### 個人作業branch
 
-運営者は1人につき1本の`operator/<GitHubユーザー名>` branchを持ち，同じbranchを継続利用します．`main`へ直接commitしません．
+運営者は`main`ではなく，個人作業branchで更新します．Davisはbranch名のprefixやGitHubユーザー名との一致を要求しません．運営内で識別できる任意の名前を使用できます．branch一覧を増やしすぎないため，同じ個人branchの継続利用を推奨しますが，新しいbranchを作る運用も可能です．
 
 初回だけ，最新`main`から個人branchを作成します．
 
@@ -135,22 +135,22 @@ Gitはcode，schema，PDF，DatasetManifestの履歴を管理し，R2は実デ�
 git status
 git switch main
 git pull --ff-only
-git switch -c operator/<GitHubユーザー名>
-git push -u origin operator/<GitHubユーザー名>
+git switch -c <個人作業branch名>
+git push -u origin <個人作業branch名>
 ```
 
 2回目以降は，編集を始める前に個人branchを最新`main`まで早送りします．
 
 ```bash
 git status
-git switch operator/<GitHubユーザー名>
+git switch <個人作業branch名>
 git fetch origin
 git merge --ff-only origin/main
 ```
 
 未commit変更がある場合や`--ff-only`が失敗した場合は，reset，stash，rebase，強制mergeをせず，作業を保ったまま運営内で相談してください．Pull Requestはmerge commitで`main`へmergeし，個人branchを削除しません．squash mergeとrebase mergeは，次回の`--ff-only`更新を妨げるため使用しません．
 
-`davis push`は`operator/<GitHubユーザー名>`と完全一致する形式のbranch以外では拒否されます．`operator/team/name`のような共有・多段branchも使用できません．個人branchから`davis publish`は実行できません．
+`davis push`は，名前の付いた`main`以外のbranchで実行できます．detached HEADと`main`からの実行は拒否されます．個人branchから`davis publish`は実行できません．
 
 ### 1件のdatasetを更新する標準手順
 

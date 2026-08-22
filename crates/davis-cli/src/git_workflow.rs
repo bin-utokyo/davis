@@ -6,7 +6,7 @@ pub(crate) fn verify_operator_worktree(
     dataset_ids: &[String],
 ) -> Result<(), Box<dyn std::error::Error>> {
     let branch = git_output(repository, &["branch", "--show-current"])?;
-    validate_operator_branch(&branch)?;
+    validate_personal_branch(&branch)?;
     git_run(repository, &["fetch", "origin", "main"])?;
     let current = Command::new("git")
         .args(["merge-base", "--is-ancestor", "origin/main", "HEAD"])
@@ -143,24 +143,14 @@ fn git_run(repository: &Path, arguments: &[&str]) -> Result<(), Box<dyn std::err
     Ok(())
 }
 
-fn validate_operator_branch(branch: &str) -> Result<(), String> {
-    let Some(username) = branch.strip_prefix("operator/") else {
-        return Err(format!(
-            "davis push must run from a personal operator/<GitHub-username> branch; current branch is {branch}"
-        ));
-    };
-    let valid = !username.is_empty()
-        && username.len() <= 39
-        && !username.starts_with('-')
-        && !username.ends_with('-')
-        && !username.contains("--")
-        && username
-            .bytes()
-            .all(|byte| byte.is_ascii_alphanumeric() || byte == b'-');
-    if !valid {
-        return Err(format!(
-            "operator branch must be exactly operator/<GitHub-username>; current branch is {branch}"
-        ));
+fn validate_personal_branch(branch: &str) -> Result<(), String> {
+    if branch.is_empty() {
+        return Err("davis push requires a named personal working branch; HEAD is detached".into());
+    }
+    if branch == "main" {
+        return Err(
+            "davis push must not run from main; switch to a personal working branch first".into(),
+        );
     }
     Ok(())
 }
@@ -174,20 +164,15 @@ fn path_belongs_to_datasets(path: &str, dataset_ids: &[String]) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use super::{path_belongs_to_datasets, validate_operator_branch};
+    use super::{path_belongs_to_datasets, validate_personal_branch};
 
     #[test]
-    fn operator_branch_is_exactly_one_personal_github_username() {
-        assert!(validate_operator_branch("operator/alice-1").is_ok());
-        for invalid in [
-            "main",
-            "operator/",
-            "operator/team/alice",
-            "operator/-alice",
-            "operator/alice_",
-        ] {
-            assert!(validate_operator_branch(invalid).is_err(), "{invalid}");
+    fn push_accepts_any_named_branch_except_main() {
+        for valid in ["operator/alice-1", "data-update", "team/network/2026"] {
+            assert!(validate_personal_branch(valid).is_ok(), "{valid}");
         }
+        assert!(validate_personal_branch("main").is_err());
+        assert!(validate_personal_branch("").is_err());
     }
 
     #[test]
