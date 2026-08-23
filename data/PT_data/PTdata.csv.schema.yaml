@@ -3,8 +3,8 @@ city:
   ja: 東京都市圏
 columns:
 - description:
-    en: An ID that identifies a movement with a pair of departure and destination.
-    ja: 出発地と目的地のペアをもつ移動を識別するID。
+    en: An ID that identifies each trip from an origin to a destination.
+    ja: 出発地から目的地までの各トリップを識別するID。
   name: TripID
   type_:
     name: Int64
@@ -31,14 +31,14 @@ columns:
   type_:
     name: Int64
 - description:
-    en: The total number of trips in a series of trips.
-    ja: 一連のトリップの合計回数。
+    en: The total number of trips in the trip chain.
+    ja: 当該トリップチェーンに含まれる総トリップ回数。
   name: TripNumber
   type_:
     name: Int64
 - description:
-    en: The order of the trip in a series of trips.
-    ja: 一連のトリップの中での順番。
+    en: The order of the trip in the trip chain.
+    ja: 当該トリップチェーン内でのトリップの順番。
   name: TripOrder
   type_:
     name: Int64
@@ -67,9 +67,9 @@ columns:
   type_:
     name: Int64
 - description:
-    en: A coefficient used to estimate the actual population size from the sample
-      size obtained in the PT survey.
-    ja: 調査で得られたサンプル数から実際の母集団数を推定するための係数。
+    en: An expansion factor used to estimate the actual population size from the PT
+      survey sample.
+    ja: PT調査のサンプルから実際の母集団数を推定するための拡大係数。
   name: EnlargeCoefficient
   type_:
     name: Int64
@@ -81,20 +81,20 @@ columns:
   type_:
     name: Int64
 - description:
-    en: Departure time, expressed as the number of seconds elapsed since 0:00.
-    ja: 出発時刻。0:00から経過した秒数で表されている。
+    en: Departure time, expressed as the number of seconds elapsed since 00:00 JST.
+    ja: 出発時刻。00:00（日本標準時、JST）から経過した秒数で表されている。
   name: Stime
   type_:
     name: Int64
 - description:
-    en: Arrival time, expressed as the number of seconds elapsed since 0:00.
-    ja: 到着時刻。0:00から経過した秒数で表されている。
+    en: Arrival time, expressed as the number of seconds elapsed since 00:00 JST.
+    ja: 到着時刻。00:00（日本標準時、JST）から経過した秒数で表されている。
   name: Gtime
   type_:
     name: Int64
 - description:
-    en: Stay time, expressed in seconds.
-    ja: 滞在時間。秒単位で表されている。
+    en: Duration of stay at the destination, expressed in seconds.
+    ja: 目的地での滞在時間。秒単位で表されている。
   name: StayTime
   type_:
     name: Int64
@@ -103,9 +103,9 @@ description:
   ja: 東京都市圏で実施したPT調査のデータ。
 hash_: 33c310f31479f98dade7866073649059ffaeff7771602c60276eca4489538fb5
 license_:
-  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+  en: Use is permitted only for the 2026 Summer Course on Behavior Modeling in Transportation
     Networks.
-  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+  ja: 2026年度の行動モデル夏の学校のための利用のみ許可します。
 name:
   en: Tokyo metropolitan area PT survey
   ja: 東京都市圏PT調査

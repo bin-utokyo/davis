@@ -2,15 +2,21 @@ city:
   en: Tokyo metropolitan area
   ja: 東京都市圏
 columns:
-- description: null
+- description:
+    en: Zone code assigned to an area outside the targegt area.
+    ja: 対象領域外の地域に割り当てられたゾーンコード。
   name: Zone Code
   type_:
     name: String
-- description: null
+- description:
+    en: Name of the prefecture.
+    ja: 都道府県名。
   name: Prefecture
   type_:
     name: String
-- description: null
+- description:
+    en: Name of the city or designated area, where applicable.
+    ja: 該当する場合の市または地域の名称。
   name: City Name
   type_:
     name: String
@@ -22,14 +28,14 @@ columns:
   type_:
     name: String
 description:
-  en: Codes to indicate locations for trips departing from and arriving at destinations    outside
-    the target area.
+  en: Codes to indicate locations for trips departing from and arriving at destinations
+    outside the target area.
   ja: 対象領域の外側を発着するトリップについて、その場所を表すためのコード。
 hash_: 8ed41780ac014fdcf39cb9e345e39e6ac4f7091ee7ae3b8114bba394c9f5ddf6
 license_:
-  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+  en: Use is permitted only for the 2026 Summer Course on Behavior Modeling in Transportation
     Networks.
-  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+  ja: 2026年度の行動モデル夏の学校のための利用のみ許可します。
 name:
   en: Out-of-zone code (others)
   ja: 域外コード（その他）
