@@ -78,7 +78,7 @@ The CLI checks for a newer release once every 24 hours and displays a notice aft
 davis update
 ```
 
-This command compares the installed version with the latest release and displays the update command for the current operating system. Run the displayed installer to update. The installer preserves the login session and downloaded object cache.
+This command compares the installed version with the latest release, shows the release information, and asks `y/N` before installation. Enter `y` to run the operating-system installer automatically and verify the release artifact's SHA-256 checksum. Use `davis update --yes` to skip confirmation. The installer preserves the login session and downloaded object cache.
 
 ## Troubleshooting
 

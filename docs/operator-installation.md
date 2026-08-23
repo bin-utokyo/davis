@@ -225,7 +225,7 @@ VS CodeのSource Control操作とterminalのGit commandは，同じrepository状
 | command | 目的 | 公開Webへの影響 |
 | --- | --- | --- |
 | `davis --version` | インストール済みversionを確認する | なし |
-| `davis update` | 最新releaseと更新方法を確認する | なし |
+| `davis update` | 最新releaseを確認し，承認後にCLIを更新する | CLI binary |
 | `davis login <URL>`・`logout` | download用の参加者sessionを保存・削除する | なし |
 | `davis operator login <URL>`・`status`・`logout` | upload・公開用の運営sessionを管理する | なし |
 | `davis list` | 利用可能なdatasetを一覧表示する | なし |
@@ -313,7 +313,7 @@ davis publish
 
 ## 更新
 
-CLIは24時間に1回だけ最新版を確認し，新しいreleaseがある場合は通常commandの完了後に案内します．`davis update`を実行すると，現在のversionと最新版を比較し，OSに対応する更新commandを表示します．表示されたinstallerを実行すると最新版へ更新できます．repository，実データ，login session，運営sessionは維持されます．
+CLIは24時間に1回だけ最新版を確認し，新しいreleaseがある場合は通常commandの完了後に案内します．`davis update`を実行すると，現在のversionと最新版を比較し，installするか`y/N`で確認します．`y`を入力するとOS対応installerを実行し，release artifactのSHA-256 checksumを検証して最新版へ更新します．確認を省く場合は`davis update --yes`を使用します．repository，実データ，login session，運営sessionは維持されます．
 
 ## 公式環境以外のstorageを利用する場合
 

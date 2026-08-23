@@ -15,7 +15,7 @@ Davisは，交通データの取得から行動モデルの実行までを，一
 
 Davis本体の開発・buildを行う場合だけ，RustとCargoが必要です．
 
-CLIは，通常commandの完了後に24時間に1回だけ最新版を確認します．新しいreleaseがある場合は，通常処理やJSON出力を妨げずに更新案内を表示します．`davis update`を実行すると，最新版の確認とOSに対応する更新commandを確認できます．
+CLIは，通常commandの完了後に24時間に1回だけ最新版を確認します．新しいreleaseがある場合は，通常処理やJSON出力を妨げずに更新案内を表示します．`davis update`を実行すると，更新内容を表示してinstallするか`y/N`で確認し，承認後にOS対応installerを実行します．確認を省く場合は`davis update --yes`を使用します．
 
 ## 現在の構成
 

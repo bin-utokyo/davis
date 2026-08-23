@@ -1,4 +1,6 @@
 use std::fs;
+use std::io::{BufRead, IsTerminal, Write};
+use std::process::Command;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use reqwest::{StatusCode, Url};
@@ -9,6 +11,7 @@ use thiserror::Error;
 use crate::session;
 
 const DEFAULT_SERVICE_URL: &str = "https://davis-web.davis-bin.workers.dev";
+const RELEASE_DOWNLOAD_ROOT: &str = "https://github.com/bin-utokyo/davis/releases/download";
 const UPDATE_INTERVAL_SECONDS: u64 = 24 * 60 * 60;
 const UPDATE_STATE_VERSION: u32 = 1;
 
@@ -47,6 +50,14 @@ enum Language {
     English,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum InstallOutcome {
+    #[cfg(not(target_os = "windows"))]
+    Completed,
+    #[cfg(target_os = "windows")]
+    Started,
+}
+
 #[derive(Debug, Error)]
 enum UpdateError {
     #[error("invalid update service URL: {0}")]
@@ -75,11 +86,38 @@ pub async fn check_automatically() {
     }
 }
 
-pub async fn check_explicitly() -> Result<(), Box<dyn std::error::Error>> {
+pub async fn check_explicitly(assume_yes: bool) -> Result<(), Box<dyn std::error::Error>> {
     let now = unix_time();
     let release = fetch_release_info().await?;
     record_attempt(now);
     print_release_status(&release, true);
+    if classify(&release)? == UpdateStatus::Current {
+        return Ok(());
+    }
+    let language = Language::detect();
+    let approved = if assume_yes {
+        true
+    } else {
+        if !std::io::stdin().is_terminal() {
+            return Err("standard input is not a terminal; use `davis update --yes` to install without confirmation".into());
+        }
+        let stdin = std::io::stdin();
+        let stdout = std::io::stdout();
+        prompt_to_install(
+            &mut stdin.lock(),
+            &mut stdout.lock(),
+            language,
+            &release.latest,
+        )?
+    };
+    if !approved {
+        match language {
+            Language::Japanese => println!("更新を中止しました．"),
+            Language::English => println!("Update cancelled."),
+        }
+        return Ok(());
+    }
+    install_release(&release, language)?;
     Ok(())
 }
 
@@ -189,7 +227,6 @@ fn print_release_status(release: &ReleaseInfo, explicit: bool) {
         (_, UpdateStatus::Current) => return,
     }
     if explicit {
-        print_install_command(language);
         eprintln!("{}", release.release_url);
     } else {
         match language {
@@ -201,17 +238,107 @@ fn print_release_status(release: &ReleaseInfo, explicit: bool) {
     }
 }
 
-fn print_install_command(language: Language) {
-    #[cfg(target_os = "windows")]
-    let command =
-        "irm https://raw.githubusercontent.com/bin-utokyo/davis/main/scripts/install.ps1 | iex";
-    #[cfg(not(target_os = "windows"))]
-    let command = "curl --proto '=https' --tlsv1.2 -fsSL https://raw.githubusercontent.com/bin-utokyo/davis/main/scripts/install.sh | sh";
-
-    match language {
-        Language::Japanese => eprintln!("次のcommandを実行して更新してください:\n  {command}"),
-        Language::English => eprintln!("Run the following command to update:\n  {command}"),
+fn prompt_to_install(
+    input: &mut impl BufRead,
+    output: &mut impl Write,
+    language: Language,
+    version: &str,
+) -> std::io::Result<bool> {
+    loop {
+        match language {
+            Language::Japanese => write!(output, "Davis v{version}へ更新しますか? [y/N] ")?,
+            Language::English => write!(output, "Update to Davis v{version}? [y/N] ")?,
+        }
+        output.flush()?;
+        let mut answer = String::new();
+        if input.read_line(&mut answer)? == 0 {
+            return Ok(false);
+        }
+        match answer.trim().to_ascii_lowercase().as_str() {
+            "y" | "yes" => return Ok(true),
+            "" | "n" | "no" => return Ok(false),
+            _ => match language {
+                Language::Japanese => writeln!(output, "yまたはnを入力してください．")?,
+                Language::English => writeln!(output, "Please answer y or n.")?,
+            },
+        }
     }
+}
+
+fn install_release(
+    release: &ReleaseInfo,
+    language: Language,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let tag = format!("v{}", parse_version(&release.latest)?);
+    let install_directory = std::env::current_exe()?
+        .parent()
+        .ok_or("current Davis executable has no parent directory")?
+        .to_path_buf();
+    match (
+        language,
+        install_platform_release(&tag, &install_directory)?,
+    ) {
+        #[cfg(not(target_os = "windows"))]
+        (Language::Japanese, InstallOutcome::Completed) => {
+            println!("Davis {tag}への更新が完了しました．");
+        }
+        #[cfg(not(target_os = "windows"))]
+        (Language::English, InstallOutcome::Completed) => {
+            println!("Davis was updated to {tag}.");
+        }
+        #[cfg(target_os = "windows")]
+        (Language::Japanese, InstallOutcome::Started) => {
+            println!("更新を開始しました．このcommandの終了後にDavis {tag}へ置き換えます．");
+        }
+        #[cfg(target_os = "windows")]
+        (Language::English, InstallOutcome::Started) => {
+            println!("Update started. Davis will be replaced with {tag} after this command exits.");
+        }
+    }
+    Ok(())
+}
+
+#[cfg(not(target_os = "windows"))]
+fn install_platform_release(
+    tag: &str,
+    install_directory: &std::path::Path,
+) -> Result<InstallOutcome, Box<dyn std::error::Error>> {
+    let installer_url = format!("{RELEASE_DOWNLOAD_ROOT}/{tag}/install.sh");
+    let status = Command::new("sh")
+        .arg("-c")
+        .arg("curl --proto '=https' --tlsv1.2 -fsSL \"$DAVIS_INSTALLER_URL\" | sh")
+        .env("DAVIS_INSTALLER_URL", installer_url)
+        .env("DAVIS_VERSION", tag)
+        .env("DAVIS_INSTALL_DIR", install_directory)
+        .status()?;
+    if !status.success() {
+        return Err(format!("Davis installer exited with {status}").into());
+    }
+    Ok(InstallOutcome::Completed)
+}
+
+#[cfg(target_os = "windows")]
+fn install_platform_release(
+    tag: &str,
+    install_directory: &std::path::Path,
+) -> Result<InstallOutcome, Box<dyn std::error::Error>> {
+    let installer_url = format!("{RELEASE_DOWNLOAD_ROOT}/{tag}/install.ps1");
+    let command = "$parentProcess = Get-Process -Id ([int]$env:DAVIS_PARENT_PID) -ErrorAction SilentlyContinue; if ($parentProcess) { $parentProcess.WaitForExit() }; irm $env:DAVIS_INSTALLER_URL | iex";
+    let child = Command::new("powershell.exe")
+        .args([
+            "-NoProfile",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-Command",
+            command,
+        ])
+        .env("DAVIS_INSTALLER_URL", installer_url)
+        .env("DAVIS_VERSION", tag)
+        .env("DAVIS_INSTALL_DIR", install_directory)
+        .env("DAVIS_PARENT_PID", std::process::id().to_string())
+        .spawn()?;
+    drop(child);
+    Ok(InstallOutcome::Started)
 }
 
 impl Language {
@@ -275,7 +402,10 @@ fn record_attempt(checked_at: u64) {
 
 #[cfg(test)]
 mod tests {
-    use super::{classify, Language, LocalizedMessage, ReleaseInfo, UpdateStatus};
+    use super::{
+        classify, prompt_to_install, Language, LocalizedMessage, ReleaseInfo, UpdateStatus,
+    };
+    use std::io::Cursor;
 
     fn release(latest: &str, minimum_supported: &str) -> ReleaseInfo {
         ReleaseInfo {
@@ -311,5 +441,31 @@ mod tests {
     fn detects_japanese_locale_explicitly() {
         assert_eq!(Language::from_locale("ja_JP.UTF-8"), Language::Japanese);
         assert_eq!(Language::from_locale("en_US.UTF-8"), Language::English);
+    }
+
+    #[test]
+    fn update_prompt_accepts_yes() {
+        let mut input = Cursor::new(b"y\n");
+        let mut output = Vec::new();
+
+        assert!(
+            prompt_to_install(&mut input, &mut output, Language::Japanese, "1.2.3")
+                .expect("prompt should accept input")
+        );
+        assert_eq!(
+            String::from_utf8(output).expect("prompt should be UTF-8"),
+            "Davis v1.2.3へ更新しますか? [y/N] "
+        );
+    }
+
+    #[test]
+    fn update_prompt_defaults_to_no() {
+        let mut input = Cursor::new(b"\n");
+        let mut output = Vec::new();
+
+        assert!(
+            !prompt_to_install(&mut input, &mut output, Language::English, "1.2.3")
+                .expect("prompt should accept input")
+        );
     }
 }

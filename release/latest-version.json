@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
-  "latest": "0.3.2",
+  "latest": "0.3.3",
   "minimum_supported": "0.2.2",
   "released_at": "2026-08-23",
-  "release_url": "https://github.com/bin-utokyo/davis/releases/tag/v0.3.2",
+  "release_url": "https://github.com/bin-utokyo/davis/releases/tag/v0.3.3",
   "message": {
-    "ja": "新規・変更Objectのdry runを修正し，個人作業branchの命名規則を撤廃しました．運営者は更新してください．",
-    "en": "Davis fixes dry runs for new and changed objects and removes the prescribed naming format for personal working branches. Organizers should update."
+    "ja": "`get`の既存file上書き確認と，`davis update`による自己更新に対応しました．",
+    "en": "Davis adds overwrite confirmation to `get` and self-updates through `davis update`."
   }
 }

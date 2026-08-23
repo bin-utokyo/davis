@@ -225,7 +225,7 @@ For current interface names and details, see the official VS Code documentation 
 | Command | Purpose | Effect on the public Web catalog |
 | --- | --- | --- |
 | `davis --version` | Show the installed version | None |
-| `davis update` | Check the latest release and update method | None |
+| `davis update` | Check the latest release and update the CLI after approval | CLI binary |
 | `davis login <URL>` / `logout` | Store or remove the participant download session | None |
 | `davis operator login <URL>` / `status` / `logout` | Manage the organizer upload and publication session | None |
 | `davis list` | List available datasets | None |
@@ -313,7 +313,7 @@ Adding, moving, renaming, or deleting a data file affects Catalog IDs and reprod
 
 ## Updating
 
-The CLI checks for a newer release once every 24 hours and displays a notice after a normal command when an update is available. Run `davis update` to compare the installed version with the latest release and display the update command for the current operating system. Run the displayed installer to update. The installer preserves the repository, real data, participant session, and organizer session.
+The CLI checks for a newer release once every 24 hours and displays a notice after a normal command when an update is available. Run `davis update` to compare the installed version with the latest release and answer `y/N` before installation. Enter `y` to run the operating-system installer and verify the release artifact's SHA-256 checksum. Use `davis update --yes` to skip confirmation. The installer preserves the repository, real data, participant session, and organizer session.
 
 ## Using storage outside the official deployment
 

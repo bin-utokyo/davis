@@ -52,8 +52,12 @@ enum Command {
     },
     /// Remove the locally stored CLI session.
     Logout,
-    /// Check for a newer Davis release and show the update command.
-    Update,
+    /// Check for and install a newer Davis release.
+    Update {
+        /// Install the update without asking for confirmation.
+        #[arg(short = 'y', long)]
+        yes: bool,
+    },
     /// Authenticate and manage organizer access.
     Operator {
         #[command(subcommand)]
@@ -239,7 +243,7 @@ enum OperatorCommand {
 #[tokio::main]
 async fn main() {
     let cli = Cli::parse();
-    let checks_update_explicitly = matches!(cli.command, Command::Update);
+    let checks_update_explicitly = matches!(cli.command, Command::Update { .. });
     if let Err(error) = run(cli).await {
         eprintln!("error: {error}");
         std::process::exit(1);
@@ -256,7 +260,7 @@ async fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
             invite_code_stdin,
         } => handle_login(&service_url, invite_code_stdin).await?,
         Command::Logout => handle_logout()?,
-        Command::Update => update::check_explicitly().await?,
+        Command::Update { yes } => update::check_explicitly(yes).await?,
         Command::Operator { command } => handle_operator(command).await?,
         Command::List { json } => handle_list(&cli.repository, json).await?,
         Command::Info { dataset_id, json } => {
@@ -1736,6 +1740,14 @@ mod tests {
             }
             _ => panic!("expected get command"),
         }
+    }
+
+    #[test]
+    fn update_accepts_non_interactive_confirmation() {
+        let cli =
+            Cli::try_parse_from(["davis", "update", "--yes"]).expect("update command should parse");
+
+        assert!(matches!(cli.command, Command::Update { yes: true }));
     }
 
     #[test]

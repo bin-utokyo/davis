@@ -15,7 +15,7 @@ For organizers, the guide's first five sections cover installation, repository, 
 
 Rust and Cargo are required only when developing or building Davis itself.
 
-After a normal command completes, the CLI checks for a newer release at most once every 24 hours. When an update is available, it prints guidance without interrupting the command or corrupting JSON output. Run `davis update` to check explicitly and display the update command for the current operating system.
+After a normal command completes, the CLI checks for a newer release at most once every 24 hours. When an update is available, it prints guidance without interrupting the command or corrupting JSON output. Run `davis update` to review the release and answer `y/N`; after approval, Davis runs the installer for the current operating system. Use `davis update --yes` to skip confirmation.
 
 ## Current structure
 

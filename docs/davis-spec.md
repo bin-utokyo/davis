@@ -2114,7 +2114,7 @@ davis component install runtime
 davis component install mnl
 ```
 
-基本binaryとcomponentは独立してSemVerで版管理します．CLIは対話端末で1日1回以下の頻度でGitHub Releasesの最新版を確認し，新版がある場合だけ変更概要と`davis update`を案内します．利用者の確認なしに実行中のbinaryを自動置換せず，非対話実行とoffline利用では通知を抑止できます．更新時はrelease artifactのchecksumと署名を検証します．Catalog protocolと互換である限り旧CLIを直ちに使用不能にはしません．
+基本binaryとcomponentは独立してSemVerで版管理します．CLIは対話端末で1日1回以下の頻度でGitHub Releasesの最新版を確認し，新版がある場合だけ変更概要と`davis update`を案内します．`davis update`は更新内容を表示して`y/N`で確認し，承認後にOS対応installerを実行します．`--yes`を指定した場合だけ確認を省略できます．通常command後の自動確認から，利用者の承認なしにbinaryを置換しません．非対話実行とoffline利用では通知を抑止できます．更新時はrelease artifactのSHA-256 checksumを検証します．Catalog protocolと互換である限り旧CLIを直ちに使用不能にはしません．
 
 ---
 
