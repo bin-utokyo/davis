@@ -2,27 +2,39 @@ city:
   en: Saitama Prefecture
   ja: 埼玉県
 columns:
-- description: null
+- description:
+    en: Code of the large zone.
+    ja: 大ゾーンのコード。
   name: Zone Large
   type_:
     name: Int64
-- description: null
+- description:
+    en: Code of the medium zone.
+    ja: 中ゾーンのコード。
   name: Zone Medium
   type_:
     name: Int64
-- description: null
+- description:
+    en: Code of the planning base zone.
+    ja: 計画基本ゾーンのコード。
   name: Planning Base Zone
   type_:
     name: Int64
-- description: null
+- description:
+    en: Code of the small zone.
+    ja: 小ゾーンのコード。
   name: Zone Small
   type_:
     name: Int64
-- description: null
+- description:
+    en: Name of the city, ward, town, or village.
+    ja: 市区町村名。
   name: City/Town/Village
   type_:
     name: String
-- description: null
+- description:
+    en: Name of the neighborhood or area.
+    ja: 町丁・地区名。
   name: Neighborhood/Area Name
   type_:
     name: String
@@ -33,9 +45,9 @@ description:
   ja: 埼玉県の市町村別の大ゾーン、中ゾーン、計画基本ゾーン、小ゾーンのコード一覧。さいたま市は政令指定都市のため、区ごとに分かれている。
 hash_: 334557498f9585d5ece2f66f73b53f8d366ce51611c6180a94a265bdd405176d
 license_:
-  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+  en: Use is permitted only for the 2026 Summer Course on Behavior Modeling in Transportation
     Networks.
-  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+  ja: 2026年度の行動モデル夏の学校のための利用のみ許可します。
 name:
   en: List of zones by municipality in Saitama Prefecture
   ja: 埼玉県 市町村別ゾーン一覧
