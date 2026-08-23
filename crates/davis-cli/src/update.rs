@@ -10,7 +10,8 @@ use thiserror::Error;
 
 use crate::session;
 
-const DEFAULT_SERVICE_URL: &str = "https://davis-web.davis-bin.workers.dev";
+const DEFAULT_UPDATE_URL: &str =
+    "https://github.com/bin-utokyo/davis/releases/latest/download/latest-version.json";
 const RELEASE_DOWNLOAD_ROOT: &str = "https://github.com/bin-utokyo/davis/releases/download";
 const UPDATE_INTERVAL_SECONDS: u64 = 24 * 60 * 60;
 const UPDATE_STATE_VERSION: u32 = 1;
@@ -60,11 +61,11 @@ enum InstallOutcome {
 
 #[derive(Debug, Error)]
 enum UpdateError {
-    #[error("invalid update service URL: {0}")]
+    #[error("invalid update metadata URL: {0}")]
     InvalidUrl(#[from] url::ParseError),
-    #[error("failed to contact the update service: {0}")]
+    #[error("failed to retrieve update metadata: {0}")]
     Request(#[from] reqwest::Error),
-    #[error("update service returned HTTP {0}")]
+    #[error("update metadata returned HTTP {0}")]
     Http(StatusCode),
     #[error("unsupported update information version: {0}")]
     UnsupportedSchema(u32),
@@ -124,8 +125,8 @@ pub async fn check_explicitly(assume_yes: bool) -> Result<(), Box<dyn std::error
 async fn fetch_release_info() -> Result<ReleaseInfo, UpdateError> {
     let endpoint = update_endpoint()?;
     let response = reqwest::Client::builder()
-        .connect_timeout(Duration::from_secs(1))
-        .timeout(Duration::from_secs(2))
+        .connect_timeout(Duration::from_secs(3))
+        .timeout(Duration::from_secs(8))
         .build()?
         .get(endpoint)
         .send()
@@ -145,15 +146,7 @@ fn update_endpoint() -> Result<Url, UpdateError> {
     if let Ok(endpoint) = std::env::var("DAVIS_UPDATE_URL") {
         return Ok(Url::parse(&endpoint)?);
     }
-    let service_url = session::load()
-        .ok()
-        .flatten()
-        .or_else(|| session::load_operator().ok().flatten())
-        .map_or_else(
-            || DEFAULT_SERVICE_URL.to_owned(),
-            |stored| stored.service_url,
-        );
-    Ok(Url::parse(&service_url)?.join("/api/v1/version")?)
+    Ok(Url::parse(DEFAULT_UPDATE_URL)?)
 }
 
 fn classify(release: &ReleaseInfo) -> Result<UpdateStatus, UpdateError> {

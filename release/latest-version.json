@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
-  "latest": "0.3.3",
+  "latest": "0.3.4",
   "minimum_supported": "0.2.2",
   "released_at": "2026-08-23",
-  "release_url": "https://github.com/bin-utokyo/davis/releases/tag/v0.3.3",
+  "release_url": "https://github.com/bin-utokyo/davis/releases/tag/v0.3.4",
   "message": {
-    "ja": "`get`の既存file上書き確認と，`davis update`による自己更新に対応しました．",
-    "en": "Davis adds overwrite confirmation to `get` and self-updates through `davis update`."
+    "ja": "`get`の上書き確認と`davis update`による自己更新に対応し，更新情報をGitHub Releaseで管理するようにしました．",
+    "en": "Davis adds overwrite confirmation to `get`, self-updates through `davis update`, and manages update metadata through GitHub Releases."
   }
 }

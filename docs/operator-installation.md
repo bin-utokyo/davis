@@ -313,7 +313,7 @@ davis publish
 
 ## 更新
 
-CLIは24時間に1回だけ最新版を確認し，新しいreleaseがある場合は通常commandの完了後に案内します．`davis update`を実行すると，現在のversionと最新版を比較し，installするか`y/N`で確認します．`y`を入力するとOS対応installerを実行し，release artifactのSHA-256 checksumを検証して最新版へ更新します．確認を省く場合は`davis update --yes`を使用します．repository，実データ，login session，運営sessionは維持されます．
+CLIはGitHub Releaseの更新情報を24時間に1回だけ確認し，新しいreleaseがある場合は通常commandの完了後に案内します．CLI releaseのためにWebを再deployする必要はありません．`davis update`を実行すると，現在のversionと最新版を比較し，installするか`y/N`で確認します．`y`を入力するとOS対応installerを実行し，release artifactのSHA-256 checksumを検証して最新版へ更新します．確認を省く場合は`davis update --yes`を使用します．repository，実データ，login session，運営sessionは維持されます．
 
 ## 公式環境以外のstorageを利用する場合
 

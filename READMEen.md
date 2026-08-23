@@ -15,7 +15,7 @@ For organizers, the guide's first five sections cover installation, repository, 
 
 Rust and Cargo are required only when developing or building Davis itself.
 
-After a normal command completes, the CLI checks for a newer release at most once every 24 hours. When an update is available, it prints guidance without interrupting the command or corrupting JSON output. Run `davis update` to review the release and answer `y/N`; after approval, Davis runs the installer for the current operating system. Use `davis update --yes` to skip confirmation.
+After a normal command completes, the CLI checks for a newer release at most once every 24 hours. The source of truth for update metadata is `latest-version.json`, attached to each GitHub Release, so a CLI release does not require a Web redeployment. When an update is available, Davis prints guidance without interrupting the command or corrupting JSON output. Run `davis update` to review the release and answer `y/N`; after approval, Davis runs the installer for the current operating system. Use `davis update --yes` to skip confirmation.
 
 ## Current structure
 

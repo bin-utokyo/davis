@@ -379,7 +379,7 @@ dependencies = [
 
 [[package]]
 name = "davis-catalog"
-version = "0.3.3"
+version = "0.3.4"
 dependencies = [
  "blake3",
  "davis-core",
@@ -393,7 +393,7 @@ dependencies = [
 
 [[package]]
 name = "davis-cli"
-version = "0.3.3"
+version = "0.3.4"
 dependencies = [
  "blake3",
  "clap",
@@ -417,7 +417,7 @@ dependencies = [
 
 [[package]]
 name = "davis-core"
-version = "0.3.3"
+version = "0.3.4"
 dependencies = [
  "blake3",
  "serde",
@@ -428,7 +428,7 @@ dependencies = [
 
 [[package]]
 name = "davis-document"
-version = "0.3.3"
+version = "0.3.4"
 dependencies = [
  "davis-core",
  "fullbleed",
@@ -437,7 +437,7 @@ dependencies = [
 
 [[package]]
 name = "davis-storage"
-version = "0.3.3"
+version = "0.3.4"
 dependencies = [
  "davis-core",
  "futures",

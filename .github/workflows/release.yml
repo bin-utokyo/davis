@@ -92,8 +92,9 @@ jobs:
         shell: bash
         run: |
           cp scripts/install.sh scripts/install.ps1 dist/
+          cp release/latest-version.json dist/
           cd dist
-          sha256sum davis-* > SHA256SUMS
+          sha256sum davis-* latest-version.json > SHA256SUMS
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:

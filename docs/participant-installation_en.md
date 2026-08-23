@@ -78,7 +78,7 @@ The CLI checks for a newer release once every 24 hours and displays a notice aft
 davis update
 ```
 
-This command compares the installed version with the latest release, shows the release information, and asks `y/N` before installation. Enter `y` to run the operating-system installer automatically and verify the release artifact's SHA-256 checksum. Use `davis update --yes` to skip confirmation. The installer preserves the login session and downloaded object cache.
+This command retrieves update metadata directly from GitHub Releases, compares the installed version with the latest release, and asks `y/N` before installation. Enter `y` to run the operating-system installer automatically and verify the release artifact's SHA-256 checksum. Use `davis update --yes` to skip confirmation. The installer preserves the login session and downloaded object cache.
 
 ## Troubleshooting
 

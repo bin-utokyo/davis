@@ -78,7 +78,7 @@ CLIは24時間に1回だけ最新版を確認し，新しいreleaseがある場�
 davis update
 ```
 
-このcommandは，現在のversionと最新版を比較し，更新内容を表示してinstallするか`y/N`で確認します．`y`を入力するとOS対応installerを自動実行し，release artifactのSHA-256 checksumを検証して更新します．確認を省く場合は`davis update --yes`を使用します．login sessionとdownload済みcacheは維持されます．
+このcommandは，GitHub Releaseから更新情報を直接取得し，現在のversionと最新版を比較して，installするか`y/N`で確認します．`y`を入力するとOS対応installerを自動実行し，release artifactのSHA-256 checksumを検証して更新します．確認を省く場合は`davis update --yes`を使用します．login sessionとdownload済みcacheは維持されます．
 
 ## 困ったとき
 
