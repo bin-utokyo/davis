@@ -109,9 +109,9 @@ description:
   ja: 本データセットは、各個人の初期時点（観測開始時）の状態を示したものであり、性別、年齢、婚姻状態、子供の有無・人数、被災経験、初期居住地などの社会・経済属性を含む。数値の一部は正規化されており、学歴や雇用形態はバイナリ変数で表される。
 hash_: c1c35c53cdd7417994ec8ad852ae4cde453ba2f001fc281bb25b84e0f0629f64
 license_:
-  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+  en: Use is permitted only for the 2026 Summer Course on Behavior Modeling in Transportation
     Networks.
-  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+  ja: 2026年度の行動モデル夏の学校のための利用のみ許可します。
 name:
   en: Initial state of the individual
   ja: 個人の初期時点の状態
