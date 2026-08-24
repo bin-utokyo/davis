@@ -2,6 +2,8 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 
+import { buildGetCommands } from "./cli-command";
+
 type LocalizedText = { ja: string; en: string };
 type Language = "ja" | "en";
 type Column = { name: string; data_type: string; description: LocalizedText | null };
@@ -190,13 +192,16 @@ export function CatalogApp() {
   const selectedHasSchema = selectedFiles.some((file) => Boolean(file.documents?.schema));
   const selectedHasPdfJa = selectedFiles.some((file) => Boolean(file.documents?.pdf_ja));
   const selectedHasPdfEn = selectedFiles.some((file) => Boolean(file.documents?.pdf_en));
+  const shouldIncludeSchema = selectedHasSchema && includeSchema;
+  const shouldIncludePdfJa = selectedHasPdfJa && includePdfJa;
+  const shouldIncludePdfEn = selectedHasPdfEn && includePdfEn;
   const selectedSchemaDocuments = selectedFiles.flatMap((file) => [
-    includeSchema ? file.documents?.schema : null,
+    shouldIncludeSchema ? file.documents?.schema : null,
   ].filter((document): document is CatalogDocument => Boolean(document))
     .map((document) => ({ ...document, contents: file.raw_schema ?? "" })));
   const selectedPdfDocuments = selectedFiles.flatMap((file) => [
-    includePdfJa ? file.documents?.pdf_ja : null,
-    includePdfEn ? file.documents?.pdf_en : null,
+    shouldIncludePdfJa ? file.documents?.pdf_ja : null,
+    shouldIncludePdfEn ? file.documents?.pdf_en : null,
   ].filter((document): document is ExternalDocument => Boolean(document)));
   const selectedDownloadIds = [
     ...selectedFiles.map((file) => file.id),
@@ -205,7 +210,6 @@ export function CatalogApp() {
   const selectedDownloadSize = selectedSize
     + selectedSchemaDocuments.reduce((sum, document) => sum + document.size, 0)
     + selectedPdfDocuments.reduce((sum, document) => sum + document.size, 0);
-  const selectedHasMissingLicense = selectedFiles.some((file) => !localized(file.license, language));
 
   function toggleFile(id: string) {
     setSelected((current) => {
@@ -238,14 +242,11 @@ export function CatalogApp() {
   }
 
   async function copyCommands() {
-    const serviceOption = ` --service-url ${JSON.stringify(window.location.origin)}`;
-    const ids = [...new Set(selectedFiles.map((file) => file.dataset_id))];
-    const commands = ids.map((id) => {
-      const datasetFiles = files.filter((file) => file.dataset_id === id);
-      const chosenFiles = selectedFiles.filter((file) => file.dataset_id === id);
-      if (datasetFiles.length === chosenFiles.length) return `davis get ${id}${serviceOption}`;
-      return `davis get ${id} ${chosenFiles.map((file) => `--file ${JSON.stringify(file.file_id)}`).join(" ")}${serviceOption}`;
-    }).join("\n");
+    const commands = buildGetCommands(files, selectedFiles, window.location.origin, {
+      schema: shouldIncludeSchema,
+      pdfJa: shouldIncludePdfJa,
+      pdfEn: shouldIncludePdfEn,
+    });
     await navigator.clipboard.writeText(commands);
     setCopied(true);
     window.setTimeout(() => setCopied(false), 1600);
@@ -428,12 +429,12 @@ export function CatalogApp() {
         {activeFile.raw_schema && <details className="raw-schema"><summary>Raw schema.yaml</summary><pre>{activeFile.raw_schema}</pre></details>}
       </aside></div>}
 
-      {selected.size > 0 && <aside className="selection-dock" id="selection" aria-label={tr("選択内容", "Selection details")}><div><strong>{selected.size} files</strong><span>{humanSize(selectedSize)}</span></div><p>{tr(`${new Set(selectedFiles.map((file) => file.dataset_id)).size}データセットから選択中`, `Selected from ${new Set(selectedFiles.map((file) => file.dataset_id)).size} datasets`)}</p><button type="button" className="clear-button" onClick={() => setSelected(new Set())}>{tr("すべて解除", "Clear all")}</button><button type="button" className="clear-button" onClick={copyCommands}>{copied ? tr("コピーしました", "Copied") : tr("CLIコマンドをコピー", "Copy CLI command")}</button><button type="button" className="copy-button" onClick={openDownloadDialog}>{tr("Webでダウンロード", "Download on web")}</button></aside>}
+      {selected.size > 0 && <aside className="selection-dock" id="selection" aria-label={tr("選択内容", "Selection details")}><div><strong>{selected.size} files</strong><span>{humanSize(selectedSize)}</span></div><p>{tr(`${new Set(selectedFiles.map((file) => file.dataset_id)).size}データセットから選択中`, `Selected from ${new Set(selectedFiles.map((file) => file.dataset_id)).size} datasets`)}</p><button type="button" className="clear-button" onClick={() => setSelected(new Set())}>{tr("すべて解除", "Clear all")}</button><button type="button" className="copy-button" onClick={openDownloadDialog}>{tr("取得方法を選ぶ", "Choose download method")}</button></aside>}
 
       {downloadDialogOpen && <div className="overlay access-overlay"><button className="overlay-dismiss" type="button" aria-label={tr("ダウンロード画面を閉じる", "Close download dialog")} disabled={downloadPending} onClick={() => setDownloadDialogOpen(false)}/><section className="access-dialog" role="dialog" aria-modal="true" aria-labelledby="download-title">
         <div className="drawer-heading"><div><p className="dataset-id">{selectedFiles.length > 0 ? "DOWNLOAD" : "ACCESS"}</p><h2 id="download-title">{selectedFiles.length > 0 ? tr("選択内容を取得する", "Download your selection") : tr("参加者ログイン", "Participant login")}</h2></div><button type="button" aria-label={tr("閉じる", "Close")} disabled={downloadPending} onClick={() => setDownloadDialogOpen(false)}>×</button></div>
         {selectedFiles.length > 0 && <><div className="download-summary"><strong>{selectedDownloadCount} files</strong><span>{humanSize(selectedDownloadSize)}</span></div>
-        <p className="download-note">{tr("Webでは各ファイルをブラウザのダウンロードフォルダへ保存します．データセットの階層をそのまま作る場合は，CLIコマンドをコピーして取得してください．", "On the web, each file is saved to your browser's Downloads folder. To preserve the dataset directory structure, copy the CLI command and download with Davis.")}</p>
+        <p className="download-note">{tr("Webでは各ファイルをブラウザのダウンロードフォルダへ保存します．", "On the web, each file is saved to your browser's Downloads folder.")}</p>
         <fieldset className="document-options"><legend>{tr("付属資料", "Companion documents")}</legend>
           <label className={!selectedHasSchema ? "document-option-unavailable" : undefined}><input type="checkbox" checked={selectedHasSchema && includeSchema} disabled={!selectedHasSchema} onChange={(event) => setIncludeSchema(event.target.checked)}/><span>schema.yaml</span></label>
           {selectedHasSchema && !includeSchema && <p className="document-warning">{tr("schema.yamlを含めない場合，列定義や利用条件が保存されず，将来Davisの整形・推定機能へ接続するときに再取得が必要になることがあります．", "Without schema.yaml, column definitions and terms of use are not saved locally, and you may need to download them again for future Davis formatting and modeling workflows.")}</p>}
@@ -441,11 +442,12 @@ export function CatalogApp() {
           <label className={!selectedHasPdfEn ? "document-option-unavailable" : undefined}><input type="checkbox" checked={selectedHasPdfEn && includePdfEn} disabled={!selectedHasPdfEn} onChange={(event) => setIncludePdfEn(event.target.checked)}/><span>{tr("英語説明PDF", "English PDF")}</span></label>
           <p>{tr(`実データ${selectedFiles.length}件 + 付属資料${selectedSchemaDocuments.length + selectedPdfDocuments.length}件`, `${selectedFiles.length} data files + ${selectedSchemaDocuments.length + selectedPdfDocuments.length} companion documents`)}</p>
         </fieldset>
+        <div className="cli-copy"><p>{tr("CLIならデータセットの階層構造を保って保存できます．上の付属資料の選択内容もコマンドに反映されます．", "The CLI preserves the dataset directory structure and applies the companion-document choices above.")} <a href={language === "ja" ? "https://github.com/bin-utokyo/davis/blob/main/docs/participant-installation.md" : "https://github.com/bin-utokyo/davis/blob/main/docs/participant-installation_en.md"} target="_blank" rel="noreferrer">{tr("利用者向け導入ガイド", "Participant installation guide")}</a></p><button type="button" onClick={copyCommands}>{copied ? tr("コピーしました", "Copied") : tr("CLIコマンドをコピー", "Copy CLI command")}</button></div>
         {selectedLicenses.length > 0 && <div className="license-list"><strong>{tr("利用条件", "Terms of use")}</strong>{selectedLicenses.map((value) => <p key={value}>{value}</p>)}</div>}
-        {selectedHasMissingLicense && <div className="license-list warning"><strong>{tr("利用条件", "Terms of use")}</strong><p>{tr("選択内容に利用条件が記載されていないファイルがあります．利用前に運営へ確認してください．", "Some selected files do not specify terms of use. Please check with the organizers before using them.")}</p></div>}</>}
+        </>}
         {sessionState !== "authenticated" && <form className="login-form" onSubmit={login}><label htmlFor="invite-code">{tr("参加者用招待コード", "Participant invitation code")}</label><div><input id="invite-code" type="password" autoComplete="off" required maxLength={256} value={inviteCode} onChange={(event) => setInviteCode(event.target.value)} placeholder={tr("運営から案内されたコード", "Code provided by the organizers")}/><button type="submit" disabled={authPending}>{authPending ? tr("確認中", "Checking") : tr("ログイン", "Log in")}</button></div><p>{tr("一度ログインすると，このブラウザではセッション期限まで再入力不要です．", "After logging in once, you will not need to enter the code again in this browser until the session expires.")}</p></form>}
         {sessionState === "authenticated" && <p className="session-status">{tr("ログイン済み", "Logged in")}{sessionExpiresAt && <> ・ {tr("セッション期限", "session expires")} {new Intl.DateTimeFormat(language === "ja" ? "ja-JP" : "en-US").format(new Date(sessionExpiresAt))}</>}</p>}
-        {selectedFiles.length > 0 && <label className="license-confirm"><input type="checkbox" checked={licenseConfirmed} onChange={(event) => setLicenseConfirmed(event.target.checked)}/><span>{tr("上記の利用条件と保存方法を確認しました．", "I have reviewed the terms of use and download method above.")}</span></label>}
+        {selectedFiles.length > 0 && <label className="license-confirm"><input type="checkbox" checked={licenseConfirmed} onChange={(event) => setLicenseConfirmed(event.target.checked)}/><span>{selectedLicenses.length > 0 ? tr("上記の利用条件と保存方法を確認しました．", "I have reviewed the terms of use and download method above.") : tr("保存方法を確認しました．", "I have reviewed the download method.")}</span></label>}
         {accessError && <p className="access-message error-message" role="alert">{accessError === "login" ? tr("ログインに失敗しました．招待コードを確認してください．", "Login failed. Please check the invitation code.") : accessError === "session" ? tr("セッションの有効期限が切れました．もう一度招待コードを入力してください．", "Your session has expired. Please enter the invitation code again.") : tr("ダウンロードを開始できませんでした．もう一度お試しください．", "The download could not be started. Please try again.")}</p>}
         {downloadCount > 0 && <p className="access-message success-message" role="status">{tr(`${downloadCount}ファイルのダウンロードを開始しました．`, `Started downloading ${downloadCount} files.`)}</p>}
         {selectedFiles.length > 0 && <button className="download-button" type="button" disabled={!licenseConfirmed || sessionState !== "authenticated" || downloadPending} onClick={downloadSelected}>{downloadPending ? tr("ダウンロードを準備中", "Preparing download") : tr(`${selectedDownloadCount}ファイルをダウンロード`, `Download ${selectedDownloadCount} files`)}</button>}
