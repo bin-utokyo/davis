@@ -187,6 +187,9 @@ export function CatalogApp() {
   const activeDatasetFiles = activeDataset ? files.filter((file) => file.dataset_id === activeDataset) : [];
   const selectedFiles = files.filter((file) => selected.has(file.id));
   const selectedSize = selectedFiles.reduce((sum, file) => sum + file.size, 0);
+  const selectedHasSchema = selectedFiles.some((file) => Boolean(file.documents?.schema));
+  const selectedHasPdfJa = selectedFiles.some((file) => Boolean(file.documents?.pdf_ja));
+  const selectedHasPdfEn = selectedFiles.some((file) => Boolean(file.documents?.pdf_en));
   const selectedSchemaDocuments = selectedFiles.flatMap((file) => [
     includeSchema ? file.documents?.schema : null,
   ].filter((document): document is CatalogDocument => Boolean(document))
@@ -432,10 +435,10 @@ export function CatalogApp() {
         {selectedFiles.length > 0 && <><div className="download-summary"><strong>{selectedDownloadCount} files</strong><span>{humanSize(selectedDownloadSize)}</span></div>
         <p className="download-note">{tr("Webでは各ファイルをブラウザのダウンロードフォルダへ保存します．データセットの階層をそのまま作る場合は，CLIコマンドをコピーして取得してください．", "On the web, each file is saved to your browser's Downloads folder. To preserve the dataset directory structure, copy the CLI command and download with Davis.")}</p>
         <fieldset className="document-options"><legend>{tr("付属資料", "Companion documents")}</legend>
-          <label><input type="checkbox" checked={includeSchema} onChange={(event) => setIncludeSchema(event.target.checked)}/><span>schema.yaml</span></label>
-          {!includeSchema && <p className="document-warning">{tr("schema.yamlを含めない場合，列定義や利用条件が保存されず，将来Davisの整形・推定機能へ接続するときに再取得が必要になることがあります．", "Without schema.yaml, column definitions and terms of use are not saved locally, and you may need to download them again for future Davis formatting and modeling workflows.")}</p>}
-          <label><input type="checkbox" checked={includePdfJa} onChange={(event) => setIncludePdfJa(event.target.checked)}/><span>{tr("日本語説明PDF", "Japanese PDF")}</span></label>
-          <label><input type="checkbox" checked={includePdfEn} onChange={(event) => setIncludePdfEn(event.target.checked)}/><span>{tr("英語説明PDF", "English PDF")}</span></label>
+          <label className={!selectedHasSchema ? "document-option-unavailable" : undefined}><input type="checkbox" checked={selectedHasSchema && includeSchema} disabled={!selectedHasSchema} onChange={(event) => setIncludeSchema(event.target.checked)}/><span>schema.yaml</span></label>
+          {selectedHasSchema && !includeSchema && <p className="document-warning">{tr("schema.yamlを含めない場合，列定義や利用条件が保存されず，将来Davisの整形・推定機能へ接続するときに再取得が必要になることがあります．", "Without schema.yaml, column definitions and terms of use are not saved locally, and you may need to download them again for future Davis formatting and modeling workflows.")}</p>}
+          <label className={!selectedHasPdfJa ? "document-option-unavailable" : undefined}><input type="checkbox" checked={selectedHasPdfJa && includePdfJa} disabled={!selectedHasPdfJa} onChange={(event) => setIncludePdfJa(event.target.checked)}/><span>{tr("日本語説明PDF", "Japanese PDF")}</span></label>
+          <label className={!selectedHasPdfEn ? "document-option-unavailable" : undefined}><input type="checkbox" checked={selectedHasPdfEn && includePdfEn} disabled={!selectedHasPdfEn} onChange={(event) => setIncludePdfEn(event.target.checked)}/><span>{tr("英語説明PDF", "English PDF")}</span></label>
           <p>{tr(`実データ${selectedFiles.length}件 + 付属資料${selectedSchemaDocuments.length + selectedPdfDocuments.length}件`, `${selectedFiles.length} data files + ${selectedSchemaDocuments.length + selectedPdfDocuments.length} companion documents`)}</p>
         </fieldset>
         {selectedLicenses.length > 0 && <div className="license-list"><strong>{tr("利用条件", "Terms of use")}</strong>{selectedLicenses.map((value) => <p key={value}>{value}</p>)}</div>}
