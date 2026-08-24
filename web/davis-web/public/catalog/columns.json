@@ -4730,196 +4730,280 @@
     "file_id": "2008_PT_zone_master/chiba.csv",
     "name": "Zone Large",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "大ゾーンのコード。",
+      "en": "Code of the large zone."
+    }
   },
   {
     "dataset_id": "PT_data",
     "file_id": "2008_PT_zone_master/chiba.csv",
     "name": "Zone Medium",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "中ゾーンのコード。",
+      "en": "Code of the medium zone."
+    }
   },
   {
     "dataset_id": "PT_data",
     "file_id": "2008_PT_zone_master/chiba.csv",
     "name": "Planning Base Zone",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "計画基本ゾーンのコード。",
+      "en": "Code of the planning base zone."
+    }
   },
   {
     "dataset_id": "PT_data",
     "file_id": "2008_PT_zone_master/chiba.csv",
     "name": "Zone Small",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "小ゾーンのコード。",
+      "en": "Code of the small zone."
+    }
   },
   {
     "dataset_id": "PT_data",
     "file_id": "2008_PT_zone_master/chiba.csv",
     "name": "City/Town/Village",
     "data_type": "String",
-    "description": null
+    "description": {
+      "ja": "市区町村名。",
+      "en": "Name of the city, ward, town, or village."
+    }
   },
   {
     "dataset_id": "PT_data",
     "file_id": "2008_PT_zone_master/chiba.csv",
     "name": "Neighborhood/Area Name",
     "data_type": "String",
-    "description": null
+    "description": {
+      "ja": "町丁・地区名。",
+      "en": "Name of the neighborhood or area."
+    }
   },
   {
     "dataset_id": "PT_data",
     "file_id": "2008_PT_zone_master/ibaraki.csv",
     "name": "Zone Large",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "大ゾーンのコード。",
+      "en": "Code of the large zone."
+    }
   },
   {
     "dataset_id": "PT_data",
     "file_id": "2008_PT_zone_master/ibaraki.csv",
     "name": "Zone Medium",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "中ゾーンのコード。",
+      "en": "Code of the medium zone."
+    }
   },
   {
     "dataset_id": "PT_data",
     "file_id": "2008_PT_zone_master/ibaraki.csv",
     "name": "Planning Base Zone",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "計画基本ゾーンのコード。",
+      "en": "Code of the planning base zone."
+    }
   },
   {
     "dataset_id": "PT_data",
     "file_id": "2008_PT_zone_master/ibaraki.csv",
     "name": "Zone Small",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "小ゾーンのコード。",
+      "en": "Code of the small zone."
+    }
   },
   {
     "dataset_id": "PT_data",
     "file_id": "2008_PT_zone_master/ibaraki.csv",
     "name": "City/Town/Village",
     "data_type": "String",
-    "description": null
+    "description": {
+      "ja": "市区町村名。",
+      "en": "Name of the city, ward, town, or village."
+    }
   },
   {
     "dataset_id": "PT_data",
     "file_id": "2008_PT_zone_master/ibaraki.csv",
     "name": "Neighborhood/Area Name",
     "data_type": "String",
-    "description": null
+    "description": {
+      "ja": "町丁・地区名。",
+      "en": "Name of the neighborhood or area."
+    }
   },
   {
     "dataset_id": "PT_data",
     "file_id": "2008_PT_zone_master/kanagawa.csv",
     "name": "Zone Large",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "大ゾーンのコード。",
+      "en": "Code of the large zone."
+    }
   },
   {
     "dataset_id": "PT_data",
     "file_id": "2008_PT_zone_master/kanagawa.csv",
     "name": "Zone Medium",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "中ゾーンのコード。",
+      "en": "Code of the medium zone."
+    }
   },
   {
     "dataset_id": "PT_data",
     "file_id": "2008_PT_zone_master/kanagawa.csv",
     "name": "Planning Base Zone",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "計画基本ゾーンのコード。",
+      "en": "Code of the planning base zone."
+    }
   },
   {
     "dataset_id": "PT_data",
     "file_id": "2008_PT_zone_master/kanagawa.csv",
     "name": "Zone Small",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "小ゾーンのコード。",
+      "en": "Code of the small zone."
+    }
   },
   {
     "dataset_id": "PT_data",
     "file_id": "2008_PT_zone_master/kanagawa.csv",
     "name": "City/Town/Village",
     "data_type": "String",
-    "description": null
+    "description": {
+      "ja": "市区町村名。",
+      "en": "Name of the city, ward, town, or village."
+    }
   },
   {
     "dataset_id": "PT_data",
     "file_id": "2008_PT_zone_master/kanagawa.csv",
     "name": "Neighborhood/Area Name",
     "data_type": "String",
-    "description": null
+    "description": {
+      "ja": "町丁・地区名。",
+      "en": "Name of the neighborhood or area."
+    }
   },
   {
     "dataset_id": "PT_data",
     "file_id": "2008_PT_zone_master/saitama.csv",
     "name": "Zone Large",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "大ゾーンのコード。",
+      "en": "Code of the large zone."
+    }
   },
   {
     "dataset_id": "PT_data",
     "file_id": "2008_PT_zone_master/saitama.csv",
     "name": "Zone Medium",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "中ゾーンのコード。",
+      "en": "Code of the medium zone."
+    }
   },
   {
     "dataset_id": "PT_data",
     "file_id": "2008_PT_zone_master/saitama.csv",
     "name": "Planning Base Zone",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "計画基本ゾーンのコード。",
+      "en": "Code of the planning base zone."
+    }
   },
   {
     "dataset_id": "PT_data",
     "file_id": "2008_PT_zone_master/saitama.csv",
     "name": "Zone Small",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "小ゾーンのコード。",
+      "en": "Code of the small zone."
+    }
   },
   {
     "dataset_id": "PT_data",
     "file_id": "2008_PT_zone_master/saitama.csv",
     "name": "City/Town/Village",
     "data_type": "String",
-    "description": null
+    "description": {
+      "ja": "市区町村名。",
+      "en": "Name of the city, ward, town, or village."
+    }
   },
   {
     "dataset_id": "PT_data",
     "file_id": "2008_PT_zone_master/saitama.csv",
     "name": "Neighborhood/Area Name",
     "data_type": "String",
-    "description": null
+    "description": {
+      "ja": "町丁・地区名。",
+      "en": "Name of the neighborhood or area."
+    }
   },
   {
     "dataset_id": "PT_data",
     "file_id": "2008_PT_zone_master/tokyo.csv",
     "name": "Zone Large",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "大ゾーンのコード。",
+      "en": "Code of the large zone."
+    }
   },
   {
     "dataset_id": "PT_data",
     "file_id": "2008_PT_zone_master/tokyo.csv",
     "name": "Zone Medium",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "中ゾーンのコード。",
+      "en": "Code of the medium zone."
+    }
   },
   {
     "dataset_id": "PT_data",
     "file_id": "2008_PT_zone_master/tokyo.csv",
     "name": "Planning Base Zone",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "計画基本ゾーンのコード。",
+      "en": "Code of the planning base zone."
+    }
   },
   {
     "dataset_id": "PT_data",
     "file_id": "2008_PT_zone_master/tokyo.csv",
     "name": "Zone Small",
     "data_type": "Int64",
-    "description": null
+    "description": {
+      "ja": "小ゾーンのコード。",
+      "en": "Code of the small zone."
+    }
   },
   {
     "dataset_id": "PT_data",
@@ -4936,14 +5020,20 @@
     "file_id": "2008_PT_zone_master/tokyo.csv",
     "name": "Neighborhood/Area Name",
     "data_type": "String",
-    "description": null
+    "description": {
+      "ja": "町丁・地区名。",
+      "en": "Name of the neighborhood or area."
+    }
   },
   {
     "dataset_id": "PT_data",
     "file_id": "2008_PT_zone_master/zones-by-municipality.csv",
     "name": "Prefecture",
     "data_type": "String",
-    "description": null
+    "description": {
+      "ja": "都道府県名。",
+      "en": "Name of the prefecture."
+    }
   },
   {
     "dataset_id": "PT_data",
@@ -4960,28 +5050,40 @@
     "file_id": "2008_PT_zone_master/zones-by-municipality.csv",
     "name": "Zone Large",
     "data_type": "String",
-    "description": null
+    "description": {
+      "ja": "大ゾーンのコード。",
+      "en": "Code of the large zone."
+    }
   },
   {
     "dataset_id": "PT_data",
     "file_id": "2008_PT_zone_master/zones-by-municipality.csv",
     "name": "Zone Medium",
     "data_type": "String",
-    "description": null
+    "description": {
+      "ja": "中ゾーンのコード。",
+      "en": "Code of the mediam zone."
+    }
   },
   {
     "dataset_id": "PT_data",
     "file_id": "2008_PT_zone_master/zones-by-municipality.csv",
     "name": "Planning Base Zone",
     "data_type": "String",
-    "description": null
+    "description": {
+      "ja": "計画基本ゾーンのコード。",
+      "en": "Code of the planning base zone."
+    }
   },
   {
     "dataset_id": "PT_data",
     "file_id": "2008_PT_zone_master/zones-by-municipality.csv",
     "name": "Zone Small",
     "data_type": "String",
-    "description": null
+    "description": {
+      "ja": "小ゾーンのコード。",
+      "en": "Code of the small zone."
+    }
   },
   {
     "dataset_id": "PT_data",
@@ -4989,8 +5091,8 @@
     "name": "TripID",
     "data_type": "Int64",
     "description": {
-      "ja": "出発地と目的地のペアをもつ移動を識別するID。",
-      "en": "An ID that identifies a movement with a pair of departure and destination."
+      "ja": "出発地から目的地までの各トリップを識別するID。",
+      "en": "An ID that identifies each trip from an origin to a destination."
     }
   },
   {
@@ -5029,8 +5131,8 @@
     "name": "TripNumber",
     "data_type": "Int64",
     "description": {
-      "ja": "一連のトリップの合計回数。",
-      "en": "The total number of trips in a series of trips."
+      "ja": "当該トリップチェーンに含まれる総トリップ回数。",
+      "en": "The total number of trips in the trip chain."
     }
   },
   {
@@ -5039,8 +5141,8 @@
     "name": "TripOrder",
     "data_type": "Int64",
     "description": {
-      "ja": "一連のトリップの中での順番。",
-      "en": "The order of the trip in a series of trips."
+      "ja": "当該トリップチェーン内でのトリップの順番。",
+      "en": "The order of the trip in the trip chain."
     }
   },
   {
@@ -5079,8 +5181,8 @@
     "name": "EnlargeCoefficient",
     "data_type": "Int64",
     "description": {
-      "ja": "調査で得られたサンプル数から実際の母集団数を推定するための係数。",
-      "en": "A coefficient used to estimate the actual population size from the sample size obtained in the PT survey."
+      "ja": "PT調査のサンプルから実際の母集団数を推定するための拡大係数。",
+      "en": "An expansion factor used to estimate the actual population size from the PT survey sample."
     }
   },
   {
@@ -5099,8 +5201,8 @@
     "name": "Stime",
     "data_type": "Int64",
     "description": {
-      "ja": "出発時刻。0:00から経過した秒数で表されている。",
-      "en": "Departure time, expressed as the number of seconds elapsed since 0:00."
+      "ja": "出発時刻。00:00（日本標準時、JST）から経過した秒数で表されている。",
+      "en": "Departure time, expressed as the number of seconds elapsed since 00:00 JST."
     }
   },
   {
@@ -5109,8 +5211,8 @@
     "name": "Gtime",
     "data_type": "Int64",
     "description": {
-      "ja": "到着時刻。0:00から経過した秒数で表されている。",
-      "en": "Arrival time, expressed as the number of seconds elapsed since 0:00."
+      "ja": "到着時刻。00:00（日本標準時、JST）から経過した秒数で表されている。",
+      "en": "Arrival time, expressed as the number of seconds elapsed since 00:00 JST."
     }
   },
   {
@@ -5119,8 +5221,8 @@
     "name": "StayTime",
     "data_type": "Int64",
     "description": {
-      "ja": "滞在時間。秒単位で表されている。",
-      "en": "Stay time, expressed in seconds."
+      "ja": "目的地での滞在時間。秒単位で表されている。",
+      "en": "Duration of stay at the destination, expressed in seconds."
     }
   },
   {
@@ -5128,42 +5230,60 @@
     "file_id": "out-of-zone-codes/out-of-zone-codes-others-overseas.csv",
     "name": "Zone Code",
     "data_type": "String",
-    "description": null
+    "description": {
+      "ja": "海外地域に割り当てられたゾーンコード。",
+      "en": "Zone code assigned to an overseas area."
+    }
   },
   {
     "dataset_id": "PT_data",
     "file_id": "out-of-zone-codes/out-of-zone-codes-others-overseas.csv",
     "name": "Foreign",
     "data_type": "String",
-    "description": null
+    "description": {
+      "ja": "海外地域の区分を表す項目。",
+      "en": "Field for foreign-area classification."
+    }
   },
   {
     "dataset_id": "PT_data",
     "file_id": "out-of-zone-codes/out-of-zone-codes-others-overseas.csv",
     "name": "Place Name",
     "data_type": "String",
-    "description": null
+    "description": {
+      "ja": "海外地域の名称。",
+      "en": "Name of the overseas area."
+    }
   },
   {
     "dataset_id": "PT_data",
     "file_id": "out-of-zone-codes/out-of-zone-codes-others.csv",
     "name": "Zone Code",
     "data_type": "String",
-    "description": null
+    "description": {
+      "ja": "対象領域外の地域に割り当てられたゾーンコード。",
+      "en": "Zone code assigned to an area outside the targegt area."
+    }
   },
   {
     "dataset_id": "PT_data",
     "file_id": "out-of-zone-codes/out-of-zone-codes-others.csv",
     "name": "Prefecture",
     "data_type": "String",
-    "description": null
+    "description": {
+      "ja": "都道府県名。",
+      "en": "Name of the prefecture."
+    }
   },
   {
     "dataset_id": "PT_data",
     "file_id": "out-of-zone-codes/out-of-zone-codes-others.csv",
     "name": "City Name",
     "data_type": "String",
-    "description": null
+    "description": {
+      "ja": "該当する場合の市または地域の名称。",
+      "en": "Name of the city or designated area, where applicable."
+    }
   },
   {
     "dataset_id": "PT_data",
@@ -5180,21 +5300,30 @@
     "file_id": "out-of-zone-codes/out-of-zone-codes.csv",
     "name": "Zone Code",
     "data_type": "String",
-    "description": null
+    "description": {
+      "ja": "対象領域外の地域に割り当てられたゾーンコード。",
+      "en": "Zone code assigned to an area outside the target area."
+    }
   },
   {
     "dataset_id": "PT_data",
     "file_id": "out-of-zone-codes/out-of-zone-codes.csv",
     "name": "Prefecture",
     "data_type": "String",
-    "description": null
+    "description": {
+      "ja": "都道府県名。",
+      "en": "Name of the prefecture."
+    }
   },
   {
     "dataset_id": "PT_data",
     "file_id": "out-of-zone-codes/out-of-zone-codes.csv",
     "name": "City Name",
     "data_type": "String",
-    "description": null
+    "description": {
+      "ja": "該当する場合の市または地域の名称。",
+      "en": "Name of the city or designated area, where applicable."
+    }
   },
   {
     "dataset_id": "PT_data",
@@ -11924,17 +12053,17 @@
   {
     "dataset_id": "network/matsuyama",
     "file_id": "link.csv",
-    "name": "Length",
+    "name": "length",
     "data_type": "Int64",
     "description": {
-      "ja": "リンク経路の距離",
-      "en": "Link path distance"
+      "ja": "リンク経路の距離 (m)",
+      "en": "Link path distance (m)"
     }
   },
   {
     "dataset_id": "network/matsuyama",
     "file_id": "link.csv",
-    "name": "Speed",
+    "name": "speed",
     "data_type": "Int64",
     "description": {
       "ja": "旅行速度",
@@ -11977,8 +12106,8 @@
     "name": "LinkID",
     "data_type": "Int64",
     "description": {
-      "ja": "リンク番号\n10000000番台: 徒歩リンク (DRM)\n20000000番台: 鉄道リンク\n30000000番台: バスリンク\n40000000番台: 鉄道駅徒歩NWコネクター\n50000000番台: バス停徒歩NWコネクター\n100000000番台: 徒歩リンク (豊洲詳細ネット)\n",
-      "en": "Link Number\nthe 10000000s: Walking Link (DRM)\nthe 20000000s: Railroad Link\nthe 30000000s: Bus Link\nthe 40000000s: Railroad Station Walking NW Connector\nthe 50000000s: Bus Stop Walking NW Connector\nthe 100000000s: Walking Link (Toyosu Detailed Network)\n"
+      "ja": "リンク番号 10000000番台: 徒歩リンク (DRM) 20000000番台: 鉄道リンク 30000000番台: バスリンク 40000000番台: 鉄道駅徒歩NWコネクター 50000000番台: バス停徒歩NWコネクター 100000000番台: 徒歩リンク (豊洲詳細ネット)",
+      "en": "Link Number the 10000000s: Walking Link (DRM) the 20000000s: Railroad Link the 30000000s: Bus Link the 40000000s: Railroad Station Walking NW Connector the 50000000s: Bus Stop Walking NW Connector the 100000000s: Walking Link (Toyosu Detailed Network)"
     }
   },
   {
@@ -11997,8 +12126,8 @@
     "name": "operator name",
     "data_type": "String",
     "description": {
-      "ja": "バスリンクの場合、 バス事業者名\n鉄道リンクの場合、 鉄道事業者名\n徒歩リンクの場合、 高速、 国道、 都道府県道、 市道、 その他の別\n自動車リンクの場合、1の位道路種別 10の位道路管理者\n",
-      "en": "For bus links, enter the bus operator's name.\nFor rail links, enter the rail operator's name.\nFor walking links, enter expressway, national highway, prefectural road, city road, or other.\nFor car links, enter the road type in the first digit and the road administrator in the tenth digit.\n"
+      "ja": "バスリンクの場合、 バス事業者名 鉄道リンクの場合、 鉄道事業者名 徒歩リンクの場合、 高速、 国道、 都道府県道、 市道、 その他の別 自動車リンクの場合、1の位道路種別 10の位道路管理者",
+      "en": "For bus links, enter the bus operator's name. For rail links, enter the rail operator's name. For walking links, enter expressway, national highway, prefectural road, city road, or other. For car links, enter the road type in the first digit and the road administrator in the tenth digit."
     }
   },
   {
@@ -12007,8 +12136,8 @@
     "name": "route name",
     "data_type": "String",
     "description": {
-      "ja": "バスの場合、 系統番号\n鉄道の場合、 鉄道の路線名\n道路の場合、 道路の路線名\n自動車リンクの場合、 路線番号\n",
-      "en": "For buses, route number\nFor trains, railway line name\nFor roads, road line name\nFor car links, route number\n"
+      "ja": "バスの場合、 系統番号 鉄道の場合、 鉄道の路線名 道路の場合、 道路の路線名 自動車リンクの場合、 路線番号",
+      "en": "For buses, route number For trains, railway line name For roads, road line name For car links, route number"
     }
   },
   {
@@ -12017,8 +12146,8 @@
     "name": "link type code",
     "data_type": "Int64",
     "description": {
-      "ja": "1: 徒歩リンク (W) DRM 豊洲エリア内の徒歩DRMリンクは方向規制で通行不可0 を設定\n2: 鉄道リンク (R)\n3: バスリンク (B)\n10: 豊洲歩道リンク (WD)\n11: 徒歩リンクメッシュコネクタリンク (WW)DRM境界ノード間に設定\n13: 徒歩リンク豊洲詳細ネットとDRMのコネクタリンク (WDW)\n14: 豊洲駅構内リンク (WT)\n21: 徒歩⇒鉄道駅コネクタリンク (RC_ON) 基本料金課金あり、 待ち時間あり\n22: 鉄道駅 徒歩コネクタリンク (RC_OFF) 基本料金課金なし、 待ち時間なし\n23: 駅構内鉄道乗り換えリンク (TS_ON) 基本料金課金なし、 待ち時間あり\n31: 徒歩⇒バス停コネクタリンク (BC_ON) 基本料金課金あり、 待ち時間あり\n32: バス停徒歩コネクタリンク (BC_OFF) 基本料金課金なし、 待ち時間なし\n",
-      "en": "1: Walking Link (W) DRM Walking DRM links within the Toyosu area are set to 0 with directional restrictions.\n2: Railroad Link (R)\n3: Bus Link (B)\n10: Toyosu Pedestrian Link (WD)\n11: Walking Link Mesh Connector Link (WW) Set between DRM boundary nodes\n13: Walking Link Toyosu Detailed Net and DRM Connector Link (WDW)\n14: Toyosu Station Link (WT)\n21: Walking to Railroad Station Connector Link (RC_ON) Basic fee charged, waiting time required\n22: Railroad Station to Walking Connector Link (RC_OFF) No basic fee charged, no waiting time\n23: Station to Railroad Transfer Link (TS_ON) No basic fee charged, waiting time required\n31: Walking to Bus Stop Connector Link (BC_ON) Basic fee charged, waiting time required\n32: Bus Stop to Walking Connector Link (BC_OFF) No basic fee charged, no waiting time\n"
+      "ja": "1: 徒歩リンク (W) DRM 豊洲エリア内の徒歩DRMリンクは方向規制で通行不可0 を設定 2: 鉄道リンク (R) 3: バスリンク (B) 10: 豊洲歩道リンク (WD) 11: 徒歩リンクメッシュコネクタリンク (WW)DRM境界ノード間に設定 13: 徒歩リンク豊洲詳細ネットとDRMのコネクタリンク (WDW) 14: 豊洲駅構内リンク (WT) 21: 徒歩⇒鉄道駅コネクタリンク (RC_ON) 基本料金課金あり、 待ち時間あり 22: 鉄道駅 徒歩コネクタリンク (RC_OFF) 基本料金課金なし、 待ち時間なし 23: 駅構内鉄道乗り換えリンク (TS_ON) 基本料金課金なし、 待ち時間あり 31: 徒歩⇒バス停コネクタリンク (BC_ON) 基本料金課金あり、 待ち時間あり 32: バス停徒歩コネクタリンク (BC_OFF) 基本料金課金なし、 待ち時間なし",
+      "en": "1: Walking Link (W) DRM Walking DRM links within the Toyosu area are set to 0 with directional restrictions. 2: Railroad Link (R) 3: Bus Link (B) 10: Toyosu Pedestrian Link (WD) 11: Walking Link Mesh Connector Link (WW) Set between DRM boundary nodes 13: Walking Link Toyosu Detailed Net and DRM Connector Link (WDW) 14: Toyosu Station Link (WT) 21: Walking to Railroad Station Connector Link (RC_ON) Basic fee charged, waiting time required 22: Railroad Station to Walking Connector Link (RC_OFF) No basic fee charged, no waiting time 23: Station to Railroad Transfer Link (TS_ON) No basic fee charged, waiting time required 31: Walking to Bus Stop Connector Link (BC_ON) Basic fee charged, waiting time required 32: Bus Stop to Walking Connector Link (BC_OFF) No basic fee charged, no waiting time"
     }
   },
   {
@@ -12027,58 +12156,58 @@
     "name": "link type",
     "data_type": "String",
     "description": {
-      "ja": "リンク種別コードに対応した名称\n例) リンク種別コードが1の場合…W\n",
-      "en": "Name corresponding to link type code\nExample) If the link type code is 1...W\n"
+      "ja": "リンク種別コードに対応した名称 例) リンク種別コードが1の場合…W",
+      "en": "Name corresponding to link type code Example) If the link type code is 1...W"
     }
   },
   {
     "dataset_id": "network/tokyo-metropolitan-area",
     "file_id": "bus_link.csv",
-    "name": "morning service interval (min)",
+    "name": "morning service interval",
     "data_type": "Int64",
     "description": {
-      "ja": "運行間隔を分で入力",
-      "en": "Enter the interval in minutes"
+      "ja": "運行間隔 (min)",
+      "en": "Enter the interval (min)"
     }
   },
   {
     "dataset_id": "network/tokyo-metropolitan-area",
     "file_id": "bus_link.csv",
-    "name": "daytime service interval (min)",
+    "name": "daytime service interval",
     "data_type": "Int64",
     "description": {
-      "ja": "運行間隔を分で入力",
-      "en": "Enter the interval in minutes"
+      "ja": "運行間隔 (min)",
+      "en": "Enter the interval (min)"
     }
   },
   {
     "dataset_id": "network/tokyo-metropolitan-area",
     "file_id": "bus_link.csv",
-    "name": "holiday service interval (min)",
+    "name": "holiday service interval",
     "data_type": "Int64",
     "description": {
-      "ja": "運行間隔を分で入力",
-      "en": "Enter the interval in minutes"
+      "ja": "運行間隔 (min)",
+      "en": "Enter the interval (min)"
     }
   },
   {
     "dataset_id": "network/tokyo-metropolitan-area",
     "file_id": "bus_link.csv",
-    "name": "speed (km/h)",
+    "name": "speed",
     "data_type": "Float64",
     "description": {
-      "ja": "リンクの移動速度",
-      "en": "Link's movement speed"
+      "ja": "リンクの移動速度 (km/h)",
+      "en": "Link's movement speed (km/h)"
     }
   },
   {
     "dataset_id": "network/tokyo-metropolitan-area",
     "file_id": "bus_link.csv",
-    "name": "length (km)",
+    "name": "length",
     "data_type": "Float64",
     "description": {
-      "ja": "リンクの長さ",
-      "en": "Link length"
+      "ja": "リンクの長さ (km)",
+      "en": "Link length (km)"
     }
   },
   {
@@ -12087,8 +12216,8 @@
     "name": "direction restrictions",
     "data_type": "String",
     "description": {
-      "ja": "一方通行リンク、 両方向リンクの別\n0: 通行不可\n1: 両方向リンク\n2: 一方通行リンク (起点側ノード⇒終点側ノード)\n3: 一方通行リンク (終点側ノード⇒起点側ノード)\n",
-      "en": "One-way link or two-way link\n0: No access\n1: Two-way link\n2: One-way link (from source node to destination node)\n3: One-way link (from destination node to source node)\n"
+      "ja": "一方通行リンク、 両方向リンクの別 0: 通行不可 1: 両方向リンク 2: 一方通行リンク (起点側ノード⇒終点側ノード) 3: 一方通行リンク (終点側ノード⇒起点側ノード)",
+      "en": "One-way link or two-way link 0: No access 1: Two-way link 2: One-way link (from source node to destination node) 3: One-way link (from destination node to source node)"
     }
   },
   {
@@ -12107,8 +12236,8 @@
     "name": "fare code",
     "data_type": "Int64",
     "description": {
-      "ja": "0: 課金なしリンク\n1: 1以上課金リンク\n料金コード表を参照\n",
-      "en": "0: No charge link\n1: 1 or more charge link\nSee price code table\n"
+      "ja": "0: 課金なしリンク 1: 1以上課金リンク 料金コード表を参照",
+      "en": "0: No charge link 1: 1 or more charge link See price code table"
     }
   },
   {
@@ -12147,8 +12276,8 @@
     "name": "Pavement structure code",
     "data_type": "Int64",
     "description": {
-      "ja": "0: 不明･･･ 豊洲以外に指定\n1: 横断歩道\n2: 横断歩道なし横断リンク\n3: 歩道橋\n4: 駅構内\n5: 地下歩道\n6: 平面部歩道\n7: 橋梁部歩道\n8: 遊歩道公園内\n9: 公開空地\n-94: 交差点のすみきり (幅員コードは交差道路の主方向のものを設定)\n-96: 階段\n-97: 路側帯なし (歩道も路側帯もない道路)\n-1: 不明 (晴美周辺の工事中箇所に設定)\n",
-      "en": "0: Unknown... Designated outside Toyosu\n1: Crosswalk\n2: Crossing link without crosswalk\n3: Pedestrian bridge\n4: Inside station\n5: Underground walkway\n6: At-grade walkway\n7: Walkway over bridge\n8: Promenade in park\n9: Public open space\n-94: Corner of intersection (set width code based on the main direction of the intersecting road)\n-96: Stairs\n-97: No shoulder (road without sidewalk or shoulder)\n-1: Unknown (set for construction areas around Harumi)\n"
+      "ja": "0: 不明･･･ 豊洲以外に指定 1: 横断歩道 2: 横断歩道なし横断リンク 3: 歩道橋 4: 駅構内 5: 地下歩道 6: 平面部歩道 7: 橋梁部歩道 8: 遊歩道公園内 9: 公開空地 -94: 交差点のすみきり (幅員コードは交差道路の主方向のものを設定) -96: 階段 -97: 路側帯なし (歩道も路側帯もない道路) -1: 不明 (晴美周辺の工事中箇所に設定)",
+      "en": "0: Unknown... Designated outside Toyosu 1: Crosswalk 2: Crossing link without crosswalk 3: Pedestrian bridge 4: Inside station 5: Underground walkway 6: At-grade walkway 7: Walkway over bridge 8: Promenade in park 9: Public open space -94: Corner of intersection (set width code based on the main direction of the intersecting road) -96: Stairs -97: No shoulder (road without sidewalk or shoulder) -1: Unknown (set for construction areas around Harumi)"
     }
   },
   {
@@ -12157,8 +12286,8 @@
     "name": "Pavement width code",
     "data_type": "Int64",
     "description": {
-      "ja": "0: 不明 (未調査)\n1: 歩道なし\n2: 2m未満\n3: 2m~3.5m\n4: 3.5m~4.5m\n5: 4.5m以上\n",
-      "en": "0: Unknown (not surveyed)\n1: No sidewalk\n2: Less than 2m\n3: 2m-3.5m\n4: 3.5m-4.5m\n5: 4.5m or more\n"
+      "ja": "0: 不明 (未調査) 1: 歩道なし 2: 2m未満 3: 2m~3.5m 4: 3.5m~4.5m 5: 4.5m以上",
+      "en": "0: Unknown (not surveyed) 1: No sidewalk 2: Less than 2m 3: 2m-3.5m 4: 3.5m-4.5m 5: 4.5m or more"
     }
   },
   {
@@ -12167,8 +12296,8 @@
     "name": "Station layout code",
     "data_type": "Int64",
     "description": {
-      "ja": "0: 駅構内以外のリンク\n1: 階段\n2: エスカレーター\n3: エレベーター\n4: 改札\n5: 通路\n6: ダミー\n",
-      "en": "0: Links outside the station\n1: Stairs\n2: Escalators\n3: Elevators\n4: Ticket gates\n5: Passageways\n6: Dummy\n"
+      "ja": "0: 駅構内以外のリンク 1: 階段 2: エスカレーター 3: エレベーター 4: 改札 5: 通路 6: ダミー",
+      "en": "0: Links outside the station 1: Stairs 2: Escalators 3: Elevators 4: Ticket gates 5: Passageways 6: Dummy"
     }
   },
   {
@@ -12177,8 +12306,8 @@
     "name": "3D structure",
     "data_type": "Int64",
     "description": {
-      "ja": "-3: 地下3F\n-2: 地下2F\n-1: 地下1F\n0: 地上\n1: 地上1F\n99: 不明 (未調査)\n",
-      "en": "-3: 3rd basement floor\n-2: 2nd basement floor\n-1: 1st basement floor\n0: Above ground\n1: 1st above ground\n99: Unknown (uninvestigated)\n"
+      "ja": "-3: 地下3F -2: 地下2F -1: 地下1F 0: 地上 1: 地上1F 99: 不明 (未調査)",
+      "en": "-3: 3rd basement floor -2: 2nd basement floor -1: 1st basement floor 0: Above ground 1: 1st above ground 99: Unknown (uninvestigated)"
     }
   },
   {
@@ -12187,8 +12316,8 @@
     "name": "ONodeID",
     "data_type": "Int64",
     "description": {
-      "ja": "起点側ノード番号\n2000番未満: 豊洲歩道ノード\n10000000番台: 徒歩ノード\n20000000番台: 鉄道ノード\n30000000番台: バスノード\n",
-      "en": "Starting node number\nUnder 2000: Toyosu pedestrian node\nthe 10000000s: Pedestrian node\nthe 20000000s: Railroad node\nthe 30000000s: Bus node\n"
+      "ja": "起点側ノード番号 2000番未満: 豊洲歩道ノード 10000000番台: 徒歩ノード 20000000番台: 鉄道ノード 30000000番台: バスノード",
+      "en": "Starting node number Under 2000: Toyosu pedestrian node the 10000000s: Pedestrian node the 20000000s: Railroad node the 30000000s: Bus node"
     }
   },
   {
@@ -12197,8 +12326,8 @@
     "name": "ONodeName",
     "data_type": "String",
     "description": {
-      "ja": "起点側ノード名称\nONode Type が 1 (徒歩の場合): DRMメッシュ+ノード番号\nONodeType が 2 (鉄道の場合): 鉄道駅名\nONode Type が 3 (バスの場合): バス停名\n",
-      "en": "Starting node name\nONode Type 1 (for walking): DRM mesh + node number\nONode Type 2 (for trains): Train station name\nONode Type 3 (for buses): Bus stop name\n"
+      "ja": "起点側ノード名称 ONode Type が 1 (徒歩の場合): DRMメッシュ+ノード番号 ONodeType が 2 (鉄道の場合): 鉄道駅名 ONode Type が 3 (バスの場合): バス停名",
+      "en": "Starting node name ONode Type 1 (for walking): DRM mesh + node number ONode Type 2 (for trains): Train station name ONode Type 3 (for buses): Bus stop name"
     }
   },
   {
@@ -12207,8 +12336,8 @@
     "name": "ONodeLat",
     "data_type": "Float64",
     "description": {
-      "ja": "起点側座標 世界測地系 経度",
-      "en": "Origin coordinates World Geodetic System Longitude"
+      "ja": "起点側座標 世界測地系 緯度",
+      "en": "Origin coordinates World Geodetic System Latitude"
     }
   },
   {
@@ -12217,8 +12346,8 @@
     "name": "ONodeLon",
     "data_type": "Float64",
     "description": {
-      "ja": "起点側座標 世界測地系 緯度",
-      "en": "Origin coordinates World Geodetic System Latitude"
+      "ja": "起点側座標 世界測地系 経度",
+      "en": "Origin coordinates World Geodetic System Longitude"
     }
   },
   {
@@ -12247,8 +12376,8 @@
     "name": "DNodeLat",
     "data_type": "Float64",
     "description": {
-      "ja": "終点側座標 世界測地系 経度",
-      "en": "End point coordinates World Geodetic System Longitude"
+      "ja": "終点側座標 世界測地系 緯度",
+      "en": "End point coordinates World Geodetic System Latitude"
     }
   },
   {
@@ -12257,8 +12386,8 @@
     "name": "DNodeLon",
     "data_type": "Float64",
     "description": {
-      "ja": "終点側座標 世界測地系 緯度",
-      "en": "End point coordinates World Geodetic System Latitude"
+      "ja": "終点側座標 世界測地系 経度",
+      "en": "End point coordinates World Geodetic System Longitude"
     }
   },
   {
@@ -12267,8 +12396,8 @@
     "name": "NodeID",
     "data_type": "Int64",
     "description": {
-      "ja": "各ノードの識別ID\n10000000番台: 徒歩ノード\n20000000番台: 鉄道ノード\n30000000番台: バスノード\n",
-      "en": "Identification ID of each node\nthe 10000000s: Walking Node\nthe 20000000s: Railroad Node\nthe 30000000s: Bus Node\n"
+      "ja": "各ノードの識別ID 10000000番台: 徒歩ノード 20000000番台: 鉄道ノード 30000000番台: バスノード",
+      "en": "Identification ID of each node the 10000000s: Walking Node the 20000000s: Railroad Node the 30000000s: Bus Node"
     }
   },
   {
@@ -12277,8 +12406,8 @@
     "name": "NodeName",
     "data_type": "String",
     "description": {
-      "ja": "ノード名称\nNodeTypeが1 (徒歩の場合): DRMメッシュ+ノード番号\nNodeTypeが2 (鉄道の場合): 鉄道駅名\nNodeTypeが3 (バスの場合): バス停名\nNodeTypeが4 (バスNW分岐): Dummy\nNodeTypeが5 (自動車の場合): DRMメッシュ+ノード番号\n",
-      "en": "Node Name\nNodeType 1 (For Walking): DRM Mesh + Node Number\nNodeType 2 (For Trains): Train Station Name\nNodeType 3 (For Buses): Bus Stop Name\nNodeType 4 (Bus NW Branch): Dummy\nNodeType 5 (For Cars): DRM Mesh + Node Number\n"
+      "ja": "ノード名称 NodeTypeが1 (徒歩の場合): DRMメッシュ+ノード番号 NodeTypeが2 (鉄道の場合): 鉄道駅名 NodeTypeが3 (バスの場合): バス停名 NodeTypeが4 (バスNW分岐): Dummy NodeTypeが5 (自動車の場合): DRMメッシュ+ノード番号",
+      "en": "Node Name NodeType 1 (For Walking): DRM Mesh + Node Number NodeType 2 (For Trains): Train Station Name NodeType 3 (For Buses): Bus Stop Name NodeType 4 (Bus NW Branch): Dummy NodeType 5 (For Cars): DRM Mesh + Node Number"
     }
   },
   {
@@ -12287,8 +12416,8 @@
     "name": "NodeType",
     "data_type": "Int64",
     "description": {
-      "ja": "1: 徒歩NWノード\n2: 鉄道NWノード(駅)\n3: バスNWノード(バス停)\n4: バスNW分岐ノード\n5: 自動車NWノード\n",
-      "en": "1: Pedestrian network node\n2: Railroad network node (station)\n3: Bus network node (bus stop)\n4: Bus network branch node\n5: Automobile network node\n"
+      "ja": "1: 徒歩NWノード 2: 鉄道NWノード(駅) 3: バスNWノード(バス停) 4: バスNW分岐ノード 5: 自動車NWノード",
+      "en": "1: Pedestrian network node 2: Railroad network node (station) 3: Bus network node (bus stop) 4: Bus network branch node 5: Automobile network node"
     }
   },
   {
@@ -12297,8 +12426,8 @@
     "name": "Lat",
     "data_type": "Float64",
     "description": {
-      "ja": "起点側座標 世界測地系 WGS84 経度",
-      "en": "Origin coordinates World Geodetic System WGS84 Longitude"
+      "ja": "起点側座標 世界測地系 WGS84 緯度",
+      "en": "Origin coordinates World Geodetic System WGS84 Latitude"
     }
   },
   {
@@ -12397,8 +12526,8 @@
     "name": "Major_Route_Manager",
     "data_type": "Int64",
     "description": {
-      "ja": "道路管理者\n0:未調査\n1:ネクスコ\n2:首都高速道路株式会社\n3:道路降車\n4:国\n5:都道府県\n6:指定市\n7:その他市町村 (23区含む)\n8:その他管理者\n",
-      "en": "Road Administrator\n0: Not Surveyed\n1: NEXCO\n2: Metropolitan Expressway Co., Ltd.\n3: Roadside Exit\n4: National Government\n5: Prefectural Government\n6: Designated City\n7: Other Municipalities (including the 23 Wards)\n8: Other Administrators\n"
+      "ja": "道路管理者 0:未調査 1:ネクスコ 2:首都高速道路株式会社 3:道路降車 4:国 5:都道府県 6:指定市 7:その他市町村 (23区含む) 8:その他管理者",
+      "en": "Road Administrator 0: Not Surveyed 1: NEXCO 2: Metropolitan Expressway Co., Ltd. 3: Roadside Exit 4: National Government 5: Prefectural Government 6: Designated City 7: Other Municipalities (including the 23 Wards) 8: Other Administrators"
     }
   },
   {
@@ -12407,8 +12536,8 @@
     "name": "Major_Route_Road_Type",
     "data_type": "Int64",
     "description": {
-      "ja": "0:未調査\n1:高速自動車国道\n2:都市高速道路 (含指定都市高速道路)\n3:一般国道\n4:主要地方道 (都道府県道)\n5:主要地方道 (指定市道)\n6:一般都道府県道\n7:指定市の一般市道\n8:その他の道路\n",
-      "en": "0:Not surveyed\n1:National Expressway\n2:Urban Expressway (including designated urban expressways)\n3:National Highway\n4:Major Regional Road (Prefectural Road)\n5:Major Regional Road (Designated City Road)\n6:General Prefectural Road\n7:General City Road in Designated City\n8:Other Roads\n"
+      "ja": "0:未調査 1:高速自動車国道 2:都市高速道路 (含指定都市高速道路) 3:一般国道 4:主要地方道 (都道府県道) 5:主要地方道 (指定市道) 6:一般都道府県道 7:指定市の一般市道 8:その他の道路",
+      "en": "0:Not surveyed 1:National Expressway 2:Urban Expressway (including designated urban expressways) 3:National Highway 4:Major Regional Road (Prefectural Road) 5:Major Regional Road (Designated City Road) 6:General Prefectural Road 7:General City Road in Designated City 8:Other Roads"
     }
   },
   {
@@ -12417,8 +12546,8 @@
     "name": "Lane_Number_Code",
     "data_type": "Int64",
     "description": {
-      "ja": "0: 未調査\n1: 1車線\n2: 2車線\n3: 3車線\n4: 4車線\n5: 5車線\n6: 6車線以上\n",
-      "en": "0: Not surveyed\n1: 1 lane\n2: 2 lane\n3: 3 lane\n4: 4 lane\n5: 5 lane\n6: 6 or more lanes\n"
+      "ja": "0: 未調査 1: 1車線 2: 2車線 3: 3車線 4: 4車線 5: 5車線 6: 6車線以上",
+      "en": "0: Not surveyed 1: 1 lane 2: 2 lanes 3: 3 lanes 4: 4 lanes 5: 5 lanes 6: 6 or more lanes"
     }
   },
   {
@@ -12427,8 +12556,8 @@
     "name": "Toll_Road",
     "data_type": "Int64",
     "description": {
-      "ja": "0: 非該当\n1: 該当\n",
-      "en": "0: Not applicable\n1: Applicable\n"
+      "ja": "0: 非該当 1: 該当",
+      "en": "0: Not applicable 1: Applicable"
     }
   },
   {
@@ -12467,8 +12596,8 @@
     "name": "Link_Type",
     "data_type": "Int64",
     "description": {
-      "ja": "1:本線 (上下非分離) リンク\n2:本線 (上下分離) リンク\n3:連結路 (本線間の渡り線) リンク\n4:交差点内リンク\n5:連結路 (ランプ) リンク\n6:本線と同一路線の側道リンク\n7:SA等側線リンク\n8:自転車道等リンク\n9:本線側道接続リンク\n10:DRM メッシュ境界リンク\n0:未調査\n",
-      "en": "1:Main line (unseparated) link\n2:Main line (separated) link\n3:Connecting road (crossover between main lines) link\n4:Intersection link\n5:Connecting road (ramp) link\n6:Side road link on the same route as the main line\n7:Side road link (SA, etc.)\n8:Bicycle path link, etc.\n9:Main line side road connection link\n10:DRM mesh boundary link\n0:Unsurveyed\n"
+      "ja": "1:本線 (上下非分離) リンク 2:本線 (上下分離) リンク 3:連結路 (本線間の渡り線) リンク 4:交差点内リンク 5:連結路 (ランプ) リンク 6:本線と同一路線の側道リンク 7:SA等側線リンク 8:自転車道等リンク 9:本線側道接続リンク 10:DRM メッシュ境界リンク 0:未調査",
+      "en": "1:Main line (unseparated) link 2:Main line (separated) link 3:Connecting road (crossover between main lines) link 4:Intersection link 5:Connecting road (ramp) link 6:Side road link on the same route as the main line 7:Side road link (SA, etc.) 8:Bicycle path link, etc. 9:Main line side road connection link 10:DRM mesh boundary link 0:Unsurveyed"
     }
   },
   {
@@ -12477,8 +12606,8 @@
     "name": "Motorway",
     "data_type": "Int64",
     "description": {
-      "ja": "0: 非該当\n1: 該当\n",
-      "en": "0: Not applicable\n1: Applicable\n"
+      "ja": "0: 非該当 1: 該当",
+      "en": "0: Not applicable 1: Applicable"
     }
   },
   {
@@ -12487,8 +12616,8 @@
     "name": "Link_Passable",
     "data_type": "Int64",
     "description": {
-      "ja": "0:未調査\n1:自動車通行可\n2:自動車通行不可\n3:未供用 (含む工事中)\n4:計画決定\n",
-      "en": "0:Not surveyed\n1:Vehicle access permitted\n2:Vehicle access prohibited\n3:Not in service (including under construction)\n4:Plan approved\n"
+      "ja": "0:未調査 1:自動車通行可 2:自動車通行不可 3:未供用 (含む工事中) 4:計画決定",
+      "en": "0:Not surveyed 1:Vehicle access permitted 2:Vehicle access prohibited 3:Not in service (including under construction) 4:Plan approved"
     }
   },
   {
@@ -12497,8 +12626,8 @@
     "name": "Traffic_Restriction_Type",
     "data_type": "String",
     "description": {
-      "ja": "0:未調査\n1:規制なし\n2:通行禁止 (条件無)\n3:通行禁止 (条件付)\n4:一方通行 (正方向、 条件無)\n5:一方通行 (逆方向、 条件無)\n6:一方通行 (正方向、 条件付)\n7:一方通行 (逆方向、 条件付)\n8:一方通行 (正逆切り替えあり)\n",
-      "en": "0:Not surveyed\n1:No restrictions\n2:No entry (unconditional)\n3:No entry (conditional)\n4:One-way (forward, unconditional)\n5:One-way (reverse, unconditional)\n6:One-way (forward, conditional)\n7:One-way (reverse, conditional)\n8:One-way (forward/reverse switchable)\n"
+      "ja": "0:未調査 1:規制なし 2:通行禁止 (条件無) 3:通行禁止 (条件付) 4:一方通行 (正方向、 条件無) 5:一方通行 (逆方向、 条件無) 6:一方通行 (正方向、 条件付) 7:一方通行 (逆方向、 条件付) 8:一方通行 (正逆切り替えあり)",
+      "en": "0:Not surveyed 1:No restrictions 2:No entry (unconditional) 3:No entry (conditional) 4:One-way (forward, unconditional) 5:One-way (reverse, unconditional) 6:One-way (forward, conditional) 7:One-way (reverse, conditional) 8:One-way (forward/reverse switchable)"
     }
   },
   {
@@ -12507,8 +12636,8 @@
     "name": "Traffic_Restriction_Condition_Type",
     "data_type": "Int64",
     "description": {
-      "ja": "0:未調査\n1:車種のみ\n2:時刻のみ\n3:曜日のみ\n4:車種および時刻\n5:車種および曜日\n6:曜日および時刻\n7:車種、 時刻および曜日\n8:その他の条件\n",
-      "en": "0:Not investigated\n1:Vehicle type only\n2:Time only\n3:Day of week only\n4:Vehicle type and time\n5:Vehicle type and day of week\n6:Day of week and time\n7:Vehicle type, time, and day of week\n8:Other conditions\n"
+      "ja": "0:未調査 1:車種のみ 2:時刻のみ 3:曜日のみ 4:車種および時刻 5:車種および曜日 6:曜日および時刻 7:車種、 時刻および曜日 8:その他の条件",
+      "en": "0:Not investigated 1:Vehicle type only 2:Time only 3:Day of week only 4:Vehicle type and time 5:Vehicle type and day of week 6:Day of week and time 7:Vehicle type, time, and day of week 8:Other conditions"
     }
   },
   {
@@ -12517,8 +12646,8 @@
     "name": "Restricted_Speed",
     "data_type": "Int64",
     "description": {
-      "ja": "0:未調査\n1:30km/h未満\n2:40km/h\n3:50km/h\n4:60km/h\n5:70km/h\n6:80km/h\n7:100km/h\n",
-      "en": "0:Not surveyed\n1:Under 30km/h\n2:40km/h\n3:50km/h\n4:60km/h\n5:70km/h\n6:80km/h\n7:100km/h\n"
+      "ja": "0:未調査 1:30km/h未満 2:40km/h 3:50km/h 4:60km/h 5:70km/h 6:80km/h 7:100km/h",
+      "en": "0:Not surveyed 1:Under 30km/h 2:40km/h 3:50km/h 4:60km/h 5:70km/h 6:80km/h 7:100km/h"
     }
   },
   {
@@ -12527,8 +12656,8 @@
     "name": "Travel Speed",
     "data_type": "Float64",
     "description": {
-      "ja": "km/h × 10倍\nセンサス対象区間の場合、 H27センサス旅行速度\nセンサス対象区間以外の場合、 H27 センサスを道路種別 車線別に集計した速度値を設定\n※センサス区間以外の旅行速度設定値シートを参照\n",
-      "en": "km/h x 10\nFor census-covered sections, use the 2015 census travel speed.\nFor non-census-covered sections, use the speed calculated by the 2015 census, broken down by road type and lane.\n*See the travel speed setting sheet for non-census sections.\n"
+      "ja": "km/h × 10倍 センサス対象区間の場合、 H27センサス旅行速度 センサス対象区間以外の場合、 H27 センサスを道路種別 車線別に集計した速度値を設定 ※センサス区間以外の旅行速度設定値シートを参照",
+      "en": "km/h x 10 For census-covered sections, use the 2015 census travel speed. For non-census-covered sections, use the speed calculated by the 2015 census, broken down by road type and lane. *See the travel speed setting sheet for non-census sections."
     }
   },
   {
@@ -12617,8 +12746,8 @@
     "name": "NodeID",
     "data_type": "Int64",
     "description": {
-      "ja": "各ノードの識別ID\n10000000番台: 徒歩ノード\n20000000番台: 鉄道ノード\n30000000番台: バスノード\n",
-      "en": "Identification ID of each node\nthe 10000000s:Walking Node\nthe 20000000s:Railroad Node\nthe 30000000s:Bus Node\n"
+      "ja": "各ノードの識別ID 10000000番台: 徒歩ノード 20000000番台: 鉄道ノード 30000000番台: バスノード",
+      "en": "Identification ID of each node the 10000000s:Walking Node the 20000000s:Railroad Node the 30000000s:Bus Node"
     }
   },
   {
@@ -12627,8 +12756,8 @@
     "name": "NodeName",
     "data_type": "String",
     "description": {
-      "ja": "ノード名称\nNodeTypeが1 (徒歩の場合):DRMメッシュ+ノード番号\nNodeTypeが2 (鉄道の場合):鉄道駅名\nNodeTypeが3 (バスの場合):バス停名\nNodeTypeが4 (バスNW分岐):Dummy\nNodeTypeが5 (自動車の場合):DRMメッシュ+ノード番号\n",
-      "en": "Node Name\nNodeType 1 (For Walking):DRM Mesh + Node Number\nNodeType 2 (For Trains):Train Station Name\nNodeType 3 (For Buses):Bus Stop Name\nNodeType 4 (Bus NW Branch):Dummy\nNodeType 5 (For Cars):DRM Mesh + Node Number\n"
+      "ja": "ノード名称 NodeTypeが1 (徒歩の場合):DRMメッシュ+ノード番号 NodeTypeが2 (鉄道の場合):鉄道駅名 NodeTypeが3 (バスの場合):バス停名 NodeTypeが4 (バスNW分岐):Dummy NodeTypeが5 (自動車の場合):DRMメッシュ+ノード番号",
+      "en": "Node Name NodeType 1 (For Walking):DRM Mesh + Node Number NodeType 2 (For Trains):Train Station Name NodeType 3 (For Buses):Bus Stop Name NodeType 4 (Bus NW Branch):Dummy NodeType 5 (For Cars):DRM Mesh + Node Number"
     }
   },
   {
@@ -12637,8 +12766,8 @@
     "name": "NodeType",
     "data_type": "Int64",
     "description": {
-      "ja": "1:徒歩NWノード\n2:鉄道NWノード(駅)\n3:バスNWノード(バス停)\n4:バスNW分岐ノード\n5:自動車NWノード\n",
-      "en": "1:Pedestrian network node\n2:Railroad network node (station)\n3:Bus network node (bus stop)\n4:Bus network branch node\n5:Automobile network node\n"
+      "ja": "1:徒歩NWノード 2:鉄道NWノード(駅) 3:バスNWノード(バス停) 4:バスNW分岐ノード 5:自動車NWノード",
+      "en": "1:Pedestrian network node 2:Railroad network node (station) 3:Bus network node (bus stop) 4:Bus network branch node 5:Automobile network node"
     }
   },
   {
@@ -12647,8 +12776,8 @@
     "name": "Lat",
     "data_type": "Float64",
     "description": {
-      "ja": "起点側座標 世界測地系 WGS84 経度",
-      "en": "Origin coordinates World Geodetic System WGS84 Longitude"
+      "ja": "起点側座標 世界測地系 WGS84 緯度",
+      "en": "Origin coordinates World Geodetic System WGS84 Latitude"
     }
   },
   {
@@ -13017,8 +13146,8 @@
     "name": "LinkID",
     "data_type": "Int64",
     "description": {
-      "ja": "リンク番号\n10000000番台:徒歩リンク (DRM)\n20000000番台:鉄道リンク\n30000000番台:バスリンク\n40000000番台:鉄道駅徒歩NWコネクター\n50000000番台:バス停徒歩NWコネクター\n100000000番台:徒歩リンク (豊洲詳細ネット)\n",
-      "en": "Link Number\nthe 10000000s:Walking Link (DRM)\nthe 20000000s:Railroad Link\nthe 30000000s:Bus Link\nthe 40000000s:Railroad Station Walking NW Connector\nthe 50000000s:Bus Stop Walking NW Connector\nthe 100000000s:Walking Link (Toyosu Detailed Network)\n"
+      "ja": "リンク番号 10000000番台:徒歩リンク (DRM) 20000000番台:鉄道リンク 30000000番台:バスリンク 40000000番台:鉄道駅徒歩NWコネクター 50000000番台:バス停徒歩NWコネクター 100000000番台:徒歩リンク (豊洲詳細ネット)",
+      "en": "Link Number the 10000000s:Walking Link (DRM) the 20000000s:Railroad Link the 30000000s:Bus Link the 40000000s:Railroad Station Walking NW Connector the 50000000s:Bus Stop Walking NW Connector the 100000000s:Walking Link (Toyosu Detailed Network)"
     }
   },
   {
@@ -13037,8 +13166,8 @@
     "name": "operator name",
     "data_type": "String",
     "description": {
-      "ja": "バスリンクの場合、 バス事業者名\n鉄道リンクの場合、 鉄道事業者名\n徒歩リンクの場合、 高速、 国道、 都道府県道、 市道、 その他の別\n自動車リンクの場合、1の位道路種別 10の位道路管理者\n",
-      "en": "For bus links, enter the bus operator's name.\nFor rail links, enter the rail operator's name.\nFor walking links, enter expressway, national highway, prefectural road, city road, or other.\nFor car links, enter the road type in the first digit and the road administrator in the tenth digit.\n"
+      "ja": "バスリンクの場合、 バス事業者名 鉄道リンクの場合、 鉄道事業者名 徒歩リンクの場合、 高速、 国道、 都道府県道、 市道、 その他の別 自動車リンクの場合、1の位道路種別 10の位道路管理者",
+      "en": "For bus links, enter the bus operator's name. For rail links, enter the rail operator's name. For walking links, enter expressway, national highway, prefectural road, city road, or other. For car links, enter the road type in the first digit and the road administrator in the tenth digit."
     }
   },
   {
@@ -13047,8 +13176,8 @@
     "name": "route name",
     "data_type": "String",
     "description": {
-      "ja": "バスの場合、 系統番号\n鉄道の場合、 鉄道の路線名\n道路の場合、 道路の路線名\n自動車リンクの場合、 路線番号\n",
-      "en": "For buses, route number\nFor trains, railway line name\nFor roads, road line name\nFor car links, route number\n"
+      "ja": "バスの場合、 系統番号 鉄道の場合、 鉄道の路線名 道路の場合、 道路の路線名 自動車リンクの場合、 路線番号",
+      "en": "For buses, route number For trains, railway line name For roads, road line name For car links, route number"
     }
   },
   {
@@ -13057,8 +13186,8 @@
     "name": "link type code",
     "data_type": "Int64",
     "description": {
-      "ja": "1:徒歩リンク (W) DRM 豊洲エリア内の徒歩DRMリンクは方向規制で通行不可0 を設定\n2:鉄道リンク (R)\n3:バスリンク (B)\n10:豊洲歩道リンク (WD)\n11:徒歩リンクメッシュコネクタリンク (WW)DRM境界ノード間に設定\n13:徒歩リンク豊洲詳細ネットとDRMのコネクタリンク (WDW)\n14:豊洲駅構内リンク (WT)\n21:徒歩⇒鉄道駅コネクタリンク (RC_ON) 基本料金課金あり、 待ち時間あり\n22:鉄道駅 徒歩コネクタリンク (RC_OFF) 基本料金課金なし、 待ち時間なし\n23:駅構内鉄道乗り換えリンク (TS_ON) 基本料金課金なし、 待ち時間あり\n31:徒歩⇒バス停コネクタリンク (BC_ON) 基本料金課金あり、 待ち時間あり\n32:バス停徒歩コネクタリンク (BC_OFF) 基本料金課金なし、 待ち時間なし\n",
-      "en": "1:Walking Link (W) DRM Walking DRM links within the Toyosu area are set to 0 with directional restrictions.\n2:Railroad Link (R)\n3:Bus Link (B)\n10:Toyosu Pedestrian Link (WD)\n11:Walking Link Mesh Connector Link (WW) Set between DRM boundary nodes\n13:Walking Link Toyosu Detailed Net and DRM Connector Link (WDW)\n14:Toyosu Station Link (WT)\n21:Walking to Railroad Station Connector Link (RC_ON) Basic fee charged, waiting time required\n22:Railroad Station to Walking Connector Link (RC_OFF) No basic fee charged, no waiting time\n23:Station to Railroad Transfer Link (TS_ON) No basic fee charged, waiting time required\n31:Walking to Bus Stop Connector Link (BC_ON) Basic fee charged, waiting time required\n32:Bus Stop to Walking Connector Link (BC_OFF) No basic fee charged, no waiting time\n"
+      "ja": "1:徒歩リンク (W) DRM 豊洲エリア内の徒歩DRMリンクは方向規制で通行不可0 を設定 2:鉄道リンク (R) 3:バスリンク (B) 10:豊洲歩道リンク (WD) 11:徒歩リンクメッシュコネクタリンク (WW)DRM境界ノード間に設定 13:徒歩リンク豊洲詳細ネットとDRMのコネクタリンク (WDW) 14:豊洲駅構内リンク (WT) 21:徒歩⇒鉄道駅コネクタリンク (RC_ON) 基本料金課金あり、 待ち時間あり 22:鉄道駅 徒歩コネクタリンク (RC_OFF) 基本料金課金なし、 待ち時間なし 23:駅構内鉄道乗り換えリンク (TS_ON) 基本料金課金なし、 待ち時間あり 31:徒歩⇒バス停コネクタリンク (BC_ON) 基本料金課金あり、 待ち時間あり 32:バス停徒歩コネクタリンク (BC_OFF) 基本料金課金なし、 待ち時間なし",
+      "en": "1:Walking Link (W) DRM Walking DRM links within the Toyosu area are set to 0 with directional restrictions. 2:Railroad Link (R) 3:Bus Link (B) 10:Toyosu Pedestrian Link (WD) 11:Walking Link Mesh Connector Link (WW) Set between DRM boundary nodes 13:Walking Link Toyosu Detailed Net and DRM Connector Link (WDW) 14:Toyosu Station Link (WT) 21:Walking to Railroad Station Connector Link (RC_ON) Basic fee charged, waiting time required 22:Railroad Station to Walking Connector Link (RC_OFF) No basic fee charged, no waiting time 23:Station to Railroad Transfer Link (TS_ON) No basic fee charged, waiting time required 31:Walking to Bus Stop Connector Link (BC_ON) Basic fee charged, waiting time required 32:Bus Stop to Walking Connector Link (BC_OFF) No basic fee charged, no waiting time"
     }
   },
   {
@@ -13067,58 +13196,58 @@
     "name": "link type",
     "data_type": "String",
     "description": {
-      "ja": "リンク種別コードに対応した名称\n例) リンク種別コードが1の場合…W\n",
-      "en": "Name corresponding to link type code\nExample) If the link type code is 1...W\n"
+      "ja": "リンク種別コードに対応した名称 例) リンク種別コードが1の場合…W",
+      "en": "Name corresponding to link type code Example) If the link type code is 1...W"
     }
   },
   {
     "dataset_id": "network/tokyo-metropolitan-area",
     "file_id": "rail_link.csv",
-    "name": "morning service interval (min)",
+    "name": "morning service interval",
     "data_type": "Int64",
     "description": {
-      "ja": "運行間隔を分で入力",
-      "en": "Enter the interval in minutes"
+      "ja": "運行間隔 (min)",
+      "en": "Enter the interval (min)"
     }
   },
   {
     "dataset_id": "network/tokyo-metropolitan-area",
     "file_id": "rail_link.csv",
-    "name": "daytime service interval (min)",
+    "name": "daytime service interval",
     "data_type": "Int64",
     "description": {
-      "ja": "運行間隔を分で入力",
-      "en": "Enter the interval in minutes"
+      "ja": "運行間隔 (min)",
+      "en": "Enter the interval (min)"
     }
   },
   {
     "dataset_id": "network/tokyo-metropolitan-area",
     "file_id": "rail_link.csv",
-    "name": "holiday service interval (min)",
+    "name": "holiday service interval",
     "data_type": "Int64",
     "description": {
-      "ja": "運行間隔を分で入力",
-      "en": "Enter the interval in minutes"
+      "ja": "運行間隔 (min)",
+      "en": "Enter the interval (min)"
     }
   },
   {
     "dataset_id": "network/tokyo-metropolitan-area",
     "file_id": "rail_link.csv",
-    "name": "speed (km/h)",
+    "name": "speed",
     "data_type": "Int64",
     "description": {
-      "ja": "リンクの移動速度",
-      "en": "Link's movement speed"
+      "ja": "リンクの移動速度 (km/h)",
+      "en": "Link's movement speed (km/h)"
     }
   },
   {
     "dataset_id": "network/tokyo-metropolitan-area",
     "file_id": "rail_link.csv",
-    "name": "length (km)",
+    "name": "length",
     "data_type": "Float64",
     "description": {
-      "ja": "リンクの長さ",
-      "en": "Link length"
+      "ja": "リンクの長さ (km)",
+      "en": "Link length (km)"
     }
   },
   {
@@ -13127,8 +13256,8 @@
     "name": "direction restrictions",
     "data_type": "String",
     "description": {
-      "ja": "一方通行リンク、 両方向リンクの別\n0:通行不可\n1:両方向リンク\n2:一方通行リンク (起点側ノード⇒終点側ノード)\n3:一方通行リンク (終点側ノード⇒起点側ノード)\n",
-      "en": "One-way link or two-way link\n0:No access\n1:Two-way link\n2:One-way link (from source node to destination node)\n3:One-way link (from destination node to source node)\n"
+      "ja": "一方通行リンク、 両方向リンクの別 0:通行不可 1:両方向リンク 2:一方通行リンク (起点側ノード⇒終点側ノード) 3:一方通行リンク (終点側ノード⇒起点側ノード)",
+      "en": "One-way link or two-way link 0:No access 1:Two-way link 2:One-way link (from source node to destination node) 3:One-way link (from destination node to source node)"
     }
   },
   {
@@ -13147,8 +13276,8 @@
     "name": "fare code",
     "data_type": "Int64",
     "description": {
-      "ja": "0:課金なしリンク\n1:1以上課金リンク\n料金コード表を参照\n",
-      "en": "0:No charge link\n1:1 or more charge link\nSee price code table\n"
+      "ja": "0:課金なしリンク 1:1以上課金リンク 料金コード表を参照",
+      "en": "0:No charge link 1:1 or more charge link See price code table"
     }
   },
   {
@@ -13187,8 +13316,8 @@
     "name": "Pavement Structure Code",
     "data_type": "Int64",
     "description": {
-      "ja": "0: 不明･･･ 豊洲以外に指定\n1:横断歩道\n2:横断歩道なし横断リンク\n3:歩道橋\n4:駅構内\n5:地下歩道\n6:平面部歩道\n7:橋梁部歩道\n8:遊歩道公園内\n9:公開空地\n-94:交差点のすみきり (幅員コードは交差道路の主方向のものを設定)\n-96:階段\n-97:路側帯なし (歩道も路側帯もない道路)\n-1:不明 (晴美周辺の工事中箇所に設定)\n",
-      "en": "0:Unknown... Designated outside Toyosu\n1:Crosswalk\n2:Crossing link without crosswalk\n3:Pedestrian bridge\n4:Inside station\n5:Underground walkway\n6:At-grade walkway\n7:Walkway over bridge\n8:Promenade in park\n9:Public open space\n-94:Corner of intersection (set width code based on the main direction of the intersecting road)\n-96:Stairs\n-97:No shoulder (road without sidewalk or shoulder)\n-1:Unknown (set for construction areas around Harumi)\n"
+      "ja": "0: 不明･･･ 豊洲以外に指定 1:横断歩道 2:横断歩道なし横断リンク 3:歩道橋 4:駅構内 5:地下歩道 6:平面部歩道 7:橋梁部歩道 8:遊歩道公園内 9:公開空地 -94:交差点のすみきり (幅員コードは交差道路の主方向のものを設定) -96:階段 -97:路側帯なし (歩道も路側帯もない道路) -1:不明 (晴美周辺の工事中箇所に設定)",
+      "en": "0:Unknown... Designated outside Toyosu 1:Crosswalk 2:Crossing link without crosswalk 3:Pedestrian bridge 4:Inside station 5:Underground walkway 6:At-grade walkway 7:Walkway over bridge 8:Promenade in park 9:Public open space -94:Corner of intersection (set width code based on the main direction of the intersecting road) -96:Stairs -97:No shoulder (road without sidewalk or shoulder) -1:Unknown (set for construction areas around Harumi)"
     }
   },
   {
@@ -13197,8 +13326,8 @@
     "name": "Pavement Width Code",
     "data_type": "Int64",
     "description": {
-      "ja": "0:不明 (未調査)\n1:歩道なし\n2:2m未満\n3:2m~3.5m\n4:3.5m~4.5m\n5:4.5m以上\n",
-      "en": "0:Unknown (not surveyed)\n1:No sidewalk\n2:Less than 2m\n3:2m-3.5m\n4:3.5m-4.5m\n5:4.5m or more\n"
+      "ja": "0:不明 (未調査) 1:歩道なし 2:2m未満 3:2m~3.5m 4:3.5m~4.5m 5:4.5m以上",
+      "en": "0:Unknown (not surveyed) 1:No sidewalk 2:Less than 2m 3:2m-3.5m 4:3.5m-4.5m 5:4.5m or more"
     }
   },
   {
@@ -13207,8 +13336,8 @@
     "name": "Station Structure Code",
     "data_type": "Int64",
     "description": {
-      "ja": "0:駅構内以外のリンク\n1:階段\n2:エスカレーター\n3:エレベーター\n4:改札\n5:通路\n6:ダミー\n",
-      "en": "0:Links outside the station\n1:Stairs\n2:Escalators\n3:Elevators\n4:Ticket gates\n5:Passageways\n6:Dummy\n"
+      "ja": "0:駅構内以外のリンク 1:階段 2:エスカレーター 3:エレベーター 4:改札 5:通路 6:ダミー",
+      "en": "0:Links outside the station 1:Stairs 2:Escalators 3:Elevators 4:Ticket gates 5:Passageways 6:Dummy"
     }
   },
   {
@@ -13217,8 +13346,8 @@
     "name": "3D Structure",
     "data_type": "Int64",
     "description": {
-      "ja": "-3:地下3F\n-2:地下2F\n-1:地下1F\n0:地上\n1:地上1F\n99:不明 (未調査)\n",
-      "en": "-3:3rd basement floor\n-2:2nd basement floor\n-1:1st basement floor\n0:Above ground\n1:1st above ground\n99:Unknown (uninvestigated)\n"
+      "ja": "-3:地下3F -2:地下2F -1:地下1F 0:地上 1:地上1F 99:不明 (未調査)",
+      "en": "-3:3rd basement floor -2:2nd basement floor -1:1st basement floor 0:Above ground 1:1st above ground 99:Unknown (uninvestigated)"
     }
   },
   {
@@ -13227,8 +13356,8 @@
     "name": "ONodeID",
     "data_type": "Int64",
     "description": {
-      "ja": "起点側ノード番号\n2000番未満:豊洲歩道ノード\n10000000番台:徒歩ノード\n20000000番台:鉄道ノード\n30000000番台:バスノード\n",
-      "en": "Starting node number\nUnder 2000:Toyosu pedestrian node\nthe 10000000s:Pedestrian node\nthe 20000000s:Railroad node\nthe 30000000s:Bus node\n"
+      "ja": "起点側ノード番号 2000番未満:豊洲歩道ノード 10000000番台:徒歩ノード 20000000番台:鉄道ノード 30000000番台:バスノード",
+      "en": "Starting node number Under 2000:Toyosu pedestrian node the 10000000s:Pedestrian node the 20000000s:Railroad node the 30000000s:Bus node"
     }
   },
   {
@@ -13237,8 +13366,8 @@
     "name": "ONodeName",
     "data_type": "String",
     "description": {
-      "ja": "起点側ノード名称\nONode Type が 1 (徒歩の場合):DRMメッシュ+ノード番号\nONodeType が 2 (鉄道の場合):鉄道駅名\nONode Type が 3 (バスの場合):バス停名\n",
-      "en": "Starting node name\nONode Type 1 (for walking):DRM mesh + node number\nONode Type 2 (for trains):Train station name\nONode Type 3 (for buses):Bus stop name\n"
+      "ja": "起点側ノード名称 ONode Type が 1 (徒歩の場合):DRMメッシュ+ノード番号 ONodeType が 2 (鉄道の場合):鉄道駅名 ONode Type が 3 (バスの場合):バス停名",
+      "en": "Starting node name ONode Type 1 (for walking):DRM mesh + node number ONode Type 2 (for trains):Train station name ONode Type 3 (for buses):Bus stop name"
     }
   },
   {
@@ -13247,8 +13376,8 @@
     "name": "ONodeLat",
     "data_type": "Float64",
     "description": {
-      "ja": "起点側座標 世界測地系 経度",
-      "en": "Origin coordinates World Geodetic System Longitude"
+      "ja": "起点側座標 世界測地系 緯度",
+      "en": "Origin coordinates World Geodetic System Latitude"
     }
   },
   {
@@ -13257,8 +13386,8 @@
     "name": "ONodeLon",
     "data_type": "Float64",
     "description": {
-      "ja": "起点側座標 世界測地系 緯度",
-      "en": "Origin coordinates World Geodetic System Latitude"
+      "ja": "起点側座標 世界測地系 経度",
+      "en": "Origin coordinates World Geodetic System Longitude"
     }
   },
   {
@@ -13287,8 +13416,8 @@
     "name": "DNodeLat",
     "data_type": "Float64",
     "description": {
-      "ja": "終点側座標 世界測地系 経度",
-      "en": "End point coordinates World Geodetic System Longitude"
+      "ja": "終点側座標 世界測地系 緯度",
+      "en": "End point coordinates World Geodetic System Latitude"
     }
   },
   {
@@ -13297,8 +13426,8 @@
     "name": "DNodeLon",
     "data_type": "Float64",
     "description": {
-      "ja": "終点側座標 世界測地系 緯度",
-      "en": "End point coordinates World Geodetic System Latitude"
+      "ja": "終点側座標 世界測地系 経度",
+      "en": "End point coordinates World Geodetic System Longitude"
     }
   },
   {
@@ -13307,8 +13436,8 @@
     "name": "NodeID",
     "data_type": "Int64",
     "description": {
-      "ja": "各ノードの識別ID\n10000000番台:徒歩ノード\n20000000番台:鉄道ノード\n30000000番台:バスノード\n",
-      "en": "Identification ID of each node\nthe 10000000s:Walking Node\nthe 20000000s:Railroad Node\nthe 30000000s:Bus Node\n"
+      "ja": "各ノードの識別ID 10000000番台:徒歩ノード 20000000番台:鉄道ノード 30000000番台:バスノード",
+      "en": "Identification ID of each node the 10000000s:Walking Node the 20000000s:Railroad Node the 30000000s:Bus Node"
     }
   },
   {
@@ -13317,8 +13446,8 @@
     "name": "NodeName",
     "data_type": "String",
     "description": {
-      "ja": "ノード名称\nNodeTypeが1 (徒歩の場合):DRMメッシュ+ノード番号\nNodeTypeが2 (鉄道の場合):鉄道駅名\nNodeTypeが3 (バスの場合):バス停名\nNodeTypeが4 (バスNW分岐):Dummy\nNodeTypeが5 (自動車の場合):DRMメッシュ+ノード番号\n",
-      "en": "Node Name\nNodeType 1 (For Walking):DRM Mesh + Node Number\nNodeType 2 (For Trains):Train Station Name\nNodeType 3 (For Buses):Bus Stop Name\nNodeType 4 (Bus NW Branch):Dummy\nNodeType 5 (For Cars):DRM Mesh + Node Number\n"
+      "ja": "ノード名称 NodeTypeが1 (徒歩の場合):DRMメッシュ+ノード番号 NodeTypeが2 (鉄道の場合):鉄道駅名 NodeTypeが3 (バスの場合):バス停名 NodeTypeが4 (バスNW分岐):Dummy NodeTypeが5 (自動車の場合):DRMメッシュ+ノード番号",
+      "en": "Node Name NodeType 1 (For Walking):DRM Mesh + Node Number NodeType 2 (For Trains):Train Station Name NodeType 3 (For Buses):Bus Stop Name NodeType 4 (Bus NW Branch):Dummy NodeType 5 (For Cars):DRM Mesh + Node Number"
     }
   },
   {
@@ -13327,8 +13456,8 @@
     "name": "NodeType",
     "data_type": "Int64",
     "description": {
-      "ja": "1:徒歩NWノード\n2:鉄道NWノード(駅)\n3:バスNWノード(バス停)\n4:バスNW分岐ノード\n5:自動車NWノード\n",
-      "en": "1:Pedestrian network node\n2:Railroad network node (station)\n3:Bus network node (bus stop)\n4:Bus network branch node\n5:Automobile network node\n"
+      "ja": "1:徒歩NWノード 2:鉄道NWノード(駅) 3:バスNWノード(バス停) 4:バスNW分岐ノード 5:自動車NWノード",
+      "en": "1:Pedestrian network node 2:Railroad network node (station) 3:Bus network node (bus stop) 4:Bus network branch node 5:Automobile network node"
     }
   },
   {
@@ -13337,8 +13466,8 @@
     "name": "Lat",
     "data_type": "Float64",
     "description": {
-      "ja": "起点側座標 世界測地系 WGS84 経度",
-      "en": "Origin coordinates World Geodetic System WGS84 Longitude"
+      "ja": "起点側座標 世界測地系 WGS84 緯度",
+      "en": "Origin coordinates World Geodetic System WGS84 Latitude"
     }
   },
   {
@@ -13367,8 +13496,8 @@
     "name": "LinkID",
     "data_type": "Int64",
     "description": {
-      "ja": "リンク番号\n10000000番台:徒歩リンク (DRM)\n20000000番台:鉄道リンク\n30000000番台:バスリンク\n40000000番台:鉄道駅徒歩NWコネクター\n50000000番台:バス停徒歩NWコネクター\n100000000番台:徒歩リンク (豊洲詳細ネット)\n",
-      "en": "Link Number\nthe 10000000s:Walking Link (DRM)\nthe 20000000s:Railroad Link\nthe 30000000s:Bus Link\nthe 40000000s:Railroad Station Walking NW Connector\nthe 50000000s:Bus Stop Walking NW Connector\nthe 100000000s:Walking Link (Toyosu Detailed Network)\n"
+      "ja": "リンク番号 10000000番台:徒歩リンク (DRM) 20000000番台:鉄道リンク 30000000番台:バスリンク 40000000番台:鉄道駅徒歩NWコネクター 50000000番台:バス停徒歩NWコネクター 100000000番台:徒歩リンク (豊洲詳細ネット)",
+      "en": "Link Number the 10000000s:Walking Link (DRM) the 20000000s:Railroad Link the 30000000s:Bus Link the 40000000s:Railroad Station Walking NW Connector the 50000000s:Bus Stop Walking NW Connector the 100000000s:Walking Link (Toyosu Detailed Network)"
     }
   },
   {
@@ -13387,8 +13516,8 @@
     "name": "operator name",
     "data_type": "String",
     "description": {
-      "ja": "バスリンクの場合、 バス事業者名\n鉄道リンクの場合、 鉄道事業者名\n徒歩リンクの場合、 高速、 国道、 都道府県道、 市道、 その他の別\n自動車リンクの場合、1の位道路種別 10の位道路管理者\n",
-      "en": "For bus links, enter the bus operator's name.\nFor rail links, enter the rail operator's name.\nFor walking links, enter expressway, national highway, prefectural road, city road, or other.\nFor car links, enter the road type in the first digit and the road administrator in the tenth digit.\n"
+      "ja": "バスリンクの場合、 バス事業者名 鉄道リンクの場合、 鉄道事業者名 徒歩リンクの場合、 高速、 国道、 都道府県道、 市道、 その他の別 自動車リンクの場合、1の位道路種別 10の位道路管理者",
+      "en": "For bus links, enter the bus operator's name. For rail links, enter the rail operator's name. For walking links, enter expressway, national highway, prefectural road, city road, or other. For car links, enter the road type in the first digit and the road administrator in the tenth digit."
     }
   },
   {
@@ -13397,8 +13526,8 @@
     "name": "route name",
     "data_type": "String",
     "description": {
-      "ja": "バスの場合、 系統番号\n鉄道の場合、 鉄道の路線名\n道路の場合、 道路の路線名\n自動車リンクの場合、 路線番号\n",
-      "en": "For buses, route number\nFor trains, railway line name\nFor roads, road line name\nFor car links, route number\n"
+      "ja": "バスの場合、 系統番号 鉄道の場合、 鉄道の路線名 道路の場合、 道路の路線名 自動車リンクの場合、 路線番号",
+      "en": "For buses, route number For trains, railway line name For roads, road line name For car links, route number"
     }
   },
   {
@@ -13407,8 +13536,8 @@
     "name": "link type code",
     "data_type": "Int64",
     "description": {
-      "ja": "1:徒歩リンク (W) DRM 豊洲エリア内の徒歩DRMリンクは方向規制で通行不可0 を設定\n2:鉄道リンク (R)\n3:バスリンク (B)\n10:豊洲歩道リンク (WD)\n11:徒歩リンクメッシュコネクタリンク (WW)DRM境界ノード間に設定\n13:徒歩リンク豊洲詳細ネットとDRMのコネクタリンク (WDW)\n14:豊洲駅構内リンク (WT)\n21:徒歩⇒鉄道駅コネクタリンク (RC_ON) 基本料金課金あり、 待ち時間あり\n22:鉄道駅 徒歩コネクタリンク (RC_OFF) 基本料金課金なし、 待ち時間なし\n23:駅構内鉄道乗り換えリンク (TS_ON) 基本料金課金なし、 待ち時間あり\n31:徒歩⇒バス停コネクタリンク (BC_ON) 基本料金課金あり、 待ち時間あり\n32:バス停徒歩コネクタリンク (BC_OFF) 基本料金課金なし、 待ち時間なし\n",
-      "en": "1:Walking Link (W) DRM Walking DRM links within the Toyosu area are set to 0 with directional restrictions.\n2:Railroad Link (R)\n3:Bus Link (B)\n10:Toyosu Pedestrian Link (WD)\n11:Walking Link Mesh Connector Link (WW) Set between DRM boundary nodes\n13:Walking Link Toyosu Detailed Net and DRM Connector Link (WDW)\n14:Toyosu Station Link (WT)\n21:Walking to Railroad Station Connector Link (RC_ON) Basic fee charged, waiting time required\n22:Railroad Station to Walking Connector Link (RC_OFF) No basic fee charged, no waiting time\n23:Station to Railroad Transfer Link (TS_ON) No basic fee charged, waiting time required\n31:Walking to Bus Stop Connector Link (BC_ON) Basic fee charged, waiting time required\n32:Bus Stop to Walking Connector Link (BC_OFF) No basic fee charged, no waiting time\n"
+      "ja": "1:徒歩リンク (W) DRM 豊洲エリア内の徒歩DRMリンクは方向規制で通行不可0 を設定 2:鉄道リンク (R) 3:バスリンク (B) 10:豊洲歩道リンク (WD) 11:徒歩リンクメッシュコネクタリンク (WW)DRM境界ノード間に設定 13:徒歩リンク豊洲詳細ネットとDRMのコネクタリンク (WDW) 14:豊洲駅構内リンク (WT) 21:徒歩⇒鉄道駅コネクタリンク (RC_ON) 基本料金課金あり、 待ち時間あり 22:鉄道駅 徒歩コネクタリンク (RC_OFF) 基本料金課金なし、 待ち時間なし 23:駅構内鉄道乗り換えリンク (TS_ON) 基本料金課金なし、 待ち時間あり 31:徒歩⇒バス停コネクタリンク (BC_ON) 基本料金課金あり、 待ち時間あり 32:バス停徒歩コネクタリンク (BC_OFF) 基本料金課金なし、 待ち時間なし",
+      "en": "1:Walking Link (W) DRM Walking DRM links within the Toyosu area are set to 0 with directional restrictions. 2:Railroad Link (R) 3:Bus Link (B) 10:Toyosu Pedestrian Link (WD) 11:Walking Link Mesh Connector Link (WW) Set between DRM boundary nodes 13:Walking Link Toyosu Detailed Net and DRM Connector Link (WDW) 14:Toyosu Station Link (WT) 21:Walking to Railroad Station Connector Link (RC_ON) Basic fee charged, waiting time required 22:Railroad Station to Walking Connector Link (RC_OFF) No basic fee charged, no waiting time 23:Station to Railroad Transfer Link (TS_ON) No basic fee charged, waiting time required 31:Walking to Bus Stop Connector Link (BC_ON) Basic fee charged, waiting time required 32:Bus Stop to Walking Connector Link (BC_OFF) No basic fee charged, no waiting time"
     }
   },
   {
@@ -13417,58 +13546,58 @@
     "name": "link type",
     "data_type": "String",
     "description": {
-      "ja": "リンク種別コードに対応した名称\n例) リンク種別コードが1の場合…W\n",
-      "en": "Name corresponding to link type code\nExample) If the link type code is 1...W\n"
+      "ja": "リンク種別コードに対応した名称 例) リンク種別コードが1の場合…W",
+      "en": "Name corresponding to link type code Example) If the link type code is 1...W"
     }
   },
   {
     "dataset_id": "network/tokyo-metropolitan-area",
     "file_id": "walk_link.csv",
-    "name": "morning service interval (min)",
+    "name": "morning service interval",
     "data_type": "Int64",
     "description": {
-      "ja": "運行間隔を分で入力",
-      "en": "Enter the interval in minutes"
+      "ja": "運行間隔 (min)",
+      "en": "Enter the interval (min)"
     }
   },
   {
     "dataset_id": "network/tokyo-metropolitan-area",
     "file_id": "walk_link.csv",
-    "name": "daytime service interval (min)",
+    "name": "daytime service interval",
     "data_type": "Int64",
     "description": {
-      "ja": "運行間隔を分で入力",
-      "en": "Enter the interval in minutes"
+      "ja": "運行間隔 (min)",
+      "en": "Enter the interval (min)"
     }
   },
   {
     "dataset_id": "network/tokyo-metropolitan-area",
     "file_id": "walk_link.csv",
-    "name": "holiday service interval (min)",
+    "name": "holiday service interval",
     "data_type": "Int64",
     "description": {
-      "ja": "運行間隔を分で入力",
-      "en": "Enter the interval in minutes"
+      "ja": "運行間隔 (min)",
+      "en": "Enter the interval (min)"
     }
   },
   {
     "dataset_id": "network/tokyo-metropolitan-area",
     "file_id": "walk_link.csv",
-    "name": "speed (km/h)",
+    "name": "speed",
     "data_type": "Float64",
     "description": {
-      "ja": "リンクの移動速度",
-      "en": "Link's movement speed"
+      "ja": "リンクの移動速度 (km/h)",
+      "en": "Link's movement speed (km/h)"
     }
   },
   {
     "dataset_id": "network/tokyo-metropolitan-area",
     "file_id": "walk_link.csv",
-    "name": "length (km)",
+    "name": "length",
     "data_type": "Float64",
     "description": {
-      "ja": "リンクの長さ",
-      "en": "Link length"
+      "ja": "リンクの長さ (km)",
+      "en": "Link length (km)"
     }
   },
   {
@@ -13477,8 +13606,8 @@
     "name": "direction restrictions",
     "data_type": "String",
     "description": {
-      "ja": "一方通行リンク、 両方向リンクの別\n0:通行不可\n1:両方向リンク\n2:一方通行リンク (起点側ノード⇒終点側ノード)\n3:一方通行リンク (終点側ノード⇒起点側ノード)\n",
-      "en": "One-way link or two-way link\n0:No access\n1:Two-way link\n2:One-way link (from source node to destination node)\n3:One-way link (from destination node to source node)\n"
+      "ja": "一方通行リンク、 両方向リンクの別 0:通行不可 1:両方向リンク 2:一方通行リンク (起点側ノード⇒終点側ノード) 3:一方通行リンク (終点側ノード⇒起点側ノード)",
+      "en": "One-way link or two-way link 0:No access 1:Two-way link 2:One-way link (from source node to destination node) 3:One-way link (from destination node to source node)"
     }
   },
   {
@@ -13497,8 +13626,8 @@
     "name": "fare code",
     "data_type": "Int64",
     "description": {
-      "ja": "0:課金なしリンク\n1:1以上課金リンク\n料金コード表を参照\n",
-      "en": "0:No charge link\n1:1 or more charge link\nSee price code table\n"
+      "ja": "0:課金なしリンク 1:1以上課金リンク 料金コード表を参照",
+      "en": "0:No charge link 1:1 or more charge link See price code table"
     }
   },
   {
@@ -13537,8 +13666,8 @@
     "name": "Pavement Structure Code",
     "data_type": "Int64",
     "description": {
-      "ja": "0: 不明･･･ 豊洲以外に指定\n1:横断歩道\n2:横断歩道なし横断リンク\n3:歩道橋\n4:駅構内\n5:地下歩道\n6:平面部歩道\n7:橋梁部歩道\n8:遊歩道公園内\n9:公開空地\n-94:交差点のすみきり (幅員コードは交差道路の主方向のものを設定)\n-96:階段\n-97:路側帯なし (歩道も路側帯もない道路)\n-1:不明 (晴美周辺の工事中箇所に設定)\n",
-      "en": "0:Unknown... Designated outside Toyosu\n1:Crosswalk\n2:Crossing link without crosswalk\n3:Pedestrian bridge\n4:Inside station\n5:Underground walkway\n6:At-grade walkway\n7:Walkway over bridge\n8:Promenade in park\n9:Public open space\n-94:Corner of intersection (set width code based on the main direction of the intersecting road)\n-96:Stairs\n-97:No shoulder (road without sidewalk or shoulder)\n-1:Unknown (set for construction areas around Harumi)\n"
+      "ja": "0: 不明･･･ 豊洲以外に指定 1:横断歩道 2:横断歩道なし横断リンク 3:歩道橋 4:駅構内 5:地下歩道 6:平面部歩道 7:橋梁部歩道 8:遊歩道公園内 9:公開空地 -94:交差点のすみきり (幅員コードは交差道路の主方向のものを設定) -96:階段 -97:路側帯なし (歩道も路側帯もない道路) -1:不明 (晴美周辺の工事中箇所に設定)",
+      "en": "0:Unknown... Designated outside Toyosu 1:Crosswalk 2:Crossing link without crosswalk 3:Pedestrian bridge 4:Inside station 5:Underground walkway 6:At-grade walkway 7:Walkway over bridge 8:Promenade in park 9:Public open space -94:Corner of intersection (set width code based on the main direction of the intersecting road) -96:Stairs -97:No shoulder (road without sidewalk or shoulder) -1:Unknown (set for construction areas around Harumi)"
     }
   },
   {
@@ -13547,8 +13676,8 @@
     "name": "Pavement Width Code",
     "data_type": "Int64",
     "description": {
-      "ja": "0:不明 (未調査)\n1:歩道なし\n2:2m未満\n3:2m~3.5m\n4:3.5m~4.5m\n5:4.5m以上\n",
-      "en": "0:Unknown (not surveyed)\n1:No sidewalk\n2:Less than 2m\n3:2m-3.5m\n4:3.5m-4.5m\n5:4.5m or more\n"
+      "ja": "0:不明 (未調査) 1:歩道なし 2:2m未満 3:2m~3.5m 4:3.5m~4.5m 5:4.5m以上",
+      "en": "0:Unknown (not surveyed) 1:No sidewalk 2:Less than 2m 3:2m-3.5m 4:3.5m-4.5m 5:4.5m or more"
     }
   },
   {
@@ -13557,8 +13686,8 @@
     "name": "Station Structure Code",
     "data_type": "Int64",
     "description": {
-      "ja": "0:駅構内以外のリンク\n1:階段\n2:エスカレーター\n3:エレベーター\n4:改札\n5:通路\n6:ダミー\n",
-      "en": "0:Links outside the station\n1:Stairs\n2:Escalators\n3:Elevators\n4:Ticket gates\n5:Passageways\n6:Dummy\n"
+      "ja": "0:駅構内以外のリンク 1:階段 2:エスカレーター 3:エレベーター 4:改札 5:通路 6:ダミー",
+      "en": "0:Links outside the station 1:Stairs 2:Escalators 3:Elevators 4:Ticket gates 5:Passageways 6:Dummy"
     }
   },
   {
@@ -13567,8 +13696,8 @@
     "name": "3D Structure",
     "data_type": "Int64",
     "description": {
-      "ja": "-3:地下3F\n-2:地下2F\n-1:地下1F\n0:地上\n1:地上1F\n99:不明 (未調査)\n",
-      "en": "-3:3rd basement floor\n-2:2nd basement floor\n-1:1st basement floor\n0:Above ground\n1:1st above ground\n99:Unknown (uninvestigated)\n"
+      "ja": "-3:地下3F -2:地下2F -1:地下1F 0:地上 1:地上1F 99:不明 (未調査)",
+      "en": "-3:3rd basement floor -2:2nd basement floor -1:1st basement floor 0:Above ground 1:1st above ground 99:Unknown (uninvestigated)"
     }
   },
   {
@@ -13577,8 +13706,8 @@
     "name": "ONodeID",
     "data_type": "Int64",
     "description": {
-      "ja": "起点側ノード番号\n2000番未満:豊洲歩道ノード\n10000000番台:徒歩ノード\n20000000番台:鉄道ノード\n30000000番台:バスノード\n",
-      "en": "Starting node number\nUnder 2000:Toyosu pedestrian node\nthe 10000000s:Pedestrian node\nthe 20000000s:Railroad node\nthe 30000000s:Bus node\n"
+      "ja": "起点側ノード番号 2000番未満:豊洲歩道ノード 10000000番台:徒歩ノード 20000000番台:鉄道ノード 30000000番台:バスノード",
+      "en": "Starting node number Under 2000:Toyosu pedestrian node the 10000000s:Pedestrian node the 20000000s:Railroad node the 30000000s:Bus node"
     }
   },
   {
@@ -13587,8 +13716,8 @@
     "name": "ONodeName",
     "data_type": "String",
     "description": {
-      "ja": "起点側ノード名称\nONode Type が 1 (徒歩の場合):DRMメッシュ+ノード番号\nONodeType が 2 (鉄道の場合):鉄道駅名\nONode Type が 3 (バスの場合):バス停名\n",
-      "en": "Starting node name\nONode Type 1 (for walking):DRM mesh + node number\nONode Type 2 (for trains):Train station name\nONode Type 3 (for buses):Bus stop name\n"
+      "ja": "起点側ノード名称 ONode Type が 1 (徒歩の場合):DRMメッシュ+ノード番号 ONodeType が 2 (鉄道の場合):鉄道駅名 ONode Type が 3 (バスの場合):バス停名",
+      "en": "Starting node name ONode Type 1 (for walking):DRM mesh + node number ONode Type 2 (for trains):Train station name ONode Type 3 (for buses):Bus stop name"
     }
   },
   {
@@ -13597,8 +13726,8 @@
     "name": "ONodeLat",
     "data_type": "Float64",
     "description": {
-      "ja": "起点側座標 世界測地系 経度",
-      "en": "Origin coordinates World Geodetic System Longitude"
+      "ja": "起点側座標 世界測地系 緯度",
+      "en": "Origin coordinates World Geodetic System Latitude"
     }
   },
   {
@@ -13607,8 +13736,8 @@
     "name": "ONodeLon",
     "data_type": "Float64",
     "description": {
-      "ja": "起点側座標 世界測地系 緯度",
-      "en": "Origin coordinates World Geodetic System Latitude"
+      "ja": "起点側座標 世界測地系 経度",
+      "en": "Origin coordinates World Geodetic System Longitude"
     }
   },
   {
@@ -13637,8 +13766,8 @@
     "name": "DNodeLat",
     "data_type": "Float64",
     "description": {
-      "ja": "終点側座標 世界測地系 経度",
-      "en": "End point coordinates World Geodetic System Longitude"
+      "ja": "終点側座標 世界測地系 緯度",
+      "en": "End point coordinates World Geodetic System Latitude"
     }
   },
   {
@@ -13647,8 +13776,8 @@
     "name": "DNodeLon",
     "data_type": "Float64",
     "description": {
-      "ja": "終点側座標 世界測地系 緯度",
-      "en": "End point coordinates World Geodetic System Latitude"
+      "ja": "終点側座標 世界測地系 経度",
+      "en": "End point coordinates World Geodetic System Longitude"
     }
   },
   {
@@ -13657,8 +13786,8 @@
     "name": "NodeID",
     "data_type": "Int64",
     "description": {
-      "ja": "各ノードの識別ID\n10000000番台:徒歩ノード\n20000000番台:鉄道ノード\n30000000番台:バスノード\n",
-      "en": "Identification ID of each node\nthe 10000000s:Walking Node\nthe 20000000s:Railroad Node\nthe 30000000s:Bus Node\n"
+      "ja": "各ノードの識別ID 10000000番台:徒歩ノード 20000000番台:鉄道ノード 30000000番台:バスノード",
+      "en": "Identification ID of each node the 10000000s:Walking Node the 20000000s:Railroad Node the 30000000s:Bus Node"
     }
   },
   {
@@ -13667,8 +13796,8 @@
     "name": "NodeName",
     "data_type": "String",
     "description": {
-      "ja": "ノード名称\nNodeTypeが1 (徒歩の場合):DRMメッシュ+ノード番号\nNodeTypeが2 (鉄道の場合):鉄道駅名\nNodeTypeが3 (バスの場合):バス停名\nNodeTypeが4 (バスNW分岐):Dummy\nNodeTypeが5 (自動車の場合):DRMメッシュ+ノード番号\n",
-      "en": "Node Name\nNodeType 1 (For Walking):DRM Mesh + Node Number\nNodeType 2 (For Trains):Train Station Name\nNodeType 3 (For Buses):Bus Stop Name\nNodeType 4 (Bus NW Branch):Dummy\nNodeType 5 (For Cars):DRM Mesh + Node Number\n"
+      "ja": "ノード名称 NodeTypeが1 (徒歩の場合):DRMメッシュ+ノード番号 NodeTypeが2 (鉄道の場合):鉄道駅名 NodeTypeが3 (バスの場合):バス停名 NodeTypeが4 (バスNW分岐):Dummy NodeTypeが5 (自動車の場合):DRMメッシュ+ノード番号",
+      "en": "Node Name NodeType 1 (For Walking):DRM Mesh + Node Number NodeType 2 (For Trains):Train Station Name NodeType 3 (For Buses):Bus Stop Name NodeType 4 (Bus NW Branch):Dummy NodeType 5 (For Cars):DRM Mesh + Node Number"
     }
   },
   {
@@ -13677,8 +13806,8 @@
     "name": "NodeType",
     "data_type": "Int64",
     "description": {
-      "ja": "1:徒歩NWノード\n2:鉄道NWノード(駅)\n3:バスNWノード(バス停)\n4:バスNW分岐ノード\n5:自動車NWノード\n",
-      "en": "1:Pedestrian network node\n2:Railroad network node (station)\n3:Bus network node (bus stop)\n4:Bus network branch node\n5:Automobile network node\n"
+      "ja": "1:徒歩NWノード 2:鉄道NWノード(駅) 3:バスNWノード(バス停) 4:バスNW分岐ノード 5:自動車NWノード",
+      "en": "1:Pedestrian network node 2:Railroad network node (station) 3:Bus network node (bus stop) 4:Bus network branch node 5:Automobile network node"
     }
   },
   {
@@ -13687,8 +13816,8 @@
     "name": "Lat",
     "data_type": "Float64",
     "description": {
-      "ja": "起点側座標 世界測地系 WGS84 経度",
-      "en": "Origin coordinates World Geodetic System WGS84 Longitude"
+      "ja": "起点側座標 世界測地系 WGS84 緯度",
+      "en": "Origin coordinates World Geodetic System WGS84 Latitude"
     }
   },
   {

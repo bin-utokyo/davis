@@ -16,6 +16,7 @@ type CatalogFile = {
   path: string;
   size: number;
   object: { oid: string; size: number };
+  updated_at: string | null;
   format: string;
   schema_status: "ready" | "missing" | "invalid";
   schema_path: string | null;
@@ -39,6 +40,7 @@ type Dataset = {
   file_count: number;
   schema_ready_count: number;
   total_size: number;
+  updated_at: string | null;
 };
 type Facets = {
   cities: LocalizedText[];
@@ -89,6 +91,16 @@ function humanSize(bytes: number) {
 
 function datasetLabel(id: string) {
   return id.split("/").at(-1)?.replaceAll("-", " ") ?? id;
+}
+
+function formattedDate(value: string | null | undefined, language: Language) {
+  if (!value) return language === "ja" ? "不明" : "Unknown";
+  const date = new Date(`${value}T00:00:00Z`);
+  if (Number.isNaN(date.valueOf())) return language === "ja" ? "不明" : "Unknown";
+  return new Intl.DateTimeFormat(language === "ja" ? "ja-JP" : "en-US", {
+    dateStyle: "medium",
+    timeZone: "UTC",
+  }).format(date);
 }
 
 function localized(value: LocalizedText | null, language: Language) {
@@ -404,6 +416,7 @@ export function CatalogApp() {
               <div className="card-topline"><span className="index">{String(index + 1).padStart(2, "0")}</span><label className="check-label"><input type="checkbox" checked={allSelected} onChange={() => toggleDataset(dataset.id)}/><span>{tr("データセット全体", "Entire dataset")}</span></label></div>
               <p className="dataset-id">{dataset.id}</p><h3>{datasetLabel(dataset.id)}</h3>{sample && <p className="sample-name">{sample} {tr("など", "and more")}</p>}
               <p className="description">{language === "ja" ? `${matches.length}件が現在の条件に一致 / 全${dataset.file_count}ファイル` : `${matches.length} match the current filters / ${dataset.file_count} files total`}，{humanSize(dataset.total_size)}</p>
+              <p className="updated-date">{tr("最終更新", "Last updated")} {formattedDate(dataset.updated_at, language)}</p>
               <div className="tags"><span>{dataset.schema_ready_count} schemas</span>{[...new Set(matches.map((file) => file.format))].slice(0, 3).map((value) => <span key={value}>{value.toUpperCase()}</span>)}</div>
               <button className="detail-link" type="button" onClick={() => setActiveDataset(dataset.id)}>{tr("ファイルを見る", "View files")} <span aria-hidden="true">→</span></button>
             </article>;
@@ -438,13 +451,13 @@ export function CatalogApp() {
       {activeDataset && <div className="overlay"><button className="overlay-dismiss" type="button" aria-label={tr("ファイル一覧を閉じる", "Close file list")} onClick={() => setActiveDataset(null)}/><aside className="drawer" role="dialog" aria-modal="true" aria-label={tr(`${activeDataset}のファイル`, `${activeDataset} files`)}>
         <div className="drawer-heading"><div><p className="dataset-id">{activeDataset}</p><h2>{datasetLabel(activeDataset)}</h2></div><button type="button" aria-label={tr("閉じる", "Close")} onClick={() => setActiveDataset(null)}>×</button></div>
         <p className="drawer-summary">{activeDatasetFiles.length} files ・ {humanSize(activeDatasetFiles.reduce((sum, file) => sum + file.size, 0))}</p>
-        <div className="file-list">{activeDatasetFiles.map((file) => <div className="file-row" key={file.id}><input aria-label={tr(`${file.file_id}を選択`, `Select ${file.file_id}`)} type="checkbox" checked={selected.has(file.id)} onChange={() => toggleFile(file.id)}/><button type="button" onClick={() => setActiveFile(file)}><strong>{localized(file.name, language) || file.file_id}</strong><span>{file.file_id} ・ {humanSize(file.size)} ・ {file.schema_status === "ready" ? tr("schemaあり", "schema available") : tr("schemaなし", "schema unavailable")}</span></button></div>)}</div>
+        <div className="file-list">{activeDatasetFiles.map((file) => <div className="file-row" key={file.id}><input aria-label={tr(`${file.file_id}を選択`, `Select ${file.file_id}`)} type="checkbox" checked={selected.has(file.id)} onChange={() => toggleFile(file.id)}/><button type="button" onClick={() => setActiveFile(file)}><strong>{localized(file.name, language) || file.file_id}</strong><span>{file.file_id} ・ {humanSize(file.size)} ・ {file.schema_status === "ready" ? tr("schemaあり", "schema available") : tr("schemaなし", "schema unavailable")} ・ {tr("最終更新", "updated")} {formattedDate(file.updated_at, language)}</span></button></div>)}</div>
       </aside></div>}
 
       {activeFile && <div className="overlay detail-overlay"><button className="overlay-dismiss" type="button" aria-label={tr("ファイル詳細を閉じる", "Close file details")} onClick={() => setActiveFile(null)}/><aside className="drawer file-detail" role="dialog" aria-modal="true" aria-label={tr(`${activeFile.file_id}の詳細`, `Details for ${activeFile.file_id}`)}>
         <div className="drawer-heading"><div><p className="dataset-id">{activeFile.dataset_id}</p><h2>{localized(activeFile.name, language) || activeFile.file_id}</h2></div><button type="button" aria-label={tr("閉じる", "Close")} onClick={() => setActiveFile(null)}>×</button></div>
         {localized(activeFile.description, language) && <p className="file-description">{localized(activeFile.description, language)}</p>}
-        <dl className="file-meta"><div><dt>{tr("ファイル", "File")}</dt><dd>{activeFile.file_id}</dd></div><div><dt>{tr("地域", "Location")}</dt><dd>{localized(activeFile.city, language) || tr("記載なし", "Not provided")}</dd></div><div><dt>{tr("年", "Year")}</dt><dd>{activeFile.year ?? tr("記載なし", "Not provided")}</dd></div><div><dt>{tr("形式・容量", "Format and size")}</dt><dd>{activeFile.format.toUpperCase()} ・ {humanSize(activeFile.size)}</dd></div></dl>
+        <dl className="file-meta"><div><dt>{tr("ファイル", "File")}</dt><dd>{activeFile.file_id}</dd></div><div><dt>{tr("最終更新", "Last updated")}</dt><dd>{formattedDate(activeFile.updated_at, language)}</dd></div><div><dt>{tr("地域", "Location")}</dt><dd>{localized(activeFile.city, language) || tr("記載なし", "Not provided")}</dd></div><div><dt>{tr("年", "Year")}</dt><dd>{activeFile.year ?? tr("記載なし", "Not provided")}</dd></div><div><dt>{tr("形式・容量", "Format and size")}</dt><dd>{activeFile.format.toUpperCase()} ・ {humanSize(activeFile.size)}</dd></div></dl>
         {localized(activeFile.license, language) && <div className="license-note"><strong>{tr("利用条件", "Terms of use")}</strong><p>{localized(activeFile.license, language)}</p></div>}
         <h3 className="detail-title">{tr("列定義", "Column definitions")} ({activeFile.columns.length})</h3><div className="column-table">{activeFile.columns.map((column) => <div key={column.name}><code>{column.name}</code><span>{column.data_type}</span><p>{localized(column.description, language) || tr("説明なし", "No description")}</p></div>)}</div>
         {activeFile.raw_schema && <details className="raw-schema"><summary>Raw schema.yaml</summary><pre>{activeFile.raw_schema}</pre></details>}

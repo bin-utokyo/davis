@@ -2,7 +2,7 @@
 
 > 状態: Draft 0.12
 >
-> 最終更新日: 2026-08-23
+> 最終更新日: 2026-08-24
 >
 > 1〜50節は受領したGit-nativeデータ基盤仕様を本文の土台とし，51節以降で交通行動モデル研究プラットフォームとしての拡張を定義します．
 >
@@ -584,12 +584,17 @@ files:
     object:
       oid: blake3:aaaaaaaa
       size: 728193721
+    updated_at: 2026-08-24
 
   - path: zones.geojson
     object:
       oid: blake3:bbbbbbbb
       size: 2819231
 ```
+
+`files[].updated_at`は任意の`YYYY-MM-DD`で，そのfileが現在のObject IDへ変わった更新操作の日を表す．通常の`davis push`はObject IDが変わったfileだけを実行日へ更新し，未変更fileの値を維持する．`--dry-run`は値を変更しない．日付のないManifestもversion 1として読み込み可能とし，日付が不明なfileへ現在日を自動補完しない．
+
+CatalogIndexのfile最終更新日はこの値を使用し，dataset最終更新日は構成fileの既知の`updated_at`の最大値として導出する．既存の全fileへ`2026-08-24`を設定する処理は，現行repositoryの一度限りの初期移行であり，将来のfallback規則ではない．
 
 ---
 
@@ -1754,7 +1759,7 @@ Dataset IDは人間が読めるglobalに一意な値とし，初回移行時は`
 
 ## 52.3 既存FileSchemaの利用
 
-2026-08-22時点のcurrent revisionには，DatasetManifestで参照する255個の実fileと176個の`*.schema.yaml`があります．Webでは実データfileごとの`<filename>.schema.yaml`を表示・検索します．dataset単位のYAMLだけで列情報を代替しません．件数は固定値として実装へ埋め込まず，対象Git revisionから生成して全件性を試験します．
+2026-08-24時点のcurrent revisionには，DatasetManifestで参照する258個の実fileと176個の`*.schema.yaml`があります．Webでは実データfileごとの`<filename>.schema.yaml`を表示・検索します．dataset単位のYAMLだけで列情報を代替しません．件数は固定値として実装へ埋め込まず，対象Git revisionから生成して全件性を試験します．
 
 初期索引は，主に次を扱います．
 
@@ -2146,7 +2151,7 @@ P3  その他の拡張
 
 | 段階 | 状況 | 実装済み | 主な未実装・設計差分 |
 | --- | --- | --- | --- |
-| P0-0 | 完了 | DVC非依存のBLAKE3 Object，DatasetManifest，R2，参加者認証，DownloadGrant，全255 FileのCatalog生成 | なし |
+| P0-0 | 完了 | DVC非依存のBLAKE3 Object，DatasetManifest，R2，参加者認証，DownloadGrant，全258 FileのCatalog生成 | なし |
 | P0-A | 完了 | `list`，`info`，`get`，`pull`，File・directory単位取得，取得前license表示，schema・日英PDF取得，3 OS向けrelease | loginはbrowser起動ではなくterminal入力，sessionはOS credential storeではなく権限を限定したuser設定fileへ保存します |
 | P0-B | 一部完了 | `verify`，公式運営session利用時の`main`以外の個人作業branch限定`push`，filesystem・S3互換storageへの独立した直接`push`，決定的PDF生成，R2同期，Git commit・push，review済み`main`限定の`publish`，運営session | 公開revisionとの差分をまとめる`status`と`verify --remote`は未実装です |
 | P1 | ほぼ完了 | 日英Web，schema検索・filter，複数選択，利用条件確認，200並列認証test，認証付きdownload | D1は使わず署名済みstateless sessionを採用し，R2署名URLの直接返却ではなく短寿命DownloadGrantをWorkerが検証してstreamします |
@@ -2203,7 +2208,7 @@ davis pull [dataset-id]
 ### 完了条件
 
 1. 現行CLIで取得できる全Datasetと関連文書を取得できます．
-2. 対象Git revisionの全DatasetManifest参照が一覧とdownload対象から欠落しません．current revisionでは255個です．
+2. 対象Git revisionの全DatasetManifest参照が一覧とdownload対象から欠落しません．current revisionでは258個です．
 3. 対象Git revisionの全FileSchemaを詳細表示に利用できます．current revisionでは176個です．
 4. schema未整備のファイルも`schema-missing`として取得できます．
 5. CLI以外から同じuse caseを呼ぶunit testを用意します．
@@ -2226,6 +2231,8 @@ davis verify --remote
 ```
 
 `push`の中核は，接続先に依存しないObject・DatasetManifest同期です．Dataset IDを指定した場合はその1件，省略した無印`push`は全Datasetを対象にし，`--all`も互換aliasとして同じ全件操作を行います．通常は前回Manifestとlocal cacheを使って未変更fileを再利用し，新規・変更・cache欠落fileだけのBLAKE3を計算します．`--rehash`を指定した場合だけ全対象fileを読み直します．不足Objectだけを接続先へuploadし，既存Objectを上書きしません．
+
+実行時にObject IDが変わったfileは，Manifestの`updated_at`をその実行日へ更新します．Object IDが同じfileは既存値を維持し，値が存在しない場合も現在日で補完しません．新規fileはObject IDが新たに登録されるため実行日を記録します．`--dry-run`では日付を含むManifestを変更しません．datasetの最終更新日は，CatalogIndex生成時に構成fileの既知の日付の最大値として導出します．
 
 公式運営sessionを利用する場合は，この中核処理へ公式運用adapterを加えます．名前の付いた`main`以外の個人作業branchであることと最新`origin/main`を基点としていることを検証します．branch名の形式やGitHubユーザー名との一致は要求しません．不足ObjectのR2 upload成功後に，変更されたschemaまたはObject IDに関係する日英PDFだけを生成します．その後，対象Datasetのmetadataだけをstage・commitし，現在の個人branchをGitHubへpushします．Catalog公開は行いません．
 

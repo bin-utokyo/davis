@@ -892,6 +892,7 @@ mod tests {
                             oid: object.oid.clone(),
                             size: object.size,
                         },
+                        updated_at: None,
                         schema_path: None,
                     }],
                 },
@@ -928,6 +929,7 @@ mod tests {
                     oid: object.oid,
                     size: object.size,
                 },
+                updated_at: None,
                 schema_path: None,
             }],
         };
@@ -982,6 +984,7 @@ mod tests {
                 id: "changed.csv".into(),
                 path: "changed.csv".into(),
                 object: object.clone(),
+                updated_at: None,
                 schema_path: None,
             }],
         };
@@ -1026,6 +1029,7 @@ mod tests {
                         oid: object.oid.clone(),
                         size: object.size,
                     },
+                    updated_at: None,
                     schema_path: None,
                 }],
             })

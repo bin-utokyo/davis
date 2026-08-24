@@ -34,6 +34,21 @@ impl DatasetManifest {
         let mut paths = HashSet::new();
         for file in &self.files {
             validate_relative_path(&file.path)?;
+            if let Some(updated_at) = &file.updated_at {
+                let canonical = updated_at
+                    .parse::<jiff::civil::Date>()
+                    .map(|date| date.to_string())
+                    .map_err(|_| ManifestError::InvalidUpdatedAt {
+                        file_id: file.id.clone(),
+                        value: updated_at.clone(),
+                    })?;
+                if canonical != *updated_at {
+                    return Err(ManifestError::InvalidUpdatedAt {
+                        file_id: file.id.clone(),
+                        value: updated_at.clone(),
+                    });
+                }
+            }
             if file.id.is_empty() || !ids.insert(&file.id) {
                 return Err(ManifestError::DuplicateFileId(file.id.clone()));
             }
@@ -85,6 +100,9 @@ pub struct ManifestFile {
     pub id: String,
     pub path: String,
     pub object: ObjectRef,
+    /// Date when this object ID was first recorded by an updating Davis operation.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub updated_at: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub schema_path: Option<String>,
 }
@@ -120,6 +138,8 @@ pub enum ManifestError {
     DuplicateFileId(String),
     #[error("duplicate file path: {0}")]
     DuplicateFilePath(String),
+    #[error("invalid updated_at date for file {file_id}: {value} (expected YYYY-MM-DD)")]
+    InvalidUpdatedAt { file_id: String, value: String },
     #[error("file selection must not be empty")]
     EmptyFileSelection,
     #[error("file was not found in the manifest: {0}")]

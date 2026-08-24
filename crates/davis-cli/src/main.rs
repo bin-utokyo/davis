@@ -11,11 +11,11 @@ use std::time::Duration;
 use clap::{Args, Parser, Subcommand};
 use davis_catalog::{
     audit_datasets, build_catalog_index, ingest_dataset, read_file_schema, refresh_dataset,
-    scan_repository, write_catalog_index,
+    scan_repository, write_catalog_index, RefreshOptions,
 };
 use davis_core::{
-    read_manifest, write_manifest, Dataset, LocalObjectStore, LocalizedText, ObjectRef,
-    SchemaStatus,
+    current_local_date, read_manifest, write_manifest, Dataset, LocalObjectStore, LocalizedText,
+    ObjectRef, SchemaStatus,
 };
 use davis_document::{render_schema_pdf, write_pdf_if_changed, Language};
 use davis_storage::{
@@ -1429,6 +1429,7 @@ fn prepare_push_manifests(
     write_changes: bool,
 ) -> Result<Vec<davis_core::DatasetManifest>, Box<dyn std::error::Error>> {
     let mut manifests = Vec::with_capacity(dataset_ids.len());
+    let updated_on = write_changes.then(current_local_date);
     for dataset_id in dataset_ids {
         let manifest_path = manifest_directory.join(format!("{dataset_id}.yaml"));
         let previous = manifest_path
@@ -1443,9 +1444,12 @@ fn prepare_push_manifests(
             &dataset.id,
             &dataset.root,
             local_store,
-            previous.as_ref(),
-            rehash,
-            write_changes,
+            RefreshOptions {
+                previous: previous.as_ref(),
+                rehash,
+                write_objects: write_changes,
+                updated_on: updated_on.as_deref(),
+            },
         )?;
         if write_changes && previous.as_ref() != Some(&report.manifest) {
             write_manifest(&manifest_path, &report.manifest)?;
@@ -1805,12 +1809,14 @@ mod tests {
                     id: "raw/first.csv".into(),
                     path: "raw/first.csv".into(),
                     object: object.clone(),
+                    updated_at: None,
                     schema_path: None,
                 },
                 ManifestFile {
                     id: "raw/second.csv".into(),
                     path: "raw/second.csv".into(),
                     object,
+                    updated_at: None,
                     schema_path: None,
                 },
             ],

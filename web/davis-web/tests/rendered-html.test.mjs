@@ -55,9 +55,11 @@ test("generated catalog files agree on current coverage", async () => {
   ]);
 
   assert.equal(datasets.length, 15);
-  assert.equal(files.length, 255);
+  assert.equal(files.length, 258);
   assert.equal(files.filter((file) => file.schema_status === "ready").length, 176);
   assert.ok(files.every((file) => file.object.oid.startsWith("blake3:")));
+  assert.ok(files.every((file) => file.updated_at === "2026-08-24"));
+  assert.ok(datasets.every((dataset) => dataset.updated_at === "2026-08-24"));
   assert.ok(columns.length > 1_000);
   assert.ok(facets.formats.includes("csv"));
   assert.ok(files.some((file) => file.raw_schema?.includes("columns:")));

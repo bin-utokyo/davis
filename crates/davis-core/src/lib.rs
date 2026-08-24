@@ -13,6 +13,12 @@ pub use manifest::{
 };
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
+/// Returns the current date in the system time zone as `YYYY-MM-DD`.
+#[must_use]
+pub fn current_local_date() -> String {
+    jiff::Zoned::now().date().to_string()
+}
+
 /// A storage-independent identifier for immutable content.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ObjectId {
@@ -197,7 +203,9 @@ impl Catalog {
 
 #[cfg(test)]
 mod tests {
-    use super::{DatasetManifest, ManifestDataset, ManifestFile, ObjectId, ObjectRef};
+    use super::{
+        DatasetManifest, ManifestDataset, ManifestError, ManifestFile, ObjectId, ObjectRef,
+    };
 
     #[test]
     fn object_id_uses_portable_string_representation() {
@@ -225,6 +233,7 @@ mod tests {
                         oid: object.clone(),
                         size: 1,
                     },
+                    updated_at: None,
                     schema_path: None,
                 })
                 .collect(),
@@ -241,5 +250,33 @@ mod tests {
             vec!["first.csv", "third.csv"]
         );
         assert!(manifest.select_files(&["missing.csv".into()]).is_err());
+    }
+
+    #[test]
+    fn manifest_updated_at_is_optional_and_must_be_an_iso_date() {
+        let yaml = r"version: 1
+dataset:
+  id: sample
+  root: data/sample
+files:
+  - id: sample.csv
+    path: sample.csv
+    object:
+      oid: blake3:aabbcc
+      size: 1
+";
+        let mut manifest: DatasetManifest = serde_yaml::from_str(yaml).unwrap();
+        assert_eq!(manifest.files[0].updated_at, None);
+        assert!(!serde_yaml::to_string(&manifest)
+            .unwrap()
+            .contains("updated_at"));
+
+        manifest.files[0].updated_at = Some("2026-08-24".into());
+        manifest.validate().unwrap();
+        manifest.files[0].updated_at = Some("2026/08/24".into());
+        assert!(matches!(
+            manifest.validate(),
+            Err(ManifestError::InvalidUpdatedAt { .. })
+        ));
     }
 }

@@ -241,6 +241,8 @@ VS CodeのSource Control操作とterminalのGit commandは，同じrepository状
 
 `davis ingest`，`davis documents`，`davis index`は開発・保守用です．通常の更新では使用しません．通常の`push`は前回Manifestとlocal cacheが一致する未変更fileを再利用し，新規・変更・cache欠落fileだけをhashします．全fileを読み直す場合だけ`--rehash`を指定します．
 
+通常の`davis push`では，実データのObject IDが変わったfileだけ，Manifestの`updated_at`を実行日へ更新します．Object IDが変わらないfileの日付は維持します．`--dry-run`は日付を含むManifestを変更しません．Webに表示するdatasetの最終更新日は，そのdataset内で日付が分かるfileのうち最も新しい日付です．既存fileには初回移行値として`2026-08-24`を設定しましたが，これは一度限りの移行です．今後，日付のない古いManifestを読み込んでも実行日で補完せず，不明のまま扱います．
+
 `get`では`--file`を繰り返してfile・directoryを選択でき，`--pdf-ja`と`--pdf-en`で説明PDFを追加できます．schemaは標準で保存され，`--no-schema`を指定した場合だけ省略します．`pull`にも同じ文書optionがあります．完全な引数一覧は`davis <command> --help`で確認してください．
 
 ### 正本と自動生成物
@@ -253,7 +255,7 @@ VS CodeのSource Control操作とterminalのGit commandは，同じrepository状
 
 1. 個人branchと`origin/main`の状態を検査する
 2. 対象dataset外の未commit変更がないことを検査する
-3. 未変更fileを前回Manifestとlocal cacheから再利用し，必要なfileのBLAKE3 ObjectとDatasetManifestを生成する
+3. 未変更fileを前回Manifestとlocal cacheから再利用し，必要なfileのBLAKE3 ObjectとDatasetManifestを生成する．Object IDが変わったfileには実行日を記録する
 4. 不足ObjectをR2へuploadする
 5. upload成功後，変更されたschemaまたはObject IDに関係する日英PDFだけを生成する
 6. 対象datasetのschema，PDF，Manifestだけをstageする

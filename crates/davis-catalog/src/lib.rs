@@ -13,9 +13,9 @@ use std::io::Read;
 use std::path::{Component, Path, PathBuf};
 
 use davis_core::{
-    hash_file, Catalog, CatalogFile, ColumnSchema, Dataset, DatasetManifest, FileSchema,
-    LocalObjectStore, LocalizedText, ManifestDataset, ManifestFile, ObjectId, ObjectRef,
-    SchemaStatus,
+    current_local_date, hash_file, Catalog, CatalogFile, ColumnSchema, Dataset, DatasetManifest,
+    FileSchema, LocalObjectStore, LocalizedText, ManifestDataset, ManifestFile, ObjectId,
+    ObjectRef, SchemaStatus,
 };
 use serde::Deserialize;
 use thiserror::Error;
@@ -206,15 +206,28 @@ pub fn ingest_dataset(
     dataset: &Dataset,
     store: &LocalObjectStore,
 ) -> Result<IngestReport, CatalogError> {
+    let updated_on = current_local_date();
     refresh_dataset(
         repository_root,
         &dataset.id,
         &dataset.root,
         store,
-        None,
-        true,
-        true,
+        RefreshOptions {
+            previous: None,
+            rehash: true,
+            write_objects: true,
+            updated_on: Some(&updated_on),
+        },
     )
+}
+
+/// Controls how a dataset Manifest is refreshed from local files.
+#[derive(Debug, Clone, Copy)]
+pub struct RefreshOptions<'a> {
+    pub previous: Option<&'a DatasetManifest>,
+    pub rehash: bool,
+    pub write_objects: bool,
+    pub updated_on: Option<&'a str>,
 }
 
 /// Rebuilds a dataset manifest directly from local files without DVC metadata.
@@ -228,9 +241,7 @@ pub fn refresh_dataset(
     dataset_id: &str,
     dataset_root: &str,
     store: &LocalObjectStore,
-    previous: Option<&DatasetManifest>,
-    rehash: bool,
-    write_objects: bool,
+    options: RefreshOptions<'_>,
 ) -> Result<IngestReport, CatalogError> {
     let root = repository_root.join(dataset_root);
     if !root.is_dir() {
@@ -259,17 +270,18 @@ pub fn refresh_dataset(
             .strip_prefix(&root)
             .map(path_to_slash)
             .map_err(|_| CatalogError::PathOutsideRepository(source.clone()))?;
-        let previous_file = previous
+        let previous_file = options
+            .previous
             .filter(|manifest| {
                 manifest.dataset.id == dataset_id && manifest.dataset.root == dataset_root
             })
             .and_then(|manifest| manifest.files.iter().find(|file| file.id == file_id));
-        let reusable =
-            previous_file.filter(|file| !rehash && reusable_source(&source, store, &file.object));
+        let reusable = previous_file
+            .filter(|file| !options.rehash && reusable_source(&source, store, &file.object));
         let object = if let Some(file) = reusable {
             reused_files += 1;
             file.object.clone()
-        } else if write_objects {
+        } else if options.write_objects {
             let ingested = store.ingest_file(&source)?;
             if ingested.already_present {
                 existing_objects += 1;
@@ -292,10 +304,15 @@ pub fn refresh_dataset(
                 actual: u64::MAX,
             })?;
         let schema_path = PathBuf::from(format!("{}.schema.yaml", source.display()));
+        let updated_at = match previous_file {
+            Some(previous) if previous.object == object => previous.updated_at.clone(),
+            Some(_) | None => options.updated_on.map(str::to_owned),
+        };
         files.push(ManifestFile {
             id: file_id.clone(),
             path: file_id,
             object,
+            updated_at,
             schema_path: schema_path
                 .is_file()
                 .then(|| {
@@ -496,11 +513,12 @@ fn path_to_slash(path: &Path) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::refresh_dataset;
+    use super::{refresh_dataset, RefreshOptions};
     use davis_core::LocalObjectStore;
     use std::fs;
 
     #[test]
+    #[allow(clippy::too_many_lines)]
     fn refresh_hashes_primary_files_without_dvc_metadata() {
         let temporary = tempfile::tempdir().unwrap();
         let source = temporary.path().join("data/routes/sample/source.csv");
@@ -522,15 +540,22 @@ mod tests {
             "routes/sample",
             "data/routes/sample",
             &store,
-            None,
-            false,
-            true,
+            RefreshOptions {
+                previous: None,
+                rehash: false,
+                write_objects: true,
+                updated_on: Some("2026-08-20"),
+            },
         )
         .unwrap();
         assert_eq!(first.added_objects, 1);
         assert_eq!(first.manifest.files.len(), 1);
         assert_eq!(first.manifest.files[0].id, "source.csv");
         assert_eq!(first.manifest.files[0].object.oid.algorithm(), "blake3");
+        assert_eq!(
+            first.manifest.files[0].updated_at.as_deref(),
+            Some("2026-08-20")
+        );
         assert!(first.manifest.files[0].schema_path.is_some());
 
         let unchanged = refresh_dataset(
@@ -538,13 +563,20 @@ mod tests {
             "routes/sample",
             "data/routes/sample",
             &store,
-            Some(&first.manifest),
-            false,
-            true,
+            RefreshOptions {
+                previous: Some(&first.manifest),
+                rehash: false,
+                write_objects: true,
+                updated_on: Some("2026-08-21"),
+            },
         )
         .unwrap();
         assert_eq!(unchanged.reused_files, 1);
         assert_eq!(unchanged.added_objects, 0);
+        assert_eq!(
+            unchanged.manifest.files[0].updated_at.as_deref(),
+            Some("2026-08-20")
+        );
 
         let changed_contents = b"id,value\n1,changed-and-longer\n";
         fs::write(&source, changed_contents).unwrap();
@@ -553,9 +585,12 @@ mod tests {
             "routes/sample",
             "data/routes/sample",
             &store,
-            Some(&unchanged.manifest),
-            false,
-            true,
+            RefreshOptions {
+                previous: Some(&unchanged.manifest),
+                rehash: false,
+                write_objects: true,
+                updated_on: Some("2026-08-22"),
+            },
         )
         .unwrap();
         assert_eq!(changed.added_objects, 1);
@@ -563,6 +598,27 @@ mod tests {
             changed.manifest.files[0].object.oid,
             first.manifest.files[0].object.oid
         );
+        assert_eq!(
+            changed.manifest.files[0].updated_at.as_deref(),
+            Some("2026-08-22")
+        );
+
+        let mut unknown = changed.manifest.clone();
+        unknown.files[0].updated_at = None;
+        let preserved_unknown = refresh_dataset(
+            temporary.path(),
+            "routes/sample",
+            "data/routes/sample",
+            &store,
+            RefreshOptions {
+                previous: Some(&unknown),
+                rehash: false,
+                write_objects: true,
+                updated_on: Some("2026-08-23"),
+            },
+        )
+        .unwrap();
+        assert_eq!(preserved_unknown.manifest.files[0].updated_at, None);
 
         let dry_run_store = LocalObjectStore::new(temporary.path().join("dry-run-cache"));
         let dry_run = refresh_dataset(
@@ -570,12 +626,19 @@ mod tests {
             "routes/sample",
             "data/routes/sample",
             &dry_run_store,
-            Some(&changed.manifest),
-            false,
-            false,
+            RefreshOptions {
+                previous: Some(&changed.manifest),
+                rehash: false,
+                write_objects: false,
+                updated_on: None,
+            },
         )
         .unwrap();
         assert_eq!(dry_run.added_objects, 1);
+        assert_eq!(
+            dry_run.manifest.files[0].updated_at.as_deref(),
+            Some("2026-08-22")
+        );
         assert!(!dry_run_store.root().exists());
     }
 }

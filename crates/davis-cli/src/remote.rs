@@ -850,6 +850,7 @@ fn build_manifest(
                 id: file.file_id,
                 path: path.to_owned(),
                 object: file.object,
+                updated_at: file.updated_at,
                 schema_path: file.schema_path,
             })
         })

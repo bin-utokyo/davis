@@ -3,7 +3,8 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use davis_core::{
-    read_manifest, Catalog, ColumnSchema, FileSchema, LocalizedText, ObjectRef, SchemaStatus,
+    read_manifest, Catalog, ColumnSchema, DatasetManifest, FileSchema, LocalizedText, ObjectRef,
+    SchemaStatus,
 };
 use serde::{Deserialize, Serialize};
 
@@ -35,6 +36,7 @@ pub struct IndexedDataset {
     pub file_count: usize,
     pub schema_ready_count: usize,
     pub total_size: u64,
+    pub updated_at: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -45,6 +47,7 @@ pub struct IndexedFile {
     pub path: String,
     pub size: u64,
     pub object: ObjectRef,
+    pub updated_at: Option<String>,
     pub format: String,
     pub schema_status: SchemaStatus,
     pub schema_path: Option<String>,
@@ -121,19 +124,15 @@ pub fn build_catalog_index(
     let mut total_size = 0_u64;
 
     for dataset in &catalog.datasets {
-        let manifest_path = repository_root
-            .join(".davis/datasets")
-            .join(format!("{}.yaml", dataset.id));
-        let manifest = manifest_path
-            .is_file()
-            .then(|| read_manifest(&manifest_path))
-            .transpose()?;
+        let manifest = read_dataset_manifest(repository_root, &dataset.id)?;
+        let updated_at = latest_updated_at(manifest.as_ref());
         datasets.push(IndexedDataset {
             id: dataset.id.clone(),
             root: dataset.root.clone(),
             file_count: dataset.files.len(),
             schema_ready_count: dataset.schema_ready_count(),
             total_size: dataset.total_size(),
+            updated_at,
         });
         total_size = total_size
             .checked_add(dataset.total_size())
@@ -162,21 +161,22 @@ pub fn build_catalog_index(
                     description: column.description.clone(),
                 }));
             }
-            let object = manifest
+            let manifest_file = manifest
                 .as_ref()
-                .and_then(|value| value.files.iter().find(|item| item.id == file.id))
-                .map_or_else(
-                    || ObjectRef {
-                        oid: file.object.clone(),
-                        size: file.size,
-                    },
-                    |item| item.object.clone(),
-                );
+                .and_then(|value| value.files.iter().find(|item| item.id == file.id));
+            let object = manifest_file.map_or_else(
+                || ObjectRef {
+                    oid: file.object.clone(),
+                    size: file.size,
+                },
+                |item| item.object.clone(),
+            );
             files.push(index_file(
                 repository_root,
                 dataset.id.as_str(),
                 file,
                 object,
+                manifest_file.and_then(|item| item.updated_at.clone()),
                 format,
                 raw_schema,
             ));
@@ -207,6 +207,27 @@ pub fn build_catalog_index(
     })
 }
 
+fn read_dataset_manifest(
+    repository_root: &Path,
+    dataset_id: &str,
+) -> Result<Option<DatasetManifest>, CatalogError> {
+    let path = repository_root
+        .join(".davis/datasets")
+        .join(format!("{dataset_id}.yaml"));
+    Ok(path.is_file().then(|| read_manifest(&path)).transpose()?)
+}
+
+fn latest_updated_at(manifest: Option<&DatasetManifest>) -> Option<String> {
+    manifest.and_then(|value| {
+        value
+            .files
+            .iter()
+            .filter_map(|file| file.updated_at.as_deref())
+            .max()
+            .map(str::to_owned)
+    })
+}
+
 /// Writes the complete index and split static API documents.
 ///
 /// # Errors
@@ -233,6 +254,7 @@ fn index_file(
     dataset_id: &str,
     file: &davis_core::CatalogFile,
     object: ObjectRef,
+    updated_at: Option<String>,
     format: String,
     raw_schema: Option<String>,
 ) -> IndexedFile {
@@ -246,6 +268,7 @@ fn index_file(
         path: file.path.clone(),
         size: file.size,
         object,
+        updated_at,
         format,
         schema_status: file.schema_status,
         schema_path: file.schema_path.clone(),

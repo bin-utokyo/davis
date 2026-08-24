@@ -8,243 +8,290 @@ files:
   object:
     oid: blake3:2333b01a942991db0b2b3afc768110344b8f4f254d1806507c109a779651b440
     size: 2240
+  updated_at: 2026-08-24
 - id: bus_link.csv
   path: bus_link.csv
   object:
     oid: blake3:1124fb98d670c01257856b5693a91b71efb78297573c496b94beb9355ffeb7f4
     size: 39668316
+  updated_at: 2026-08-24
   schema_path: data/network/tokyo-metropolitan-area/bus_link.csv.schema.yaml
 - id: bus_node.csv
   path: bus_node.csv
   object:
     oid: blake3:1f8976fb9f587ab095050b5ee11fc721a4e99884a632b0daad0efec1ee62f047
     size: 5347756
+  updated_at: 2026-08-24
   schema_path: data/network/tokyo-metropolitan-area/bus_node.csv.schema.yaml
 - id: car_link.csv
   path: car_link.csv
   object:
     oid: blake3:35fca363809417776d33a6529e0cd02ef304975b0f838a71f296214009a9f420
     size: 64414212
+  updated_at: 2026-08-24
   schema_path: data/network/tokyo-metropolitan-area/car_link.csv.schema.yaml
 - id: car_node.csv
   path: car_node.csv
   object:
     oid: blake3:fa79deaf07ee4042b9d697b21abe77ff3611872b6ef4f81a44e7532ad060dc72
     size: 6460525
+  updated_at: 2026-08-24
   schema_path: data/network/tokyo-metropolitan-area/car_node.csv.schema.yaml
 - id: network-data-creation-work-report.docx
   path: network-data-creation-work-report.docx
   object:
     oid: blake3:094c2725e20855b0d172a151d34e304b0f189b1a59b448efdc861dfc83e8dac4
     size: 2261599
+  updated_at: 2026-08-24
 - id: public_link.csv
   path: public_link.csv
   object:
     oid: blake3:570d7b7d36d0e9c271ba63f5ae960e03db8759979abe0130323cfa753aa8f32b
     size: 89913016
+  updated_at: 2026-08-24
   schema_path: data/network/tokyo-metropolitan-area/public_link.csv.schema.yaml
 - id: public_node.csv
   path: public_node.csv
   object:
     oid: blake3:12175f7114e21e796cd197abdcf975081263aca108e72bd90be1b330e2b8a0a4
     size: 11863880
+  updated_at: 2026-08-24
   schema_path: data/network/tokyo-metropolitan-area/public_node.csv.schema.yaml
 - id: rail_link.csv
   path: rail_link.csv
   object:
     oid: blake3:8672302952ced2286742deab6a2319dbde28d3e785e18a134c302f091c3122a0
     size: 794390
+  updated_at: 2026-08-24
   schema_path: data/network/tokyo-metropolitan-area/rail_link.csv.schema.yaml
 - id: rail_node.csv
   path: rail_node.csv
   object:
     oid: blake3:b4e3842076e4f504cfd834f128603ce4d74a33db8e124e681e43032fdd72ae8e
     size: 189543
+  updated_at: 2026-08-24
   schema_path: data/network/tokyo-metropolitan-area/rail_node.csv.schema.yaml
 - id: raw/specification_of_fee_codes.xlsx
   path: raw/specification_of_fee_codes.xlsx
   object:
     oid: blake3:fc808f40c35b90f95460e61711681d57bed18779d824f80228901a42e1b23a7b
     size: 18898612
+  updated_at: 2026-08-24
 - id: raw/specification_of_network_definition.xlsb
   path: raw/specification_of_network_definition.xlsb
   object:
     oid: blake3:a43fa1f17a9917cac74782155cabcbceda0fb54ba1f41235c142ef208b207c85
     size: 8767366
+  updated_at: 2026-08-24
 - id: readme.txt
   path: readme.txt
   object:
     oid: blake3:2c5e603c86bd3605a9f0cb25af4345a7263c30767b7161958541343707eae8d1
     size: 1015
+  updated_at: 2026-08-24
 - id: shapefile/bus_link.dbf
   path: shapefile/bus_link.dbf
   object:
     oid: blake3:eead3b5b1ca41f0de596ca11395bfe2a9c7d7985acf9b4143c9c86d3f7bc424a
     size: 36011585
+  updated_at: 2026-08-24
 - id: shapefile/bus_link.shp
   path: shapefile/bus_link.shp
   object:
     oid: blake3:3ff95524cb61eba93fbd6c406c2995df8641392c4576eb929dae8fc81ea609c1
     size: 41383404
+  updated_at: 2026-08-24
 - id: shapefile/bus_link.shx
   path: shapefile/bus_link.shx
   object:
     oid: blake3:e1fcb837b1c022da5184f0e681bbb8005862e0145fbb0912d8ca8a2c30984bb6
     size: 844924
+  updated_at: 2026-08-24
 - id: shapefile/bus_node.dbf
   path: shapefile/bus_node.dbf
   object:
     oid: blake3:66bfafe7a7e4e306273541729c787672031cac62a6ddc76a4e189ffb34c7e36d
     size: 35946243
+  updated_at: 2026-08-24
 - id: shapefile/bus_node.shp
   path: shapefile/bus_node.shp
   object:
     oid: blake3:26c8aaf343344ca02b01f2da45b62a65a122599484fd508a939c1face860f356
     size: 3022588
+  updated_at: 2026-08-24
 - id: shapefile/bus_node.shx
   path: shapefile/bus_node.shx
   object:
     oid: blake3:455a4b5ee7e490da95ea3456e53db35d098dc3694658c29ca9f17e34e94a572e
     size: 863668
+  updated_at: 2026-08-24
 - id: shapefile/car_link.dbf
   path: shapefile/car_link.dbf
   object:
     oid: blake3:263aacd5a7b68ea1714ba63e90aeada111b87c8e839742ce5ffd3d549b6d7aa0
     size: 33547450
+  updated_at: 2026-08-24
 - id: shapefile/car_link.shp
   path: shapefile/car_link.shp
   object:
     oid: blake3:8ec09e134a4fddd3bd8ff0b12534d70f362690124d4bdcba22605b0790d56277
     size: 31923220
+  updated_at: 2026-08-24
 - id: shapefile/car_link.shx
   path: shapefile/car_link.shx
   object:
     oid: blake3:917ffab5488effb465b3eb8f8737cf5a200730f996e1eefad388749e344cda90
     size: 1687972
+  updated_at: 2026-08-24
 - id: shapefile/car_node.dbf
   path: shapefile/car_node.dbf
   object:
     oid: blake3:44246a35ffc98fe54599fb5f385ecb94f7e2884455043684bc187856aa04238a
     size: 12604729
+  updated_at: 2026-08-24
 - id: shapefile/car_node.shp
   path: shapefile/car_node.shp
   object:
     oid: blake3:b18e0551e432532912b64d0458f97fec849b4acc78db4162908a342f3daa33dc
     size: 4201612
+  updated_at: 2026-08-24
 - id: shapefile/car_node.shx
   path: shapefile/car_node.shx
   object:
     oid: blake3:8cd5069b2f8e138ce1200ccb630f369996f7a6ed24fb2b699cf854607f2b76cb
     size: 1200532
+  updated_at: 2026-08-24
 - id: shapefile/public_link.dbf
   path: shapefile/public_link.dbf
   object:
     oid: blake3:6c3c2b316206ada416da2fb183ce4cba76ab44215a2c3d90f033062381a5ff8b
     size: 202205046
+  updated_at: 2026-08-24
 - id: shapefile/public_link.shp
   path: shapefile/public_link.shp
   object:
     oid: blake3:7509b6623e5689a45f7958da7bdf832773782b00c0234ce8e5a712ec695dbe31
     size: 91370436
+  updated_at: 2026-08-24
 - id: shapefile/public_link.shx
   path: shapefile/public_link.shx
   object:
     oid: blake3:6f1f6a9ff0403b4e71fc4e723e4ac12a34c6d387c5de5cc5c63762949a5e2ce2
     size: 4223684
+  updated_at: 2026-08-24
 - id: shapefile/public_node.dbf
   path: shapefile/public_node.dbf
   object:
     oid: blake3:7cbdeb1491265b7a5223768c33a2768119471febeb9fc5453dd74710bcd821b3
     size: 82097103
+  updated_at: 2026-08-24
 - id: shapefile/public_node.shp
   path: shapefile/public_node.shp
   object:
     oid: blake3:ccba7190766717814470fdd88b20f92923c9282c969e46214fce4ea6c73f1be7
     size: 7116860
+  updated_at: 2026-08-24
 - id: shapefile/public_node.shx
   path: shapefile/public_node.shx
   object:
     oid: blake3:d873e94b7e9e25246e790813cdd8af8033f51a1a34178ee7a858b6b22859d986
     size: 2033460
+  updated_at: 2026-08-24
 - id: shapefile/rail_link.dbf
   path: shapefile/rail_link.dbf
   object:
     oid: blake3:e1018d7a6b6a1ba4a750ae29111a5e545f0376da1c25c2287d2548b7fa100992
     size: 524227
+  updated_at: 2026-08-24
 - id: shapefile/rail_link.shp
   path: shapefile/rail_link.shp
   object:
     oid: blake3:cd2dcd99ae7778d54a6ad84fd7bbeabe6e6f3e80ec42755151ab73bac3108de6
     size: 1157692
+  updated_at: 2026-08-24
 - id: shapefile/rail_link.shx
   path: shapefile/rail_link.shx
   object:
     oid: blake3:3b629f7fcedec5b96988373d1bede207f22896806812f739990c14324c6ff886
     size: 18380
+  updated_at: 2026-08-24
 - id: shapefile/rail_node.CSV
   path: shapefile/rail_node.CSV
   object:
     oid: blake3:e6729b06c8d751ca4f44e8818d65e2e0179834ee59da21997645eb9cf6f7d64a
     size: 194894
+  updated_at: 2026-08-24
 - id: shapefile/rail_node.dbf
   path: shapefile/rail_node.dbf
   object:
     oid: blake3:1b9090f556978297408878c29a418b812d61f0be1090dd0062c6a429bc8628b4
     size: 1520037
+  updated_at: 2026-08-24
 - id: shapefile/rail_node.shp
   path: shapefile/rail_node.shp
   object:
     oid: blake3:a4d50a57414021d3d7d8eaa2667b2945563e82da108cf977aa7ab2537acd06e7
     size: 127892
+  updated_at: 2026-08-24
 - id: shapefile/rail_node.shx
   path: shapefile/rail_node.shx
   object:
     oid: blake3:da5ed11bc6463ae1b8b116fe0e7149e2f0c8d06d2ca3fe9a859112c8fbb746f9
     size: 36612
+  updated_at: 2026-08-24
 - id: shapefile/walk_link.dbf
   path: shapefile/walk_link.dbf
   object:
     oid: blake3:50bf88624228055455576bff405d6e47277b9b2b6ae25d0f6bea50272205d2a8
     size: 29292182
+  updated_at: 2026-08-24
 - id: shapefile/walk_link.shp
   path: shapefile/walk_link.shp
   object:
     oid: blake3:2099cfcc189504d2431b623183e1aa27a40d1f611eb7e8ea3e142bac3bfa9b82
     size: 29399140
+  updated_at: 2026-08-24
 - id: shapefile/walk_link.shx
   path: shapefile/walk_link.shx
   object:
     oid: blake3:65e7722e9294708f3bfceba968b8edbf97b1aaf203e1aef6058c48b145d6272e
     size: 1594180
+  updated_at: 2026-08-24
 - id: shapefile/walk_node.dbf
   path: shapefile/walk_node.dbf
   object:
     oid: blake3:9372e9733ca3dc5386bb27924c9ea4f3cf34e31006a6c71842e8268e2a7ef2c9
     size: 45756373
+  updated_at: 2026-08-24
 - id: shapefile/walk_node.shp
   path: shapefile/walk_node.shp
   object:
     oid: blake3:29f05b42482933c2305d80f14d38ee7739bdf44d503de721ed848cab5bbbb5fc
     size: 3966580
+  updated_at: 2026-08-24
 - id: shapefile/walk_node.shx
   path: shapefile/walk_node.shx
   object:
     oid: blake3:749d626bdd347ddd345346349ca9d7a422dac75abee0554ccff21ae7923513cc
     size: 1133380
+  updated_at: 2026-08-24
 - id: walk_link.csv
   path: walk_link.csv
   object:
     oid: blake3:21470c6d62849ecfbe5a7e9203dcdce8caec9a0e2cadda43233d2d3d31776591
     size: 55742592
+  updated_at: 2026-08-24
   schema_path: data/network/tokyo-metropolitan-area/walk_link.csv.schema.yaml
 - id: walk_node.csv
   path: walk_node.csv
   object:
     oid: blake3:c7c680ec3f61438bd22da682208f52fc99d4690ad7847977d50199315049c24b
     size: 6326647
+  updated_at: 2026-08-24
   schema_path: data/network/tokyo-metropolitan-area/walk_node.csv.schema.yaml
 - id: ネットワークデータ作成業務報告書.docx
   path: ネットワークデータ作成業務報告書.docx
   object:
     oid: blake3:094c2725e20855b0d172a151d34e304b0f189b1a59b448efdc861dfc83e8dac4
     size: 2261599
+  updated_at: 2026-08-24

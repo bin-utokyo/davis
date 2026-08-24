@@ -241,6 +241,8 @@ For current interface names and details, see the official VS Code documentation 
 
 `davis ingest`, `davis documents`, and `davis index` are development and maintenance commands. Routine updates do not use them. A normal `push` reuses unchanged files when their previous Manifest entry and local cache object remain valid, and hashes only new, changed, or uncached files. Use `--rehash` only to read every selected file again.
 
+During a normal `davis push`, Davis updates a file's Manifest `updated_at` to the operation date only when its real-data Object ID changes. A file with an unchanged Object ID keeps its date. `--dry-run` does not modify the Manifest or its dates. The last-updated date shown for a dataset is the latest known date among its files. Existing files received `2026-08-24` as a one-time migration value. This is not an ongoing fallback: if Davis reads an older Manifest without a date in the future, it leaves that date unknown instead of substituting the operation date.
+
 For `get`, repeat `--file` to select files or directories and use `--pdf-ja` and `--pdf-en` to include documentation PDFs. Schemas are saved by default and omitted only with `--no-schema`. `pull` provides the same document options. Run `davis <command> --help` for the complete option list.
 
 ### Sources of truth and generated artifacts
@@ -253,7 +255,7 @@ A normal `davis push` performs these steps in order:
 
 1. Validate the personal branch and its relationship to `origin/main`.
 2. Reject uncommitted changes outside the selected dataset.
-3. Reuse unchanged files from the previous Manifest and local cache, then generate the required BLAKE3 objects and DatasetManifest.
+3. Reuse unchanged files from the previous Manifest and local cache, then generate the required BLAKE3 objects and DatasetManifest. Record the operation date for files whose Object ID changed.
 4. Upload missing objects to R2.
 5. After upload succeeds, generate only the Japanese and English PDFs affected by a changed schema or object ID.
 6. Stage only the selected dataset's schemas, PDFs, and Manifest.

@@ -8,25 +8,30 @@ files:
   object:
     oid: blake3:ed68818a59f660dccc26aa036f798c62b3ba5e093f20d910f215eee1779b6315
     size: 10080
+  updated_at: 2026-08-24
 - id: README.txt
   path: README.txt
   object:
     oid: blake3:159096137d1119fea50dfddf0aecf1b822cf28509ed33ce88d37f8b1bd57c9ab
     size: 1049
+  updated_at: 2026-08-24
 - id: link.csv
   path: link.csv
   object:
     oid: blake3:f1f5498b742cc32b3891dc82af9adda189ff6d506617c2471a73934dee822a04
     size: 7407034
+  updated_at: 2026-08-24
   schema_path: data/routes/Matsuyama/link.csv.schema.yaml
 - id: linkFile.zip
   path: linkFile.zip
   object:
     oid: blake3:8da9b4d0b9127f938182631755b7bf32181db73a44929c2ea95560bffcbf98ad
     size: 20567704
+  updated_at: 2026-08-24
 - id: path.csv
   path: path.csv
   object:
     oid: blake3:9ec50ef1c2c3db3348f290db57ba43938acfca2f40b2ed4d7ae23f4bd104b7ea
     size: 221961
+  updated_at: 2026-08-24
   schema_path: data/routes/Matsuyama/path.csv.schema.yaml

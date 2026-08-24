@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
-  "latest": "0.3.4",
+  "latest": "0.3.5",
   "minimum_supported": "0.2.2",
-  "released_at": "2026-08-23",
-  "release_url": "https://github.com/bin-utokyo/davis/releases/tag/v0.3.4",
+  "released_at": "2026-08-24",
+  "release_url": "https://github.com/bin-utokyo/davis/releases/tag/v0.3.5",
   "message": {
-    "ja": "`get`の上書き確認と`davis update`による自己更新に対応し，更新情報をGitHub Releaseで管理するようにしました．",
-    "en": "Davis adds overwrite confirmation to `get`, self-updates through `davis update`, and manages update metadata through GitHub Releases."
+    "ja": "実データのObject IDが変わった日をfileごとに記録し，Web Catalogでfileとdatasetの最終更新日を確認できるようにしました．",
+    "en": "Davis records when each real-data Object ID changes and shows file and dataset last-updated dates in the Web Catalog."
   }
 }

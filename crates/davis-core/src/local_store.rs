@@ -320,6 +320,7 @@ mod tests {
                     oid: object.oid,
                     size: object.size,
                 },
+                updated_at: None,
                 schema_path: None,
             }],
         };

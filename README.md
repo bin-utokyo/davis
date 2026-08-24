@@ -102,6 +102,8 @@ cargo run -p davis-cli -- ingest --all
 
 公式operator sessionを使い，`main`以外の個人作業branchから`davis push <dataset>`を実行すると，新規・変更・cache欠落fileのBLAKE3を計算し，未変更fileは前回Manifestとlocal cacheから再利用します．branch名の形式はDavisでは指定しません．不足ObjectのR2 uploadに成功した後，変更されたschemaまたはObject IDに関係する日英PDFだけを生成し，対象datasetのschema，PDF，Manifestだけをstage・commitして，現在の個人branchをGitHubへpushします．公開Catalogは変更しません．事前確認には`--dry-run`を使用します．dry runはrepository，cache，R2，Gitを変更しません．全fileを読み直す場合だけ`--rehash`を指定します．DVCと`.dvc`は通常経路で使用しません．
 
+各fileのManifestには，そのObject IDへ変わった`davis push`の日を`updated_at`として記録します．Object IDが変わらなければ日付も維持され，datasetの最終更新日は構成fileの最も新しい日付から導出されます．これらはWeb Catalogのdataset一覧，file選択，詳細画面に表示されます．
+
 operator sessionを使わず，`.davis/config.toml`でfilesystemまたはS3互換remoteへ直接接続する場合，`davis push`はObjectとlocal Manifestを同期しますが，公式branch名，`origin/main`，GitHubを要求せず，Git commit・pushも行いません．これにより別組織のrepository，MinIO，S3，local storageでも同じManifestとObject形式を利用できます．
 
 review済みmetadataをWebへ反映するときは，Pull Requestをmergeした後，最新かつcleanな`main`から`davis publish`を実行します．このcommandは`main`，`origin/main`との一致，working tree，R2 Objectの網羅性を検査してから，CatalogIndexをrevision単位で保存し，`catalog/current.json`を切り替えます．個人作業branchではObjectを先に同期できますが，Catalogは公開できません．設定例は`.davis/config.example.toml`にあります．

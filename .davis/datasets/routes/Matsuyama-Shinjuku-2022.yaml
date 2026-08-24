@@ -8,79 +8,93 @@ files:
   object:
     oid: blake3:026a65e39c08aa091202bfa3c087513c7d5115e4fb7653bbc38888349a724145
     size: 79675
+  updated_at: 2026-08-24
   schema_path: data/routes/Matsuyama-Shinjuku-2022/OD.csv.schema.yaml
 - id: OD_revised.csv
   path: OD_revised.csv
   object:
     oid: blake3:57789933bc046b13d75616708c8a3f57659fb187c5a291a9c0bab6d42cd27bf5
     size: 138526
+  updated_at: 2026-08-24
   schema_path: data/routes/Matsuyama-Shinjuku-2022/OD_revised.csv.schema.yaml
 - id: bike/bike_result.csv
   path: bike/bike_result.csv
   object:
     oid: blake3:c1df978bb8524c8abdbb123395aa8fe238d398e28a7e2f0379d22f2a7b7c71e9
     size: 40950
+  updated_at: 2026-08-24
   schema_path: data/routes/Matsuyama-Shinjuku-2022/bike/bike_result.csv.schema.yaml
 - id: bike/link.csv
   path: bike/link.csv
   object:
     oid: blake3:31f976badf08474d34dce4d99d73fd672db1a0bc41dcc56ce8112cf1d0f63213
     size: 117529
+  updated_at: 2026-08-24
   schema_path: data/routes/Matsuyama-Shinjuku-2022/bike/link.csv.schema.yaml
 - id: bike/linkFile.zip
   path: bike/linkFile.zip
   object:
     oid: blake3:202ef283c67d5ed298c3c3a5e9a0c86d7b5da5771149b0112ea9c3b61f7fa947
     size: 228636
+  updated_at: 2026-08-24
 - id: bike/path.csv
   path: bike/path.csv
   object:
     oid: blake3:1df932112e8f2f3b66fcb2ce9f93baf953fad106a18e14f21d132d48bc7590b3
     size: 8146
+  updated_at: 2026-08-24
   schema_path: data/routes/Matsuyama-Shinjuku-2022/bike/path.csv.schema.yaml
 - id: car/car_result.csv
   path: car/car_result.csv
   object:
     oid: blake3:62f1094d4feed664c1266c43a80f37ab3355420c61114c16d03ff4ada9670974
     size: 174668
+  updated_at: 2026-08-24
   schema_path: data/routes/Matsuyama-Shinjuku-2022/car/car_result.csv.schema.yaml
 - id: car/link.csv
   path: car/link.csv
   object:
     oid: blake3:f42ac6bc390bd0b438878c6b9d56dc8e7ca941df04fdd07d58b7e6d912a68fe2
     size: 503444
+  updated_at: 2026-08-24
   schema_path: data/routes/Matsuyama-Shinjuku-2022/car/link.csv.schema.yaml
 - id: car/linkFile.zip
   path: car/linkFile.zip
   object:
     oid: blake3:5beec0781c845a95212215682dbd0c8047286ccbf17e14efe656b559dc4e1e79
     size: 2367461
+  updated_at: 2026-08-24
 - id: car/path.csv
   path: car/path.csv
   object:
     oid: blake3:1c02f6e9784a7c976e4c74933f17f6e1155b8275c0d09972bf7b355dfd19820e
     size: 12016
+  updated_at: 2026-08-24
   schema_path: data/routes/Matsuyama-Shinjuku-2022/car/path.csv.schema.yaml
 - id: walk/link.csv
   path: walk/link.csv
   object:
     oid: blake3:15308be3398f2c06b7381c927ed67df5712e909c260a612f7d9663799445c9bb
     size: 935071
+  updated_at: 2026-08-24
   schema_path: data/routes/Matsuyama-Shinjuku-2022/walk/link.csv.schema.yaml
 - id: walk/linkFile.zip
   path: walk/linkFile.zip
   object:
     oid: blake3:fdbac5679e770ae63b538479d851dfa79059919c85caace856c226d898bd4619
     size: 3621177
+  updated_at: 2026-08-24
 - id: walk/path.csv
   path: walk/path.csv
   object:
     oid: blake3:ced9483e1503c82c7ce4eeed0ee5edf343fae089e5bf92a2e8ab7761983ef497
     size: 163682
+  updated_at: 2026-08-24
   schema_path: data/routes/Matsuyama-Shinjuku-2022/walk/path.csv.schema.yaml
 - id: walk/walk_result.csv
   path: walk/walk_result.csv
   object:
     oid: blake3:c6842abea0576eb4ae847d22185e589f8e5f900295799d23961605a2a443c459
     size: 291895
+  updated_at: 2026-08-24
   schema_path: data/routes/Matsuyama-Shinjuku-2022/walk/walk_result.csv.schema.yaml
