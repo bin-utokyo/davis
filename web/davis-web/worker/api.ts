@@ -32,6 +32,14 @@ type AssetFetcher = {
   fetch(request: Request): Promise<Response>;
 };
 
+type AnalyticsEngineDataset = {
+  writeDataPoint(point: {
+    blobs?: string[];
+    doubles?: number[];
+    indexes?: string[];
+  }): void;
+};
+
 type R2Range = { offset: number; length: number };
 type R2ObjectMetadata = {
   size: number;
@@ -64,6 +72,7 @@ type R2Bucket = {
 export type DavisWorkerEnv = {
   ASSETS: AssetFetcher;
   DAVIS_DATA?: R2Bucket;
+  DAVIS_DOWNLOAD_ANALYTICS?: AnalyticsEngineDataset;
   DAVIS_INVITE_CODE?: string;
   DAVIS_TOKEN_SECRET?: string;
   DAVIS_ACCESS_REVISION?: string;
@@ -570,6 +579,7 @@ async function downloadObject(request: Request, env: DavisWorkerEnv): Promise<Re
   if (!isValidDownloadToken(payload, env)) {
     return errorResponse(401, "invalid_grant", "Download grant is invalid or expired");
   }
+  recordDownloadAttempt(env, payload, request.headers.has("Range"));
 
   const object = await env.DAVIS_DATA.get(objectKey(payload.oid), {
     onlyIf: request.headers,
@@ -597,6 +607,29 @@ async function downloadObject(request: Request, env: DavisWorkerEnv): Promise<Re
     headers.set("Content-Length", String(object.size));
   }
   return new Response(object.body, { status: object.range ? 206 : 200, headers });
+}
+
+function recordDownloadAttempt(
+  env: DavisWorkerEnv,
+  payload: DownloadToken,
+  isRangeRequest: boolean,
+): void {
+  try {
+    env.DAVIS_DOWNLOAD_ANALYTICS?.writeDataPoint({
+      blobs: [
+        payload.file_id,
+        payload.path,
+        payload.oid,
+        isRangeRequest ? "range" : "full",
+      ],
+      doubles: [1],
+      indexes: [payload.oid],
+    });
+  } catch (error) {
+    console.warn("Failed to record a Davis download attempt", {
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
 }
 
 async function authenticate(request: Request, env: DavisWorkerEnv): Promise<SessionToken | null> {

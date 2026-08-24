@@ -41,6 +41,12 @@ const localBindingConfig = {
         },
       ]
     : [],
+  analytics_engine_datasets: [
+    {
+      binding: "DAVIS_DOWNLOAD_ANALYTICS",
+      dataset: "davis_downloads",
+    },
+  ],
   vars: {
     DAVIS_ACCESS_REVISION: process.env.DAVIS_ACCESS_REVISION ?? "2026",
     DAVIS_OPERATOR_ACCESS_REVISION: process.env.DAVIS_OPERATOR_ACCESS_REVISION ?? "2026",

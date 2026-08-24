@@ -126,6 +126,8 @@ pnpm dev
 
 The catalog supports text and column search, faceted filtering, Dataset and File details, raw YAML inspection, multi-selection, total-size calculation, and copying the corresponding `davis get` command. The download dialog selects `schema.yaml` by default and lets users add Japanese and English PDFs independently. An inline warning explains the effect of omitting schemas from future formatting and modeling workflows. The Worker provides shared-code authentication, revocable sessions, short-lived download grants, private R2 delivery, organizer authentication, multipart uploads, and catalog publication APIs.
 
+The official Worker records each request reaching the object-delivery endpoint with a valid Download Grant as a download attempt in Cloudflare Analytics Engine. It stores only the File ID, path, Object ID, and full/range distinction; it does not store personal information or session tokens. Analytics failures never fail the download. This adds no changes to the public API, CLI, Manifest, or schema formats.
+
 ## Validation
 
 ```bash

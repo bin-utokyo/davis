@@ -457,7 +457,14 @@ test("creates download grants from the browser session cookie", async () => {
 });
 
 test("streams an authorized R2 object and supports byte ranges", async () => {
-  const { env, requestedKeys } = createEnv();
+  const analytics: Array<{ blobs?: string[]; doubles?: number[]; indexes?: string[] }> = [];
+  const { env, requestedKeys } = createEnv({
+    DAVIS_DOWNLOAD_ANALYTICS: {
+      writeDataPoint(point) {
+        analytics.push(point);
+      },
+    },
+  });
   const { body } = await exchange(env);
   const grantResponse = await handleApiRequest(apiRequest("/api/v1/download-grants", {
     method: "POST",
@@ -465,6 +472,7 @@ test("streams an authorized R2 object and supports byte ranges", async () => {
     body: JSON.stringify({ file_ids: [sampleFile.id] }),
   }), env);
   const grants = await grantResponse.json() as { grants: Array<{ url: string }> };
+  assert.deepEqual(analytics, []);
 
   const response = await handleApiRequest(new Request(grants.grants[0].url, {
     headers: { Range: "bytes=0-2" },
@@ -477,6 +485,32 @@ test("streams an authorized R2 object and supports byte ranges", async () => {
     "catalog/current.json",
     "objects/blake3/e2/d004c4d48e0a7b166c588fc479eec8610940be7a58f0456b86c90dd0126cc9",
   ]);
+  assert.deepEqual(analytics, [{
+    blobs: [sampleFile.id, sampleFile.path, sampleFile.object.oid, "range"],
+    doubles: [1],
+    indexes: [sampleFile.object.oid],
+  }]);
+});
+
+test("does not fail a download when analytics recording fails", async () => {
+  const { env } = createEnv({
+    DAVIS_DOWNLOAD_ANALYTICS: {
+      writeDataPoint() {
+        throw new Error("analytics unavailable");
+      },
+    },
+  });
+  const { body } = await exchange(env);
+  const grantResponse = await handleApiRequest(apiRequest("/api/v1/download-grants", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${body.token}` },
+    body: JSON.stringify({ file_ids: [sampleFile.id] }),
+  }), env);
+  const grants = await grantResponse.json() as { grants: Array<{ url: string }> };
+
+  const response = await handleApiRequest(new Request(grants.grants[0].url), env);
+  assert.equal(response.status, 200);
+  assert.deepEqual(new Uint8Array(await response.arrayBuffer()), contents);
 });
 
 test("rejects a tampered download grant", async () => {

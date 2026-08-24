@@ -138,6 +138,8 @@ pnpm dev
 
 Webカタログでは，名称・説明・地域・年・形式・license・schema状態・列情報による検索，Dataset・File詳細，Raw YAML表示，複数選択，合計容量表示，対応する`davis get` commandのcopyができます．download確認画面では，`schema.yaml`を初期選択し，日本語PDFと英語PDFを任意で追加できます．schemaの選択を外すと，将来の整形・推定機能との接続に再取得が必要になる可能性を画面内で警告します．Workerには，共通招待code，失効可能なsession，短寿命Download Grant，private R2 Object配信の共通APIがあります．
 
+公式Workerは，有効なDownload GrantでObject配信endpointへ到達した回数を「download試行数」としてCloudflare Analytics Engineへ記録します．File ID，path，Object ID，full／rangeの区別だけを保存し，個人情報やsession tokenは保存しません．統計記録の失敗はdownloadを失敗させません．公開API，CLI，Manifest，schemaの形式は変更しません．
+
 ## 検証
 
 ```bash
