@@ -411,7 +411,28 @@ export function CatalogApp() {
         </div>
       </section>
 
-      <section className="guide-section" id="guide"><p className="section-kicker">HOW TO USE</p><h2>{tr("見つけた後は，モデルへ．", "From discovery to modeling.")}</h2><div className="guide-grid"><div><span>01</span><h3>{tr("schemaから探す", "Search the schemas")}</h3><p>{tr("名称だけでなく，地域，年，列名や説明から必要なファイルを探せます．", "Find files by location, year, column name, description, and more.")}</p></div><div><span>02</span><h3>{tr("必要なものを選ぶ", "Choose what you need")}</h3><p>{tr("データセット全体でも，ファイル単位でも選択できます．合計容量も確認できます．", "Select an entire dataset or individual files and check the total size.")}</p></div><div><span>03</span><h3>{tr("Davisで取得する", "Get it with Davis")}</h3><p>{tr("Webから個別に保存できます．階層を保つ場合はCLIコマンドをコピーして取得します．", "Save files individually on the web, or copy a CLI command to preserve the directory structure.")}</p></div></div></section>
+      <section className="guide-section" id="guide">
+        <p className="section-kicker">HOW TO USE</p><h2>{tr("見つけた後は，モデルへ．", "From discovery to modeling.")}</h2>
+        <div className="guide-grid"><div><span>01</span><h3>{tr("schemaから探す", "Search the schemas")}</h3><p>{tr("名称だけでなく，地域，年，列名や説明から必要なファイルを探せます．", "Find files by location, year, column name, description, and more.")}</p></div><div><span>02</span><h3>{tr("必要なものを選ぶ", "Choose what you need")}</h3><p>{tr("データセット全体でも，ファイル単位でも選択できます．合計容量も確認できます．", "Select an entire dataset or individual files and check the total size.")}</p></div><div><span>03</span><h3>{tr("取得方法を選ぶ", "Choose a download method")}</h3><p>{tr("すぐに保存するならWeb，階層を保って研究環境へ配置するならCLIを選べます．", "Use the web for immediate downloads, or the CLI to place files in your research environment with their directory structure intact.")}</p></div></div>
+        <div className="download-method-guide">
+          <p className="method-kicker">WEB OR CLI?</p>
+          <h3>{tr("二つの取得方法がある理由", "Why Davis offers two download methods")}</h3>
+          <p className="method-intro">{tr("どちらも同じ実データを取得しますが，重視する点が異なります．Webは導入不要の手軽さを，CLIは階層構造と再現性を優先しています．", "Both methods retrieve the same data, but they serve different priorities: the web requires no installation, while the CLI prioritizes directory structure and reproducibility.")}</p>
+          <div className="method-grid">
+            <article className="method-card"><span className="method-badge">WEB DOWNLOAD</span><h4>{tr("少数のファイルを，すぐに確認する", "Quickly inspect a few files")}</h4><dl>
+              <div><dt>{tr("向いている場面", "Best for")}</dt><dd>{tr("検索しながら数件を試したいとき，CLIを導入していないPCを使うとき，まずデータの中身を確認したいとき．", "Trying a few files while searching, using a computer without the CLI, or inspecting the data before setting up a project.")}</dd></div>
+              <div><dt>{tr("メリット", "Advantages")}</dt><dd>{tr("インストールやターミナル操作が不要です．選択した実データ，schema.yaml，説明PDFをその場で保存できます．", "No installation or terminal is required. Save the selected data, schema.yaml files, and documentation PDFs directly from the catalog.")}</dd></div>
+              <div><dt>{tr("注意点", "Trade-offs")}</dt><dd>{tr("各ファイルはブラウザのダウンロード先へ個別に保存され，data以下の階層は再現されません．同名ファイルはブラウザにより改名されることがあり，多数の同時ダウンロードが確認・制限される場合もあります．", "Files are saved individually to the browser's download location, without recreating the hierarchy below data. Browsers may rename duplicate filenames or ask for permission before allowing many downloads.")}</dd></div>
+            </dl></article>
+            <article className="method-card"><span className="method-badge">CLI DOWNLOAD</span><h4>{tr("研究用の配置を，そのまま再現する", "Recreate a research-ready layout")}</h4><dl>
+              <div><dt>{tr("向いている場面", "Best for")}</dt><dd>{tr("データセット全体や多数のファイルを取得するとき，分析プロジェクトに配置するとき，同じ取得条件を後から再実行・共有したいとき．", "Downloading entire datasets or many files, placing them into an analysis project, or rerunning and sharing the same selection later.")}</dd></div>
+              <div><dt>{tr("メリット", "Advantages")}</dt><dd>{tr("data/種類/データセット以下の階層を出力先に再現します．Webで選んだファイルとschema・PDFの指定がコピーしたコマンドへ反映されるため，取得条件を残せます．", "Recreates the hierarchy under data/type/dataset in the output directory. The copied command records the selected files and schema/PDF options, making the retrieval conditions reproducible.")}</dd></div>
+              <div><dt>{tr("注意点", "Trade-offs")}</dt><dd>{tr("最初にDavis CLIの導入が必要です．保存したいディレクトリでターミナルを開いてコマンドを実行し，未ログインの場合は参加者用招待コードを入力します．", "The Davis CLI must be installed first. Open a terminal in the destination directory, run the command, and enter the participant invitation code if you are not already logged in.")}</dd></div>
+            </dl><a href={language === "ja" ? "https://github.com/bin-utokyo/davis/blob/main/docs/participant-installation.md" : "https://github.com/bin-utokyo/davis/blob/main/docs/participant-installation_en.md"} target="_blank" rel="noreferrer">{tr("CLIの利用者向け導入ガイド", "CLI participant installation guide")} →</a></article>
+          </div>
+          <p className="method-recommendation"><strong>{tr("迷った場合", "If you are unsure")}</strong>{tr("数ファイルを試す段階ではWeb，実際の研究フォルダへ保存する段階ではCLIがおすすめです．Webで選択してから，そのままCLIコマンドをコピーできます．", "Start with the web when trying a few files, then use the CLI when saving them into a real research folder. You can make the selection on the web and copy the matching CLI command directly.")}</p>
+        </div>
+      </section>
       <footer id="about"><a className="brand" href="#top"><span className="brand-mark">D</span><span>Davis</span></a><p>{tr("交通データの取得から行動モデルの研究までを，一つの流れにつなぐためのプラットフォームです．", "A platform connecting transport data discovery and travel behavior model research in one workflow.")}</p><a href="https://github.com/bin-utokyo/davis">GitHub</a></footer>
 
       {activeDataset && <div className="overlay"><button className="overlay-dismiss" type="button" aria-label={tr("ファイル一覧を閉じる", "Close file list")} onClick={() => setActiveDataset(null)}/><aside className="drawer" role="dialog" aria-modal="true" aria-label={tr(`${activeDataset}のファイル`, `${activeDataset} files`)}>

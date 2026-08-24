@@ -100,6 +100,21 @@ h2 { font-family: Georgia, "Yu Mincho", serif; font-size: 35px; font-weight: 500
 .guide-grid span { color: #f0a27d; font-family: var(--font-geist-mono), monospace; font-size: 12px; }
 .guide-grid h3 { font-family: Georgia, "Yu Mincho", serif; font-size: 22px; font-weight: 500; margin: 28px 0 12px; }
 .guide-grid p { color: rgba(255,255,255,.7); font-size: 13px; line-height: 1.8; }
+.download-method-guide { border-top: 1px solid rgba(255,255,255,.2); margin-top: 64px; padding-top: 48px; }
+.method-kicker { color: #f0a27d; font-family: var(--font-geist-mono), monospace; font-size: 11px; letter-spacing: .12em; margin: 0 0 14px; }
+.download-method-guide > h3 { font-family: Georgia, "Yu Mincho", serif; font-size: 30px; font-weight: 500; margin: 0; }
+.method-intro { color: rgba(255,255,255,.72); font-size: 13px; line-height: 1.85; max-width: 780px; }
+.method-grid { display: grid; gap: 18px; grid-template-columns: 1fr 1fr; margin-top: 28px; }
+.method-card { background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.18); padding: 28px; }
+.method-badge { color: #f0a27d; font-family: var(--font-geist-mono), monospace; font-size: 10px; letter-spacing: .08em; }
+.method-card h4 { font-family: Georgia, "Yu Mincho", serif; font-size: 22px; font-weight: 500; margin: 15px 0 22px; }
+.method-card dl { margin: 0; }
+.method-card dl > div { border-top: 1px solid rgba(255,255,255,.14); padding: 15px 0; }
+.method-card dt { color: #f0a27d; font-size: 11px; font-weight: 700; margin-bottom: 6px; }
+.method-card dd { color: rgba(255,255,255,.72); font-size: 12px; line-height: 1.75; margin: 0; }
+.method-card > a { color: white; display: inline-block; font-size: 12px; font-weight: 700; margin-top: 10px; }
+.method-recommendation { background: rgba(9,31,23,.38); color: rgba(255,255,255,.78); font-size: 12px; line-height: 1.75; margin: 18px 0 0; padding: 18px 20px; }
+.method-recommendation strong { color: white; display: block; margin-bottom: 4px; }
 footer { align-items: center; background: #102c22; color: white; display: grid; gap: 30px; grid-template-columns: auto 1fr auto; padding: 32px 8vw; }
 footer p { color: rgba(255,255,255,.62); font-size: 12px; margin: 0; text-align: center; }
 footer > a:last-child { color: #f0a27d; font-family: var(--font-geist-mono), monospace; font-size: 11px; }
@@ -193,6 +208,7 @@ footer > a:last-child { color: #f0a27d; font-family: var(--font-geist-mono), mon
   .filter-panel { grid-template-columns: 1fr 1fr; }
   .guide-grid { grid-template-columns: 1fr; }
   .guide-grid > div { border-bottom: 1px solid rgba(255,255,255,.2); }
+  .method-grid { grid-template-columns: 1fr; }
   .selection-dock { gap: 10px; grid-template-columns: 1fr auto auto; }
   .selection-dock > p { display: none; }
   footer { grid-template-columns: 1fr auto; }

@@ -33,7 +33,8 @@ test("server-renders the Davis catalog shell", async () => {
   assert.match(html, /交通データを/);
   assert.match(html, /研究のすぐそばに/);
   assert.match(html, /データセットを探す/);
-  assert.match(html, /Webから個別に保存できます/);
+  assert.match(html, /二つの取得方法がある理由/);
+  assert.match(html, /CLIは階層構造と再現性を優先しています/);
   assert.match(html, /確認中/);
   assert.match(html, /日本語/);
   assert.match(html, /English/);
