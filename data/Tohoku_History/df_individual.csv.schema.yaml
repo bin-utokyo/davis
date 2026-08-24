@@ -129,9 +129,9 @@ description:
   ja: 本データセットは、被災者の20年間にわたるライフイベント（結婚、離婚、出産、就職、退職、地域間移動等）と、その年における居住地選択に関する情報を含むパネルデータである。
 hash_: 39504ef0a4f7c32c684bcac9ad72be0721b7687ba47f6104d35baa650319bbdc
 license_:
-  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+  en: Use is permitted only for the 2026 Summer Course on Behavior Modeling in Transportation
     Networks.
-  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+  ja: 2026年度の行動モデル夏の学校のための利用のみ許可します。
 name:
   en: 20-year panel data on individual states and transitions
   ja: 個人の20年間の状態・変化の記録

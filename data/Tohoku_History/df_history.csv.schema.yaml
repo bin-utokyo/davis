@@ -214,9 +214,9 @@ description:
   ja: このデータは、被災者の年ごとの移動履歴、ライフイベント（結婚、出産、退職、転職、転居など）、およびその際の選択行動（居住地選択やターゲット設定）を記録したものである。本人と配偶者それぞれのステータスや位置情報の変化も含まれている。
 hash_: c7938d180371f5f315c15c3c786abe11b313d4ebbb22cf9abc16856522669b71
 license_:
-  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+  en: Use is permitted only for the 2026 Summer Course on Behavior Modeling in Transportation
     Networks.
-  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+  ja: 2026年度の行動モデル夏の学校のための利用のみ許可します。
 name:
   en: Mobility history, life events, and choice behavior of disaster-affected individuals
   ja: 被災者の移動履歴・ライフイベントと選択行動

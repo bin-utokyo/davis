@@ -65,9 +65,9 @@ description:
   ja: 本データセットは、**個人単位の選択肢説明変数（被災者データ）**を記録したものであり、時系列（year）および都市ごとの選択肢属性を含む。各は、特定の個人（individual_id）が特定の年（time）に、各候補都市（city）を選択肢とした場合の説明変数を示す。都市ごとの地理的条件や通勤コスト、家族の所在地などが含まれている。
 hash_: fabde83b3db19bb1a012fa2d7697d05310d2b39e47eba3d3b931a48e3518a185
 license_:
-  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+  en: Use is permitted only for the 2026 Summer Course on Behavior Modeling in Transportation
     Networks.
-  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+  ja: 2026年度の行動モデル夏の学校のための利用のみ許可します。
 name:
   en: Choice-specific attributes by individual
   ja: 避難個人毎の選択肢説明変数

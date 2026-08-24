@@ -54,9 +54,9 @@ description:
   ja: 東北地方の居住地履歴Web調査の質問データです。元データを一次正規化しています。
 hash_: d5a7ff7aae19be2c3e0cc6ea9c55cd79f18923022f6f94f003d90dcd6bc6dc01
 license_:
-  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+  en: Use is permitted only for the 2026 Summer Course on Behavior Modeling in Transportation
     Networks.
-  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+  ja: 2026年度の行動モデル夏の学校のための利用のみ許可します。
 name:
   en: Tohoku Residence History Web Survey - Question
   ja: 東北 居住地履歴Web調査 質問

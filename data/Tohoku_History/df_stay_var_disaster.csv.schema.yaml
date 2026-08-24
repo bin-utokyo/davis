@@ -49,9 +49,9 @@ description:
   ja: 本データは、被災者の現居住地における活動、家族との近接度、居住年数、持ち家の有無を年ごとに記録したものである。活動や家族近接度は正規化された指標で表され、居住年数は累積年数を正規化して示す。持ち家はバイナリ変数として表される。
 hash_: 97d624faa62cb9d423a4a65a1a06faf967f967514c455f1f467fa95c644640a7
 license_:
-  en: Use is permitted only for the 2025 Summer Course on Behavior Modeling in Transportation
+  en: Use is permitted only for the 2026 Summer Course on Behavior Modeling in Transportation
     Networks.
-  ja: 2025年度の行動モデル夏の学校のための利用のみ許可します。
+  ja: 2026年度の行動モデル夏の学校のための利用のみ許可します。
 name:
   en: Activities at the individual's current residence (disaster-affected)
   ja: 個人の現居住地における活動など(被災者)
