@@ -40,7 +40,10 @@ test("server-renders the Davis catalog shell", async () => {
   assert.match(html, /English/);
   assert.match(html, /property="og:image" content="http:\/\/localhost:3000\/og\.png"/);
   assert.match(html, /name="twitter:card" content="summary_large_image"/);
-  assert.match(html, /rel="icon" href="\/favicon\.png"/);
+  assert.match(html, /rel="shortcut icon" href="\/favicon\.ico"/);
+  assert.match(html, /rel="icon" href="\/favicon\.ico"/);
+  assert.match(html, /rel="icon" href="\/favicon-32x32\.png"/);
+  assert.match(html, /rel="icon" href="\/favicon-16x16\.png"/);
   assert.match(html, /rel="apple-touch-icon" href="\/apple-touch-icon\.png"/);
   assert.doesNotMatch(html, /codex-preview|SkeletonPreview|Your site is taking shape/);
 });
