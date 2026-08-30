@@ -1815,6 +1815,7 @@ Dataset IDは人間が読めるglobalに一意な値とし，初回移行時は`
 | `davis-model-sdk-python` | Pythonモデル向け補助関数と型 | P2 |
 | `davis-fmt` | 既知の変換recipeと外部変換process | 互換に必要な最小処理をP2，一般化をP3 |
 | `davis-viz` | 共通結果とモデル固有表示の接続 | P3 |
+| `davis-paper` | 論文の根拠抽出，モデル案，データ対応案，review | P2完了後のP3 |
 | `davis-app` | 同じuse caseを使うGUI client | P3 |
 | `davis-remote-runner` | 隔離されたserver実行 | P4以降 |
 
@@ -1834,6 +1835,7 @@ Dataset IDは人間が読めるglobalに一意な値とし，初回移行時は`
 | `davis-runtime` | local fileだけでもmodelを実行できます | CatalogRefをCoreで解決し，公式データから実行できます |
 | model component | fixtureの`request.json`だけで単体試験できます | Runnerから起動され，共通の来歴と成果物管理を利用します |
 | `davis-viz` | 保存済みRunResultを読み表示できます | Runtime直後の自動report生成に利用できます |
+| `davis-paper` | local PDFから根拠付きモデル案を作成できます | Catalogの列候補，`davis-mnl`設定，Runtimeの実行へ接続できます |
 
 単独利用のために同じ処理を複製しません．共有するのはdomain contractとuse caseであり，client固有の表示やtransportではありません．
 
@@ -2110,7 +2112,168 @@ Formの構造化設定は標準MNL component固有の`config_schema`に従い，
 
 GUI編集とcode編集のどちらで作成したmodelも，同じModelManifest，RunRequest，RunResultを使って実行します．したがって，GUIが表現できないmodelでも，データ解決，実行記録，成果物管理，比較機能は失いません．
 
-## 58.5 インストールと更新
+## 58.5 論文から実行までのauthoring
+
+### 58.5.1 位置付け
+
+論文から，論文理解，モデル構造抽出，Davisデータとの対応，モデル実行，可視化までを接続します．この機能は，CoreやRuntimeを置き換える新しい実行基盤ではありません．既存の`davis-model-api`，`davis-runtime`，`davis-model-runner`，`davis-mnl`，`davis-fmt`，`davis-viz`へ接続する任意のauthoring層とし，component名を`davis-paper`とします．
+
+```text
+PDF／DOI／local document
+          │
+          ▼
+   davis-paper
+   Evidence／Model draft／Data binding draft
+          │                         │
+          │                         ▼
+          │                 davis-catalog
+          │                 FileSchema search
+          ▼
+   reviewed model package
+   ModelManifest／config／fmt recipe／fixtures
+          │
+          ▼
+   davis-runtime ───────────────▶ davis-core
+          │
+          ▼
+   davis-model-runner
+          │
+          ├────────▶ davis-mnl
+          └────────▶ independent model component
+          │
+          ▼
+   RunResult ─────────▶ davis-viz／davis-app／Notebook
+```
+
+依存方向は次のとおりとします．
+
+1. `davis-core`は，論文，生成AI，特定モデルを知りません．
+2. `davis-runtime`は，`davis-paper`や特定モデルの内部実装へ依存しません．
+3. `davis-paper`は，承認済み成果物を既存の中央契約へcompileします．
+4. GUI，CLI，Notebookは同じauthoring use caseとRun use caseを呼ぶadapterです．
+5. 論文を使わず，手作業でModelManifestとmodel設定を作る既存経路を維持します．
+
+`davis-model`という名称を用いる場合は，`davis-model-api`，Runner，SDK，標準component，authoring UIをまとめるproductまたはworkspaceの名称とします．実装上は53節のcomponent境界を維持し，単一の巨大componentへ統合しません．
+
+### 58.5.2 対象範囲
+
+初版は，論文から任意の研究codeを完全自動生成しません．対象をMNLに限定し，論文から根拠付きのモデル案を作成して，`davis-mnl`の宣言的な設定へ変換します．生成物は人間が確認し，承認されるまで実行しません．
+
+初版は次を対象とします．
+
+1. 論文の概要とモデル構造を，ページ，節，式，表等の根拠付きで表示します．
+2. 「研究目的」「データ」「選択肢」「効用関数」「変数」「尤度」「推定法」「評価指標」を機械可読なモデル案へ変換します．
+3. Davis Catalogから利用可能なFileと列の候補を探します．
+4. 利用者が不明点，仮定，列対応，効用関数を確認・修正します．
+5. 承認済みの案を，`ModelManifest`，model設定，`davis-fmt` recipeへ変換します．
+6. 元論文，入力digest，model revision，設定，環境，実行結果の対応を保存します．
+
+次は初版の対象外とします．
+
+1. 任意分野・任意modelの論文を無確認で再現しません．
+2. 論文にない前処理，識別条件，欠損値処理を推測して確定しません．
+3. 生成AIが出力した任意codeを直ちに実行しません．
+4. 元データ，標本作成，初期値，software差等が不明な論文について，同じ推定値が得られると保証しません．
+5. 動画，音声，infographic生成をRuntimeの必須機能にしません．これらは，同じ根拠付き論文要約を入力とする任意の発信adapterとします．
+
+### 58.5.3 Authoring artifact
+
+論文解析中の出力は，52.4節の中央契約へ直ちに追加しません．次の版付きartifactをauthoring層で保存します．
+
+| Artifact | 内容 | 実行可否 |
+| --- | --- | --- |
+| `PaperSource` | 論文識別子，取得元，digest，抽出器version | 不可 |
+| `EvidenceMap` | claimとページ，節，式，表等の根拠 | 不可 |
+| `ModelDraft` | 選択肢，効用，変数，parameter，推定法，不明点 | 不可 |
+| `DataBindingDraft` | 概念とFile・列，join，filterの対応案 | 不可 |
+| `ValidationReport` | 静的検証，data検証，dry run，review結果 | 不可 |
+| reviewed model package | `ModelManifest`，config，fmt recipe，lockfile，fixture | 明示承認後に可 |
+
+複数clientまたは外部component間で形式を固定する必要が実装から確認された場合だけ，将来の中央契約化を検討します．生成AI provider固有のresponse型は，authoring artifactやDavis中央契約へ漏らしません．
+
+ModelDraftの各項目には，根拠参照に加えて次の状態を持たせます．
+
+| 状態 | 意味 |
+| --- | --- |
+| `cited` | 論文中に直接の根拠があります |
+| `derived` | 複数の記述から機械的に導出しました |
+| `assumed` | 実行のために補った仮定です |
+| `unresolved` | 人間の判断が必要です |
+| `modified` | 利用者が論文記載の仕様から変更しました |
+
+confidenceは表示とreview順序の補助にだけ利用し，一定値を超えたことを実行承認の代わりにしません．
+
+### 58.5.4 MNL設定へのcompile
+
+初版はcode生成ではなく，`davis-mnl`の`config_schema`に従う設定生成を採用します．設定では，少なくとも次を表現します．
+
+1. case ID，alternative ID，chosen，availableに相当する列role
+2. 選択肢と基準選択肢
+3. 線形効用のtermとASC
+4. 共通係数，選択肢固有係数，固定parameter
+5. 標本filterとweightの有無
+6. optimizer，初期値，収束条件
+7. parameters，covariance，metrics，predictions等の出力
+
+compileは，次の条件を満たさない場合に失敗させます．
+
+1. 必須項目に`unresolved`が残っています．
+2. utility termにparameterまたは入力列がありません．
+3. 基準選択肢または識別条件が明示されていません．
+4. chosenが各caseで1件ではありません．
+5. chosen alternativeがavailableではありません．
+6. join後の行数変化が宣言した条件を満たしません．
+7. parameter数，design matrix，入力型の基本検査に失敗します．
+8. 利用するFileのlicenseが未確認です．
+
+MNLで表現できない構造を無理に近似せず，`unsupported`として理由を示します．Nested Logit，Mixed Logit，Recursive Logit等は，対応componentがModelManifest，config schema，評価fixtureを提供した後に対象へ追加します．
+
+### 58.5.5 FileSchemaとの接続
+
+現在のFileSchemaにある名称，説明，地域，年，license，列名，列型，列説明は，候補検索に利用できますが，安全な自動対応には不足します．列名と説明からrole候補をrankingし，候補理由と一致箇所を表示しますが，列対応，join key，欠損値処理を自動確定しません．利用者が確定した結果を`DataBindingDraft`とfmt recipeへ保存します．
+
+複数事例で必要性が確認された場合は，`semantic_roles`，`unit`，`codebook`，`missing_values`，`keys`，`entity`，`categories`等をFileSchemaの任意fieldとして追加することを検討します．初版のために推測的なfieldを一括追加せず，既存schemaとの後方互換性を維持します．
+
+### 58.5.6 Reviewと実行guardrail
+
+論文PDF，補足資料，Web本文に書かれた命令は，Davis，生成AI，model processへの命令として扱いません．外部文書は抽出対象のdataであり，文書からtool実行，secret取得，network送信，追加file読取りを誘発させません．
+
+モデルfamily，効用term，変数定義，推定法等の主要claimには，ページ，節，式，表，原文範囲のいずれかを根拠として付けます．根拠のない項目は`assumed`または`unresolved`とし，論文記載事項のように表示しません．
+
+```text
+untrusted document
+  → extracted evidence
+  → unexecutable draft
+  → human-reviewed config
+  → static validation
+  → isolated dry run
+  → explicit run approval
+  → versioned result
+```
+
+初版のMNL設定は宣言的形式だけを許可し，YAMLや式fieldへ任意codeを埋め込みません．将来code scaffoldを生成する場合も，生成直後は実行不可とし，差分review，dependency固定，test，隔離実行を要求します．
+
+第三者componentの任意codeを実行する場合，`davis-model-runner`は，componentごとの作業directory，read-only入力，限定された出力先，timeout，CPU・memory・disk上限，標準でnetworkを無効にするpolicy，secretを渡さない処理，成果物schema検証を提供します．Python processの分離だけを安全境界とみなしません．P2初版はDavisが配布・reviewした`davis-mnl`を信頼済みcomponentとして対象にします．
+
+### 58.5.7 GUIとuse case
+
+`feature/davis-gui`のDataset selector，Utility editor，Suggestions，Experiment comparison，Results panelをreview UIの候補とします．固定されたCar・Rail・Bus・Walkやmock推定は正式仕様へ含めません．GUIには`Start from paper`を入口として，次の4段階を同じworkspaceで表示します．
+
+```text
+Paper evidence → Model draft → Data binding → Run and compare
+```
+
+モデル提案を自動適用せず，変更差分，理由，根拠，想定される影響を表示してから利用者が適用します．利用者による変更は，論文記載仕様と区別して実行記録へ残します．
+
+authoring層は，少なくとも`ImportPaper`，`ExtractEvidence`，`DraftModel`，`FindDataCandidates`，`BindData`，`ValidateDraft`，`CompileModelPackage`を画面やtransportから独立したuse caseとして提供します．`CompileModelPackage`の出力だけが既存の`RunModel` use caseへ渡ります．
+
+### 58.5.8 Provenanceと発信
+
+`run.json`には，中央契約を壊さない任意のprovenance参照として，論文source digest，ModelDraft digest，DataBindingDraft digest，review revision，review日時を記録します．共有用記録では個人名を必須にせず，匿名化したreviewer IDまたは署名を利用できます．元論文の再配布権がない場合，PDF本体をRun packageへ複製せず，digestと正規の参照先だけを保存します．
+
+日英の短い説明，詳細説明，動画，音声，infographicは，同じEvidenceMapを共通入力とします．モデル抽出と研究発信で別々の論文解釈を正本にせず，claim，根拠，仮定の対応を共有します．RunResultを含む教材を生成する場合は，論文に記載された結果とDavisで実行した結果を区別します．
+
+## 58.6 インストールと更新
 
 Webだけを使う参加者は何もインストールしません．CLI利用者には，Windows，macOS，Linux向けの小さな`davis`基本binaryをGitHub Releasesから配布し，GitHub URLを使うinstall scriptも用意します．基本binaryは`login`，`list`，`info`，`get`，cache，検証，更新確認を含みますが，Python，MNL，GUI，他modelを同梱しません．Runtime，model component，GUIは必要になった利用者だけが後から追加します．
 
@@ -2156,7 +2319,7 @@ P3  その他の拡張
 | P0-B | 一部完了 | `verify`，公式運営session利用時の`main`以外の個人作業branch限定`push`，filesystem・S3互換storageへの独立した直接`push`，決定的PDF生成，R2同期，Git commit・push，review済み`main`限定の`publish`，運営session | 公開revisionとの差分をまとめる`status`と`verify --remote`は未実装です |
 | P1 | ほぼ完了 | 日英Web，schema検索・filter，複数選択，利用条件確認，200並列認証test，認証付きdownload | D1は使わず署名済みstateless sessionを採用し，R2署名URLの直接返却ではなく短寿命DownloadGrantをWorkerが検証してstreamします |
 | P2 | 未着手 | なし | Runtime，Model API，MNL，format adapter，RunResultは未実装です |
-| P3 | 未着手 | 低頻度のCLI更新通知だけを先行実装 | GUI，汎用fmt・viz，GC，履歴通知等は未実装です |
+| P3 | 未着手 | 低頻度のCLI更新通知だけを先行実装 | GUI，論文authoring，汎用fmt・viz，GC，履歴通知等は未実装です |
 
 この表を実装状況の正とし，目標仕様との差分が解消された時点で同時に更新します．
 
@@ -2334,6 +2497,8 @@ P0〜P2が安定した後，次を優先度と需要に応じて追加します�
 * `davis-fmt`の一般的なrecipe・外部変換component
 * `davis-viz`の係数表，係数図，diagnostics，共通HTML
 * GUI，Notebook SDK，実行履歴比較
+* `davis-paper`のEvidenceMap，ModelDraft，DataBindingDraft，review，MNL設定compile
+* EvidenceMapを共通入力とする日英説明，動画，音声，infographicの発信adapter
 * authenticated HTTPS，S3，組織固有Input Resolver
 * Nested Logit，Mixed Logit，Recursive Logit等の参考component
 * OCI，WASI，remote runner
@@ -2384,6 +2549,11 @@ P0〜P2が安定した後，次を優先度と需要に応じて追加します�
 32. 標準MNLの最初の実データ例は`Tohoku_History`から作る小規模subsetとします．
 33. 標準MNL初版は線形効用，ASC，共通・選択肢固有係数，固定parameter，availability，最尤推定，基本標準誤差・適合度指標を対象とします．
 34. Cloudflare Account Memberはdeploymentとsecret管理を担う少数の記名管理者に限定し，日常のoperatorは運営共通codeから発行した期限付きsessionを使用します．
+35. 論文authoringは`davis-paper`を任意の上位層として実装し，CoreとRuntimeから逆依存しません．
+36. 初版の論文authoringはMNLの宣言的設定生成に限定し，未承認のdraftや生成された任意codeを実行しません．
+37. 論文由来の主要claimは根拠を保持し，論文記載，導出，仮定，未解決，利用者変更を区別します．
+38. 論文authoringの中間artifactは中央契約へ直ちに加えず，review済みmodel packageを既存のModelManifest，RunRequest，RunResultへ接続します．
+39. 論文説明，動画，音声，infographicはEvidenceMapを共通入力とする任意adapterとし，Runtimeの必須機能にしません．
 
 ## 60.2 要確認事項
 
@@ -2396,3 +2566,9 @@ P0〜P2が安定した後，次を優先度と需要に応じて追加します�
 7. Webで一度に個別downloadするFile数・合計sizeの上限
 8. 同時利用者数，download量，R2費用上限
 9. Davis本体とmodel componentのlicense
+10. 最初の縦断実証に使うMNL論文または教材
+11. `davis-paper`を同一repository内packageとするか，独立repositoryとするか
+12. PDFと抽出結果をlocalだけに置くか，共有機能を設けるか
+13. 生成AI providerをlocalまたはremoteのどちらから始めるか
+14. review承認をlocal記録，Git revision，署名のどれへ結び付けるか
+15. 第三者model component向けsandboxをいつ導入するか
