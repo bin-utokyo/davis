@@ -414,7 +414,7 @@ export function CatalogApp() {
             const sample = localized(matches.find((file) => file.name)?.name ?? null, language);
             return <article className="dataset-card" key={dataset.id}>
               <div className="card-topline"><span className="index">{String(index + 1).padStart(2, "0")}</span><label className="check-label"><input type="checkbox" checked={allSelected} onChange={() => toggleDataset(dataset.id)}/><span>{tr("データセット全体", "Entire dataset")}</span></label></div>
-              <p className="dataset-id">{dataset.id}</p><h3>{datasetLabel(dataset.id)}</h3>{sample && <p className="sample-name">{sample} {tr("など", "and more")}</p>}
+              <h3 className="dataset-id">{dataset.id}</h3>{sample && <p className="sample-name">{sample} {tr("など", "and more")}</p>}
               <p className="description">{language === "ja" ? `${matches.length}件が現在の条件に一致 / 全${dataset.file_count}ファイル` : `${matches.length} match the current filters / ${dataset.file_count} files total`}，{humanSize(dataset.total_size)}</p>
               <p className="updated-date">{tr("最終更新", "Last updated")} {formattedDate(dataset.updated_at, language)}</p>
               <div className="tags"><span>{dataset.schema_ready_count} schemas</span>{[...new Set(matches.map((file) => file.format))].slice(0, 3).map((value) => <span key={value}>{value.toUpperCase()}</span>)}</div>
