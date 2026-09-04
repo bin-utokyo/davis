@@ -1,5 +1,6 @@
 //! Local-first analysis-plan compiler and model runtime.
 
+mod components;
 mod inspect;
 
 use std::collections::BTreeMap;
@@ -8,6 +9,9 @@ use std::io::{self, Read};
 use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
 
+pub use components::{
+    user_data_directory, ComponentStore, ComponentStoreError, InstalledComponent,
+};
 use davis_model_api::{
     AnalysisPlan, InputSource, ModelManifest, ResolvedComponent, ResolvedFile, ResolvedInput,
     RunRequest, RunResult, RUN_API_VERSION,
@@ -29,11 +33,11 @@ pub enum RuntimeError {
         path: PathBuf,
         source: std::io::Error,
     },
-    #[error("model component `{id}` version `{version}` was not found below {root}")]
+    #[error("model component `{id}` version `{version}` was not found; searched {roots:?}")]
     ModelNotFound {
         id: String,
         version: String,
-        root: PathBuf,
+        roots: Vec<PathBuf>,
     },
     #[error("model `{id}` does not support operation `{operation}`")]
     UnsupportedOperation { id: String, operation: String },
@@ -292,25 +296,40 @@ fn find_manifest(
     id: &str,
     version: &str,
 ) -> Result<(PathBuf, ModelManifest), RuntimeError> {
-    for entry in WalkDir::new(repository.join("components"))
-        .max_depth(4)
-        .into_iter()
-        .filter_map(Result::ok)
-    {
-        if entry.file_name() != "model-manifest.yaml" {
-            continue;
+    let mut roots = vec![repository.join("components")];
+    if let Ok(store) = ComponentStore::for_user() {
+        if !roots.iter().any(|root| root == store.root()) {
+            roots.push(store.root().to_owned());
         }
-        if let Ok(manifest) = ModelManifest::read(entry.path()) {
-            if manifest.id == id && manifest.version == version {
-                return Ok((absolute_path(entry.path())?, manifest));
+    }
+    for root in &roots {
+        for entry in WalkDir::new(root)
+            .into_iter()
+            .filter_entry(|entry| !is_temporary_install_entry(entry))
+            .filter_map(Result::ok)
+        {
+            if entry.file_name() != "model-manifest.yaml" {
+                continue;
+            }
+            if let Ok(manifest) = ModelManifest::read(entry.path()) {
+                if manifest.id == id && manifest.version == version {
+                    return Ok((absolute_path(entry.path())?, manifest));
+                }
             }
         }
     }
     Err(RuntimeError::ModelNotFound {
         id: id.to_owned(),
         version: version.to_owned(),
-        root: repository.to_owned(),
+        roots,
     })
+}
+
+fn is_temporary_install_entry(entry: &walkdir::DirEntry) -> bool {
+    entry
+        .file_name()
+        .to_str()
+        .is_some_and(|name| name.starts_with(".install-"))
 }
 
 fn absolute_path(path: &Path) -> Result<PathBuf, RuntimeError> {
@@ -393,10 +412,13 @@ fn hash_component(directory: &Path) -> Result<blake3::Hash, RuntimeError> {
             !entry.path().components().any(|component| {
                 matches!(
                     component.as_os_str().to_str(),
-                    Some(".venv" | "__pycache__" | "examples")
+                    Some(
+                        ".venv" | "__pycache__" | ".pytest_cache" | ".git" | "target" | "examples"
+                    )
                 )
             })
         })
+        .filter(|entry| entry.file_name() != ".davis-install.json")
         .map(walkdir::DirEntry::into_path)
         .collect();
     files.sort();

@@ -1,3 +1,4 @@
+mod component;
 mod git_workflow;
 mod model;
 mod remote;
@@ -33,7 +34,7 @@ use remote::{DavisService, RemoteError};
 #[derive(Debug, Parser)]
 #[command(name = "davis", version, about = "Davis data catalog client")]
 struct Cli {
-    /// Davis repository to read.
+    /// Davis repository or local analysis workspace to read.
     #[arg(long, global = true, default_value = ".")]
     repository: PathBuf,
 
@@ -68,6 +69,16 @@ enum Command {
     Model {
         #[command(subcommand)]
         command: ModelCommand,
+    },
+    /// Install optional Davis applications and components.
+    Install {
+        #[command(subcommand)]
+        command: InstallCommand,
+    },
+    /// Inspect and manage installed model components.
+    Component {
+        #[command(subcommand)]
+        command: ComponentCommand,
     },
     /// List available datasets.
     List {
@@ -284,6 +295,47 @@ enum ModelCommand {
     },
 }
 
+#[derive(Debug, Subcommand)]
+enum InstallCommand {
+    /// Validate and install a local model component package.
+    Component {
+        path: PathBuf,
+        /// Print structured JSON.
+        #[arg(long)]
+        json: bool,
+    },
+}
+
+#[derive(Debug, Subcommand)]
+enum ComponentCommand {
+    /// List installed model components.
+    List {
+        /// Print structured JSON.
+        #[arg(long)]
+        json: bool,
+    },
+    /// Show one installed model component.
+    Inspect {
+        id: String,
+        /// Select an exact installed version.
+        #[arg(long)]
+        version: Option<String>,
+        /// Print structured JSON.
+        #[arg(long)]
+        json: bool,
+    },
+    /// Remove one installed model component.
+    Remove {
+        id: String,
+        /// Select an exact installed version.
+        #[arg(long)]
+        version: Option<String>,
+        /// Print structured JSON.
+        #[arg(long)]
+        json: bool,
+    },
+}
+
 #[tokio::main]
 async fn main() {
     let cli = Cli::parse();
@@ -307,6 +359,8 @@ async fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
         Command::Update { yes } => update::check_explicitly(yes).await?,
         Command::Operator { command } => handle_operator(command).await?,
         Command::Model { command } => model::handle(&cli.repository, command)?,
+        Command::Install { command } => component::handle_install(command)?,
+        Command::Component { command } => component::handle_component(command)?,
         Command::List { json } => handle_list(&cli.repository, json).await?,
         Command::Info { dataset_id, json } => {
             handle_info(&cli.repository, &dataset_id, json).await?;
@@ -1710,7 +1764,7 @@ fn update_transfer_progress(progress_bar: &ProgressBar, label: &str, progress: T
 
 #[cfg(test)]
 mod tests {
-    use super::{Cli, Command};
+    use super::{Cli, Command, ComponentCommand, InstallCommand};
     use clap::Parser;
     use std::io::Cursor;
     use std::path::PathBuf;
@@ -1797,6 +1851,34 @@ mod tests {
             Cli::try_parse_from(["davis", "update", "--yes"]).expect("update command should parse");
 
         assert!(matches!(cli.command, Command::Update { yes: true }));
+    }
+
+    #[test]
+    fn component_management_commands_parse() {
+        let install = Cli::try_parse_from(["davis", "install", "component", "components/example"])
+            .expect("component install should parse");
+        assert!(matches!(
+            install.command,
+            Command::Install {
+                command: InstallCommand::Component { path, json: false }
+            } if path == std::path::Path::new("components/example")
+        ));
+
+        let inspect = Cli::try_parse_from([
+            "davis",
+            "component",
+            "inspect",
+            "davis/mnl",
+            "--version",
+            "0.1.0",
+        ])
+        .expect("component inspect should parse");
+        assert!(matches!(
+            inspect.command,
+            Command::Component {
+                command: ComponentCommand::Inspect { id, version, json: false }
+            } if id == "davis/mnl" && version.as_deref() == Some("0.1.0")
+        ));
     }
 
     #[test]
