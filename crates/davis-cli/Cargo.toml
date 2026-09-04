@@ -15,9 +15,11 @@ clap.workspace = true
 davis-catalog = { path = "../davis-catalog" }
 davis-core = { path = "../davis-core" }
 davis-document = { path = "../davis-document" }
+davis-model-api = { path = "../davis-model-api" }
 davis-runtime = { path = "../davis-runtime" }
 davis-storage = { path = "../davis-storage" }
 futures.workspace = true
+flate2.workspace = true
 indicatif.workspace = true
 reqwest.workspace = true
 rpassword.workspace = true
@@ -25,6 +27,7 @@ semver.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 tempfile.workspace = true
+tar.workspace = true
 thiserror.workspace = true
 tokio.workspace = true
 toml.workspace = true

@@ -23,6 +23,7 @@ blake3 = "1"
 clap = { version = "4.5", features = ["derive"] }
 csv = "1"
 encoding_rs = "0.8"
+flate2 = "1"
 fullbleed = "2.3.1"
 futures = "0.3"
 indicatif = "0.18"
@@ -36,6 +37,7 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 serde_yaml = "0.9"
 tempfile = "3"
+tar = "0.4"
 thiserror = "2"
 tokio = { version = "1", features = ["fs", "io-util", "macros", "rt-multi-thread"] }
 toml = "0.9"

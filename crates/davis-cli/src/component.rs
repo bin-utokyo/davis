@@ -1,11 +1,39 @@
+use std::path::PathBuf;
+
 use davis_runtime::{ComponentStore, InstalledComponent};
 
 use crate::{ComponentCommand, InstallCommand};
 
-pub(crate) fn handle_install(command: InstallCommand) -> Result<(), Box<dyn std::error::Error>> {
+pub(crate) async fn handle_install(
+    command: InstallCommand,
+) -> Result<(), Box<dyn std::error::Error>> {
     match command {
-        InstallCommand::Component { path, json } => {
-            let installed = ComponentStore::for_user()?.install(&path)?;
+        InstallCommand::Component {
+            source,
+            version,
+            registry,
+            json,
+        } => {
+            let store = ComponentStore::for_user()?;
+            let path = PathBuf::from(&source);
+            let installed = if path.exists() || looks_like_explicit_path(&source, &path) {
+                if version.is_some() || registry.is_some() {
+                    return Err(
+                        "--version and --registry can only be used with an official component name"
+                            .into(),
+                    );
+                }
+                store.install(&path)?
+            } else {
+                let downloaded = crate::component_registry::download(
+                    &source,
+                    version.as_deref(),
+                    registry.as_deref(),
+                )
+                .await?;
+                let origin = format!("registry:{}@{}", downloaded.id(), downloaded.version());
+                store.install_with_origin(downloaded.path(), Some(origin))?
+            };
             print_installed(&installed, json, "Installed")?;
         }
     }
@@ -57,8 +85,19 @@ fn print_installed(
         println!("{label}: {} {}", component.id, component.version);
         println!("Name: {}", component.name);
         println!("Path: {}", component.path.display());
-        println!("Source: {}", component.source.display());
+        println!("Source: {}", component.source);
         println!("Digest: {}", component.source_digest);
     }
     Ok(())
+}
+
+fn looks_like_explicit_path(source: &str, path: &std::path::Path) -> bool {
+    path.is_absolute()
+        || source == "."
+        || source == ".."
+        || source.starts_with("./")
+        || source.starts_with("../")
+        || source.starts_with("~/")
+        || source.starts_with(".\\")
+        || source.starts_with("..\\")
 }

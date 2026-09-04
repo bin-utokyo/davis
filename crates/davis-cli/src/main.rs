@@ -1,4 +1,5 @@
 mod component;
+mod component_registry;
 mod git_workflow;
 mod model;
 mod remote;
@@ -297,9 +298,16 @@ enum ModelCommand {
 
 #[derive(Debug, Subcommand)]
 enum InstallCommand {
-    /// Validate and install a local model component package.
+    /// Install an official or local model component package.
     Component {
-        path: PathBuf,
+        /// Official component name, ID, or local package directory.
+        source: String,
+        /// Select an exact official component version.
+        #[arg(long)]
+        version: Option<String>,
+        /// Override the official component registry URL.
+        #[arg(long)]
+        registry: Option<String>,
         /// Print structured JSON.
         #[arg(long)]
         json: bool,
@@ -359,7 +367,7 @@ async fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
         Command::Update { yes } => update::check_explicitly(yes).await?,
         Command::Operator { command } => handle_operator(command).await?,
         Command::Model { command } => model::handle(&cli.repository, command)?,
-        Command::Install { command } => component::handle_install(command)?,
+        Command::Install { command } => component::handle_install(command).await?,
         Command::Component { command } => component::handle_component(command)?,
         Command::List { json } => handle_list(&cli.repository, json).await?,
         Command::Info { dataset_id, json } => {
@@ -1860,8 +1868,13 @@ mod tests {
         assert!(matches!(
             install.command,
             Command::Install {
-                command: InstallCommand::Component { path, json: false }
-            } if path == std::path::Path::new("components/example")
+                command: InstallCommand::Component {
+                    source,
+                    version: None,
+                    registry: None,
+                    json: false
+                }
+            } if source == "components/example"
         ));
 
         let inspect = Cli::try_parse_from([

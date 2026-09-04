@@ -60,7 +60,7 @@ pub struct InstalledComponent {
     pub name: String,
     pub version: String,
     pub path: PathBuf,
-    pub source: PathBuf,
+    pub source: String,
     pub source_digest: String,
     pub installed_at_unix_seconds: u64,
 }
@@ -97,6 +97,19 @@ impl ComponentStore {
     /// Returns an error for an invalid package, unsafe identity, duplicate
     /// version, symlink, or filesystem failure.
     pub fn install(&self, source: &Path) -> Result<InstalledComponent, ComponentStoreError> {
+        self.install_with_origin(source, None)
+    }
+
+    /// Installs a package while recording a registry URL or other stable origin.
+    ///
+    /// # Errors
+    ///
+    /// Returns the same validation and filesystem errors as [`Self::install`].
+    pub fn install_with_origin(
+        &self,
+        source: &Path,
+        origin: Option<String>,
+    ) -> Result<InstalledComponent, ComponentStoreError> {
         let source = fs::canonicalize(source).map_err(|error| {
             if error.kind() == std::io::ErrorKind::NotFound {
                 ComponentStoreError::InvalidSource(source.to_owned())
@@ -143,7 +156,7 @@ impl ComponentStore {
             name: manifest.name,
             version: manifest.version,
             path: destination.clone(),
-            source,
+            source: origin.unwrap_or_else(|| source.to_string_lossy().into_owned()),
             source_digest: digest,
             installed_at_unix_seconds: SystemTime::now()
                 .duration_since(UNIX_EPOCH)
