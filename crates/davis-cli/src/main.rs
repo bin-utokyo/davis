@@ -1,4 +1,5 @@
 mod git_workflow;
+mod model;
 mod remote;
 mod session;
 mod update;
@@ -62,6 +63,11 @@ enum Command {
     Operator {
         #[command(subcommand)]
         command: OperatorCommand,
+    },
+    /// Validate and run local behavioral model components.
+    Model {
+        #[command(subcommand)]
+        command: ModelCommand,
     },
     /// List available datasets.
     List {
@@ -240,6 +246,44 @@ enum OperatorCommand {
     Logout,
 }
 
+#[derive(Debug, Subcommand)]
+enum ModelCommand {
+    /// Inspect the encoding, delimiter, and inferred columns of a local CSV file.
+    Inspect {
+        path: PathBuf,
+        /// Print structured JSON.
+        #[arg(long)]
+        json: bool,
+    },
+    /// Validate an analysis plan and resolve its model component.
+    Validate {
+        plan: PathBuf,
+        /// Print structured JSON.
+        #[arg(long)]
+        json: bool,
+    },
+    /// Resolve local inputs and print the exact request without running the model.
+    Plan {
+        plan: PathBuf,
+        /// Root where the eventual run directory will be created.
+        #[arg(long, default_value = "davis-runs")]
+        run_root: PathBuf,
+        /// Print structured JSON.
+        #[arg(long)]
+        json: bool,
+    },
+    /// Resolve inputs and execute a local model component.
+    Run {
+        plan: PathBuf,
+        /// Directory below which immutable run records are written.
+        #[arg(long, default_value = "davis-runs")]
+        run_root: PathBuf,
+        /// Print structured JSON.
+        #[arg(long)]
+        json: bool,
+    },
+}
+
 #[tokio::main]
 async fn main() {
     let cli = Cli::parse();
@@ -262,6 +306,7 @@ async fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
         Command::Logout => handle_logout()?,
         Command::Update { yes } => update::check_explicitly(yes).await?,
         Command::Operator { command } => handle_operator(command).await?,
+        Command::Model { command } => model::handle(&cli.repository, command)?,
         Command::List { json } => handle_list(&cli.repository, json).await?,
         Command::Info { dataset_id, json } => {
             handle_info(&cli.repository, &dataset_id, json).await?;

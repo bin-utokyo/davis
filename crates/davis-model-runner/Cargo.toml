@@ -1,0 +1,15 @@
+[package]
+name = "davis-model-runner"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+blake3.workspace = true
+davis-model-api = { path = "../davis-model-api" }
+serde_json.workspace = true
+thiserror.workspace = true
+
+[lints]
+workspace = true

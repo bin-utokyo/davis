@@ -15,6 +15,7 @@ clap.workspace = true
 davis-catalog = { path = "../davis-catalog" }
 davis-core = { path = "../davis-core" }
 davis-document = { path = "../davis-document" }
+davis-runtime = { path = "../davis-runtime" }
 davis-storage = { path = "../davis-storage" }
 futures.workspace = true
 indicatif.workspace = true

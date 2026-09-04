@@ -1,0 +1,9 @@
+{
+  "ui:order": ["roles", "terms", "parameters", "estimation"],
+  "roles": {
+    "ui:description": "Map semantic roles to columns in the long-format choice table."
+  },
+  "terms": {
+    "ui:description": "Define the variables contributing to each alternative utility."
+  }
+}

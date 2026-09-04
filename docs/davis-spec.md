@@ -1784,18 +1784,19 @@ Dataset IDは人間が読めるglobalに一意な値とし，初回移行時は`
 
 ## 52.4 中央契約
 
-言語やクライアントをまたいで固定する契約は，次の6種類に限定します．
+言語やクライアントをまたいで固定する契約は，次の7種類に限定します．
 
 1. `DatasetManifest`
 2. `ObjectId`
 3. `FileSchema`
 4. `ModelManifest`
-5. `RunRequest`
-6. `RunResult`
+5. `AnalysisPlan`
+6. `RunRequest`
+7. `RunResult`
 
 検索画面の状態，モデル内部の効用関数，尤度，勾配，最適化器，クラス構成は中央契約に含めません．
 
-利用者が記述する`project.yaml`はMVPに設けません．Davisが解決済み入力，整形，モデル，環境，出力を`run.json`へ自動記録します．一括実験の必要性が確認された場合だけ，将来`experiment.yaml`等を任意機能として検討します．
+`AnalysisPlan`は，GUI，人間，AIが共通に作成する単一runの編集可能な設計書であり，既定のファイル名を`model.yaml`とします．利用者が記述する一括実験用の`project.yaml`はMVPに設けません．Davisが解決済み入力，整形，モデル，環境，出力を`run.json`へ自動記録します．一括実験の必要性が確認された場合だけ，将来`experiment.yaml`等を任意機能として検討します．
 
 ---
 
@@ -1808,7 +1809,7 @@ Dataset IDは人間が読めるglobalに一意な値とし，初回移行時は`
 | `davis-cli` | list，info，getと運営者向け公開操作を提供する最初の参照client | P0-A／P0-B |
 | `davis-server` | 参加者認証，CatalogIndex配信，download認可，署名付きURL | 最小DownloadGrantをP0-0，Web APIをP1 |
 | `davis-web` | 検索，絞り込み，複数選択，download queue | P1 |
-| `davis-model-api` | ModelManifest，RunRequest，RunResultのschema | P2 |
+| `davis-model-api` | ModelManifest，AnalysisPlan，RunRequest，RunResultのschema | P2 |
 | `davis-runtime` | 入力解決，モデル実行，成果物整理，来歴記録 | P2 |
 | `davis-model-runner` | モデルprocess起動，log，結果検証 | P2 |
 | `davis-mnl` | 標準MNLの参考component | P2 |
@@ -1844,7 +1845,7 @@ Dataset IDは人間が読めるglobalに一意な値とし，初回移行時は`
 ```text
 Contracts
 DatasetManifest／ObjectId／FileSchema
-ModelManifest／RunRequest／RunResult
+ModelManifest／AnalysisPlan／RunRequest／RunResult
         │
         ▼
 Use cases
@@ -1944,15 +1945,17 @@ version: 0.1.0
 
 runtime:
   kind: python
-  command: ["uv", "run", "python", "-m", "scale_mnl"]
+  command: ["uv", "run", "--frozen", "python", "-m", "scale_mnl"]
+  request_argument: "--request"
   lockfile: uv.lock
 
 operations: [validate, estimate, predict]
 inputs:
   - name: choice_data
-    media_types: [application/vnd.apache.parquet]
+    media_types: [text/csv, application/vnd.apache.parquet]
     required: true
 config_schema: schemas/config.schema.json
+ui_schema: schemas/ui.schema.json
 outputs:
   standard: [parameters, covariance, metrics, predictions]
   extensions: [estimated_scales]
@@ -1960,7 +1963,37 @@ outputs:
 
 MVPは`python`と`native`から始め，`wasm`と`container`を後から追加します．
 
-## 55.3 RunRequest
+## 55.3 AnalysisPlan
+
+`AnalysisPlan`は利用者の意図を保存します．入力pathは`model.yaml`からの相対pathを許可し，Runtimeが実行前に絶対path，digest，media typeへ解決します．`config`以下は選択したcomponentの`config_schema`で検証し，共通contractへMNLの効用関数等を固定しません．
+
+```yaml
+api_version: davis.analysis/v1alpha1
+name: toyosu-mode-choice
+model:
+  component: davis/mnl
+  version: 0.1.0
+  operation: estimate
+inputs:
+  choice_data:
+    kind: local
+    path: trip.csv
+    read:
+      encoding: auto
+      delimiter: auto
+config:
+  roles:
+    case_id: trip_id
+    alternative_id: alternative
+    chosen: chosen
+  terms:
+    - parameter: beta_time
+      column: travel_time
+```
+
+GUI固有の未保存状態を正本にせず，GUI編集は常に同じ`AnalysisPlan`へ変換できるようにします．
+
+## 55.4 RunRequest
 
 ```json
 {
@@ -1988,8 +2021,12 @@ MVPは`python`と`native`から始め，`wasm`と`container`を後から追加�
     }
   },
   "config": {
-    "path": "/resolved/input/model.yaml",
-    "sha256": "<hash>"
+    "roles": {
+      "case_id": "trip_id",
+      "alternative_id": "alternative",
+      "chosen": "chosen"
+    },
+    "terms": [{"parameter": "beta_time", "column": "travel_time"}]
   },
   "output_directory": "/resolved/output"
 }
@@ -1997,7 +2034,7 @@ MVPは`python`と`native`から始め，`wasm`と`container`を後から追加�
 
 クライアントは主に`source`を指定し，Runtimeが`resolved`を生成します．Davisの`run.json`には秘密情報を除いた両方を記録します．モデル向け`request.json`には原則として`resolved`だけを渡します．
 
-## 55.4 RunResult
+## 55.5 RunResult
 
 ```json
 {
@@ -2005,13 +2042,24 @@ MVPは`python`と`native`から始め，`wasm`と`container`を後から追加�
   "run_id": "run_01...",
   "status": "succeeded",
   "artifacts": {
-    "parameters": "parameters.parquet",
-    "covariance": "covariance.parquet",
-    "metrics": "metrics.json",
-    "predictions": "predictions.parquet"
+    "parameters": {
+      "path": "parameters.csv",
+      "media_type": "text/csv",
+      "size": 2048,
+      "object_id": "blake3:<digest>"
+    },
+    "metrics": {
+      "path": "metrics.json",
+      "media_type": "application/json",
+      "size": 1024,
+      "object_id": "blake3:<digest>"
+    }
   },
   "extensions": {
-    "example-lab/estimated-scales": "extensions/scales.parquet"
+    "example-lab/estimated-scales": {
+      "path": "extensions/scales.parquet",
+      "media_type": "application/vnd.apache.parquet"
+    }
   }
 }
 ```
@@ -2024,7 +2072,7 @@ MVPは`python`と`native`から始め，`wasm`と`container`を後から追加�
 
 `davis-mnl`はDavisに固定された唯一のモデルではありません．モデルコンポーネントAPIの参考実装であり，複製・変更して新しいモデルを作るためのひな型です．利用者は，データ取得，cache，入出力整理，hash，実行記録をモデルごとに書き直さず，主にモデルコードと設定を変更します．
 
-標準MNLの推奨入力はlong形式のParquetとし，`case_id`，`alternative_id`，`chosen`，`available`に相当する列を設定で対応付けます．ただし，現行の`los.csv`と`trip.csv`を初期互換入力として維持するかは要確認です．他モデルにはlong形式を強制せず，複数表，network，GeoJSON，行列等を追加できます．
+標準MNLはlong形式のCSVとParquetを正式入力とし，`case_id`，`alternative_id`，`chosen`，`available`に相当する列を設定で対応付けます．CSV利用者へ事前変換を要求せず，Parquetは大規模データと反復実行時の推奨内部形式とします．encoding，delimiter，欠損表現，型推論結果を実行前に確認し，確定した読込条件を`run.json`へ記録します．ただし，現行の`los.csv`と`trip.csv`を初期互換入力として維持するかは要確認です．他モデルにはlong形式を強制せず，複数表，network，GeoJSON，行列等を追加できます．
 
 入力contractは，共通部分とmodel固有部分を分けます．Runtimeが共通に扱うのは，入力slot名，media type，File参照，digest等です．標準MNLは`case_id`，`alternative_id`，`chosen`，`available`という意味上のroleを要求しますが，実データの列名そのものは固定せず設定から対応付けます．説明変数，weight，panel ID，network等の追加要件は各ModelManifestと`config_schema`が宣言します．これにより，標準MNLは共通の入力検証を利用しながら，他modelへlong形式や同一列構成を強制しません．
 
@@ -2087,6 +2135,8 @@ Remote API─┘
 
 すべてのクライアントが同じ`run.json`，成果物，実行履歴を利用します．GUIがCLIをshell実行することを正式な接続方式にはしません．
 
+local model GUIはTauri desktop applicationとして実装し，RustのRun use caseをIPCから同一process内で直接呼びます．local fileやmodel実行のためにHTTP serverを起動せず，明示的なremote実行を選ばない限り入力データを外部送信しません．公開`davis-web`はcatalog検索とdownloadを担当し，local model processを起動しません．
+
 ## 58.3 GUIプロトタイプから取り入れる要素
 
 `feature/davis-gui`の固定されたCar・Rail・Bus・Walk editorやmock推定は正式仕様にしません．次の概念はCoreまたは共通成果物へ取り入れます．
@@ -2110,7 +2160,7 @@ Formの構造化設定は標準MNL component固有の`config_schema`に従い，
 
 利用者は画面切替から生成codeを確認・編集できます．codeが線形和，parameter，列参照等の明示した対応構文だけで表現されている間は，構文検査を通してFormへ戻せます．数学的な同値性は推測しません．非線形効用，独自関数，独自尤度，独自class等の非対応構文を使う場合は確認後に，そのmodel revisionを高度な`code` modeへ一方向に切り替えます．`code` modeではFormを編集不可にし，移行直前の構造化設定を参照用に保持します．Formへ戻したい場合は，元revisionから新しいForm互換modelを作成します．
 
-GUI編集とcode編集のどちらで作成したmodelも，同じModelManifest，RunRequest，RunResultを使って実行します．したがって，GUIが表現できないmodelでも，データ解決，実行記録，成果物管理，比較機能は失いません．
+GUI編集とcode編集のどちらで作成したmodelも，同じModelManifest，AnalysisPlan，RunRequest，RunResultを使って実行します．したがって，GUIが表現できないmodelでも，データ解決，実行記録，成果物管理，比較機能は失いません．
 
 ## 58.5 論文から実行までのauthoring
 
@@ -2465,7 +2515,7 @@ Webは選択したFileを個別に順次downloadし，選択内容に対応す�
 
 ### 実装対象
 
-1. `davis-model-api`のModelManifest，RunRequest，RunResult
+1. `davis-model-api`のModelManifest，AnalysisPlan，RunRequest，RunResult
 2. `davis-runtime`のInput Resolver，実行directory，来歴記録
 3. `davis-model-runner`のprocess起動，log，終了状態，成果物検証
 4. 現行Python MNLを接続する`davis-mnl`
@@ -2552,7 +2602,7 @@ P0〜P2が安定した後，次を優先度と需要に応じて追加します�
 35. 論文authoringは`davis-paper`を任意の上位層として実装し，CoreとRuntimeから逆依存しません．
 36. 初版の論文authoringはMNLの宣言的設定生成に限定し，未承認のdraftや生成された任意codeを実行しません．
 37. 論文由来の主要claimは根拠を保持し，論文記載，導出，仮定，未解決，利用者変更を区別します．
-38. 論文authoringの中間artifactは中央契約へ直ちに加えず，review済みmodel packageを既存のModelManifest，RunRequest，RunResultへ接続します．
+38. 論文authoringの中間artifactは中央契約へ直ちに加えず，review済みmodel packageを既存のModelManifest，AnalysisPlan，RunRequest，RunResultへ接続します．
 39. 論文説明，動画，音声，infographicはEvidenceMapを共通入力とする任意adapterとし，Runtimeの必須機能にしません．
 
 ## 60.2 要確認事項

@@ -4,7 +4,11 @@ members = [
     "crates/davis-catalog",
     "crates/davis-document",
     "crates/davis-cli",
+    "crates/davis-model-api",
+    "crates/davis-model-runner",
+    "crates/davis-runtime",
     "crates/davis-storage",
+    "apps/davis-app/src-tauri",
 ]
 resolver = "2"
 
@@ -17,9 +21,12 @@ repository = "https://github.com/bin-utokyo/davis"
 [workspace.dependencies]
 blake3 = "1"
 clap = { version = "4.5", features = ["derive"] }
+csv = "1"
+encoding_rs = "0.8"
 fullbleed = "2.3.1"
 futures = "0.3"
 indicatif = "0.18"
+jsonschema = { version = "0.33", default-features = false }
 jiff = "0.2"
 opendal = { version = "0.58", default-features = false, features = ["http-transport-reqwest", "services-fs", "services-s3"] }
 reqwest = { version = "0.13", default-features = false, features = ["json", "rustls", "stream"] }

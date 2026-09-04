@@ -1,0 +1,41 @@
+api_version: davis.analysis/v1alpha1
+name: minimal-mode-choice
+
+model:
+  component: davis/mnl
+  version: 0.1.0
+  operation: estimate
+
+inputs:
+  choice_data:
+    kind: local
+    path: choice.csv
+
+config:
+  roles:
+    case_id: case_id
+    alternative_id: alternative
+    chosen: chosen
+    available: available
+
+  terms:
+    - parameter: beta_time
+      column: time
+    - parameter: beta_cost
+      column: cost
+      alternatives: [train, car]
+    - parameter: asc_car
+      constant: 1
+      alternatives: [car]
+    - parameter: asc_walk
+      constant: 1
+      alternatives: [walk]
+
+  estimation:
+    optimizer: bfgs
+    max_iterations: 500
+    tolerance: 1.0e-8
+
+run:
+  label: minimal-example
+  tags: [example, mnl]
