@@ -17,6 +17,12 @@ files:
     size: 115146835
   updated_at: 2026-08-24
   schema_path: data/PP/Matsuyama-Shinjuku/locData_Matsuyama_Shinjuku2022.csv.schema.yaml
+- id: readme.csv
+  path: readme.csv
+  object:
+    oid: blake3:12d130326e6e7813c93a4dea646355db591714f39e1dc6d952ce08e208256a85
+    size: 1561
+  updated_at: 2026-09-04
 - id: trip_all.csv
   path: trip_all.csv
   object:

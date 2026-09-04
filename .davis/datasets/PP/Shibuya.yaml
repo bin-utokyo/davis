@@ -45,6 +45,12 @@ files:
     size: 376811060
   updated_at: 2026-08-24
   schema_path: data/PP/Shibuya/locdata_Shibuya_2021.csv.schema.yaml
+- id: readme.csv
+  path: readme.csv
+  object:
+    oid: blake3:7b5abb869be95df5cb4fb9c26aa9c106c022413143bf0c3126fb59f65f6e1250
+    size: 1865
+  updated_at: 2026-09-04
 - id: trip_202301.csv
   path: trip_202301.csv
   object:

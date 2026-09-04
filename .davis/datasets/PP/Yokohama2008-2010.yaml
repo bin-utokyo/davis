@@ -24,6 +24,12 @@ files:
     size: 83059753
   updated_at: 2026-08-24
   schema_path: data/PP/Yokohama2008-2010/locData_yokohama_2010.csv.schema.yaml
+- id: readme.csv
+  path: readme.csv
+  object:
+    oid: blake3:6a95a75fbcdd70c7eb0eb533cba5cafd4c9dfd5a3b3eb983ed5efbc0e0ee4a9d
+    size: 1285
+  updated_at: 2026-09-04
 - id: trip_yokohama_2008.csv
   path: trip_yokohama_2008.csv
   object:

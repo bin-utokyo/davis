@@ -17,6 +17,12 @@ files:
     size: 104610916
   updated_at: 2026-08-24
   schema_path: data/PP/Matsuyama/locData.csv.schema.yaml
+- id: readme.csv
+  path: readme.csv
+  object:
+    oid: blake3:7bf24262e7bb997f9ae1e4d022ff4ec797343d9c4c4546261b86e2a43de85ce5
+    size: 2524
+  updated_at: 2026-09-04
 - id: trip.csv
   path: trip.csv
   object:
