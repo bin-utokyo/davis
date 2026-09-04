@@ -80,6 +80,12 @@ files:
     size: 1111449987
   updated_at: 2026-08-24
   schema_path: data/PP/Toyosu2018-2021/locData_toyosu_2021.csv.schema.yaml
+- id: readme.csv
+  path: readme.csv
+  object:
+    oid: blake3:ed925eabcd9d2ced7da0721fe40f11d559b5de733b03fdb06a684064b68d91f1
+    size: 2002
+  updated_at: 2026-09-04
 - id: trip_toyosu_2018.csv
   path: trip_toyosu_2018.csv
   object:
