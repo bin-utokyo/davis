@@ -49,10 +49,7 @@ fn generated_manifests_cover_the_current_catalog() {
             .files
             .iter()
             .all(|file| file.object.oid.algorithm() == "blake3"));
-        assert!(manifest
-            .files
-            .iter()
-            .all(|file| file.updated_at.is_some()));
+        assert!(manifest.files.iter().all(|file| file.updated_at.is_some()));
         manifest_files += manifest.files.len();
         schema_references += manifest
             .files

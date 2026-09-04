@@ -70,9 +70,57 @@ jobs:
           path: ${{ matrix.asset }}
           if-no-files-found: error
 
+  build-components:
+    name: Build and verify official components
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: astral-sh/setup-uv@v6
+      - name: Build component tooling
+        run: cargo build --release --locked --package davis-cli
+      - name: Package MNL and generate registry
+        shell: bash
+        run: |
+          mkdir -p dist
+          target/release/davis component pack components/davis-mnl --name mnl --out dist
+          target/release/davis component registry \
+            dist/davis-mnl-0.1.0.entry.json \
+            --out dist/component-registry.json
+      - name: Verify registry install and model execution
+        shell: bash
+        env:
+          DAVIS_DISABLE_UPDATE_CHECK: "1"
+        run: |
+          python3 -m http.server 8765 --directory dist >component-server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid"' EXIT
+          for _ in $(seq 1 20); do
+            curl --fail --silent http://127.0.0.1:8765/component-registry.json >/dev/null && break
+            sleep 1
+          done
+          test_root=$(mktemp -d)
+          export DAVIS_DATA_HOME="$test_root/user-data"
+          target/release/davis install component mnl \
+            --registry http://127.0.0.1:8765/component-registry.json
+          mkdir -p "$test_root/project"
+          cp components/davis-mnl/examples/minimal/model.yaml "$test_root/project/model.yaml"
+          cp components/davis-mnl/examples/minimal/choice.csv "$test_root/project/choice.csv"
+          target/release/davis --repository "$test_root/project" model run \
+            "$test_root/project/model.yaml" \
+            --run-root "$test_root/project/davis-runs"
+          test -f "$test_root/project/davis-runs"/*/artifacts/parameters.csv
+      - uses: actions/upload-artifact@v4
+        with:
+          name: official-components
+          path: |
+            dist/davis-mnl-0.1.0.tar.gz
+            dist/component-registry.json
+          if-no-files-found: error
+
   release:
     name: Publish GitHub Release
-    needs: [build-unix, build-windows]
+    needs: [build-unix, build-windows, build-components]
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5
@@ -94,7 +142,7 @@ jobs:
           cp scripts/install.sh scripts/install.ps1 dist/
           cp release/latest-version.json dist/
           cd dist
-          sha256sum davis-* latest-version.json > SHA256SUMS
+          sha256sum davis-* component-registry.json latest-version.json > SHA256SUMS
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:

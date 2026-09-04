@@ -43,9 +43,9 @@ pub(crate) async fn handle_install(
 pub(crate) fn handle_component(
     command: ComponentCommand,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let store = ComponentStore::for_user()?;
     match command {
         ComponentCommand::List { json } => {
+            let store = ComponentStore::for_user()?;
             let installed = store.list()?;
             if json {
                 println!("{}", serde_json::to_string_pretty(&installed)?);
@@ -63,12 +63,44 @@ pub(crate) fn handle_component(
             }
         }
         ComponentCommand::Inspect { id, version, json } => {
+            let store = ComponentStore::for_user()?;
             let installed = store.inspect(&id, version.as_deref())?;
             print_installed(&installed, json, "Component")?;
         }
         ComponentCommand::Remove { id, version, json } => {
+            let store = ComponentStore::for_user()?;
             let removed = store.remove(&id, version.as_deref())?;
             print_installed(&removed, json, "Removed")?;
+        }
+        ComponentCommand::Pack {
+            path,
+            out,
+            name,
+            requires_davis,
+            json,
+        } => {
+            let packed = crate::component_pack::pack(
+                &path,
+                &out,
+                name.as_deref(),
+                requires_davis.as_deref(),
+            )?;
+            if json {
+                println!("{}", serde_json::to_string_pretty(&packed)?);
+            } else {
+                println!("Bundle: {}", packed.bundle_path.display());
+                println!("Entry: {}", packed.entry_path.display());
+                println!("Digest: {}", packed.entry.bundle.blake3);
+            }
+        }
+        ComponentCommand::Registry { entries, out, json } => {
+            let registry = crate::component_pack::registry(&entries, &out)?;
+            if json {
+                println!("{}", serde_json::to_string_pretty(&registry)?);
+            } else {
+                println!("Registry: {}", out.display());
+                println!("Components: {}", registry.components.len());
+            }
         }
     }
     Ok(())

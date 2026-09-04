@@ -36,6 +36,11 @@ pub enum ContractError {
     InvalidModelIdentity,
     #[error("model manifest must declare at least one operation")]
     MissingOperations,
+    #[error("invalid Davis version requirement `{value}`: {source}")]
+    InvalidDavisRequirement {
+        value: String,
+        source: semver::Error,
+    },
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -136,6 +141,8 @@ pub struct ModelManifest {
     pub id: String,
     pub name: String,
     pub version: String,
+    #[serde(default)]
+    pub requires_davis: Option<String>,
     pub runtime: RuntimeDeclaration,
     pub operations: Vec<String>,
     pub inputs: Vec<ModelInput>,
@@ -179,6 +186,14 @@ impl ModelManifest {
         }
         if self.operations.is_empty() {
             return Err(ContractError::MissingOperations);
+        }
+        if let Some(requirement) = &self.requires_davis {
+            semver::VersionReq::parse(requirement).map_err(|source| {
+                ContractError::InvalidDavisRequirement {
+                    value: requirement.clone(),
+                    source,
+                }
+            })?;
         }
         Ok(())
     }
@@ -308,7 +323,7 @@ fn require_version(actual: &str, expected: &'static str) -> Result<(), ContractE
 
 #[cfg(test)]
 mod tests {
-    use super::{AnalysisPlan, InputSource, ANALYSIS_API_VERSION};
+    use super::{AnalysisPlan, ContractError, InputSource, ModelManifest, ANALYSIS_API_VERSION};
 
     #[test]
     fn analysis_plan_accepts_sources_alias() {
@@ -331,6 +346,34 @@ sources:
         assert!(matches!(
             plan.inputs.get("choice_data"),
             Some(InputSource::Local { .. })
+        ));
+    }
+
+    #[test]
+    fn model_manifest_validates_optional_davis_requirement() {
+        let valid: ModelManifest = serde_yaml::from_str(
+            r"
+api_version: davis.model/v1alpha1
+id: example/native
+name: Example Native
+version: 1.0.0
+requires_davis: '>=0.3.5'
+runtime:
+  kind: native
+  command: [example]
+operations: [estimate]
+inputs: []
+config_schema: schemas/config.json
+",
+        )
+        .unwrap();
+        valid.validate().unwrap();
+
+        let mut invalid = valid;
+        invalid.requires_davis = Some("not-a-requirement".to_owned());
+        assert!(matches!(
+            invalid.validate(),
+            Err(ContractError::InvalidDavisRequirement { .. })
         ));
     }
 }

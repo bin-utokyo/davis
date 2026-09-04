@@ -840,7 +840,7 @@ dependencies = [
 
 [[package]]
 name = "davis-catalog"
-version = "0.3.5"
+version = "0.4.0"
 dependencies = [
  "blake3",
  "davis-core",
@@ -854,7 +854,7 @@ dependencies = [
 
 [[package]]
 name = "davis-cli"
-version = "0.3.5"
+version = "0.4.0"
 dependencies = [
  "blake3",
  "clap",
@@ -878,11 +878,12 @@ dependencies = [
  "tokio",
  "toml 0.9.12+spec-1.1.0",
  "url",
+ "walkdir",
 ]
 
 [[package]]
 name = "davis-core"
-version = "0.3.5"
+version = "0.4.0"
 dependencies = [
  "blake3",
  "jiff",
@@ -894,7 +895,7 @@ dependencies = [
 
 [[package]]
 name = "davis-document"
-version = "0.3.5"
+version = "0.4.0"
 dependencies = [
  "davis-core",
  "fullbleed",
@@ -903,8 +904,9 @@ dependencies = [
 
 [[package]]
 name = "davis-model-api"
-version = "0.3.5"
+version = "0.4.0"
 dependencies = [
+ "semver",
  "serde",
  "serde_json",
  "serde_yaml",
@@ -913,7 +915,7 @@ dependencies = [
 
 [[package]]
 name = "davis-model-runner"
-version = "0.3.5"
+version = "0.4.0"
 dependencies = [
  "blake3",
  "davis-model-api",
@@ -923,7 +925,7 @@ dependencies = [
 
 [[package]]
 name = "davis-runtime"
-version = "0.3.5"
+version = "0.4.0"
 dependencies = [
  "blake3",
  "csv",
@@ -941,7 +943,7 @@ dependencies = [
 
 [[package]]
 name = "davis-storage"
-version = "0.3.5"
+version = "0.4.0"
 dependencies = [
  "davis-core",
  "futures",

@@ -13,6 +13,8 @@
 * long形式CSVを使う標準MNLの検証・推定
 * CLIとTauri desktop appから同じRust use caseの呼出し
 * local component packageの検証，per-user install，一覧，詳細表示，削除
+* 決定的component bundle，registry entry，公式registryの生成
+* 公式registryからの互換version選択，安全なdownload・検証・install
 * 分析project固有componentとinstall済みcomponentの優先探索
 
 catalog input，run artifact input，join，filter，Parquetへの内部materializeは型または拡張点だけを用意しており，まだ実行できません．未実装入力を指定した場合は明示的に失敗します．
@@ -35,7 +37,7 @@ davis component inspect davis/mnl --version 0.1.0
 davis component remove davis/mnl --version 0.1.0
 ```
 
-公式registryがreleaseへ公開された後は，`davis install component mnl`または`davis install component davis/mnl --version 0.1.0`で取得できます．registryとbundleの公開契約は[`davis-component-registry.md`](davis-component-registry.md)に記載します．現在はregistry clientまで実装済みで，公式release artifactはまだありません．
+公式registryがreleaseへ公開された後は，`davis install component mnl`または`davis install component davis/mnl --version 0.1.0`で取得できます．registryとbundleの公開契約は[`davis-component-registry.md`](davis-component-registry.md)に記載します．生成・実動作検証・release添付workflowは実装済みで，公式artifactは次のrelease tag公開時に利用可能になります．
 
 per-user install先はmacOSでは`~/Library/Application Support/Davis/components/`，Windowsではlocal application data，Linuxでは`$XDG_DATA_HOME/davis/components/`または`~/.local/share/davis/components/`です．開発・test時は`DAVIS_DATA_HOME`で変更できます．installは`.venv`，`__pycache__`，Git metadata等を除外し，component ID，version，schema，lockfile，symlink，重複を検証してから同一filesystem内でatomicに配置します．
 
@@ -96,3 +98,5 @@ component/
 RunnerはManifestの`runtime.command`へ`request_argument`と`request.json`の絶対pathを追加して起動します．processは指定されたoutput directoryへ`run-result.json`を書きます．artifact pathはoutput directoryからの安全な相対pathでなければなりません．
 
 localまたはregistry componentは任意codeを実行するため，現在のprototypeでは信頼できるcomponentだけをinstallしてください．sandboxとregistry署名は後続実装です．現在のPython componentは実行時に`uv`を必要とし，Davis管理runtimeの自動installはまだ実装していません．
+
+ModelManifestの`requires_davis`はcomponentが必要とするDavis contractのSemVer条件です．本体のrelease versionとは独立しており，互換性が維持されている限り，本体のminor updateに合わせて機械的に上げません．MNL 0.1.0は`>=0.3.5`を宣言します．

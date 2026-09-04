@@ -1,4 +1,5 @@
 mod component;
+mod component_pack;
 mod component_registry;
 mod git_workflow;
 mod model;
@@ -338,6 +339,33 @@ enum ComponentCommand {
         /// Select an exact installed version.
         #[arg(long)]
         version: Option<String>,
+        /// Print structured JSON.
+        #[arg(long)]
+        json: bool,
+    },
+    /// Build a deterministic release bundle and registry entry.
+    Pack {
+        path: PathBuf,
+        /// Directory where the bundle and entry JSON are written.
+        #[arg(long)]
+        out: PathBuf,
+        /// Short official install name. Defaults to the final ID segment.
+        #[arg(long)]
+        name: Option<String>,
+        /// Compatible Davis `SemVer` requirement. Defaults to the manifest declaration.
+        #[arg(long)]
+        requires_davis: Option<String>,
+        /// Print structured JSON.
+        #[arg(long)]
+        json: bool,
+    },
+    /// Combine component entry files into a versioned registry.
+    Registry {
+        /// Entry JSON files emitted by `davis component pack`.
+        entries: Vec<PathBuf>,
+        /// Registry JSON destination.
+        #[arg(long)]
+        out: PathBuf,
         /// Print structured JSON.
         #[arg(long)]
         json: bool,
@@ -1775,7 +1803,7 @@ mod tests {
     use super::{Cli, Command, ComponentCommand, InstallCommand};
     use clap::Parser;
     use std::io::Cursor;
-    use std::path::PathBuf;
+    use std::path::{Path, PathBuf};
 
     #[test]
     fn pull_accepts_first_retrieval_and_companion_options() {
@@ -1891,6 +1919,52 @@ mod tests {
             Command::Component {
                 command: ComponentCommand::Inspect { id, version, json: false }
             } if id == "davis/mnl" && version.as_deref() == Some("0.1.0")
+        ));
+
+        let pack = Cli::try_parse_from([
+            "davis",
+            "component",
+            "pack",
+            "components/davis-mnl",
+            "--out",
+            "dist",
+            "--name",
+            "mnl",
+            "--requires-davis",
+            ">=0.3.5",
+        ])
+        .expect("component pack should parse");
+        assert!(matches!(
+            pack.command,
+            Command::Component {
+                command: ComponentCommand::Pack {
+                    path,
+                    out,
+                    name,
+                    requires_davis,
+                    json: false,
+                }
+            } if path == Path::new("components/davis-mnl")
+                && out == Path::new("dist")
+                && name.as_deref() == Some("mnl")
+                && requires_davis.as_deref() == Some(">=0.3.5")
+        ));
+
+        let registry = Cli::try_parse_from([
+            "davis",
+            "component",
+            "registry",
+            "dist/mnl.entry.json",
+            "--out",
+            "dist/component-registry.json",
+        ])
+        .expect("component registry should parse");
+        assert!(matches!(
+            registry.command,
+            Command::Component {
+                command: ComponentCommand::Registry { entries, out, json: false }
+            } if entries == [PathBuf::from("dist/mnl.entry.json")]
+                && out == Path::new("dist/component-registry.json")
         ));
     }
 

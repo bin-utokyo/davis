@@ -8,7 +8,7 @@ use flate2::read::GzDecoder;
 use futures::StreamExt;
 use reqwest::{Client, Url};
 use semver::{Version, VersionReq};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use tempfile::TempDir;
 use thiserror::Error;
 
@@ -82,26 +82,26 @@ pub enum RegistryError {
     Archive(std::io::Error),
 }
 
-#[derive(Debug, Clone, Deserialize)]
-struct Registry {
-    schema_version: u32,
-    components: Vec<RegistryComponent>,
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub(crate) struct Registry {
+    pub(crate) schema_version: u32,
+    pub(crate) components: Vec<RegistryComponent>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
-struct RegistryComponent {
-    name: String,
-    id: String,
-    version: String,
-    requires_davis: String,
-    bundle: Bundle,
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub(crate) struct RegistryComponent {
+    pub(crate) name: String,
+    pub(crate) id: String,
+    pub(crate) version: String,
+    pub(crate) requires_davis: String,
+    pub(crate) bundle: Bundle,
 }
 
-#[derive(Debug, Clone, Deserialize)]
-struct Bundle {
-    url: String,
-    size: u64,
-    blake3: String,
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub(crate) struct Bundle {
+    pub(crate) url: String,
+    pub(crate) size: u64,
+    pub(crate) blake3: String,
 }
 
 pub struct DownloadedComponent {
@@ -322,7 +322,7 @@ fn parse_digest(value: &str) -> Result<blake3::Hash, RegistryError> {
         .map_err(|_| RegistryError::InvalidDigest(value.to_owned()))
 }
 
-fn extract_bundle(archive_path: &Path, destination: &Path) -> Result<(), RegistryError> {
+pub(crate) fn extract_bundle(archive_path: &Path, destination: &Path) -> Result<(), RegistryError> {
     let file = File::open(archive_path).map_err(|source| RegistryError::Io {
         path: archive_path.to_owned(),
         source,
@@ -394,8 +394,8 @@ mod tests {
             r#"{
               "schema_version": 1,
               "components": [
-                {"name":"mnl","id":"davis/mnl","version":"0.1.0","requires_davis":">=0.3.0, <0.4.0","bundle":{"url":"mnl-0.1.0.tar.gz","size":1,"blake3":"blake3:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}},
-                {"name":"mnl","id":"davis/mnl","version":"0.2.0","requires_davis":">=0.3.0, <0.4.0","bundle":{"url":"mnl-0.2.0.tar.gz","size":1,"blake3":"blake3:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}},
+                {"name":"mnl","id":"davis/mnl","version":"0.1.0","requires_davis":">=0.3.0","bundle":{"url":"mnl-0.1.0.tar.gz","size":1,"blake3":"blake3:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}},
+                {"name":"mnl","id":"davis/mnl","version":"0.2.0","requires_davis":">=0.3.0","bundle":{"url":"mnl-0.2.0.tar.gz","size":1,"blake3":"blake3:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}},
                 {"name":"mnl","id":"davis/mnl","version":"1.0.0","requires_davis":">=1.0.0","bundle":{"url":"mnl-1.0.0.tar.gz","size":1,"blake3":"blake3:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}}
               ]
             }"#,
@@ -461,7 +461,7 @@ outputs: {}
                 "name": "test",
                 "id": "davis/test",
                 "version": "0.1.0",
-                "requires_davis": ">=0.3.0, <0.4.0",
+                "requires_davis": ">=0.3.0",
                 "bundle": {
                     "url": format!("http://{address}/component.tar.gz"),
                     "size": bundle.len(),

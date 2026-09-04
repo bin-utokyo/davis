@@ -2,6 +2,7 @@ api_version: davis.model/v1alpha1
 id: davis/mnl
 name: Davis Multinomial Logit
 version: 0.1.0
+requires_davis: ">=0.3.5"
 
 runtime:
   kind: python
