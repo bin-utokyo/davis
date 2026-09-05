@@ -1,10 +1,38 @@
 # Davis Component Authoring Guide
 
-この文書は，人間とAIがDavisへ独自の計算処理を追加するための最小契約を示します．推定器だけでなく，入力CSVから説明変数CSVを作る処理や，結果を図表へ変換する処理も同じcomponentとして実装できます．
+この文書を読むと，自分で作った計算programをDavisの画面やCLIから実行できるようになります．統計モデルだけでなく，「2つのCSVを結合する」「説明変数を計算する」「推定結果を図にする」といった処理も追加できます．Python以外の言語でも構いません．
+
+Davisでは，このような追加処理一式を**component**と呼びます．componentは，普通のprogramに「何を入力し，どの設定を使い，何を出力するか」という説明書を付けたものです．その説明書が`component.yaml`です．
+
+初学者は「最初の作成手順」と「それぞれの言葉の意味」から読んでください．既に実装したい処理が決まっている方やAIは，「Manifest」以降を仕様書として使えます．
+
+## それぞれの言葉の意味
+
+| 言葉 | 意味 | 例 |
+| --- | --- | --- |
+| component | Davisから実行できるようにまとめた計算処理一式 | MNL推定，CSV結合 |
+| Manifest | componentの説明書．filenameは`component.yaml` | 入力はCSV，出力はparameters.csv |
+| input | programへ渡す入力file | `persons.csv` |
+| config | 実行する人が毎回決める設定 | ID列名，説明変数，反復回数 |
+| artifact | programが作った出力file | 推定係数CSV，指標JSON |
+| runtime command | programを起動するcommand | `python -m my_model` |
+| Analysis plan | 1回の実行内容を保存するYAML | 使用file，列，設定 |
+| schema | configに何を書けるかを示す規則 | `max_iterations`は1以上の整数 |
+| presentation | configや結果をGUIでどう見せるかという補助情報 | 結果CSVをtable表示 |
+
+関係は次のとおりです．
+
+```text
+component.yaml  ──「このprogramは何を受け取り，何を返すか」
+実program       ── 実際の計算
+analysis.yaml   ──「今回はどのfileと設定で実行するか」
+       │
+       └── Davisが実行し，結果と実行記録をdavis-runsへ保存
+```
 
 ## 基本構造
 
-すべてのcomponentは，入力参照，設定，process実装，成果物宣言を持ちます．Davisは入力解決，digest，process起動，log，成果物検証，実行記録を共通に担当します．
+最小componentは，説明書と実programの2つで構成できます．次の`model.py`という名前は一例であり，R，Julia，Node.js，native executable等でも構いません．
 
 ```text
 component/
@@ -12,11 +40,11 @@ component/
 └── model.py
 ```
 
-新規componentの正規形式は`component.yaml`と`davis.component/v1`です．設定検証用JSON SchemaとGUI表示hintを同じYAMLへ記述できるため，小さなcomponentはManifestと実programの2ファイルだけで成立します．旧形式の`component-manifest.yaml`，`model-manifest.yaml`，`davis.component/v1alpha1`，`davis.model/v1alpha1`も後方互換のため読み込めますが，1つのpackageへ複数のManifest候補を置くことはできません．`kind`で役割を区別します．
+Davisは入力fileの場所を解決し，programを起動し，logと結果を保存します．さらに，宣言した出力が本当に作られたかを確認します．モデル固有の計算は実programが担当します．
 
 ## 最初の作成手順
 
-次のcommandは，既存directoryを上書きせず，inline schemaを含む最小`component.yaml`を1ファイル生成します．`--command`はprogram名と各引数について1回ずつ指定します．`--operation`を省略した場合，`kind`に応じて`estimate`，`transform`，`visualize`のいずれかが入ります．
+まず，componentを入れる新しいdirectoryと`component.yaml`を自動生成します．次の例は，Python module `my_component`を起動するデータ加工componentです．既に同名のdirectoryがある場合は上書きしません．
 
 ```console
 davis component scaffold ./my-component \
@@ -27,7 +55,7 @@ davis component scaffold ./my-component \
   --command my_component
 ```
 
-生成後は実programを追加し，packageをinstallせずに構造だけ検証できます．この検証はManifest，ID／version，参照先，lockfile，schemaの整合性を確認します．一般言語環境やruntime commandの存在・versionは実行直前にも検査されます．
+次に，生成されたdirectoryへ実programを追加します．`component.yaml`を書き換えたら，installする前に説明書の間違いを検査します．
 
 ```console
 davis component validate ./my-component
@@ -36,11 +64,11 @@ davis component inspect example/my-component
 davis model run ./analysis.yaml
 ```
 
-機械処理では`scaffold`，`validate`ともに`--json`を指定できます．component作者は，installを検証代わりに使ったり，Davis本体のrepositoryへpackageを置いたりする必要はありません．
+`validate`が確認するのは，YAMLの形式，IDとversion，schema，参照file等です．計算内容が正しいかまでは判断しないため，小さな入力例を使ったtestも作ってください．実行時には，Python等の必要なcommandがPCにあるかも確認されます．Davisの開発repositoryへcomponentを置く必要はありません．
 
-### AIへ渡す最小依頼
+### AIに作成を頼む場合
 
-AIへcomponent作成を依頼する場合は，この文書を渡したうえで，少なくとも次を伝えます．
+AIにはこの文書全体と，少なくとも次の情報を渡してください．Davisの内部実装や開発経緯を説明する必要はありません．
 
 1. componentの目的と`kind`
 2. 入力slotごとの名前，media type，意味
@@ -48,9 +76,28 @@ AIへcomponent作成を依頼する場合は，この文書を渡したうえで
 4. 出力artifactごとの名前，media type，意味
 5. 利用可能なruntime commandと必要な外部環境
 
-AIが生成したpackageにも同じ`davis component validate`を実行します．検証成功は任意codeの安全性や統計モデルの妥当性を保証しないため，実装reviewと既知fixtureによる試験は別に行います．
+依頼文では「推測でDavis独自fieldを追加せず，このガイドに書かれた契約だけを使う」「完成後に`davis component validate`と既知入力による実行手順を示す」と指定してください．AIが生成した任意codeは，実行前に内容を確認してください．
+
+次の依頼文を出発点にできます．
+
+```text
+添付したDavis Component Authoring GuideだけをDavis固有仕様の根拠として，
+次の処理を行うcomponentを作成してください．
+
+目的: (行いたい推定や計算)
+入力: (file名，形式，各列の意味)
+実行時に変更したい設定: (説明変数等)
+出力: (必要な表や指標)
+使用できる言語・command: (Python，R等)
+
+component.yaml，実program，最小sample，Analysis plan，testを作成してください．
+未記載のDavis独自fieldは推測で追加しないでください．
+davis component validateとsample実行の手順も示してください．
+```
 
 ## Manifest
+
+Manifestは「このcomponentの取扱説明書」です．利用者が毎回選ぶ値はManifestへ直接書かず，`configuration.schema`で項目だけ定義します．実際に選んだ値は後述するAnalysis planへ保存します．
 
 ```yaml
 api_version: davis.component/v1
@@ -129,6 +176,8 @@ presentation:
 
 ## Analysis plan
 
+Analysis planは「今回の実験条件」です．同じcomponentでも，入力fileや説明変数を変えるたびに別のplanとして保存できます．このため，`component.yaml`を毎回編集して実験履歴の代わりにする必要はありません．
+
 ```yaml
 api_version: davis.analysis/v1alpha1
 name: calculate-accessibility
@@ -148,6 +197,8 @@ config:
 
 ## Process contract
 
+ここからは実programを書く人とAIが守る規則です．GUIだけで既存componentを使う人は読み飛ばせます．Davisとprogramは，関数呼出しではなく2つのJSON fileで情報を交換します．そのため，programming言語を限定しません．
+
 DavisはManifestの`runtime.command`をcomponent directoryで起動し，`request_argument`の直後に`request.json`の絶対pathを渡します．componentは次を行います．
 
 1. `request.json`を読みます．
@@ -155,6 +206,38 @@ DavisはManifestの`runtime.command`をcomponent directoryで起動し，`reques
 3. `output_directory`以下へ成果物を書きます．
 4. `output_directory/run-result.json`を書きます．
 5. 成功時は終了code 0，失敗時は非0を返します．
+
+例えば，programには次のようなJSONが渡ります．`source`は利用者が指定した元情報，`resolved`はDavisが検証した実fileです．programは必ず`resolved.path`を読んでください．
+
+```json
+{
+  "api_version": "davis.run/v1alpha1",
+  "run_id": "run_123456",
+  "operation": "transform",
+  "component": {
+    "id": "example/accessibility",
+    "version": "0.1.0",
+    "kind": "transform",
+    "manifest_path": "/absolute/path/component.yaml",
+    "source_digest": "blake3:..."
+  },
+  "inputs": {
+    "persons": {
+      "source": {"kind": "local", "path": "persons.csv", "read": null},
+      "resolved": {
+        "path": "/absolute/path/persons.csv",
+        "object_id": "blake3:...",
+        "size": 1234,
+        "media_type": "text/csv"
+      }
+    }
+  },
+  "config": {"person_id": "person_id"},
+  "output_directory": "/absolute/path/davis-runs/run_123456/artifacts"
+}
+```
+
+実programは，例えば`python -m accessibility --request /.../request.json`のように起動されます．`--request`の値からJSONを読み，`run_id`と`output_directory`を取り出します．入力fileや出力directoryをcomponent directoryからの相対pathだと仮定しないでください．
 
 成功結果の最小例です．
 
@@ -303,6 +386,21 @@ davis component registry dist/my-component-0.1.0.entry.json \
 
 公開bundleには`.venv`，`__pycache__`，Git metadata，test cacheを含めません．dependencyをlockし，正常系，欠損列，不正値，成果物欠落をtestしてください．信頼できないcomponentは任意codeを実行できるため，現在はinstallしないでください．sandboxとregistry署名は未実装です．
 
+## Davisを知らないAIによる最終検証
+
+このframeworkの最終検証では，Davis開発の会話履歴やsource codeを見ていないブラウザAIを使います．AIへ渡してよいものは，このガイド，作りたいモデルの要件，入出力の小さなsampleだけです．既存componentを模写させることは必須にしません．
+
+次をすべて満たした場合に合格とします．
+
+1. AIが`component.yaml`と実programを作成できます．
+2. `davis component validate`が成功します．
+3. AIが作成したAnalysis planをGUIで開いて内容を理解・変更できます．
+4. sample dataによる実行が成功し，宣言したartifactをDavisが表示できます．
+5. 入力列不足等の失敗が，利用者の直せる説明として表示されます．
+6. 別の人がManifest，plan，結果を読み，使用file，設定，出力を説明できます．
+
+失敗した場合はAIだけを調整して通すのではなく，誤解された箇所をこのガイド，scaffold，validator，GUIのいずれかへ還元します．特定AIの事前知識に依存しないことが目的です．
+
 ## 現在の境界
 
-実装済みなのはlocal input，`run_artifact` input，推定時の複数source binding，宣言的な複数CSV join，列選択，線形結合，CSV／Parquet出力，process実行，artifact検証，local／registry installです．catalog input，filter，group，任意pipeline DAG，Davis管理Python，sandboxは未実装です．QGIS等の手作業は生成済みfileをlocal inputとして利用し，自動実行できるalgorithmは同じprocess contractでtransform componentとして包めます．
+実装済みなのはlocal input，`run_artifact` input，推定時の複数source binding，宣言的な複数CSV join，列選択，線形結合，CSV／Parquet出力，process実行，artifact検証，local／registry installです．catalog input，filter，group，任意pipeline DAG，sandboxは未実装です．DavisはPython等の一般言語環境をinstallしません．QGIS等の手作業は生成済みfileをlocal inputとして利用し，自動実行できるalgorithmは同じprocess contractでtransform componentとして包めます．

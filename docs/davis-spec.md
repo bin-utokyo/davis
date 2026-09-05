@@ -2558,7 +2558,7 @@ Webは選択したFileを個別に順次downloadし，選択内容に対応す�
 2. `davis-runtime`のInput Resolver，実行directory，来歴記録
 3. `davis-model-runner`のprocess起動，log，終了状態，成果物検証
 4. 現行Python MNLを接続する`davis-mnl`
-5. component単位の`uv.lock`とPython環境管理
+5. componentによる必要command・version・lockfileの宣言と実行前検査
 6. 現行入力を推奨入力へ接続する必要最小限のformat adapter
 7. parameters・metrics等の基本CSV・JSON出力
 
@@ -2573,6 +2573,7 @@ Runtimeはlocal fileだけで実行でき，公式catalogを必須にしませ�
 3. 標準MNLを変更したcomponentをDavis本体のforkなしに実行できます．
 4. 入力digest，model revision，環境，RunRequest，RunResult，成果物を`run.json`へ記録できます．
 5. CatalogとWebがなくてもlocal推定を実行できます．
+6. Davis開発の文脈を持たない外部AIが，公開作成ガイドとモデル要件とsample dataだけからcomponentを作成し，検証，GUI編集，実行，成果物表示まで完了できます．
 
 最初の実データ例は`Tohoku_History`の居住地選択データとし，`df_individual.csv`の選択結果と`df_ex_var.csv`の選択肢別説明変数から，小規模な回帰test用subsetを作ります．これは推定器の最初の検証対象であり，Catalogとdownloadの全Dataset対応を限定しません．
 
