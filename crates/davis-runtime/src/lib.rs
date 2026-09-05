@@ -18,7 +18,9 @@ use davis_model_api::{
     RESULT_API_VERSION, RUN_API_VERSION,
 };
 use davis_model_runner::{run_component, RunnerError};
-pub use inspect::{inspect_csv, ColumnProfile, CsvProfile, InspectError};
+pub use inspect::{
+    distinct_csv_values, inspect_csv, ColumnProfile, CsvProfile, DistinctValues, InspectError,
+};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use walkdir::WalkDir;
@@ -110,6 +112,62 @@ pub struct CompletedRun {
     pub run_directory: PathBuf,
     pub request: RunRequest,
     pub result: RunResult,
+}
+
+/// Resolves a component package from the repository or the per-user component store.
+///
+/// # Errors
+///
+/// Returns an error when the requested component version cannot be found or its
+/// manifest path cannot be made absolute.
+pub fn load_component(
+    repository: &Path,
+    id: &str,
+    version: &str,
+) -> Result<(PathBuf, ComponentManifest), RuntimeError> {
+    find_manifest(repository, id, version)
+}
+
+/// Lists component packages available from the repository and user store.
+#[must_use]
+pub fn list_components(repository: &Path) -> Vec<(PathBuf, ComponentManifest)> {
+    let mut roots = vec![repository.join("components")];
+    if let Ok(store) = ComponentStore::for_user() {
+        if !roots.iter().any(|root| root == store.root()) {
+            roots.push(store.root().to_owned());
+        }
+    }
+    let mut identities = std::collections::BTreeSet::new();
+    let mut components = Vec::new();
+    for root in roots {
+        for entry in WalkDir::new(root)
+            .into_iter()
+            .filter_entry(|entry| !is_temporary_install_entry(entry))
+            .filter_map(Result::ok)
+        {
+            let is_manifest = entry.file_name() == davis_model_api::COMPONENT_MANIFEST_FILENAME
+                || entry.file_name() == davis_model_api::LEGACY_MODEL_MANIFEST_FILENAME;
+            if !is_manifest {
+                continue;
+            }
+            let Some(directory) = entry.path().parent() else {
+                continue;
+            };
+            let Ok((manifest_path, manifest)) = ComponentManifest::read_from_directory(directory)
+            else {
+                continue;
+            };
+            if identities.insert((manifest.id.clone(), manifest.version.clone())) {
+                components.push((manifest_path, manifest));
+            }
+        }
+    }
+    components.sort_by(|(_, left), (_, right)| {
+        left.id
+            .cmp(&right.id)
+            .then_with(|| left.version.cmp(&right.version))
+    });
+    components
 }
 
 /// Validates an analysis plan and resolves its declared component.

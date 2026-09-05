@@ -1,8 +1,13 @@
+use std::collections::BTreeMap;
 use std::fs;
+use std::io::Write;
 use std::path::{Path, PathBuf};
 
-use davis_model_api::AnalysisPlan;
-use davis_runtime::{execute_plan, inspect_csv, validate_plan, CompletedRun, CsvProfile};
+use davis_model_api::{AnalysisPlan, ComponentManifest, InputSource};
+use davis_runtime::{
+    distinct_csv_values, execute_plan, inspect_csv, list_components, load_component, validate_plan,
+    CompletedRun, CsvProfile, DistinctValues,
+};
 use serde::Serialize;
 use serde_json::Value;
 
@@ -20,10 +25,158 @@ struct ComponentResponse {
     manifest: PathBuf,
 }
 
+#[derive(Serialize)]
+struct ComponentEditorResponse {
+    manifest: ComponentManifest,
+    config_schema: Value,
+    ui_schema: Value,
+}
+
+#[derive(Serialize)]
+struct EditablePlanResponse {
+    yaml: String,
+    plan: AnalysisPlan,
+    editor: ComponentEditorResponse,
+    resolved_sources: BTreeMap<String, PathBuf>,
+}
+
 #[tauri::command]
 #[allow(clippy::needless_pass_by_value)]
 fn inspect_csv_file(path: PathBuf) -> Result<CsvProfile, String> {
     inspect_csv(&path).map_err(|error| error.to_string())
+}
+
+#[tauri::command]
+#[allow(clippy::needless_pass_by_value)]
+fn inspect_distinct_values(path: PathBuf, column: String) -> Result<DistinctValues, String> {
+    distinct_csv_values(&path, &column, 200).map_err(|error| error.to_string())
+}
+
+#[tauri::command]
+#[allow(clippy::needless_pass_by_value)]
+fn component_editor_definition(
+    repository: PathBuf,
+    component_id: String,
+    version: String,
+) -> Result<ComponentEditorResponse, String> {
+    if !repository.is_dir() {
+        return Err(format!(
+            "repository does not exist: {}",
+            repository.display()
+        ));
+    }
+    editor_definition(&repository, &component_id, &version)
+}
+
+#[tauri::command]
+#[allow(clippy::needless_pass_by_value)]
+fn component_editor_definitions(
+    repository: PathBuf,
+) -> Result<Vec<ComponentEditorResponse>, String> {
+    if !repository.is_dir() {
+        return Err(format!(
+            "repository does not exist: {}",
+            repository.display()
+        ));
+    }
+    let editors = list_components(&repository)
+        .into_iter()
+        .filter_map(|(path, manifest)| editor_response(&path, manifest).ok())
+        .filter(|editor| editor.ui_schema["ui:editor"] == "linear-utility")
+        .collect();
+    Ok(editors)
+}
+
+#[tauri::command]
+#[allow(clippy::needless_pass_by_value)]
+fn load_analysis_plan_for_editing(
+    repository: PathBuf,
+    path: PathBuf,
+) -> Result<EditablePlanResponse, String> {
+    ensure_arguments(&repository, &path)?;
+    let yaml = fs::read_to_string(&path)
+        .map_err(|error| format!("failed to read analysis plan {}: {error}", path.display()))?;
+    let plan = AnalysisPlan::read(&path).map_err(|error| error.to_string())?;
+    let plan_directory = path.parent().unwrap_or_else(|| Path::new("."));
+    let mut resolved_sources = BTreeMap::new();
+    for (slot, source) in &plan.inputs {
+        collect_local_sources(source, slot, plan_directory, &mut resolved_sources);
+    }
+    let editor = editor_definition(
+        &repository,
+        &plan.component.component,
+        &plan.component.version,
+    )?;
+    Ok(EditablePlanResponse {
+        yaml,
+        plan,
+        editor,
+        resolved_sources,
+    })
+}
+
+fn collect_local_sources(
+    source: &InputSource,
+    name: &str,
+    plan_directory: &Path,
+    resolved: &mut BTreeMap<String, PathBuf>,
+) {
+    match source {
+        InputSource::Local { path, .. } => {
+            resolved.insert(
+                name.to_owned(),
+                if path.is_relative() {
+                    plan_directory.join(path)
+                } else {
+                    path.clone()
+                },
+            );
+        }
+        InputSource::TableBinding { binding } => {
+            for (nested_name, nested) in &binding.sources {
+                collect_local_sources(nested, nested_name, plan_directory, resolved);
+            }
+        }
+        InputSource::Catalog { .. } | InputSource::RunArtifact { .. } => {}
+    }
+}
+
+fn editor_definition(
+    repository: &Path,
+    component_id: &str,
+    version: &str,
+) -> Result<ComponentEditorResponse, String> {
+    let (manifest_path, manifest) =
+        load_component(repository, component_id, version).map_err(|error| error.to_string())?;
+    editor_response(&manifest_path, manifest)
+}
+
+fn editor_response(
+    manifest_path: &Path,
+    manifest: ComponentManifest,
+) -> Result<ComponentEditorResponse, String> {
+    let directory = manifest_path
+        .parent()
+        .ok_or_else(|| "component manifest has no package directory".to_owned())?;
+    let config_schema = read_json(&directory.join(&manifest.config_schema))?;
+    let ui_schema = manifest
+        .ui_schema
+        .as_ref()
+        .map(|path| read_json(&directory.join(path)))
+        .transpose()?
+        .unwrap_or_else(|| Value::Object(serde_json::Map::new()));
+    Ok(ComponentEditorResponse {
+        manifest,
+        config_schema,
+        ui_schema,
+    })
+}
+
+fn read_json(path: &Path) -> Result<Value, String> {
+    let bytes =
+        fs::read(path).map_err(|error| format!("failed to read {}: {error}", path.display()))?;
+    serde_json::from_slice(&bytes)
+        .map_err(|error| format!("invalid JSON in {}: {error}", path.display()))
 }
 
 #[tauri::command]
@@ -34,8 +187,31 @@ fn render_analysis_plan(plan: Value) -> Result<String, String> {
 
 #[tauri::command]
 #[allow(clippy::needless_pass_by_value)]
-fn save_analysis_plan(path: PathBuf, plan: Value) -> Result<PathBuf, String> {
+fn save_analysis_plan(repository: PathBuf, path: PathBuf, plan: Value) -> Result<PathBuf, String> {
     let yaml = render_plan(plan)?;
+    save_validated_yaml(&repository, &path, &yaml)
+}
+
+#[tauri::command]
+#[allow(clippy::needless_pass_by_value)]
+fn save_analysis_plan_yaml(
+    repository: PathBuf,
+    path: PathBuf,
+    yaml: String,
+) -> Result<PathBuf, String> {
+    let plan: AnalysisPlan = serde_yaml::from_str(&yaml)
+        .map_err(|error| format!("invalid analysis plan YAML: {error}"))?;
+    plan.validate().map_err(|error| error.to_string())?;
+    save_validated_yaml(&repository, &path, &yaml)
+}
+
+fn save_validated_yaml(repository: &Path, path: &Path, yaml: &str) -> Result<PathBuf, String> {
+    if !repository.is_dir() {
+        return Err(format!(
+            "repository does not exist: {}",
+            repository.display()
+        ));
+    }
     let parent = path
         .parent()
         .ok_or_else(|| "analysis plan must have a parent directory".to_owned())?;
@@ -45,9 +221,18 @@ fn save_analysis_plan(path: PathBuf, plan: Value) -> Result<PathBuf, String> {
             parent.display()
         ));
     }
-    fs::write(&path, yaml)
+    let mut candidate = tempfile::Builder::new()
+        .prefix(".davis-plan-")
+        .suffix(".yaml")
+        .tempfile_in(parent)
+        .map_err(|error| format!("failed to create validation file: {error}"))?;
+    candidate
+        .write_all(yaml.as_bytes())
+        .map_err(|error| format!("failed to write validation file: {error}"))?;
+    validate_plan(repository, candidate.path()).map_err(|error| error.to_string())?;
+    fs::write(path, yaml)
         .map_err(|error| format!("failed to save analysis plan {}: {error}", path.display()))?;
-    Ok(path)
+    Ok(path.to_owned())
 }
 
 fn render_plan(value: Value) -> Result<String, String> {
@@ -128,8 +313,13 @@ fn main() {
         .plugin(tauri_plugin_dialog::init())
         .invoke_handler(tauri::generate_handler![
             inspect_csv_file,
+            inspect_distinct_values,
+            component_editor_definition,
+            component_editor_definitions,
+            load_analysis_plan_for_editing,
             render_analysis_plan,
             save_analysis_plan,
+            save_analysis_plan_yaml,
             validate_analysis_plan,
             run_analysis_plan,
             open_run_directory
@@ -140,9 +330,18 @@ fn main() {
 
 #[cfg(test)]
 mod tests {
+    use std::path::PathBuf;
+
     use serde_json::json;
 
-    use super::render_plan;
+    use super::{
+        component_editor_definitions, editor_definition, load_analysis_plan_for_editing,
+        render_plan, save_analysis_plan_yaml,
+    };
+
+    fn repository() -> PathBuf {
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../..")
+    }
 
     #[test]
     fn renders_a_typed_multi_source_plan() {
@@ -195,5 +394,49 @@ mod tests {
         .unwrap_err();
 
         assert!(error.contains("does not contain base source"));
+    }
+
+    #[test]
+    fn loads_manifest_driven_editor_metadata() {
+        let editor = editor_definition(&repository(), "davis/mnl", "0.2.0").unwrap();
+        assert_eq!(editor.manifest.id, "davis/mnl");
+        assert_eq!(editor.ui_schema["ui:editor"], "linear-utility");
+        assert!(editor.config_schema["properties"]["roles"]["required"].is_array());
+        let editors = component_editor_definitions(repository()).unwrap();
+        assert!(editors.iter().any(|item| item.manifest.id == "davis/mnl"));
+    }
+
+    #[test]
+    fn loads_an_existing_plan_with_absolute_local_sources() {
+        let repository = repository();
+        let plan = repository.join("components/davis-mnl/examples/multi-source/model.yaml");
+        let loaded = load_analysis_plan_for_editing(repository, plan).unwrap();
+        assert!(loaded.yaml.contains("multi-source-mode-choice"));
+        let path = &loaded.resolved_sources["choices"];
+        assert!(path.is_absolute());
+        assert!(path.is_file());
+        let input = &loaded.plan.inputs["choice_data"];
+        let davis_model_api::InputSource::TableBinding { binding } = input else {
+            panic!("expected table binding");
+        };
+        let davis_model_api::InputSource::Local { path, .. } = &binding.sources["choices"] else {
+            panic!("expected local source");
+        };
+        assert!(path.is_relative());
+    }
+
+    #[test]
+    fn invalid_yaml_does_not_overwrite_an_existing_plan() {
+        let directory = tempfile::tempdir().unwrap();
+        let target = directory.path().join("model.yaml");
+        std::fs::write(&target, "original").unwrap();
+        let choices = repository().join("components/davis-mnl/examples/multi-source/choices.csv");
+        let yaml = format!(
+            "api_version: davis.analysis/v1alpha1\nname: invalid\ncomponent:\n  id: davis/mnl\n  version: 0.2.0\n  operation: estimate\ninputs:\n  choice_data:\n    kind: local\n    path: {}\nconfig:\n  roles:\n    case_id: case_id\n    alternative_id: alternative\n    chosen: chosen\n",
+            choices.display()
+        );
+        let error = save_analysis_plan_yaml(repository(), target.clone(), yaml).unwrap_err();
+        assert!(error.contains("terms"));
+        assert_eq!(std::fs::read_to_string(target).unwrap(), "original");
     }
 }

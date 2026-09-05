@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::{BTreeSet, HashSet};
 use std::fs::File;
 use std::io::{Read, Take};
 use std::path::{Path, PathBuf};
@@ -21,6 +21,8 @@ pub enum InspectError {
     Csv { path: PathBuf, source: csv::Error },
     #[error("CSV has no header row: {0}")]
     MissingHeader(PathBuf),
+    #[error("CSV {path} does not contain column `{column}`")]
+    MissingColumn { path: PathBuf, column: String },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -40,6 +42,15 @@ pub struct ColumnProfile {
     pub null_count: usize,
     pub unique_sample: usize,
     pub warnings: Vec<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct DistinctValues {
+    pub path: PathBuf,
+    pub column: String,
+    pub values: Vec<String>,
+    pub rows_sampled: usize,
+    pub truncated: bool,
 }
 
 #[derive(Default)]
@@ -143,6 +154,79 @@ pub fn inspect_csv(path: &Path) -> Result<CsvProfile, InspectError> {
     })
 }
 
+/// Returns sorted distinct values from the bounded CSV inspection sample.
+///
+/// # Errors
+///
+/// Returns an error when the file cannot be read, parsed, or does not contain
+/// the requested column.
+pub fn distinct_csv_values(
+    path: &Path,
+    column: &str,
+    value_limit: usize,
+) -> Result<DistinctValues, InspectError> {
+    let mut bytes = Vec::new();
+    let file = File::open(path).map_err(|source| InspectError::Io {
+        path: path.to_owned(),
+        source,
+    })?;
+    let mut limited: Take<File> = file.take(INSPECTION_BYTE_LIMIT);
+    limited
+        .read_to_end(&mut bytes)
+        .map_err(|source| InspectError::Io {
+            path: path.to_owned(),
+            source,
+        })?;
+    let byte_truncated =
+        std::fs::metadata(path).is_ok_and(|metadata| metadata.len() > bytes.len() as u64);
+    let (text, _) = decode(&bytes);
+    let delimiter = detect_delimiter(&text);
+    let mut reader = csv::ReaderBuilder::new()
+        .delimiter(delimiter)
+        .flexible(true)
+        .from_reader(text.as_bytes());
+    let headers = reader
+        .headers()
+        .map_err(|source| InspectError::Csv {
+            path: path.to_owned(),
+            source,
+        })?
+        .clone();
+    let index = headers
+        .iter()
+        .position(|name| name == column)
+        .ok_or_else(|| InspectError::MissingColumn {
+            path: path.to_owned(),
+            column: column.to_owned(),
+        })?;
+    let mut values = BTreeSet::new();
+    let mut rows_sampled = 0;
+    let mut value_truncated = false;
+    for record in reader.records().take(INSPECTION_ROW_LIMIT) {
+        let record = record.map_err(|source| InspectError::Csv {
+            path: path.to_owned(),
+            source,
+        })?;
+        rows_sampled += 1;
+        let value = record.get(index).unwrap_or("").trim();
+        if value.is_empty() {
+            continue;
+        }
+        if values.len() < value_limit || values.contains(value) {
+            values.insert(value.to_owned());
+        } else {
+            value_truncated = true;
+        }
+    }
+    Ok(DistinctValues {
+        path: path.to_owned(),
+        column: column.to_owned(),
+        values: values.into_iter().collect(),
+        rows_sampled,
+        truncated: byte_truncated || rows_sampled == INSPECTION_ROW_LIMIT || value_truncated,
+    })
+}
+
 fn decode(bytes: &[u8]) -> (String, &'static str) {
     let bytes = bytes.strip_prefix(&[0xef, 0xbb, 0xbf]).unwrap_or(bytes);
     if let Ok(text) = std::str::from_utf8(bytes) {
@@ -208,7 +292,7 @@ fn has_significant_leading_zero(value: &str) -> bool {
 mod tests {
     use std::fs;
 
-    use super::inspect_csv;
+    use super::{distinct_csv_values, inspect_csv};
 
     #[test]
     fn reports_leading_zero_identifiers() {
@@ -220,5 +304,20 @@ mod tests {
         assert_eq!(profile.rows_sampled, 2);
         assert_eq!(profile.columns[0].warnings, ["leading-zero-values"]);
         assert_eq!(profile.columns[1].inferred_type, "float");
+    }
+
+    #[test]
+    fn returns_bounded_distinct_column_values() {
+        let directory = tempfile::tempdir().unwrap();
+        let path = directory.path().join("sample.csv");
+        fs::write(
+            &path,
+            "case_id,alternative\n001,train\n001,car\n002,train\n002,walk\n",
+        )
+        .unwrap();
+        let values = distinct_csv_values(&path, "alternative", 10).unwrap();
+        assert_eq!(values.values, ["car", "train", "walk"]);
+        assert_eq!(values.rows_sampled, 4);
+        assert!(!values.truncated);
     }
 }

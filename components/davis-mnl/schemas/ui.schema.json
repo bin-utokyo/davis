@@ -1,9 +1,24 @@
 {
+  "ui:editor": "linear-utility",
+  "ui:inputPreparation": {
+    "component": "davis/csv-transform",
+    "version": "0.4.0"
+  },
   "ui:order": ["roles", "terms", "parameters", "estimation"],
   "roles": {
-    "ui:description": "Map semantic roles to columns in the long-format choice table."
+    "ui:widget": "role-columns",
+    "ui:description": "Map semantic roles to columns in the long-format choice table.",
+    "ui:labels": {
+      "case_id": "ケースID",
+      "alternative_id": "選択肢ID",
+      "chosen": "選択結果",
+      "available": "利用可能性 (任意)",
+      "weight": "重み (任意)"
+    }
   },
   "terms": {
-    "ui:description": "Define the variables contributing to each alternative utility."
+    "ui:widget": "linear-utility-terms",
+    "ui:description": "Define the variables contributing to each alternative utility.",
+    "ui:alternativesFromRole": "alternative_id"
   }
 }

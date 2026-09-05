@@ -17,6 +17,7 @@ serde_json.workspace = true
 serde_yaml.workspace = true
 tauri = { version = "2", features = [] }
 tauri-plugin-dialog = "2"
+tempfile.workspace = true
 
 [lints]
 workspace = true
