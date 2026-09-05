@@ -122,6 +122,43 @@ Davisは同じrun rootから`result.json`を読み，artifact名，成功状態�
 
 現段階では1つ目のRunを実行し，得られたrun IDを2つ目のplanへ記入します．複数処理を1ファイルでDAGとして実行するpipeline記法はまだありません．
 
+## 推定時の複数source binding
+
+モデル入力を作る目的では，transformを先に手動実行する必要はありません．`table_binding`をモデルのinput slotへ指定すると，Davisが推定直前に複数sourceを結合し，選択列だけをParquetへmaterializeしてモデルcomponentへ渡します．
+
+```yaml
+inputs:
+  choice_data:
+    kind: table_binding
+    processor:
+      id: davis/csv-transform
+      version: 0.4.0
+    sources:
+      choices:
+        kind: local
+        path: choices.csv
+      persons:
+        kind: local
+        path: persons.csv
+    base: choices
+    joins:
+      - source: persons
+        relationship: many_to_one
+        left_on: case_id
+        right_on: person_id
+    columns:
+      travel_time:
+        source: choices
+        column: time
+      income:
+        source: persons
+        column: income
+```
+
+`columns`のkeyはモデル設定から参照する最終列名です．GUIではparameterごとにsourceとcolumnを選び，この対応を生成します．結合済み表はRunの`artifacts/prepared/`へ保存され，`result.json`の`prepared_input:<slot名>` extensionにpath，media type，size，BLAKE3が記録されます．前処理processのrequest，result，logも`preparation/`へ保存します．
+
+現在のbinding joinはbase表の列と各追加sourceの列を照合します．単一keyと複合key，`many_to_one`と`one_to_one`，left／inner，未一致許可を指定できます．bindingの入れ子と，追加source同士を順に結ぶjoinは未対応です．完全なpipeline DAGとは別に，モデル入力を組み立てるための限定された一段前処理です．実動作例は[`components/davis-mnl/examples/multi-source`](../components/davis-mnl/examples/multi-source/)にあります．
+
 ## 参考transform component
 
 [`components/davis-csv-transform`](../components/davis-csv-transform/)は，任意codeをYAMLへ埋め込まず，数値列の線形結合を新しいCSV列として作る参考実装です．
@@ -199,4 +236,4 @@ davis component registry dist/my-component-0.1.0.entry.json \
 
 ## 現在の境界
 
-実装済みなのはlocal input，`run_artifact` input，宣言的な複数CSV join，線形結合，CSV／Parquet出力，process実行，artifact検証，local／registry installです．catalog input，filter，group，pipeline DAG，Davis管理Python，sandboxは未実装です．QGIS等の手作業は生成済みfileをlocal inputとして利用し，自動実行できるalgorithmは同じprocess contractでtransform componentとして包めます．
+実装済みなのはlocal input，`run_artifact` input，推定時の複数source binding，宣言的な複数CSV join，列選択，線形結合，CSV／Parquet出力，process実行，artifact検証，local／registry installです．catalog input，filter，group，任意pipeline DAG，Davis管理Python，sandboxは未実装です．QGIS等の手作業は生成済みfileをlocal inputとして利用し，自動実行できるalgorithmは同じprocess contractでtransform componentとして包めます．

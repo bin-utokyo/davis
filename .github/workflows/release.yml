@@ -90,9 +90,9 @@ jobs:
             --out dist
           target/release/davis component registry \
             dist/davis-mnl-0.2.0.entry.json \
-            dist/davis-csv-transform-0.3.0.entry.json \
+            dist/davis-csv-transform-0.4.0.entry.json \
             --out dist/component-registry.json
-      - name: Verify transform-to-model execution through the registry
+      - name: Verify integrated multi-source model execution through the registry
         shell: bash
         env:
           DAVIS_DISABLE_UPDATE_CHECK: "1"
@@ -111,28 +111,26 @@ jobs:
           target/release/davis install component csv-transform \
             --registry http://127.0.0.1:8765/component-registry.json
           mkdir -p "$test_root/project"
-          cp components/davis-csv-transform/examples/mnl-chain/choice.csv \
-            "$test_root/project/choice.csv"
-          cp components/davis-csv-transform/examples/mnl-chain/transform.yaml \
-            "$test_root/project/transform.yaml"
-          target/release/davis --repository "$test_root/project" model run \
-            "$test_root/project/transform.yaml" \
-            --run-root "$test_root/project/davis-runs" \
-            --json > "$test_root/transform-run.json"
-          transform_run_id=$(jq -r '.request.run_id' "$test_root/transform-run.json")
-          sed "s/REPLACE_WITH_TRANSFORM_RUN_ID/$transform_run_id/" \
-            components/davis-csv-transform/examples/mnl-chain/mnl-from-run.template.yaml \
-            > "$test_root/project/model.yaml"
+          cp components/davis-mnl/examples/multi-source/choices.csv \
+            "$test_root/project/choices.csv"
+          cp components/davis-mnl/examples/multi-source/persons.csv \
+            "$test_root/project/persons.csv"
+          cp components/davis-mnl/examples/multi-source/model.yaml \
+            "$test_root/project/model.yaml"
           target/release/davis --repository "$test_root/project" model run \
             "$test_root/project/model.yaml" \
-            --run-root "$test_root/project/davis-runs"
+            --run-root "$test_root/project/davis-runs" \
+            --json > "$test_root/model-run.json"
+          jq -e '.result.extensions["prepared_input:choice_data"].media_type == "application/vnd.apache.parquet"' \
+            "$test_root/model-run.json" >/dev/null
           test -f "$test_root/project/davis-runs"/*/artifacts/parameters.csv
+          test -f "$test_root/project/davis-runs"/*/artifacts/prepared/input-0/transformed.parquet
       - uses: actions/upload-artifact@v4
         with:
           name: official-components
           path: |
             dist/davis-mnl-0.2.0.tar.gz
-            dist/davis-csv-transform-0.3.0.tar.gz
+            dist/davis-csv-transform-0.4.0.tar.gz
             dist/component-registry.json
           if-no-files-found: error
 

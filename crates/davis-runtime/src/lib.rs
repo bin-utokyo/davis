@@ -13,8 +13,9 @@ pub use components::{
     user_data_directory, ComponentStore, ComponentStoreError, InstalledComponent,
 };
 use davis_model_api::{
-    AnalysisPlan, ComponentManifest, InputSource, ResolvedComponent, ResolvedFile, ResolvedInput,
-    RunRequest, RunResult, RunStatus, RESULT_API_VERSION, RUN_API_VERSION,
+    AnalysisPlan, ArtifactDescriptor, ComponentKind, ComponentManifest, InputSource,
+    ResolvedComponent, ResolvedFile, ResolvedInput, RunRequest, RunResult, RunStatus, TableBinding,
+    RESULT_API_VERSION, RUN_API_VERSION,
 };
 use davis_model_runner::{run_component, RunnerError};
 pub use inspect::{inspect_csv, ColumnProfile, CsvProfile, InspectError};
@@ -77,6 +78,14 @@ pub enum RuntimeError {
     InvalidModelConfig { path: PathBuf, errors: String },
     #[error("runtime generated an invalid output directory: {0}")]
     InvalidOutputDirectory(PathBuf),
+    #[error("table binding source `{0}` cannot contain another table binding")]
+    NestedTableBinding(String),
+    #[error("table binding processor `{id}` version `{version}` must be a transform component")]
+    InvalidBindingProcessor { id: String, version: String },
+    #[error("table binding processor did not return transformed_table")]
+    MissingPreparedTable,
+    #[error("model result already contains prepared-input extension `{0}`")]
+    PreparedInputArtifactConflict(String),
 }
 
 #[derive(Debug, Clone)]
@@ -92,6 +101,8 @@ pub struct PlannedRun {
     pub request: RunRequest,
     pub plan_path: PathBuf,
     pub manifest_path: PathBuf,
+    #[serde(default)]
+    pub prepared_inputs: BTreeMap<String, ArtifactDescriptor>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -133,6 +144,11 @@ pub fn validate_plan(repository: &Path, plan_path: &Path) -> Result<ValidatedPla
             return Err(RuntimeError::UnexpectedInput(name.clone()));
         }
     }
+    for input in plan.inputs.values() {
+        if let InputSource::TableBinding { binding } = input {
+            binding_processor(repository, binding)?;
+        }
+    }
     let config_schema = manifest_path
         .parent()
         .unwrap_or_else(|| Path::new("."))
@@ -166,44 +182,27 @@ pub fn plan_run(
         .plan_path
         .parent()
         .unwrap_or_else(|| Path::new("."));
+    let run_id = new_run_id();
+    let run_directory = run_root.join(&run_id);
+    let output_directory = run_directory.join("artifacts");
     let mut inputs = BTreeMap::new();
-    for (name, source) in &validated.plan.inputs {
+    let mut prepared_inputs = BTreeMap::new();
+    for (input_index, (name, source)) in validated.plan.inputs.iter().enumerate() {
         let resolved = match source {
-            InputSource::Local { path, .. } => {
-                let path = if path.is_absolute() {
-                    path.clone()
-                } else {
-                    plan_directory.join(path)
-                };
-                let path = absolute_path(&path)?;
-                if !path.is_file() {
-                    return Err(RuntimeError::MissingLocalInput(path));
-                }
-                let digest = hash_file(&path)?;
-                let metadata = fs::metadata(&path).map_err(|source| RuntimeError::Io {
-                    path: path.clone(),
-                    source,
-                })?;
-                ResolvedFile {
-                    media_type: media_type(&path).to_owned(),
-                    path,
-                    object_id: format!("blake3:{digest}"),
-                    size: metadata.len(),
-                }
+            InputSource::TableBinding { binding } => {
+                let prepared = resolve_table_binding(
+                    repository,
+                    plan_directory,
+                    &run_root,
+                    &run_id,
+                    &output_directory,
+                    input_index,
+                    binding,
+                )?;
+                prepared_inputs.insert(name.clone(), prepared.descriptor);
+                prepared.resolved
             }
-            InputSource::Catalog {
-                dataset_id,
-                file_id,
-                ..
-            } => {
-                return Err(RuntimeError::CatalogNotImplemented {
-                    dataset_id: dataset_id.clone(),
-                    file_id: file_id.clone(),
-                });
-            }
-            InputSource::RunArtifact { run_id, artifact } => {
-                resolve_run_artifact(&run_root, run_id, artifact)?
-            }
+            _ => resolve_input_source(plan_directory, &run_root, name, source)?,
         };
         let declared_media_types = validated
             .manifest
@@ -233,9 +232,6 @@ pub fn plan_run(
             },
         );
     }
-    let run_id = new_run_id();
-    let run_directory = run_root.join(&run_id);
-    let output_directory = run_directory.join("artifacts");
     let component_directory = validated
         .manifest_path
         .parent()
@@ -259,7 +255,243 @@ pub fn plan_run(
         },
         plan_path: validated.plan_path,
         manifest_path: validated.manifest_path,
+        prepared_inputs,
     })
+}
+
+struct PreparedTable {
+    resolved: ResolvedFile,
+    descriptor: ArtifactDescriptor,
+}
+
+fn resolve_input_source(
+    plan_directory: &Path,
+    run_root: &Path,
+    name: &str,
+    source: &InputSource,
+) -> Result<ResolvedFile, RuntimeError> {
+    match source {
+        InputSource::Local { path, .. } => {
+            let path = if path.is_absolute() {
+                path.clone()
+            } else {
+                plan_directory.join(path)
+            };
+            let path = absolute_path(&path)?;
+            if !path.is_file() {
+                return Err(RuntimeError::MissingLocalInput(path));
+            }
+            let digest = hash_file(&path)?;
+            let metadata = fs::metadata(&path).map_err(|source| RuntimeError::Io {
+                path: path.clone(),
+                source,
+            })?;
+            Ok(ResolvedFile {
+                media_type: media_type(&path).to_owned(),
+                path,
+                object_id: format!("blake3:{digest}"),
+                size: metadata.len(),
+            })
+        }
+        InputSource::Catalog {
+            dataset_id,
+            file_id,
+            ..
+        } => Err(RuntimeError::CatalogNotImplemented {
+            dataset_id: dataset_id.clone(),
+            file_id: file_id.clone(),
+        }),
+        InputSource::RunArtifact { run_id, artifact } => {
+            resolve_run_artifact(run_root, run_id, artifact)
+        }
+        InputSource::TableBinding { .. } => Err(RuntimeError::NestedTableBinding(name.to_owned())),
+    }
+}
+
+#[allow(clippy::too_many_arguments, clippy::too_many_lines)]
+fn resolve_table_binding(
+    repository: &Path,
+    plan_directory: &Path,
+    run_root: &Path,
+    main_run_id: &str,
+    main_output_directory: &Path,
+    input_index: usize,
+    binding: &TableBinding,
+) -> Result<PreparedTable, RuntimeError> {
+    let (manifest_path, manifest) = binding_processor(repository, binding)?;
+
+    let mut processor_inputs = BTreeMap::new();
+    for (source_name, source) in &binding.sources {
+        let resolved = resolve_input_source(plan_directory, run_root, source_name, source)?;
+        let processor_name = if source_name == &binding.base {
+            "table".to_owned()
+        } else {
+            source_name.clone()
+        };
+        validate_input_media_type(&manifest, &processor_name, &resolved.media_type)?;
+        processor_inputs.insert(
+            processor_name,
+            ResolvedInput {
+                source: source.clone(),
+                resolved,
+            },
+        );
+    }
+
+    let mut selection = serde_json::Map::new();
+    for (output, column) in &binding.columns {
+        if column.source == binding.base {
+            selection.insert(
+                output.clone(),
+                serde_json::Value::String(column.column.clone()),
+            );
+        }
+    }
+    let mut joins = Vec::new();
+    for (join_index, join) in binding.joins.iter().enumerate() {
+        let mut imported = serde_json::Map::new();
+        for (column_index, (output, column)) in binding
+            .columns
+            .iter()
+            .filter(|(_, column)| column.source == join.source)
+            .enumerate()
+        {
+            let internal = format!("__davis_join_{join_index}_{column_index}");
+            imported.insert(
+                internal.clone(),
+                serde_json::Value::String(column.column.clone()),
+            );
+            selection.insert(output.clone(), serde_json::Value::String(internal));
+        }
+        joins.push(serde_json::json!({
+            "input": join.source,
+            "how": join.how,
+            "relationship": join.relationship,
+            "allow_unmatched": join.allow_unmatched,
+            "left_on": join.left_on,
+            "right_on": join.right_on,
+            "columns": imported,
+        }));
+    }
+
+    let relative_output_directory = PathBuf::from("prepared").join(format!("input-{input_index}"));
+    let preparation_output = main_output_directory.join(&relative_output_directory);
+    let preparation_directory = main_output_directory
+        .parent()
+        .ok_or_else(|| RuntimeError::InvalidOutputDirectory(main_output_directory.to_owned()))?
+        .join("preparation")
+        .join(format!("input-{input_index}"));
+    let processor_directory = manifest_path.parent().unwrap_or_else(|| Path::new("."));
+    let processor_digest = hash_component(processor_directory)?;
+    let mut processor_config = serde_json::Map::new();
+    if !joins.is_empty() {
+        processor_config.insert("joins".to_owned(), serde_json::Value::Array(joins));
+    }
+    processor_config.insert(
+        "select".to_owned(),
+        serde_json::json!({ "columns": selection }),
+    );
+    processor_config.insert(
+        "output".to_owned(),
+        serde_json::json!({ "format": "parquet", "compression": "zstd" }),
+    );
+    let processor_config = serde_json::Value::Object(processor_config);
+    let processor_schema = processor_directory.join(&manifest.config_schema);
+    validate_component_config(&processor_schema, &processor_config)?;
+    let request = RunRequest {
+        api_version: RUN_API_VERSION.to_owned(),
+        run_id: format!("{main_run_id}_prepare_{input_index}"),
+        operation: "transform".to_owned(),
+        component: ResolvedComponent {
+            id: manifest.id.clone(),
+            version: manifest.version.clone(),
+            kind: manifest.kind,
+            manifest_path: manifest_path.clone(),
+            source_digest: format!("blake3:{processor_digest}"),
+        },
+        inputs: processor_inputs,
+        config: processor_config,
+        output_directory: preparation_output.clone(),
+    };
+    let output = run_component(&manifest_path, &manifest, &request, &preparation_directory)?;
+    let result_json = serde_json::to_vec_pretty(&output.result)?;
+    fs::write(preparation_directory.join("result.json"), result_json).map_err(|source| {
+        RuntimeError::Io {
+            path: preparation_directory.join("result.json"),
+            source,
+        }
+    })?;
+    let artifact = output
+        .result
+        .artifacts
+        .get("transformed_table")
+        .ok_or(RuntimeError::MissingPreparedTable)?;
+    let path = preparation_output.join(&artifact.path);
+    let relative_path = relative_output_directory.join(&artifact.path);
+    Ok(PreparedTable {
+        resolved: ResolvedFile {
+            path,
+            object_id: artifact.object_id.clone().unwrap_or_default(),
+            size: artifact.size.unwrap_or_default(),
+            media_type: artifact.media_type.clone(),
+        },
+        descriptor: ArtifactDescriptor {
+            path: relative_path,
+            media_type: artifact.media_type.clone(),
+            size: artifact.size,
+            object_id: artifact.object_id.clone(),
+        },
+    })
+}
+
+fn binding_processor(
+    repository: &Path,
+    binding: &TableBinding,
+) -> Result<(PathBuf, ComponentManifest), RuntimeError> {
+    let (manifest_path, manifest) = find_manifest(
+        repository,
+        &binding.processor.id,
+        &binding.processor.version,
+    )?;
+    if manifest.kind != ComponentKind::Transform
+        || !manifest
+            .operations
+            .iter()
+            .any(|operation| operation == "transform")
+    {
+        return Err(RuntimeError::InvalidBindingProcessor {
+            id: binding.processor.id.clone(),
+            version: binding.processor.version.clone(),
+        });
+    }
+    Ok((manifest_path, manifest))
+}
+
+fn validate_input_media_type(
+    manifest: &ComponentManifest,
+    name: &str,
+    media_type: &str,
+) -> Result<(), RuntimeError> {
+    let accepted = manifest
+        .inputs
+        .iter()
+        .find(|input| input.name == name)
+        .map(|input| &input.media_types)
+        .or_else(|| {
+            manifest
+                .additional_inputs
+                .as_ref()
+                .map(|input| &input.media_types)
+        })
+        .ok_or_else(|| RuntimeError::UnexpectedInput(name.to_owned()))?;
+    if accepted.iter().any(|accepted| accepted == media_type) {
+        Ok(())
+    } else {
+        Err(RuntimeError::UnsupportedMediaType {
+            name: name.to_owned(),
+            media_type: media_type.to_owned(),
+        })
+    }
 }
 
 fn resolve_run_artifact(
@@ -429,10 +661,20 @@ pub fn execute_plan(
         &planned.request,
         &run_directory,
     )?;
+    let mut result = output.result;
+    for (input_name, descriptor) in &planned.prepared_inputs {
+        let artifact_name = format!("prepared_input:{input_name}");
+        if result.extensions.contains_key(&artifact_name)
+            || result.artifacts.contains_key(&artifact_name)
+        {
+            return Err(RuntimeError::PreparedInputArtifactConflict(artifact_name));
+        }
+        result.extensions.insert(artifact_name, descriptor.clone());
+    }
     let completed = CompletedRun {
         run_directory: run_directory.clone(),
         request: planned.request,
-        result: output.result,
+        result,
     };
     let run_json = serde_json::to_vec_pretty(&completed)?;
     fs::write(run_directory.join("run.json"), run_json).map_err(|source| RuntimeError::Io {

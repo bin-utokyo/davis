@@ -8,6 +8,7 @@ import pyarrow.parquet as pq
 
 from davis_csv_transform.__main__ import (
     apply_calculations,
+    apply_selection,
     join_tables,
     write_transformed_table,
 )
@@ -44,6 +45,20 @@ class CalculationTest(unittest.TestCase):
         self.assertEqual(fields, ["time", "cost", "generalized_cost", "centered_cost"])
         self.assertEqual(rows[0]["generalized_cost"], "14")
         self.assertEqual(rows[0]["centered_cost"], "4")
+
+    def test_selects_and_renames_final_columns(self) -> None:
+        fields, rows = apply_selection(
+            ["person_id", "income", "unused"],
+            [{"person_id": "001", "income": "420", "unused": "x"}],
+            {
+                "select": {
+                    "columns": {"case_id": "person_id", "person_income": "income"}
+                }
+            },
+        )
+
+        self.assertEqual(fields, ["case_id", "person_income"])
+        self.assertEqual(rows, [{"case_id": "001", "person_income": "420"}])
 
 
 class JoinTest(unittest.TestCase):

@@ -3,7 +3,7 @@ name: prepare-generalized-cost
 
 component:
   id: davis/csv-transform
-  version: 0.3.0
+  version: 0.4.0
   operation: transform
 
 inputs:

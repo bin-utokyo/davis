@@ -54,6 +54,7 @@ def main() -> None:
             join_summaries.append(join_summary)
 
         output_fields = apply_calculations(fieldnames, rows, request["config"])
+        output_fields, rows = apply_selection(output_fields, rows, request["config"])
         output_config = request["config"].get("output", {})
         output_format = output_config.get("format", "csv")
         table_name, table_media_type, output_schema = write_transformed_table(
@@ -71,6 +72,7 @@ def main() -> None:
                 calculation["output"]
                 for calculation in request["config"].get("calculations", [])
             ],
+            "selected_columns": output_fields,
             "joins": join_summaries,
             "source_encoding": encoding,
             "source_delimiter": delimiter,
@@ -270,6 +272,20 @@ def apply_calculations(
         if output not in output_fields:
             output_fields.append(output)
     return output_fields
+
+
+def apply_selection(
+    fieldnames: list[str], rows: list[dict[str, str]], config: dict[str, Any]
+) -> tuple[list[str], list[dict[str, str]]]:
+    selection = config.get("select")
+    if selection is None:
+        return fieldnames, rows
+    columns: dict[str, str] = selection["columns"]
+    require_columns(fieldnames, list(columns.values()), "transformed table")
+    selected_rows = [
+        {output: row[source] for output, source in columns.items()} for row in rows
+    ]
+    return list(columns), selected_rows
 
 
 def join_tables(

@@ -50,6 +50,8 @@ pub enum ContractError {
     InvalidAdditionalInputDeclaration,
     #[error("component package contains both component-manifest.yaml and model-manifest.yaml")]
     AmbiguousComponentManifest,
+    #[error("invalid table binding: {0}")]
+    InvalidTableBinding(String),
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -96,6 +98,11 @@ impl AnalysisPlan {
         if self.inputs.is_empty() {
             return Err(ContractError::MissingSources);
         }
+        for (name, input) in &self.inputs {
+            if let InputSource::TableBinding { binding } = input {
+                binding.validate(name)?;
+            }
+        }
         Ok(())
     }
 }
@@ -129,6 +136,173 @@ pub enum InputSource {
         run_id: String,
         artifact: String,
     },
+    TableBinding {
+        #[serde(flatten)]
+        binding: TableBinding,
+    },
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct TableBinding {
+    pub processor: BindingProcessor,
+    pub sources: BTreeMap<String, InputSource>,
+    pub base: String,
+    #[serde(default)]
+    pub joins: Vec<TableJoin>,
+    pub columns: BTreeMap<String, BoundColumn>,
+}
+
+impl TableBinding {
+    fn validate(&self, input_name: &str) -> Result<(), ContractError> {
+        if self.processor.id.trim().is_empty() || self.processor.version.trim().is_empty() {
+            return Err(ContractError::InvalidTableBinding(format!(
+                "input `{input_name}` has an empty processor ID or version"
+            )));
+        }
+        if !self.sources.contains_key(&self.base) {
+            return Err(ContractError::InvalidTableBinding(format!(
+                "input `{input_name}` does not contain base source `{}`",
+                self.base
+            )));
+        }
+        for (source_name, source) in &self.sources {
+            if matches!(source, InputSource::TableBinding { .. }) {
+                return Err(ContractError::InvalidTableBinding(format!(
+                    "input `{input_name}` nests a table binding in source `{source_name}`"
+                )));
+            }
+        }
+        let mut joined = std::collections::BTreeSet::new();
+        for join in &self.joins {
+            let left_columns = join.left_on.columns();
+            let right_columns = join.right_on.columns();
+            if join.source == self.base || !self.sources.contains_key(&join.source) {
+                return Err(ContractError::InvalidTableBinding(format!(
+                    "input `{input_name}` has invalid join source `{}`",
+                    join.source
+                )));
+            }
+            if !joined.insert(&join.source) {
+                return Err(ContractError::InvalidTableBinding(format!(
+                    "input `{input_name}` joins source `{}` more than once",
+                    join.source
+                )));
+            }
+            if left_columns.len() != right_columns.len() {
+                return Err(ContractError::InvalidTableBinding(format!(
+                    "input `{input_name}` has different left and right key lengths for `{}`",
+                    join.source
+                )));
+            }
+            if left_columns.is_empty()
+                || left_columns
+                    .iter()
+                    .chain(right_columns.iter())
+                    .any(|column| column.trim().is_empty())
+            {
+                return Err(ContractError::InvalidTableBinding(format!(
+                    "input `{input_name}` has an empty join key for `{}`",
+                    join.source
+                )));
+            }
+        }
+        if self.columns.is_empty() {
+            return Err(ContractError::InvalidTableBinding(format!(
+                "input `{input_name}` must select at least one output column"
+            )));
+        }
+        for (output, column) in &self.columns {
+            if output.trim().is_empty()
+                || column.column.trim().is_empty()
+                || !self.sources.contains_key(&column.source)
+            {
+                return Err(ContractError::InvalidTableBinding(format!(
+                    "input `{input_name}` has invalid output column `{output}`"
+                )));
+            }
+            if column.source != self.base && !joined.contains(&column.source) {
+                return Err(ContractError::InvalidTableBinding(format!(
+                    "input `{input_name}` selects from unjoined source `{}`",
+                    column.source
+                )));
+            }
+        }
+        for source_name in self.sources.keys().filter(|name| *name != &self.base) {
+            if !joined.contains(source_name) {
+                return Err(ContractError::InvalidTableBinding(format!(
+                    "input `{input_name}` contains unused source `{source_name}`"
+                )));
+            }
+            if !self
+                .columns
+                .values()
+                .any(|column| &column.source == source_name)
+            {
+                return Err(ContractError::InvalidTableBinding(format!(
+                    "input `{input_name}` selects no columns from joined source `{source_name}`"
+                )));
+            }
+        }
+        Ok(())
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct BindingProcessor {
+    pub id: String,
+    pub version: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct TableJoin {
+    pub source: String,
+    pub left_on: KeyColumns,
+    pub right_on: KeyColumns,
+    #[serde(default)]
+    pub relationship: JoinRelationship,
+    #[serde(default)]
+    pub how: JoinKind,
+    #[serde(default)]
+    pub allow_unmatched: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct BoundColumn {
+    pub source: String,
+    pub column: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum KeyColumns {
+    One(String),
+    Many(Vec<String>),
+}
+
+impl KeyColumns {
+    #[must_use]
+    pub fn columns(&self) -> Vec<&str> {
+        match self {
+            Self::One(column) => vec![column],
+            Self::Many(columns) => columns.iter().map(String::as_str).collect(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum JoinRelationship {
+    #[default]
+    ManyToOne,
+    OneToOne,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum JoinKind {
+    #[default]
+    Left,
+    Inner,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
@@ -518,6 +692,53 @@ config_schema: schemas/config.json
         )
         .unwrap();
         assert_eq!(legacy.kind, ComponentKind::Model);
+    }
+
+    #[test]
+    fn analysis_plan_validates_a_multi_source_table_binding() {
+        let plan: AnalysisPlan = serde_yaml::from_str(
+            r"
+api_version: davis.analysis/v1alpha1
+name: multi-source
+component:
+  id: davis/mnl
+  version: 0.2.0
+  operation: estimate
+inputs:
+  choice_data:
+    kind: table_binding
+    processor:
+      id: davis/csv-transform
+      version: 0.4.0
+    sources:
+      choices:
+        kind: local
+        path: choices.csv
+      persons:
+        kind: local
+        path: persons.csv
+    base: choices
+    joins:
+      - source: persons
+        left_on: person_id
+        right_on: person_id
+    columns:
+      case_id:
+        source: choices
+        column: person_id
+      income:
+        source: persons
+        column: income
+config: {}
+",
+        )
+        .unwrap();
+
+        plan.validate().unwrap();
+        assert!(matches!(
+            plan.inputs.get("choice_data"),
+            Some(InputSource::TableBinding { .. })
+        ));
     }
 
     #[test]

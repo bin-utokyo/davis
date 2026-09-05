@@ -109,6 +109,9 @@ pub(crate) fn handle(
                 for (name, artifact) in completed.result.artifacts {
                     println!("Artifact {name}: {}", artifact.path.display());
                 }
+                for (name, artifact) in completed.result.extensions {
+                    println!("Extension {name}: {}", artifact.path.display());
+                }
             }
         }
     }

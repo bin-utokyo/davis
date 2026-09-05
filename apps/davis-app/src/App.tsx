@@ -31,6 +31,7 @@ type CompletedRun = {
   result: {
     status: string;
     artifacts: Record<string, { path: string; media_type: string; size?: number }>;
+    extensions: Record<string, { path: string; media_type: string; size?: number }>;
   };
 };
 
@@ -184,7 +185,10 @@ export default function App() {
             <button className="secondary" disabled={busy} onClick={openRunDirectory}>結果フォルダを開く</button>
           </div>
           <div className="artifacts">
-            {Object.entries(completed.result.artifacts).map(([name, artifact]) => (
+            {[
+              ...Object.entries(completed.result.artifacts),
+              ...Object.entries(completed.result.extensions),
+            ].map(([name, artifact]) => (
               <article key={name}>
                 <strong>{name}</strong>
                 <span>{artifact.path}</span>

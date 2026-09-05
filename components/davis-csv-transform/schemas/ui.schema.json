@@ -1,5 +1,5 @@
 {
-  "ui:order": ["output", "joins", "calculations"],
+  "ui:order": ["output", "joins", "calculations", "select"],
   "output": {
     "ui:description": "Write a human-readable CSV or a typed, compressed Parquet artifact. CSV is the default."
   },
@@ -8,5 +8,8 @@
   },
   "calculations": {
     "ui:description": "Create reproducible numeric columns without embedding arbitrary code in YAML."
+  },
+  "select": {
+    "ui:description": "Select and rename the final columns after joins and calculations."
   }
 }
