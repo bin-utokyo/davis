@@ -88,18 +88,20 @@ React画面自体を変更する開発者だけが，`apps/davis-app`でNode.js 
 
 desktop画面は次を提供します．
 
-1. Davis repositoryの選択
+1. `model.yaml`と`davis-runs`を置くproject workspaceの選択(repository cloneは不要)
 2. 複数local CSVの追加と列確認
 3. 基準表，join key，関係性，join方式の指定
 4. MNLのroleと線形効用termのForm編集
 5. 型付きAnalysisPlanから生成した`model.yaml`のpreview，保存，検証，実行
 6. 既存`model.yaml`の選択・検証・実行
 7. 単一CSVのinspection
-8. run directoryとartifact一覧の表示
+8. `ui_schema`が指定するJSON／CSV result view，artifact一覧，run directoryの表示
 
 初版editorは`ui_schema`が`linear-utility` editorを宣言するcomponentと，追加表を基準表へ直接結合するstar型のtable bindingを対象とします．role一覧と必須性はcomponentの`config_schema`，表示名，editor widget，選択肢候補の取得元，入力準備componentは`ui_schema`から取得します．生成YAMLはFrontend固有形式ではなく，Rust側で共通`AnalysisPlan`へdeserializeして契約検証してから保存します．
 
 対応範囲内の既存`model.yaml`は，同じFormへ読み戻して上書きまたは別名保存できます．相対local pathはPlan directoryを基準に解決して表示します．対応範囲外のcomponentや入力表現は内容を失わないYAML modeで開きます．複合keyと追加source間の連鎖joinをFormで編集する機能は後続sliceです．選択肢別termは，`alternative_id` roleへ割り当てたCSV列から上限付きdistinct sampleを取得し，検索可能な候補として表示します．単独のCSV inspection画面は設けず，各入力データカードへ統合します．
+
+推定完了時は結果sectionへ自動scrollします．表示内容はcomponentの`ui_schema.ui:results`がartifact名，title，`key-value`／`table` widgetを指定します．desktopは宣言されたRun artifactだけを安全なpathとsize上限の下で読み，汎用rendererで表示します．表示宣言がないartifactも一覧と結果folderから参照できます．
 
 ## Component package
 

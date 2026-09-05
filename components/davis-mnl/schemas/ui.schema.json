@@ -20,5 +20,11 @@
     "ui:widget": "linear-utility-terms",
     "ui:description": "Define the variables contributing to each alternative utility.",
     "ui:alternativesFromRole": "alternative_id"
-  }
+  },
+  "ui:results": [
+    {"artifact": "metrics", "title": "推定指標", "widget": "key-value"},
+    {"artifact": "parameters", "title": "推定係数", "widget": "table"},
+    {"artifact": "sample_summary", "title": "標本", "widget": "key-value"},
+    {"artifact": "predictions", "title": "予測確率", "widget": "table"}
+  ]
 }

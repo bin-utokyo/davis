@@ -56,6 +56,8 @@ outputs:
 
 desktop Form editorを提供するcomponentは，`ui_schema`で`ui:editor`を宣言します．標準MNLの`linear-utility` editorは，roleの表示名を`roles.ui:labels`，選択肢候補を得るroleを`terms.ui:alternativesFromRole`，table bindingに使うtransformを`ui:inputPreparation`から読みます．設定項目と必須性の正本は引き続き`config_schema`です．UI schemaは契約の妥当性を緩めず，表示方法だけを補います．
 
+結果をdesktop内に表示する場合は，`ui:results`へartifact名，title，widgetを列挙します．`key-value`はJSON object，`table`はCSVを表示します．これは成果物の中央契約を増やすものではなく，Manifestで宣言済みのartifactをどう提示するかというcomponent固有のhintです．未対応widgetや大きすぎるartifactは無理に表示せず，artifact一覧へ残します．
+
 通常は`inputs`でslot名を固定します．CSV joinのように利用者が任意名の追加inputを与えるcomponentだけは，`additional_inputs.media_types`で許可する形式を限定できます．追加inputもDavisがpath，media type，size，BLAKE3を解決・記録してからcomponentへ渡します．
 
 `outputs.artifacts`を宣言したcomponentは，未宣言artifact，必須artifactの欠落，異なるmedia typeを返せません．Davisは各成果物のpath，size，BLAKE3も検証して`result.json`へ記録します．既存componentの`outputs.standard`と`outputs.extensions`は引き続き読めます．

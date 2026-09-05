@@ -9,6 +9,7 @@ repository.workspace = true
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
+csv.workspace = true
 davis-model-api = { path = "../../../crates/davis-model-api" }
 davis-runtime = { path = "../../../crates/davis-runtime" }
 open = "5"

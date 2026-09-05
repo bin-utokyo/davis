@@ -3,7 +3,7 @@ use std::fs;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 
-use davis_model_api::{AnalysisPlan, ComponentManifest, InputSource};
+use davis_model_api::{AnalysisPlan, ComponentManifest, InputSource, RunResult};
 use davis_runtime::{
     distinct_csv_values, execute_plan, inspect_csv, list_components, load_component, validate_plan,
     CompletedRun, CsvProfile, DistinctValues,
@@ -38,6 +38,13 @@ struct EditablePlanResponse {
     plan: AnalysisPlan,
     editor: ComponentEditorResponse,
     resolved_sources: BTreeMap<String, PathBuf>,
+}
+
+#[derive(Serialize)]
+struct ArtifactPreviewResponse {
+    name: String,
+    media_type: String,
+    content: Value,
 }
 
 #[tauri::command]
@@ -295,6 +302,109 @@ fn open_run_directory(repository: PathBuf, run_id: String) -> Result<(), String>
         .map_err(|error| format!("failed to open run directory: {error}"))
 }
 
+#[tauri::command]
+#[allow(clippy::needless_pass_by_value)]
+fn preview_run_artifact(
+    repository: PathBuf,
+    run_id: String,
+    artifact: String,
+) -> Result<ArtifactPreviewResponse, String> {
+    const PREVIEW_BYTE_LIMIT: u64 = 5 * 1024 * 1024;
+    if !repository.is_dir() {
+        return Err(format!(
+            "repository does not exist: {}",
+            repository.display()
+        ));
+    }
+    if run_id.is_empty()
+        || Path::new(&run_id).components().count() != 1
+        || run_id == "."
+        || run_id == ".."
+    {
+        return Err("invalid run id".to_owned());
+    }
+    let run_directory = repository.join("davis-runs").join(&run_id);
+    let result_path = run_directory.join("result.json");
+    let result: RunResult = serde_json::from_slice(
+        &fs::read(&result_path)
+            .map_err(|error| format!("failed to read {}: {error}", result_path.display()))?,
+    )
+    .map_err(|error| format!("invalid run result {}: {error}", result_path.display()))?;
+    let descriptor = result
+        .artifacts
+        .get(&artifact)
+        .or_else(|| result.extensions.get(&artifact))
+        .ok_or_else(|| format!("run `{run_id}` does not contain artifact `{artifact}`"))?;
+    if descriptor.path.is_absolute()
+        || descriptor.path.components().any(|part| {
+            matches!(
+                part,
+                std::path::Component::ParentDir
+                    | std::path::Component::RootDir
+                    | std::path::Component::Prefix(_)
+            )
+        })
+    {
+        return Err(format!("artifact `{artifact}` has an unsafe path"));
+    }
+    let artifact_root = run_directory.join("artifacts");
+    let path = artifact_root.join(&descriptor.path);
+    let canonical_root = fs::canonicalize(&artifact_root)
+        .map_err(|error| format!("failed to access {}: {error}", artifact_root.display()))?;
+    let canonical_path = fs::canonicalize(&path)
+        .map_err(|error| format!("failed to access {}: {error}", path.display()))?;
+    if !canonical_path.starts_with(canonical_root) {
+        return Err(format!(
+            "artifact `{artifact}` resolves outside its run directory"
+        ));
+    }
+    let metadata = fs::metadata(&path)
+        .map_err(|error| format!("failed to access {}: {error}", path.display()))?;
+    if metadata.len() > PREVIEW_BYTE_LIMIT {
+        return Err(format!("artifact `{artifact}` is too large to preview"));
+    }
+    let bytes =
+        fs::read(&path).map_err(|error| format!("failed to read {}: {error}", path.display()))?;
+    let content = match descriptor.media_type.as_str() {
+        "application/json" => serde_json::from_slice(&bytes)
+            .map_err(|error| format!("invalid JSON artifact {}: {error}", path.display()))?,
+        "text/csv" => preview_csv(&path, &bytes)?,
+        media_type => {
+            return Err(format!(
+                "artifact media type `{media_type}` cannot be previewed"
+            ))
+        }
+    };
+    Ok(ArtifactPreviewResponse {
+        name: artifact,
+        media_type: descriptor.media_type.clone(),
+        content,
+    })
+}
+
+fn preview_csv(path: &Path, bytes: &[u8]) -> Result<Value, String> {
+    const ROW_LIMIT: usize = 200;
+    let mut reader = csv::ReaderBuilder::new().flexible(true).from_reader(bytes);
+    let columns: Vec<String> = reader
+        .headers()
+        .map_err(|error| format!("invalid CSV artifact {}: {error}", path.display()))?
+        .iter()
+        .map(str::to_owned)
+        .collect();
+    let mut rows = Vec::new();
+    let mut truncated = false;
+    for record in reader.records() {
+        let record =
+            record.map_err(|error| format!("invalid CSV artifact {}: {error}", path.display()))?;
+        if rows.len() == ROW_LIMIT {
+            truncated = true;
+            break;
+        }
+        rows.push(record.iter().map(str::to_owned).collect::<Vec<_>>());
+    }
+    Ok(serde_json::json!({ "columns": columns, "rows": rows, "truncated": truncated }))
+}
+
 fn ensure_arguments(repository: &Path, plan: &Path) -> Result<(), String> {
     if !repository.is_dir() {
         return Err(format!(
@@ -322,7 +432,8 @@ fn main() {
             save_analysis_plan_yaml,
             validate_analysis_plan,
             run_analysis_plan,
-            open_run_directory
+            open_run_directory,
+            preview_run_artifact
         ])
         .run(tauri::generate_context!())
         .expect("failed to run Davis desktop application");
@@ -336,7 +447,7 @@ mod tests {
 
     use super::{
         component_editor_definitions, editor_definition, load_analysis_plan_for_editing,
-        render_plan, save_analysis_plan_yaml,
+        preview_csv, render_plan, save_analysis_plan_yaml,
     };
 
     fn repository() -> PathBuf {
@@ -438,5 +549,17 @@ mod tests {
         let error = save_analysis_plan_yaml(repository(), target.clone(), yaml).unwrap_err();
         assert!(error.contains("terms"));
         assert_eq!(std::fs::read_to_string(target).unwrap(), "original");
+    }
+
+    #[test]
+    fn previews_csv_artifacts_as_a_bounded_table() {
+        let content = preview_csv(
+            PathBuf::from("parameters.csv").as_path(),
+            b"name,estimate\nbeta,-1.25\n",
+        )
+        .unwrap();
+        assert_eq!(content["columns"], json!(["name", "estimate"]));
+        assert_eq!(content["rows"], json!([["beta", "-1.25"]]));
+        assert_eq!(content["truncated"], false);
     }
 }

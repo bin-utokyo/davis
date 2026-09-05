@@ -1,6 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import { open, save } from "@tauri-apps/plugin-dialog";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type ColumnProfile = { name: string; inferred_type: string; null_count: number; unique_sample: number; warnings: string[] };
 type CsvProfile = { path: string; encoding: string; delimiter: string; rows_sampled: number; truncated: boolean; columns: ColumnProfile[] };
@@ -32,6 +32,7 @@ type ComponentEditor = {
     "ui:inputPreparation"?: { component: string; version: string };
     roles?: { "ui:labels"?: Record<string, string> };
     terms?: { "ui:alternativesFromRole"?: string };
+    "ui:results"?: Array<{ artifact: string; title: string; widget: "key-value" | "table" }>;
   };
 };
 type PlanInput = {
@@ -57,6 +58,7 @@ type EditablePlan = {
   editor: ComponentEditor;
 };
 type DistinctValues = { values: string[]; rows_sampled: number; truncated: boolean };
+type ArtifactPreview = { name: string; media_type: string; content: unknown };
 
 const defaultRoleLabels: Record<string, string> = {
   case_id: "ケースID", alternative_id: "選択肢ID", chosen: "選択結果",
@@ -86,6 +88,12 @@ export default function App() {
   const [preservedConfig, setPreservedConfig] = useState<Record<string, unknown>>({});
   const [preservedRun, setPreservedRun] = useState<Record<string, unknown>>({});
   const [preparation, setPreparation] = useState<{ component: string; version: string }>();
+  const [artifactPreviews, setArtifactPreviews] = useState<Record<string, ArtifactPreview>>({});
+  const resultRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    if (completed) requestAnimationFrame(() => resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
+  }, [completed]);
 
   async function perform(action: () => Promise<void>) {
     setBusy(true); setError("");
@@ -277,7 +285,7 @@ export default function App() {
   async function saveDraft(execute: boolean, overwrite = false) {
     await perform(async () => {
       const target = overwrite ? planPath : await save({
-        defaultPath: repository ? `${repository}/davis-runs/model.yaml` : "model.yaml",
+        defaultPath: repository ? `${repository}/model.yaml` : "model.yaml",
         filters: [{ name: "Davis analysis plan", extensions: ["yaml", "yml"] }],
       });
       if (!target) return;
@@ -286,7 +294,7 @@ export default function App() {
       setPlanPath(saved); setYamlPreview(await invoke<string>("render_analysis_plan", { plan }));
       setValidation(await invoke<Validation>("validate_analysis_plan", { repository, plan: saved }));
       setCompleted(undefined);
-      if (execute) setCompleted(await invoke<CompletedRun>("run_analysis_plan", { repository, plan: saved }));
+      if (execute) await showCompleted(await invoke<CompletedRun>("run_analysis_plan", { repository, plan: saved }));
     });
   }
   async function openPlanForEditing() {
@@ -298,8 +306,8 @@ export default function App() {
       setEditorOptions((current) => current.some((item) => item.manifest.id === loaded.editor.manifest.id && item.manifest.version === loaded.editor.manifest.version)
         ? current : [...current, loaded.editor]);
       if (loaded.editor.ui_schema["ui:editor"] !== "linear-utility") {
-        setEditor(loaded.editor); setPlanPath(selected); setYamlPreview(loaded.yaml); setCodeMode(true);
-        setSources([]); setCompleted(undefined); setValidation(undefined);
+      setEditor(loaded.editor); setPlanPath(selected); setYamlPreview(loaded.yaml); setCodeMode(true);
+        setSources([]); setCompleted(undefined); setArtifactPreviews({}); setValidation(undefined);
         return;
       }
       await hydratePlan(loaded, selected);
@@ -366,7 +374,7 @@ export default function App() {
     void ignoredRoles; void ignoredTerms;
     setPreservedConfig(remainingConfig); setPreservedRun(loaded.plan.run ?? {});
     setBaseSource(loadedBase); setJoins(loadedJoins); setRoles(loadedRoles); setTerms(loadedTerms);
-    setNextTermId(loadedTerms.length + 1); setPlanPath(path); setValidation(undefined); setCompleted(undefined);
+    setNextTermId(loadedTerms.length + 1); setPlanPath(path); setValidation(undefined); setCompleted(undefined); setArtifactPreviews({});
     setYamlPreview(loaded.yaml); setCodeMode(false);
     const alternativeRole = loaded.editor.ui_schema.terms?.["ui:alternativesFromRole"];
     const alternativeRef = alternativeRole ? loadedRoles[alternativeRole] : undefined;
@@ -390,14 +398,14 @@ export default function App() {
       setTerms([]); setNextTermId(1); setYamlPreview(""); setCodeMode(false); setAlternativeValues(undefined);
       setPreservedConfig({}); setPreservedRun({});
       setPreparation(definition?.ui_schema["ui:inputPreparation"]);
-      setValidation(undefined); setCompleted(undefined);
+      setValidation(undefined); setCompleted(undefined); setArtifactPreviews({});
     });
   }
   function selectEditor(identity: string) {
     const definition = editorOptions.find((item) => `${item.manifest.id}@${item.manifest.version}` === identity);
     if (!definition) return;
     setEditor(definition); initializeRoles(definition); setPreparation(definition.ui_schema["ui:inputPreparation"]);
-    setTerms([]); setYamlPreview(""); setPlanPath(""); setValidation(undefined); setCompleted(undefined);
+    setTerms([]); setYamlPreview(""); setPlanPath(""); setValidation(undefined); setCompleted(undefined); setArtifactPreviews({});
   }
   async function openRunDirectory() {
     if (completed) await perform(async () => invoke("open_run_directory", { repository, runId: completed.request.run_id }));
@@ -408,8 +416,22 @@ export default function App() {
       if (!planPath) throw new Error("保存先がありません．既存Planを開き直してください．");
       await invoke<string>("save_analysis_plan_yaml", { repository, path: planPath, yaml: yamlPreview });
       setValidation(await invoke<Validation>("validate_analysis_plan", { repository, plan: planPath }));
-      if (execute) setCompleted(await invoke<CompletedRun>("run_analysis_plan", { repository, plan: planPath }));
+      if (execute) await showCompleted(await invoke<CompletedRun>("run_analysis_plan", { repository, plan: planPath }));
     });
+  }
+  async function showCompleted(run: CompletedRun) {
+    setCompleted(run);
+    const definitions = editor?.ui_schema["ui:results"] ?? [];
+    const previews = await Promise.all(definitions.map(async (definition) => {
+      try {
+        return await invoke<ArtifactPreview>("preview_run_artifact", {
+          repository, runId: run.request.run_id, artifact: definition.artifact,
+        });
+      } catch {
+        return undefined;
+      }
+    }));
+    setArtifactPreviews(Object.fromEntries(previews.filter(Boolean).map((preview) => [preview!.name, preview!])));
   }
 
   const base = sources.find((source) => source.id === baseSource);
@@ -421,8 +443,8 @@ export default function App() {
       <p className="lead">ComponentManifestに従い，データ結合とモデル設定を同じAnalysisPlanとして編集します．</p></header>
     {error && <div className="error sticky-error">{error}</div>}
 
-    <section><SectionHeading number="1" title="Workspace" description="componentとrun記録を置くDavis repositoryを選択します．" />
-      <PathField value={repository} placeholder="Davis repository" onChange={(value) => { setRepository(value); setEditor(undefined); }} onChoose={chooseRepository} /></section>
+    <section><SectionHeading number="1" title="Project workspace" description="model.yamlとdavis-runsを置く作業folderです．Davis repositoryのcloneは不要です．" />
+      <PathField value={repository} placeholder="Project folder" onChange={(value) => { setRepository(value); setEditor(undefined); }} onChoose={chooseRepository} /></section>
 
     <section>
       <div className="heading-with-actions"><SectionHeading number="2" title="Analysis plan editor" description="新規作成と既存Planの再編集を同じ画面で行います．" />
@@ -486,7 +508,11 @@ export default function App() {
       </>}
     </section>
 
-    {completed && <section><SectionHeading number="3" title="Run result" description={completed.request.run_id} />
+    {completed && <section ref={resultRef}><SectionHeading number="3" title="Run result" description={completed.request.run_id} />
+      <div className="result-views">{(editor?.ui_schema["ui:results"] ?? []).map((definition) => {
+        const preview = artifactPreviews[definition.artifact];
+        return preview ? <ResultPreview key={definition.artifact} definition={definition} preview={preview} /> : null;
+      })}</div>
       <div className="run-directory-row"><div className="run-directory">{completed.run_directory}</div><button className="secondary" disabled={busy} onClick={openRunDirectory}>結果フォルダを開く</button></div>
       <div className="artifacts">{[...Object.entries(completed.result.artifacts), ...Object.entries(completed.result.extensions)].map(([name, artifact]) =>
         <article key={name}><strong>{name}</strong><span>{artifact.path}</span><small>{artifact.media_type}{artifact.size ? ` · ${artifact.size} bytes` : ""}</small></article>)}</div></section>}
@@ -522,6 +548,7 @@ function ColumnPicker({ label, value, sources, optional = false, onChange, inlin
 }
 function AlternativePicker({ candidates, value, onChange }: { candidates: string[]; value: string; onChange: (value: string) => void }) {
   const [search, setSearch] = useState("");
+  const [open, setOpen] = useState(false);
   const selected = value.split(",").map((item) => item.trim()).filter(Boolean);
   const filtered = candidates.filter((candidate) => candidate.toLocaleLowerCase().includes(search.toLocaleLowerCase()));
   const visible = search ? filtered : filtered.slice(0, 8);
@@ -529,10 +556,41 @@ function AlternativePicker({ candidates, value, onChange }: { candidates: string
     onChange((selected.includes(candidate) ? selected.filter((item) => item !== candidate) : [...selected, candidate]).join(", "));
   }
   return <div className="alternative-picker">
-    <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder={candidates.length ? "選択肢を検索" : "先に選択肢ID列を指定"} disabled={!candidates.length} />
-    {!!selected.length && <div className="selected-alternatives">{selected.map((item) => <button type="button" key={item} onClick={() => toggle(item)}>{item} ×</button>)}</div>}
-    {!!visible.length && <div className="alternative-menu">{visible.map((candidate) => <button type="button" className={selected.includes(candidate) ? "selected" : ""} key={candidate} onClick={() => toggle(candidate)}>{candidate}</button>)}</div>}
+    <div className="alternative-control">
+      {selected.map((item) => <button type="button" className="selected-tag" key={item} onMouseDown={(event) => event.preventDefault()} onClick={() => toggle(item)}>{item} ×</button>)}
+      <input value={search} onFocus={() => setOpen(true)} onBlur={() => setOpen(false)} onChange={(event) => setSearch(event.target.value)}
+        placeholder={selected.length ? "検索…" : candidates.length ? "選択肢を検索" : "選択肢ID列を指定"} disabled={!candidates.length} />
+    </div>
+    {open && !!visible.length && <div className="alternative-menu">{visible.map((candidate) => <button type="button" className={selected.includes(candidate) ? "selected" : ""} key={candidate}
+      onMouseDown={(event) => event.preventDefault()} onClick={() => toggle(candidate)}>{candidate}</button>)}</div>}
   </div>;
+}
+function ResultPreview({ definition, preview }: {
+  definition: { artifact: string; title: string; widget: "key-value" | "table" };
+  preview: ArtifactPreview;
+}) {
+  return <article className="result-view"><div className="result-view-title"><h3>{definition.title}</h3><span>{definition.artifact}</span></div>
+    {definition.widget === "table" && isTablePreview(preview.content)
+      ? <div className="result-table"><table><thead><tr>{preview.content.columns.map((column) => <th key={column}>{column}</th>)}</tr></thead>
+        <tbody>{preview.content.rows.map((row, index) => <tr key={index}>{row.map((cell, cellIndex) => <td key={cellIndex}>{cell}</td>)}</tr>)}</tbody></table>
+        {preview.content.truncated && <p className="hint">先頭200行を表示しています．</p>}</div>
+      : <KeyValuePreview content={preview.content} />}
+  </article>;
+}
+function KeyValuePreview({ content }: { content: unknown }) {
+  if (!content || typeof content !== "object" || Array.isArray(content)) return <pre>{formatResultValue(content)}</pre>;
+  return <dl className="metric-grid">{Object.entries(content).map(([key, value]) => <div key={key}><dt>{key}</dt><dd>{formatResultValue(value)}</dd></div>)}</dl>;
+}
+function isTablePreview(content: unknown): content is { columns: string[]; rows: string[][]; truncated: boolean } {
+  if (!content || typeof content !== "object") return false;
+  const candidate = content as { columns?: unknown; rows?: unknown };
+  return Array.isArray(candidate.columns) && Array.isArray(candidate.rows);
+}
+function formatResultValue(value: unknown) {
+  if (typeof value === "number") return Number.isInteger(value) ? String(value) : value.toPrecision(6);
+  if (typeof value === "string" || typeof value === "boolean") return String(value);
+  if (value === null || value === undefined) return "—";
+  return JSON.stringify(value);
 }
 function ProfileTable({ profile, compact = false }: { profile: CsvProfile; compact?: boolean }) {
   return <div className={compact ? "profile embedded-profile" : "profile"}>{!compact && <div className="profile-summary"><span>{profile.encoding}</span><span>{JSON.stringify(profile.delimiter)}区切り</span><span>{profile.rows_sampled}行確認</span></div>}
