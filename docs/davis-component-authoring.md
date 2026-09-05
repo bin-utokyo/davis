@@ -323,6 +323,30 @@ cargo run -p davis-cli -- \
 
 `examples/mnl-chain`には，CSV変換Runの`transformed_table`をMNLへ渡す2段階exampleがあります．
 
+## 参考Nested Logit component
+
+[`components/davis-nl`](../components/davis-nl/)は，選択肢をnestへ分ける2段階Nested Logitの読みやすい参考実装です．MNLと共通の`roles`と`terms`に加えて，`nests`で各選択肢が所属するnestを1つずつ指定します．各nestの`dissimilarity`は`fixed`で固定するか，`initial`を初期値として推定できます．singleton nestは省略時に1へ固定します．
+
+```yaml
+nests:
+  - name: motorized
+    alternatives: [train, car]
+    dissimilarity:
+      initial: 0.8
+  - name: active
+    alternatives: [walk]
+    dissimilarity:
+      fixed: 1.0
+```
+
+全選択肢が重複なくいずれか1つのnestへ入る必要があります．推定する非類似度parameterは`0.05`から`1.0`へ制約されます．これはcross-nested logitではなく，2段階の非重複NLです．最小例は次で実行できます．
+
+```console
+cargo run -p davis-cli -- \
+  --repository . \
+  model run components/davis-nl/examples/minimal/model.yaml
+```
+
 ### 複数CSVのjoin
 
 `davis/csv-transform`は，`table`を基準表として任意名の追加CSV inputを受け取れます．join keyは単一列または複数列で指定します．次の例では，tripの`origin_zone`とzone表の`zone_code`が同じ行を結合します．
