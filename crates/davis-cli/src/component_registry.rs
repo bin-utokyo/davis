@@ -61,7 +61,7 @@ pub enum RegistryError {
     #[error("expanded component exceeds the {MAX_EXPANDED_BYTES} byte limit")]
     ExpandedTooLarge,
     #[error(
-        "component bundle must contain component-manifest.yaml (or legacy model-manifest.yaml) at its root"
+        "component bundle must contain component.yaml (or a supported legacy manifest) at its root"
     )]
     MissingManifest,
     #[error(
@@ -171,12 +171,13 @@ pub async fn download(
         source,
     })?;
     extract_bundle(&archive_path, &directory)?;
-    let has_manifest = directory
-        .join(davis_model_api::COMPONENT_MANIFEST_FILENAME)
-        .is_file()
-        || directory
-            .join(davis_model_api::LEGACY_MODEL_MANIFEST_FILENAME)
-            .is_file();
+    let has_manifest = [
+        davis_model_api::COMPONENT_MANIFEST_FILENAME,
+        davis_model_api::LEGACY_COMPONENT_MANIFEST_FILENAME,
+        davis_model_api::LEGACY_MODEL_MANIFEST_FILENAME,
+    ]
+    .iter()
+    .any(|name| directory.join(name).is_file());
     if !has_manifest {
         return Err(RegistryError::MissingManifest);
     }

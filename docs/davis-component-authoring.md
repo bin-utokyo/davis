@@ -8,27 +8,21 @@
 
 ```text
 component/
-├── component-manifest.yaml
-├── pyproject.toml
-├── uv.lock
-├── schemas/
-│   ├── config.schema.json
-│   └── ui.schema.json
-├── src/
-└── tests/
+├── component.yaml
+└── model.py
 ```
 
-新規componentの正規形式は`component-manifest.yaml`と`davis.component/v1alpha1`です．旧形式の`model-manifest.yaml`と`davis.model/v1alpha1`も後方互換のため読み込めますが，1つのpackageへ新旧両方のManifestを置くことはできません．`kind`で役割を区別します．
+新規componentの正規形式は`component.yaml`と`davis.component/v1`です．設定検証用JSON SchemaとGUI表示hintを同じYAMLへ記述できるため，小さなcomponentはManifestと実programの2ファイルだけで成立します．旧形式の`component-manifest.yaml`，`model-manifest.yaml`，`davis.component/v1alpha1`，`davis.model/v1alpha1`も後方互換のため読み込めますが，1つのpackageへ複数のManifest候補を置くことはできません．`kind`で役割を区別します．
 
 ## Manifest
 
 ```yaml
-api_version: davis.component/v1alpha1
+api_version: davis.component/v1
 id: example/accessibility
 name: Accessibility calculator
 version: 0.1.0
 kind: transform
-requires_davis: ">=0.3.5"
+requires_davis: ">=0.5.0"
 
 runtime:
   kind: python
@@ -42,8 +36,21 @@ inputs:
     media_types: [text/csv]
     required: true
 
-config_schema: schemas/config.schema.json
-ui_schema: schemas/ui.schema.json
+configuration:
+  schema:
+    type: object
+    required: [person_id]
+    properties:
+      person_id:
+        type: string
+
+presentation:
+  ui:
+    ui:editor: generic
+    ui:results:
+      - artifact: explanatory_variables
+        title: Explanatory variables
+        widget: table
 
 outputs:
   artifacts:
@@ -54,7 +61,18 @@ outputs:
 
 `kind`は`model`，`transform`，`visualize`のいずれかです．省略時は既存Manifestとの互換性のため`model`です．`operations`の名前はcomponentが定義します．`requires_davis`はDavis本体のrelease versionから自動生成せず，利用するcontractの互換範囲をcomponent作者が宣言します．
 
-desktop Form editorを提供するcomponentは，`ui_schema`で`ui:editor`を宣言します．標準MNLの`linear-utility` editorは，roleの表示名を`roles.ui:labels`，選択肢候補を得るroleを`terms.ui:alternativesFromRole`，table bindingに使うtransformを`ui:inputPreparation`から読みます．設定項目と必須性の正本は引き続き`config_schema`です．UI schemaは契約の妥当性を緩めず，表示方法だけを補います．
+desktop Form editorを提供するcomponentは，`presentation.ui`で`ui:editor`を宣言します．標準MNLの`linear-utility` editorは，roleの表示名を`roles.ui:labels`，選択肢候補を得るroleを`terms.ui:alternativesFromRole`，table bindingに使うtransformを`ui:inputPreparation`から読みます．設定項目と必須性の正本は引き続き`configuration.schema`です．presentationは契約の妥当性を緩めず，表示方法だけを補います．
+
+大きなschemaを分割したい場合は，inline値の代わりに安全なpackage相対pathを指定できます．JSONとYAMLの両方を利用できます．inlineと参照を同時に指定することはできません．
+
+```yaml
+configuration:
+  schema_ref: schemas/config.schema.json
+presentation:
+  ui_ref: schemas/ui.schema.json
+```
+
+旧Manifestのtop-level `config_schema`と`ui_schema`も同じ外部参照として解決されます．新規componentでは，Web上のLLM，人間，GUIのいずれからも1ファイルを扱いやすいinline形式を標準とします．
 
 結果をdesktop内に表示する場合は，`ui:results`へartifact名，title，widgetを列挙します．`key-value`はJSON object，`table`はCSVを表示します．これは成果物の中央契約を増やすものではなく，Manifestで宣言済みのartifactをどう提示するかというcomponent固有のhintです．未対応widgetや大きすぎるartifactは無理に表示せず，artifact一覧へ残します．
 

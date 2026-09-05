@@ -162,28 +162,22 @@ fn editor_response(
     manifest_path: &Path,
     manifest: ComponentManifest,
 ) -> Result<ComponentEditorResponse, String> {
-    let directory = manifest_path
-        .parent()
-        .ok_or_else(|| "component manifest has no package directory".to_owned())?;
-    let config_schema = read_json(&directory.join(&manifest.config_schema))?;
+    let config_schema = manifest
+        .resolve_configuration(manifest_path)
+        .map_err(|error| error.to_string())?
+        .value;
     let ui_schema = manifest
-        .ui_schema
-        .as_ref()
-        .map(|path| read_json(&directory.join(path)))
-        .transpose()?
-        .unwrap_or_else(|| Value::Object(serde_json::Map::new()));
+        .resolve_presentation(manifest_path)
+        .map_err(|error| error.to_string())?
+        .map_or_else(
+            || Value::Object(serde_json::Map::new()),
+            |document| document.value,
+        );
     Ok(ComponentEditorResponse {
         manifest,
         config_schema,
         ui_schema,
     })
-}
-
-fn read_json(path: &Path) -> Result<Value, String> {
-    let bytes =
-        fs::read(path).map_err(|error| format!("failed to read {}: {error}", path.display()))?;
-    serde_json::from_slice(&bytes)
-        .map_err(|error| format!("invalid JSON in {}: {error}", path.display()))
 }
 
 #[tauri::command]
@@ -446,8 +440,8 @@ mod tests {
     use serde_json::json;
 
     use super::{
-        component_editor_definitions, editor_definition, load_analysis_plan_for_editing,
-        preview_csv, render_plan, save_analysis_plan_yaml,
+        component_editor_definitions, editor_definition, editor_response,
+        load_analysis_plan_for_editing, preview_csv, render_plan, save_analysis_plan_yaml,
     };
 
     fn repository() -> PathBuf {
@@ -515,6 +509,44 @@ mod tests {
         assert!(editor.config_schema["properties"]["roles"]["required"].is_array());
         let editors = component_editor_definitions(repository()).unwrap();
         assert!(editors.iter().any(|item| item.manifest.id == "davis/mnl"));
+    }
+
+    #[test]
+    fn loads_inline_editor_metadata_from_one_manifest_file() {
+        let temporary = tempfile::tempdir().unwrap();
+        let manifest_path = temporary.path().join("component.yaml");
+        std::fs::write(
+            &manifest_path,
+            r"api_version: davis.component/v1
+id: example/inline-editor
+name: Inline editor
+version: 1.0.0
+runtime:
+  kind: native
+  command: [example]
+operations: [estimate]
+inputs: []
+configuration:
+  schema:
+    type: object
+    properties:
+      scale: {type: number}
+presentation:
+  ui:
+    ui:editor: generic
+outputs: {}
+",
+        )
+        .unwrap();
+        let manifest = davis_model_api::ComponentManifest::read(&manifest_path).unwrap();
+
+        let editor = editor_response(&manifest_path, manifest).unwrap();
+
+        assert_eq!(
+            editor.config_schema["properties"]["scale"]["type"],
+            "number"
+        );
+        assert_eq!(editor.ui_schema["ui:editor"], "generic");
     }
 
     #[test]

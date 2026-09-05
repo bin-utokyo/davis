@@ -125,8 +125,8 @@ impl ComponentStore {
         if !source.is_dir() {
             return Err(ComponentStoreError::InvalidSource(source));
         }
-        let (_, manifest) = ComponentManifest::read_from_directory(&source)?;
-        validate_package(&source, &manifest)?;
+        let (manifest_path, manifest) = ComponentManifest::read_from_directory(&source)?;
+        validate_package(&source, &manifest_path, &manifest)?;
         let destination = self.destination(&manifest.id, &manifest.version)?;
         if destination.exists() {
             return Err(ComponentStoreError::AlreadyInstalled {
@@ -329,16 +329,18 @@ pub fn user_data_directory() -> Result<PathBuf, ComponentStoreError> {
         .ok_or(ComponentStoreError::DirectoryUnavailable)
 }
 
-fn validate_package(root: &Path, manifest: &ComponentManifest) -> Result<(), ComponentStoreError> {
+fn validate_package(
+    root: &Path,
+    manifest_path: &Path,
+    manifest: &ComponentManifest,
+) -> Result<(), ComponentStoreError> {
     if manifest.runtime.command.is_empty() {
         return Err(ComponentStoreError::InvalidPackage(
             "runtime.command must not be empty".to_owned(),
         ));
     }
-    require_package_file(root, &manifest.config_schema, "config_schema")?;
-    if let Some(path) = &manifest.ui_schema {
-        require_package_file(root, path, "ui_schema")?;
-    }
+    manifest.resolve_configuration(manifest_path)?;
+    manifest.resolve_presentation(manifest_path)?;
     if let Some(path) = &manifest.runtime.lockfile {
         require_package_file(root, path, "runtime.lockfile")?;
     }
@@ -504,5 +506,39 @@ outputs: {}
             Err(ComponentStoreError::InvalidIdentity(_))
         ));
         assert!(!temporary.path().join("escape").exists());
+    }
+
+    #[test]
+    fn installs_a_self_contained_component_yaml() {
+        let temporary = tempfile::tempdir().unwrap();
+        let source = temporary.path().join("source");
+        fs::create_dir(&source).unwrap();
+        fs::write(
+            source.join("component.yaml"),
+            r"api_version: davis.component/v1
+id: example/inline
+name: Inline component
+version: 1.0.0
+runtime:
+  kind: native
+  command: [example]
+operations: [estimate]
+inputs: []
+configuration:
+  schema:
+    type: object
+presentation:
+  ui:
+    ui:editor: generic
+outputs: {}
+",
+        )
+        .unwrap();
+        let store = ComponentStore::new(temporary.path().join("store"));
+
+        let installed = store.install(&source).unwrap();
+
+        assert!(installed.path.join("component.yaml").is_file());
+        assert_eq!(store.inspect("example/inline", None).unwrap(), installed);
     }
 }

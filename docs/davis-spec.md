@@ -1938,12 +1938,12 @@ model／transform／visualize component
 ## 55.2 ComponentManifest
 
 ```yaml
-api_version: davis.component/v1alpha1
+api_version: davis.component/v1
 id: example-lab/scale-mnl
 name: Scale-adjusted MNL
 version: 0.1.0
 kind: model
-requires_davis: ">=0.3.5"
+requires_davis: ">=0.5.0"
 
 runtime:
   kind: python
@@ -1956,8 +1956,21 @@ inputs:
   - name: choice_data
     media_types: [text/csv, application/vnd.apache.parquet]
     required: true
-config_schema: schemas/config.schema.json
-ui_schema: schemas/ui.schema.json
+configuration:
+  schema:
+    type: object
+    properties:
+      roles:
+        type: object
+      terms:
+        type: array
+presentation:
+  ui:
+    ui:editor: linear-utility
+    ui:results:
+      - artifact: parameters
+        title: 推定パラメータ
+        widget: table
 outputs:
   artifacts:
     parameters:
@@ -1971,7 +1984,7 @@ outputs:
 
 `requires_davis`はcomponentが依存するDavis contract・Runtime APIのSemVer条件です．Davis本体やpack toolのversionから自動導出せず，component作者が互換性に基づいて宣言します．本体のminor versionを上げても既存contractとの互換性が維持される場合，最低要求versionを同時に上げる必要はありません．local componentでは省略できますが，公式registry向けbundleではManifestまたはpack commandでの明示を必須とします．
 
-`kind`は`model`，`transform`，`visualize`を取り，省略時は既存Manifestとの互換性のため`model`です．正規のfilenameとAPI versionは`component-manifest.yaml`と`davis.component/v1alpha1`です．旧packageの`model-manifest.yaml`と`davis.model/v1alpha1`も読み込めますが，新旧両方のManifestが同居する曖昧なpackageは拒否します．Runtimeのprocess・file境界は推定器に限定せず，入力データ作成，推定，可視化を同じRunRequest，RunResult，artifact検証，component配布機構へ接続します．
+`kind`は`model`，`transform`，`visualize`を取り，省略時は既存Manifestとの互換性のため`model`です．正規のfilenameとAPI versionは`component.yaml`と`davis.component/v1`です．`configuration.schema`と`presentation.ui`は同じYAMLへinlineに記述できます．大きな定義では`configuration.schema_ref`と`presentation.ui_ref`でpackage内のJSONまたはYAMLを参照できます．旧packageの`component-manifest.yaml`，`model-manifest.yaml`，top-level `config_schema`／`ui_schema`，`davis.component/v1alpha1`，`davis.model/v1alpha1`も読み込めますが，複数のManifest候補またはinline・参照が同居する曖昧なpackageは拒否します．Runtimeのprocess・file境界は推定器に限定せず，入力データ作成，推定，可視化を同じRunRequest，RunResult，artifact検証，component配布機構へ接続します．
 
 入力slotは原則として`inputs`で固定します．join等で任意名の補助入力を扱うcomponentは`additional_inputs.media_types`を宣言できます．Runtimeは固定・追加のどちらでも同じFile解決，media type検査，digest記録を適用します．
 
@@ -1979,7 +1992,7 @@ MVPは`python`と`native`から始め，`wasm`と`container`を後から追加�
 
 ## 55.3 AnalysisPlan
 
-`AnalysisPlan`は利用者の意図を保存します．入力pathはplan YAMLからの相対pathを許可し，Runtimeが実行前に絶対path，digest，media typeへ解決します．`config`以下は選択したcomponentの`config_schema`で検証し，共通contractへMNLの効用関数等を固定しません．正規表記は`component.id`で，既存の`model.component`表記も同じ意味のaliasとして読み込めます．
+`AnalysisPlan`は利用者の意図を保存します．入力pathはplan YAMLからの相対pathを許可し，Runtimeが実行前に絶対path，digest，media typeへ解決します．`config`以下は選択したcomponentの`configuration.schema`で検証し，共通contractへMNLの効用関数等を固定しません．正規表記は`component.id`で，既存の`model.component`表記も同じ意味のaliasとして読み込めます．
 
 ```yaml
 api_version: davis.analysis/v1alpha1
@@ -2090,7 +2103,7 @@ GUI固有の未保存状態を正本にせず，GUI編集は常に同じ`Analysi
 
 標準MNLはlong形式のCSVとParquetを正式入力とし，`case_id`，`alternative_id`，`chosen`，`available`に相当する列を設定で対応付けます．CSV利用者へ事前変換を要求せず，Parquetは大規模データと反復実行時の推奨内部形式とします．encoding，delimiter，欠損表現，型推論結果を実行前に確認し，確定した読込条件を`run.json`へ記録します．ただし，現行の`los.csv`と`trip.csv`を初期互換入力として維持するかは要確認です．他モデルにはlong形式を強制せず，複数表，network，GeoJSON，行列等を追加できます．
 
-入力contractは，共通部分とmodel固有部分を分けます．Runtimeが共通に扱うのは，入力slot名，media type，File参照，digest等です．標準MNLは`case_id`，`alternative_id`，`chosen`，`available`という意味上のroleを要求しますが，実データの列名そのものは固定せず設定から対応付けます．説明変数，weight，panel ID，network等の追加要件は各ComponentManifestと`config_schema`が宣言します．これにより，標準MNLは共通の入力検証を利用しながら，他modelへlong形式や同一列構成を強制しません．
+入力contractは，共通部分とmodel固有部分を分けます．Runtimeが共通に扱うのは，入力slot名，media type，File参照，digest等です．標準MNLは`case_id`，`alternative_id`，`chosen`，`available`という意味上のroleを要求しますが，実データの列名そのものは固定せず設定から対応付けます．説明変数，weight，panel ID，network等の追加要件は各ComponentManifestの`configuration.schema`が宣言します．これにより，標準MNLは共通の入力検証を利用しながら，他modelへlong形式や同一列構成を強制しません．
 
 モデル内部の効用関数，確率，尤度，gradient，optimizer，parameter共有方法は共通classへ固定しません．標準MNLを少し変更したモデルも，独立したComponentManifestとprocessとして登録し，同じRunRequestから実行・比較できるようにします．
 
@@ -2172,7 +2185,7 @@ local model GUIはTauri desktop applicationとして実装し，RustのRun use c
 V_ni = ASC_i + Σ beta_k x_nik
 ```
 
-Formの構造化設定は標準MNL component固有の`config_schema`に従い，Davis全体の中央contractには加えません．Formと生成codeを同時に別々の正本として管理せず，Form互換modeでは構造化設定を正本としてcodeを生成します．
+Formの構造化設定は標準MNL component固有の`configuration.schema`に従い，Davis全体の中央contractには加えません．Formと生成codeを同時に別々の正本として管理せず，Form互換modeでは構造化設定を正本としてcodeを生成します．
 
 利用者は画面切替から生成codeを確認・編集できます．codeが線形和，parameter，列参照等の明示した対応構文だけで表現されている間は，構文検査を通してFormへ戻せます．数学的な同値性は推測しません．非線形効用，独自関数，独自尤度，独自class等の非対応構文を使う場合は確認後に，そのmodel revisionを高度な`code` modeへ一方向に切り替えます．`code` modeではFormを編集不可にし，移行直前の構造化設定を参照用に保持します．Formへ戻したい場合は，元revisionから新しいForm互換modelを作成します．
 
@@ -2271,7 +2284,7 @@ confidenceは表示とreview順序の補助にだけ利用し，一定値を超�
 
 ### 58.5.4 MNL設定へのcompile
 
-初版はcode生成ではなく，`davis-mnl`の`config_schema`に従う設定生成を採用します．設定では，少なくとも次を表現します．
+初版はcode生成ではなく，`davis-mnl`の`configuration.schema`に従う設定生成を採用します．設定では，少なくとも次を表現します．
 
 1. case ID，alternative ID，chosen，availableに相当する列role
 2. 選択肢と基準選択肢

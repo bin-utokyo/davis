@@ -9,11 +9,13 @@ use serde_json::Value;
 use thiserror::Error;
 
 pub const ANALYSIS_API_VERSION: &str = "davis.analysis/v1alpha1";
-pub const COMPONENT_API_VERSION: &str = "davis.component/v1alpha1";
+pub const COMPONENT_API_VERSION: &str = "davis.component/v1";
+pub const LEGACY_COMPONENT_API_VERSION: &str = "davis.component/v1alpha1";
 pub const MODEL_API_VERSION: &str = "davis.model/v1alpha1";
 pub const RUN_API_VERSION: &str = "davis.run/v1alpha1";
 pub const RESULT_API_VERSION: &str = "davis.result/v1alpha1";
-pub const COMPONENT_MANIFEST_FILENAME: &str = "component-manifest.yaml";
+pub const COMPONENT_MANIFEST_FILENAME: &str = "component.yaml";
+pub const LEGACY_COMPONENT_MANIFEST_FILENAME: &str = "component-manifest.yaml";
 pub const LEGACY_MODEL_MANIFEST_FILENAME: &str = "model-manifest.yaml";
 
 #[derive(Debug, Error)]
@@ -48,8 +50,19 @@ pub enum ContractError {
     InvalidArtifactDeclaration(String),
     #[error("additional input declaration must contain at least one valid media type")]
     InvalidAdditionalInputDeclaration,
-    #[error("component package contains both component-manifest.yaml and model-manifest.yaml")]
+    #[error("component package contains multiple manifest files; keep only one of component.yaml, component-manifest.yaml, or model-manifest.yaml")]
     AmbiguousComponentManifest,
+    #[error("component manifest must declare exactly one configuration schema source")]
+    InvalidConfigurationDeclaration,
+    #[error("component manifest may declare at most one presentation source")]
+    InvalidPresentationDeclaration,
+    #[error("component manifest document reference must be a safe relative path: {0}")]
+    UnsafeDocumentReference(PathBuf),
+    #[error("invalid JSON in {path}: {source}")]
+    Json {
+        path: PathBuf,
+        source: serde_json::Error,
+    },
     #[error("invalid table binding: {0}")]
     InvalidTableBinding(String),
 }
@@ -338,11 +351,38 @@ pub struct ComponentManifest {
     pub inputs: Vec<ComponentInput>,
     #[serde(default)]
     pub additional_inputs: Option<AdditionalInputDeclaration>,
-    pub config_schema: PathBuf,
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub configuration: Option<ConfigurationDeclaration>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub presentation: Option<PresentationDeclaration>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub config_schema: Option<PathBuf>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub ui_schema: Option<PathBuf>,
     #[serde(default)]
     pub outputs: OutputDeclaration,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ConfigurationDeclaration {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub schema: Option<Value>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub schema_ref: Option<PathBuf>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct PresentationDeclaration {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub ui: Option<Value>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub ui_ref: Option<PathBuf>,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct ResolvedManifestDocument {
+    pub value: Value,
+    pub source_path: PathBuf,
 }
 
 /// Backward-compatible Rust name for [`ComponentManifest`].
@@ -384,13 +424,76 @@ impl ComponentManifest {
     /// Returns an error when both manifest filenames are present, neither file
     /// can be read, or the selected manifest is invalid.
     pub fn read_from_directory(directory: &Path) -> Result<(PathBuf, Self), ContractError> {
-        let canonical = directory.join(COMPONENT_MANIFEST_FILENAME);
-        let legacy = directory.join(LEGACY_MODEL_MANIFEST_FILENAME);
-        match (canonical.is_file(), legacy.is_file()) {
-            (true, true) => Err(ContractError::AmbiguousComponentManifest),
-            (_, false) => Ok((canonical.clone(), Self::read(&canonical)?)),
-            (false, true) => Ok((legacy.clone(), Self::read(&legacy)?)),
+        let candidates = [
+            directory.join(COMPONENT_MANIFEST_FILENAME),
+            directory.join(LEGACY_COMPONENT_MANIFEST_FILENAME),
+            directory.join(LEGACY_MODEL_MANIFEST_FILENAME),
+        ];
+        let existing: Vec<_> = candidates
+            .into_iter()
+            .filter(|path| path.is_file())
+            .collect();
+        match existing.as_slice() {
+            [] => {
+                let canonical = directory.join(COMPONENT_MANIFEST_FILENAME);
+                Ok((canonical.clone(), Self::read(&canonical)?))
+            }
+            [path] => Ok((path.clone(), Self::read(path)?)),
+            _ => Err(ContractError::AmbiguousComponentManifest),
         }
+    }
+
+    /// Resolves the inline or referenced JSON Schema for component configuration.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error for an invalid source declaration, unsafe reference,
+    /// unreadable document, or invalid JSON/YAML document.
+    pub fn resolve_configuration(
+        &self,
+        manifest_path: &Path,
+    ) -> Result<ResolvedManifestDocument, ContractError> {
+        let inline = self
+            .configuration
+            .as_ref()
+            .and_then(|declaration| declaration.schema.as_ref());
+        let reference = self
+            .configuration
+            .as_ref()
+            .and_then(|declaration| declaration.schema_ref.as_ref())
+            .or(self.config_schema.as_ref());
+        if usize::from(inline.is_some()) + usize::from(reference.is_some()) != 1 {
+            return Err(ContractError::InvalidConfigurationDeclaration);
+        }
+        resolve_document(manifest_path, inline, reference)
+    }
+
+    /// Resolves optional GUI presentation hints from the manifest or a referenced file.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when multiple sources are declared or a referenced
+    /// document is unsafe, unreadable, or invalid.
+    pub fn resolve_presentation(
+        &self,
+        manifest_path: &Path,
+    ) -> Result<Option<ResolvedManifestDocument>, ContractError> {
+        let inline = self
+            .presentation
+            .as_ref()
+            .and_then(|declaration| declaration.ui.as_ref());
+        let reference = self
+            .presentation
+            .as_ref()
+            .and_then(|declaration| declaration.ui_ref.as_ref())
+            .or(self.ui_schema.as_ref());
+        if inline.is_some() && reference.is_some() {
+            return Err(ContractError::InvalidPresentationDeclaration);
+        }
+        if inline.is_none() && reference.is_none() {
+            return Ok(None);
+        }
+        resolve_document(manifest_path, inline, reference).map(Some)
     }
 
     /// Validates the common, runtime-independent manifest fields.
@@ -400,7 +503,10 @@ impl ComponentManifest {
     /// Returns an error for an unsupported API version, an empty identity, or
     /// a manifest without operations.
     pub fn validate(&self) -> Result<(), ContractError> {
-        if self.api_version != COMPONENT_API_VERSION && self.api_version != MODEL_API_VERSION {
+        if self.api_version != COMPONENT_API_VERSION
+            && self.api_version != LEGACY_COMPONENT_API_VERSION
+            && self.api_version != MODEL_API_VERSION
+        {
             return Err(ContractError::ApiVersion {
                 actual: self.api_version.clone(),
                 expected: COMPONENT_API_VERSION,
@@ -411,6 +517,54 @@ impl ComponentManifest {
         }
         if self.operations.is_empty() {
             return Err(ContractError::MissingOperations);
+        }
+        let inline_configuration = self
+            .configuration
+            .as_ref()
+            .is_some_and(|declaration| declaration.schema.is_some());
+        let referenced_configuration = self
+            .configuration
+            .as_ref()
+            .is_some_and(|declaration| declaration.schema_ref.is_some());
+        if usize::from(inline_configuration)
+            + usize::from(referenced_configuration)
+            + usize::from(self.config_schema.is_some())
+            != 1
+        {
+            return Err(ContractError::InvalidConfigurationDeclaration);
+        }
+        for reference in self
+            .configuration
+            .as_ref()
+            .and_then(|declaration| declaration.schema_ref.as_ref())
+            .into_iter()
+            .chain(self.config_schema.iter())
+        {
+            validate_document_reference(reference)?;
+        }
+        let inline_presentation = self
+            .presentation
+            .as_ref()
+            .is_some_and(|declaration| declaration.ui.is_some());
+        let referenced_presentation = self
+            .presentation
+            .as_ref()
+            .is_some_and(|declaration| declaration.ui_ref.is_some());
+        if usize::from(inline_presentation)
+            + usize::from(referenced_presentation)
+            + usize::from(self.ui_schema.is_some())
+            > 1
+        {
+            return Err(ContractError::InvalidPresentationDeclaration);
+        }
+        for reference in self
+            .presentation
+            .as_ref()
+            .and_then(|declaration| declaration.ui_ref.as_ref())
+            .into_iter()
+            .chain(self.ui_schema.iter())
+        {
+            validate_document_reference(reference)?;
         }
         if let Some(requirement) = &self.requires_davis {
             semver::VersionReq::parse(requirement).map_err(|source| {
@@ -442,6 +596,66 @@ impl ComponentManifest {
         }
         Ok(())
     }
+}
+
+#[must_use]
+pub fn is_component_manifest_filename(name: &std::ffi::OsStr) -> bool {
+    name == COMPONENT_MANIFEST_FILENAME
+        || name == LEGACY_COMPONENT_MANIFEST_FILENAME
+        || name == LEGACY_MODEL_MANIFEST_FILENAME
+}
+
+fn resolve_document(
+    manifest_path: &Path,
+    inline: Option<&Value>,
+    reference: Option<&PathBuf>,
+) -> Result<ResolvedManifestDocument, ContractError> {
+    if let Some(value) = inline {
+        return Ok(ResolvedManifestDocument {
+            value: value.clone(),
+            source_path: manifest_path.to_owned(),
+        });
+    }
+    let reference = reference.ok_or(ContractError::InvalidConfigurationDeclaration)?;
+    validate_document_reference(reference)?;
+    let path = manifest_path
+        .parent()
+        .unwrap_or_else(|| Path::new("."))
+        .join(reference);
+    let text = fs::read_to_string(&path).map_err(|source| ContractError::Read {
+        path: path.clone(),
+        source,
+    })?;
+    let value = if matches!(
+        path.extension().and_then(|extension| extension.to_str()),
+        Some("yaml" | "yml")
+    ) {
+        serde_yaml::from_str(&text).map_err(|source| ContractError::Yaml {
+            path: path.clone(),
+            source,
+        })?
+    } else {
+        serde_json::from_str(&text).map_err(|source| ContractError::Json {
+            path: path.clone(),
+            source,
+        })?
+    };
+    Ok(ResolvedManifestDocument {
+        value,
+        source_path: path,
+    })
+}
+
+fn validate_document_reference(reference: &Path) -> Result<(), ContractError> {
+    if reference.as_os_str().is_empty()
+        || reference.is_absolute()
+        || reference
+            .components()
+            .any(|component| !matches!(component, std::path::Component::Normal(_)))
+    {
+        return Err(ContractError::UnsafeDocumentReference(reference.to_owned()));
+    }
+    Ok(())
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -651,6 +865,93 @@ config_schema: schemas/config.json
         assert!(matches!(
             invalid_additional_inputs.validate(),
             Err(ContractError::InvalidAdditionalInputDeclaration)
+        ));
+    }
+
+    #[test]
+    fn resolves_inline_configuration_and_presentation_from_component_yaml() {
+        let temporary = tempfile::tempdir().unwrap();
+        let manifest_path = temporary.path().join("component.yaml");
+        std::fs::write(
+            &manifest_path,
+            r"api_version: davis.component/v1
+id: example/inline
+name: Inline component
+version: 1.0.0
+runtime:
+  kind: native
+  command: [example]
+operations: [estimate]
+inputs: []
+configuration:
+  schema:
+    type: object
+    required: [scale]
+    properties:
+      scale:
+        type: number
+presentation:
+  ui:
+    ui:editor: generic
+outputs: {}
+",
+        )
+        .unwrap();
+
+        let (selected, manifest) =
+            ComponentManifest::read_from_directory(temporary.path()).unwrap();
+        assert_eq!(selected, manifest_path);
+        let configuration = manifest.resolve_configuration(&selected).unwrap();
+        assert_eq!(configuration.source_path, selected);
+        assert_eq!(configuration.value["properties"]["scale"]["type"], "number");
+        let presentation = manifest.resolve_presentation(&selected).unwrap().unwrap();
+        assert_eq!(presentation.value["ui:editor"], "generic");
+    }
+
+    #[test]
+    fn rejects_multiple_inline_and_referenced_document_sources() {
+        let manifest: ComponentManifest = serde_yaml::from_str(
+            r"api_version: davis.component/v1
+id: example/ambiguous
+name: Ambiguous component
+version: 1.0.0
+runtime:
+  kind: native
+  command: [example]
+operations: [estimate]
+inputs: []
+configuration:
+  schema: {type: object}
+config_schema: schemas/config.json
+outputs: {}
+",
+        )
+        .unwrap();
+
+        assert!(matches!(
+            manifest.validate(),
+            Err(ContractError::InvalidConfigurationDeclaration)
+        ));
+
+        let unsafe_reference: ComponentManifest = serde_yaml::from_str(
+            r"api_version: davis.component/v1
+id: example/unsafe
+name: Unsafe component
+version: 1.0.0
+runtime:
+  kind: native
+  command: [example]
+operations: [estimate]
+inputs: []
+configuration:
+  schema_ref: ../outside.json
+outputs: {}
+",
+        )
+        .unwrap();
+        assert!(matches!(
+            unsafe_reference.validate(),
+            Err(ContractError::UnsafeDocumentReference(_))
         ));
     }
 

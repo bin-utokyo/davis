@@ -44,13 +44,12 @@ CLIは既存directoryを指定された場合はlocal packageとしてinstallし
 
 ## Bundle contract
 
-bundleはgzip圧縮tarで，archive rootに`component-manifest.yaml`を置きます．旧bundleの`model-manifest.yaml`もinstallできますが，新しく公開するbundleでは正規名を使用します．
+bundleはgzip圧縮tarで，archive rootに`component.yaml`を置きます．旧bundleの`component-manifest.yaml`と`model-manifest.yaml`もinstallできますが，新しく公開するbundleでは正規名を使用します．
 
 ```text
-component-manifest.yaml
+component.yaml
 pyproject.toml
 uv.lock
-schemas/
 src/
 ```
 

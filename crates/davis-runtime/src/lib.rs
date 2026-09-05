@@ -145,8 +145,7 @@ pub fn list_components(repository: &Path) -> Vec<(PathBuf, ComponentManifest)> {
             .filter_entry(|entry| !is_temporary_install_entry(entry))
             .filter_map(Result::ok)
         {
-            let is_manifest = entry.file_name() == davis_model_api::COMPONENT_MANIFEST_FILENAME
-                || entry.file_name() == davis_model_api::LEGACY_MODEL_MANIFEST_FILENAME;
+            let is_manifest = davis_model_api::is_component_manifest_filename(entry.file_name());
             if !is_manifest {
                 continue;
             }
@@ -207,14 +206,12 @@ pub fn validate_plan(repository: &Path, plan_path: &Path) -> Result<ValidatedPla
             binding_processor(repository, binding)?;
         }
     }
-    let config_schema = manifest_path
-        .parent()
-        .unwrap_or_else(|| Path::new("."))
-        .join(&manifest.config_schema);
-    if !config_schema.is_file() {
-        return Err(RuntimeError::MissingLocalInput(config_schema));
-    }
-    validate_component_config(&config_schema, &plan.config)?;
+    let config_schema = manifest.resolve_configuration(&manifest_path)?;
+    validate_component_config(
+        &config_schema.source_path,
+        &config_schema.value,
+        &plan.config,
+    )?;
     Ok(ValidatedPlan {
         plan,
         plan_path,
@@ -454,8 +451,12 @@ fn resolve_table_binding(
         serde_json::json!({ "format": "parquet", "compression": "zstd" }),
     );
     let processor_config = serde_json::Value::Object(processor_config);
-    let processor_schema = processor_directory.join(&manifest.config_schema);
-    validate_component_config(&processor_schema, &processor_config)?;
+    let processor_schema = manifest.resolve_configuration(&manifest_path)?;
+    validate_component_config(
+        &processor_schema.source_path,
+        &processor_schema.value,
+        &processor_config,
+    )?;
     let request = RunRequest {
         api_version: RUN_API_VERSION.to_owned(),
         run_id: format!("{main_run_id}_prepare_{input_index}"),
@@ -766,8 +767,7 @@ fn find_manifest(
             .filter_entry(|entry| !is_temporary_install_entry(entry))
             .filter_map(Result::ok)
         {
-            let is_manifest = entry.file_name() == davis_model_api::COMPONENT_MANIFEST_FILENAME
-                || entry.file_name() == davis_model_api::LEGACY_MODEL_MANIFEST_FILENAME;
+            let is_manifest = davis_model_api::is_component_manifest_filename(entry.file_name());
             if !is_manifest {
                 continue;
             }
@@ -819,15 +819,11 @@ fn media_type(path: &Path) -> &'static str {
 
 fn validate_component_config(
     schema_path: &Path,
+    schema: &serde_json::Value,
     config: &serde_json::Value,
 ) -> Result<(), RuntimeError> {
-    let bytes = fs::read(schema_path).map_err(|source| RuntimeError::Io {
-        path: schema_path.to_owned(),
-        source,
-    })?;
-    let schema: serde_json::Value = serde_json::from_slice(&bytes)?;
     let validator =
-        jsonschema::validator_for(&schema).map_err(|error| RuntimeError::InvalidConfigSchema {
+        jsonschema::validator_for(schema).map_err(|error| RuntimeError::InvalidConfigSchema {
             path: schema_path.to_owned(),
             message: error.to_string(),
         })?;
