@@ -14,6 +14,42 @@ component/
 
 新規componentの正規形式は`component.yaml`と`davis.component/v1`です．設定検証用JSON SchemaとGUI表示hintを同じYAMLへ記述できるため，小さなcomponentはManifestと実programの2ファイルだけで成立します．旧形式の`component-manifest.yaml`，`model-manifest.yaml`，`davis.component/v1alpha1`，`davis.model/v1alpha1`も後方互換のため読み込めますが，1つのpackageへ複数のManifest候補を置くことはできません．`kind`で役割を区別します．
 
+## 最初の作成手順
+
+次のcommandは，既存directoryを上書きせず，inline schemaを含む最小`component.yaml`を1ファイル生成します．`--command`はprogram名と各引数について1回ずつ指定します．`--operation`を省略した場合，`kind`に応じて`estimate`，`transform`，`visualize`のいずれかが入ります．
+
+```console
+davis component scaffold ./my-component \
+  --id example/my-component \
+  --kind transform \
+  --command python \
+  --command -m \
+  --command my_component
+```
+
+生成後は実programを追加し，packageをinstallせずに構造だけ検証できます．この検証はManifest，ID／version，参照先，lockfile，schemaの整合性を確認します．一般言語環境やruntime commandの存在・versionは実行直前にも検査されます．
+
+```console
+davis component validate ./my-component
+davis install component ./my-component
+davis component inspect example/my-component
+davis model run ./analysis.yaml
+```
+
+機械処理では`scaffold`，`validate`ともに`--json`を指定できます．component作者は，installを検証代わりに使ったり，Davis本体のrepositoryへpackageを置いたりする必要はありません．
+
+### AIへ渡す最小依頼
+
+AIへcomponent作成を依頼する場合は，この文書を渡したうえで，少なくとも次を伝えます．
+
+1. componentの目的と`kind`
+2. 入力slotごとの名前，media type，意味
+3. 設定項目と制約
+4. 出力artifactごとの名前，media type，意味
+5. 利用可能なruntime commandと必要な外部環境
+
+AIが生成したpackageにも同じ`davis component validate`を実行します．検証成功は任意codeの安全性や統計モデルの妥当性を保証しないため，実装reviewと既知fixtureによる試験は別に行います．
+
 ## Manifest
 
 ```yaml

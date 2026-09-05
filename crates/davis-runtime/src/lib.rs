@@ -10,7 +10,8 @@ use std::path::{Component, Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 pub use components::{
-    user_data_directory, ComponentStore, ComponentStoreError, InstalledComponent,
+    user_data_directory, validate_component_package, ComponentStore, ComponentStoreError,
+    InstalledComponent, ValidatedComponentPackage,
 };
 use davis_model_api::{
     AnalysisPlan, ArtifactDescriptor, ComponentKind, ComponentManifest, InputSource,

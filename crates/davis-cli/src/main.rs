@@ -13,7 +13,7 @@ use std::io::{BufRead, IsTerminal, Read, Write};
 use std::path::PathBuf;
 use std::time::Duration;
 
-use clap::{Args, Parser, Subcommand};
+use clap::{Args, Parser, Subcommand, ValueEnum};
 use davis_catalog::{
     audit_datasets, build_catalog_index, ingest_dataset, read_file_schema, refresh_dataset,
     scan_repository, write_catalog_index, RefreshOptions,
@@ -343,6 +343,36 @@ enum InstallCommand {
 
 #[derive(Debug, Subcommand)]
 enum ComponentCommand {
+    /// Create a minimal self-contained component package.
+    Scaffold {
+        /// New component directory. It must not already exist.
+        path: PathBuf,
+        /// Stable component ID, for example `example/my-component`.
+        #[arg(long)]
+        id: String,
+        /// Human-readable name. Defaults to the final ID segment.
+        #[arg(long)]
+        name: Option<String>,
+        /// Component role.
+        #[arg(long, value_enum, default_value_t = ScaffoldKind::Model)]
+        kind: ScaffoldKind,
+        /// One runtime command argument. Repeat this option for every argument.
+        #[arg(long = "command", required = true, allow_hyphen_values = true)]
+        runtime_command: Vec<String>,
+        /// Supported operation. Repeat to declare multiple operations.
+        #[arg(long = "operation")]
+        operations: Vec<String>,
+        /// Print structured JSON.
+        #[arg(long)]
+        json: bool,
+    },
+    /// Validate a component package without installing it.
+    Validate {
+        path: PathBuf,
+        /// Print structured JSON.
+        #[arg(long)]
+        json: bool,
+    },
     /// List installed model components.
     List {
         /// Print structured JSON.
@@ -396,6 +426,13 @@ enum ComponentCommand {
         #[arg(long)]
         json: bool,
     },
+}
+
+#[derive(Debug, Clone, Copy, ValueEnum)]
+enum ScaffoldKind {
+    Model,
+    Transform,
+    Visualize,
 }
 
 #[tokio::main]
@@ -2012,6 +2049,50 @@ mod tests {
                 command: ComponentCommand::Registry { entries, out, json: false }
             } if entries == [PathBuf::from("dist/mnl.entry.json")]
                 && out == Path::new("dist/component-registry.json")
+        ));
+    }
+
+    #[test]
+    fn component_authoring_commands_parse() {
+        let scaffold = Cli::try_parse_from([
+            "davis",
+            "component",
+            "scaffold",
+            "my-component",
+            "--id",
+            "example/my-component",
+            "--kind",
+            "transform",
+            "--command",
+            "python",
+            "--command",
+            "-m",
+            "--command",
+            "my_component",
+        ])
+        .expect("component scaffold should parse");
+        assert!(matches!(
+            scaffold.command,
+            Command::Component {
+                command: ComponentCommand::Scaffold {
+                    path,
+                    id,
+                    runtime_command,
+                    ..
+                }
+            } if path == Path::new("my-component")
+                && id == "example/my-component"
+                && runtime_command == ["python", "-m", "my_component"]
+        ));
+
+        let validate =
+            Cli::try_parse_from(["davis", "component", "validate", "my-component", "--json"])
+                .expect("component validate should parse");
+        assert!(matches!(
+            validate.command,
+            Command::Component {
+                command: ComponentCommand::Validate { path, json: true }
+            } if path == Path::new("my-component")
         ));
     }
 

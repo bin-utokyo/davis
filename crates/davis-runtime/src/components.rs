@@ -67,6 +67,50 @@ pub struct InstalledComponent {
     pub installed_at_unix_seconds: u64,
 }
 
+#[derive(Debug, Clone, Serialize)]
+pub struct ValidatedComponentPackage {
+    pub source: PathBuf,
+    pub manifest_path: PathBuf,
+    pub manifest: ComponentManifest,
+    pub configuration_source: PathBuf,
+    pub presentation_source: Option<PathBuf>,
+}
+
+/// Validates a component package without installing or modifying it.
+///
+/// # Errors
+///
+/// Returns an error when the source, manifest, referenced documents, runtime
+/// lockfile, or package paths are invalid.
+pub fn validate_component_package(
+    source: &Path,
+) -> Result<ValidatedComponentPackage, ComponentStoreError> {
+    let source = fs::canonicalize(source).map_err(|error| {
+        if error.kind() == std::io::ErrorKind::NotFound {
+            ComponentStoreError::InvalidSource(source.to_owned())
+        } else {
+            ComponentStoreError::Io {
+                path: source.to_owned(),
+                source: error,
+            }
+        }
+    })?;
+    if !source.is_dir() {
+        return Err(ComponentStoreError::InvalidSource(source));
+    }
+    let (manifest_path, manifest) = ComponentManifest::read_from_directory(&source)?;
+    validate_package(&source, &manifest_path, &manifest)?;
+    let configuration = manifest.resolve_configuration(&manifest_path)?;
+    let presentation = manifest.resolve_presentation(&manifest_path)?;
+    Ok(ValidatedComponentPackage {
+        source,
+        manifest_path,
+        manifest,
+        configuration_source: configuration.source_path,
+        presentation_source: presentation.map(|document| document.source_path),
+    })
+}
+
 #[derive(Debug, Clone)]
 pub struct ComponentStore {
     root: PathBuf,
@@ -112,21 +156,9 @@ impl ComponentStore {
         source: &Path,
         origin: Option<String>,
     ) -> Result<InstalledComponent, ComponentStoreError> {
-        let source = fs::canonicalize(source).map_err(|error| {
-            if error.kind() == std::io::ErrorKind::NotFound {
-                ComponentStoreError::InvalidSource(source.to_owned())
-            } else {
-                ComponentStoreError::Io {
-                    path: source.to_owned(),
-                    source: error,
-                }
-            }
-        })?;
-        if !source.is_dir() {
-            return Err(ComponentStoreError::InvalidSource(source));
-        }
-        let (manifest_path, manifest) = ComponentManifest::read_from_directory(&source)?;
-        validate_package(&source, &manifest_path, &manifest)?;
+        let validated = validate_component_package(source)?;
+        let source = validated.source;
+        let manifest = validated.manifest;
         let destination = self.destination(&manifest.id, &manifest.version)?;
         if destination.exists() {
             return Err(ComponentStoreError::AlreadyInstalled {
@@ -334,6 +366,10 @@ fn validate_package(
     manifest_path: &Path,
     manifest: &ComponentManifest,
 ) -> Result<(), ComponentStoreError> {
+    for segment in manifest.id.split('/') {
+        validate_identity_segment(segment, &manifest.id)?;
+    }
+    validate_identity_segment(&manifest.version, &manifest.version)?;
     if manifest.runtime.command.is_empty() {
         return Err(ComponentStoreError::InvalidPackage(
             "runtime.command must not be empty".to_owned(),
@@ -453,7 +489,7 @@ fn prune_empty_parents(mut directory: Option<&Path>, root: &Path) {
 mod tests {
     use std::fs;
 
-    use super::{ComponentStore, ComponentStoreError};
+    use super::{validate_component_package, ComponentStore, ComponentStoreError};
 
     #[test]
     fn installs_lists_inspects_and_removes_a_component() {
@@ -540,5 +576,44 @@ outputs: {}
 
         assert!(installed.path.join("component.yaml").is_file());
         assert_eq!(store.inspect("example/inline", None).unwrap(), installed);
+    }
+
+    #[test]
+    fn validates_without_installing_and_rejects_unsafe_identity() {
+        let temporary = tempfile::tempdir().unwrap();
+        let source = temporary.path().join("source");
+        fs::create_dir(&source).unwrap();
+        let manifest_path = source.join("component.yaml");
+        fs::write(
+            &manifest_path,
+            r"api_version: davis.component/v1
+id: example/validation
+name: Validation example
+version: 1.0.0
+runtime:
+  executor: process
+  command: [example]
+operations: [estimate]
+inputs: []
+configuration:
+  schema:
+    type: object
+outputs: {}
+",
+        )
+        .unwrap();
+
+        let validated = validate_component_package(&source).unwrap();
+        assert_eq!(validated.manifest.id, "example/validation");
+        assert_eq!(fs::read_dir(&source).unwrap().count(), 1);
+
+        let unsafe_manifest = fs::read_to_string(&manifest_path)
+            .unwrap()
+            .replace("example/validation", "../escape");
+        fs::write(&manifest_path, unsafe_manifest).unwrap();
+        assert!(matches!(
+            validate_component_package(&source),
+            Err(ComponentStoreError::InvalidIdentity(_))
+        ));
     }
 }
