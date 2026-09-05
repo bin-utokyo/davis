@@ -91,8 +91,38 @@ configuration:
           tolerance: {type: number, exclusiveMinimum: 0}
 presentation:
   ui:
-    ui:editor: nested-utility
+    ui:editor: schema-form
     ui:description: Define linear utility terms and a partition of alternatives into nests.
+    ui:form:
+      inputs:
+        choice_data:
+          title: 選択データ
+          description: 1行が1ケース内の1選択肢を表すlong形式の表です．
+      sections:
+      - path: roles
+        widget: column-map
+        input: choice_data
+        title: 役割列
+        labels:
+          case_id: ケースID
+          alternative_id: 選択肢ID
+          chosen: 選択結果
+          available: 利用可能性 (任意)
+      - path: terms
+        widget: utility-terms
+        input: choice_data
+        title: 効用term
+        allow_constant: true
+        alternatives_from: roles.alternative_id
+      - path: nests
+        widget: nests
+        title: Nest構造
+        alternatives_from: roles.alternative_id
+      - path: estimation
+        widget: object
+        title: 推定設定
+      defaults:
+        estimation: {max_iterations: 500, tolerance: 1.0e-8}
     ui:results:
     - {artifact: metrics, title: 推定指標, widget: key-value}
     - {artifact: parameters, title: 推定係数・非類似度, widget: table}

@@ -1,6 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { open, save } from "@tauri-apps/plugin-dialog";
 import { useEffect, useRef, useState } from "react";
+import { FormDefinition, FormInput, JsonSchema, SchemaFormEditor } from "./SchemaFormEditor";
 
 type ColumnProfile = { name: string; inferred_type: string; null_count: number; unique_sample: number; warnings: string[] };
 type CsvProfile = { path: string; encoding: string; delimiter: string; rows_sampled: number; truncated: boolean; columns: ColumnProfile[] };
@@ -23,15 +24,14 @@ type TermDraft = {
   column: string; constant: string; alternatives: string;
 };
 type ComponentEditor = {
-  manifest: { id: string; name: string; version: string; kind: string; operations: string[] };
-  config_schema: {
-    properties?: { roles?: { required?: string[]; properties?: Record<string, unknown> } };
-  };
+  manifest: { id: string; name: string; version: string; kind: string; operations: string[]; inputs: Array<{ name: string; required: boolean }> };
+  config_schema: JsonSchema;
   ui_schema: {
     "ui:editor"?: string;
     "ui:inputPreparation"?: { component: string; version: string };
     roles?: { "ui:labels"?: Record<string, string> };
     terms?: { "ui:alternativesFromRole"?: string };
+    "ui:form"?: FormDefinition;
     "ui:results"?: Array<{ artifact: string; title: string; widget: "key-value" | "table" }>;
   };
 };
@@ -89,6 +89,8 @@ export default function App() {
   const [preservedRun, setPreservedRun] = useState<Record<string, unknown>>({});
   const [preparation, setPreparation] = useState<{ component: string; version: string }>();
   const [artifactPreviews, setArtifactPreviews] = useState<Record<string, ArtifactPreview>>({});
+  const [schemaInputs, setSchemaInputs] = useState<Record<string, FormInput | undefined>>({});
+  const [schemaConfig, setSchemaConfig] = useState<Record<string, unknown>>({});
   const resultRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -111,13 +113,22 @@ export default function App() {
       setEditorOptions(definitions);
       setEditor(definition);
       setPreparation(definition.ui_schema["ui:inputPreparation"]);
-      initializeRoles(definition);
+      initializeEditor(definition);
     });
   }
 
   function requireSupportedEditor(definition: ComponentEditor) {
-    if (definition.ui_schema["ui:editor"] !== "linear-utility") {
+    if (!isFormEditor(definition)) {
       throw new Error(`${definition.manifest.id}はこのGUIのForm editorに対応していません．YAML modeを利用してください．`);
+    }
+  }
+
+  function initializeEditor(definition: ComponentEditor) {
+    if (isSchemaEditor(definition)) {
+      setSchemaInputs({});
+      setSchemaConfig(structuredClone(definition.ui_schema["ui:form"]?.defaults ?? {}));
+    } else {
+      initializeRoles(definition);
     }
   }
 
@@ -215,7 +226,7 @@ export default function App() {
     });
   }
 
-  function buildPlan(outputPath?: string): Record<string, unknown> {
+  function buildLinearPlan(outputPath?: string): Record<string, unknown> {
     if (!editor) throw new Error("Workspaceを選択してComponentManifestを読み込んでください．");
     if (!sources.length) throw new Error("少なくとも1つのCSVを追加してください．");
     if (!baseSource) throw new Error("基準データを選択してください．");
@@ -279,6 +290,34 @@ export default function App() {
     };
   }
 
+  function buildPlan(outputPath?: string): Record<string, unknown> {
+    if (!editor || !isSchemaEditor(editor)) return buildLinearPlan(outputPath);
+    const required = editor.manifest.inputs.filter((input) => input.required);
+    const missing = required.find((input) => !schemaInputs[input.name]);
+    if (missing) throw new Error(`${missing.name}の入力データを選択してください．`);
+    const saveAsDifferentFile = Boolean(outputPath && planPath && outputPath !== planPath);
+    const inputs = Object.fromEntries(Object.entries(schemaInputs).filter(([, input]) => input).map(([slot, input]) => [slot, {
+      kind: "local", path: saveAsDifferentFile ? input!.path : input!.serializedPath,
+      ...(input!.read ? { read: input!.read } : {}),
+    }]));
+    const name = planName.trim() || "analysis-plan";
+    return {
+      api_version: "davis.analysis/v1alpha1", name,
+      component: { id: editor.manifest.id, version: editor.manifest.version, operation: editor.manifest.operations.includes("estimate") ? "estimate" : editor.manifest.operations[0] },
+      inputs, config: schemaConfig,
+      run: Object.keys(preservedRun).length ? preservedRun : { label: name, tags: ["gui", editor.manifest.id.replace("/", "-")] },
+    };
+  }
+
+  async function chooseSchemaInput(slot: string) {
+    const selected = await open({ multiple: false, filters: [{ name: "CSV", extensions: ["csv", "tsv"] }] });
+    if (typeof selected !== "string") return;
+    await perform(async () => {
+      const profile = await invoke<CsvProfile>("inspect_csv_file", { path: selected });
+      setSchemaInputs((current) => ({ ...current, [slot]: { path: selected, serializedPath: selected, profile } }));
+    });
+  }
+
   async function previewPlan() {
     await perform(async () => setYamlPreview(await invoke<string>("render_analysis_plan", { plan: buildPlan() })));
   }
@@ -305,13 +344,41 @@ export default function App() {
       const loaded = await invoke<EditablePlan>("load_analysis_plan_for_editing", { repository, path: selected });
       setEditorOptions((current) => current.some((item) => item.manifest.id === loaded.editor.manifest.id && item.manifest.version === loaded.editor.manifest.version)
         ? current : [...current, loaded.editor]);
-      if (loaded.editor.ui_schema["ui:editor"] !== "linear-utility") {
+      if (isSchemaEditor(loaded.editor)) {
+        await hydrateSchemaPlan(loaded, selected);
+        return;
+      }
+      if (!isLinearEditor(loaded.editor)) {
       setEditor(loaded.editor); setPlanPath(selected); setYamlPreview(loaded.yaml); setCodeMode(true);
         setSources([]); setCompleted(undefined); setArtifactPreviews({}); setValidation(undefined);
         return;
       }
       await hydratePlan(loaded, selected);
     });
+  }
+
+  async function hydrateSchemaPlan(loaded: EditablePlan, path: string) {
+    const loadedInputs: Record<string, FormInput | undefined> = {};
+    for (const input of loaded.editor.manifest.inputs) {
+      const planInput = loaded.plan.inputs[input.name];
+      if (!planInput) continue;
+      if (planInput.kind !== "local" || !planInput.path) {
+        throw new Error(`${input.name}はlocal CSVではないためFormへ読み戻せません．`);
+      }
+      const resolved = loaded.resolved_sources[input.name];
+      if (!resolved) throw new Error(`${input.name}のlocal pathを解決できません．`);
+      loadedInputs[input.name] = {
+        path: resolved,
+        serializedPath: planInput.path,
+        read: planInput.read,
+        profile: await invoke<CsvProfile>("inspect_csv_file", { path: resolved }),
+      };
+    }
+    setEditor(loaded.editor); setPlanName(loaded.plan.name); setSchemaInputs(loadedInputs);
+    setSchemaConfig(structuredClone(loaded.plan.config)); setPreservedRun(loaded.plan.run ?? {});
+    setPreparation(loaded.editor.ui_schema["ui:inputPreparation"]);
+    setPlanPath(path); setYamlPreview(loaded.yaml); setCodeMode(false);
+    setValidation(undefined); setCompleted(undefined); setArtifactPreviews({});
   }
 
   async function hydratePlan(loaded: EditablePlan, path: string) {
@@ -387,14 +454,14 @@ export default function App() {
   async function newPlan() {
     await perform(async () => {
       let definition = editor;
-      if (!definition || definition.ui_schema["ui:editor"] !== "linear-utility") {
+      if (!definition || !isFormEditor(definition)) {
         const definitions = await invoke<ComponentEditor[]>("component_editor_definitions", { repository });
         definition = definitions[0]; setEditorOptions(definitions);
         if (!definition) throw new Error("Form editorに対応するcomponentが見つかりません．");
         setEditor(definition);
       }
-      setPlanPath(""); setPlanName("mode-choice-model"); setSources([]); setBaseSource(""); setJoins({});
-      if (definition) initializeRoles(definition); else setRoles({});
+      setPlanPath(""); setPlanName(definition ? defaultPlanName(definition) : "analysis-plan"); setSources([]); setBaseSource(""); setJoins({});
+      if (definition) initializeEditor(definition); else setRoles({});
       setTerms([]); setNextTermId(1); setYamlPreview(""); setCodeMode(false); setAlternativeValues(undefined);
       setPreservedConfig({}); setPreservedRun({});
       setPreparation(definition?.ui_schema["ui:inputPreparation"]);
@@ -404,7 +471,7 @@ export default function App() {
   function selectEditor(identity: string) {
     const definition = editorOptions.find((item) => `${item.manifest.id}@${item.manifest.version}` === identity);
     if (!definition) return;
-    setEditor(definition); initializeRoles(definition); setPreparation(definition.ui_schema["ui:inputPreparation"]);
+    setEditor(definition); initializeEditor(definition); setPlanName(defaultPlanName(definition)); setPreparation(definition.ui_schema["ui:inputPreparation"]);
     setTerms([]); setYamlPreview(""); setPlanPath(""); setValidation(undefined); setCompleted(undefined); setArtifactPreviews({});
   }
   async function openRunDirectory() {
@@ -436,6 +503,9 @@ export default function App() {
 
   const base = sources.find((source) => source.id === baseSource);
   const editorReady = repository.length > 0 && sources.length > 0;
+  const schemaEditorReady = repository.length > 0 && (editor?.manifest.inputs
+    .filter((input) => input.required)
+    .every((input) => Boolean(schemaInputs[input.name])) ?? false);
   const roleNames = Object.keys(editor?.config_schema.properties?.roles?.properties ?? {});
 
   return <main>
@@ -457,7 +527,7 @@ export default function App() {
         <textarea className="yaml-preview editable" value={yamlPreview} onChange={(event) => setYamlPreview(event.target.value)} aria-label="model.yaml code editor" />
         <div className="actions"><button className="secondary" disabled={busy} onClick={() => saveCodePlan(false)}>上書き保存・検証</button><button disabled={busy} onClick={() => saveCodePlan(true)}>上書きして実行</button></div></div>}
 
-      {!codeMode && <>
+      {!codeMode && isLinearEditor(editor) && <>
       <div className="subsection-heading"><div><h3>入力データ</h3><p>inspection結果は各データカード内で確認できます．</p></div><button className="secondary" onClick={addDataSources}>CSVを追加</button></div>
       {!sources.length && <div className="empty-state">CSVを追加するか，既存Planを開いてください．</div>}
       {sources.map((source) => <article className="source-card" key={source.id}>
@@ -505,6 +575,16 @@ export default function App() {
         {planPath && <div className="plan-path">{planPath}</div>}
         {yamlPreview && <textarea className="yaml-preview" readOnly value={yamlPreview} aria-label="生成されたmodel.yaml" />}
       </>}
+      {!codeMode && editor && isSchemaEditor(editor) && <>
+        <SchemaFormEditor definition={editor} inputs={schemaInputs} config={schemaConfig} onChooseInput={chooseSchemaInput} onConfigChange={setSchemaConfig} />
+        <div className="actions editor-actions"><button className="secondary" disabled={!schemaEditorReady || busy} onClick={previewPlan}>YAMLを確認</button>
+          <button className="secondary" disabled={!schemaEditorReady || busy} onClick={() => saveDraft(false)}>別名で保存</button>
+          <button className="secondary" disabled={!schemaEditorReady || !planPath || busy} onClick={() => saveDraft(false, true)}>上書き保存</button>
+          <button disabled={!schemaEditorReady || busy} onClick={() => saveDraft(true, Boolean(planPath))}>{planPath ? "上書きして推定" : "保存して推定"}</button></div>
+        {validation && <div className="success">{validation.component.id} {validation.component.version}として保存・検証しました．</div>}
+        {planPath && <div className="plan-path">{planPath}</div>}
+        {yamlPreview && <textarea className="yaml-preview" readOnly value={yamlPreview} aria-label="生成されたmodel.yaml" />}
+      </>}
       </>}
     </section>
 
@@ -525,6 +605,18 @@ function SectionHeading({ number, title, description }: { number: string; title:
 }
 function roleLabel(role: string, editor?: ComponentEditor) {
   return editor?.ui_schema.roles?.["ui:labels"]?.[role] ?? defaultRoleLabels[role] ?? role;
+}
+function isLinearEditor(editor?: ComponentEditor) {
+  return editor?.ui_schema["ui:editor"] === "linear-utility";
+}
+function isSchemaEditor(editor?: ComponentEditor) {
+  return editor?.ui_schema["ui:editor"] === "schema-form";
+}
+function isFormEditor(editor?: ComponentEditor) {
+  return isLinearEditor(editor) || isSchemaEditor(editor);
+}
+function defaultPlanName(editor: ComponentEditor) {
+  return `${editor.manifest.id.split("/").pop() ?? "component"}-analysis`;
 }
 function sourceId(path: string) {
   const raw = path.split(/[\\/]/).pop()?.replace(/\.[^.]+$/, "") ?? "data";

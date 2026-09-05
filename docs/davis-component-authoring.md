@@ -157,6 +157,41 @@ outputs:
 
 desktop Form editorを提供するcomponentは，`presentation.ui`で`ui:editor`を宣言します．標準MNLの`linear-utility` editorは，roleの表示名を`roles.ui:labels`，選択肢候補を得るroleを`terms.ui:alternativesFromRole`，table bindingに使うtransformを`ui:inputPreparation`から読みます．設定項目と必須性の正本は引き続き`configuration.schema`です．presentationは契約の妥当性を緩めず，表示方法だけを補います．
 
+新しいcomponentでは，複数の再利用可能widgetを並べる`schema-form` editorも利用できます．Desktop側へcomponent ID固有の画面を追加する必要はありません．`ui:form.inputs`で入力slotの説明を，`ui:form.sections`でconfig内のpathとwidgetを宣言します．実際に保存できるfieldと必須性は`configuration.schema`が正本です．Desktopは存在しないpath，未宣言input，未知のwidgetを拒否します．
+
+| widget | 用途 |
+| --- | --- |
+| `column-map` | schemaに並ぶ役割名を，指定した入力表の列へ対応させます |
+| `utility-terms` | parameter，説明変数列，定数，対象選択肢，係数を編集します |
+| `nests` | 選択肢のnest所属と非類似度の固定／推定を編集します |
+| `parameter-settings` | termからparameter名を取り出し，初期値と上下限を編集します |
+| `object` | schemaにある通常の文字列，数値，列挙設定を編集します |
+
+```yaml
+presentation:
+  ui:
+    ui:editor: schema-form
+    ui:form:
+      inputs:
+        choice_data:
+          title: 選択データ
+      sections:
+        - path: roles
+          widget: column-map
+          input: choice_data
+        - path: terms
+          widget: utility-terms
+          input: choice_data
+        - path: nests
+          widget: nests
+          alternatives_from: roles.alternative_id
+      defaults:
+        estimation:
+          max_iterations: 500
+```
+
+NLとRLはどちらも同じ`schema-form` engineを使います．NLは1つの選択表とnest widgetを宣言し，RLはnetwork／observationsの2入力，2つのcolumn map，parameter settingsを宣言します．Manifestの違いだけで画面構成が変わるため，第三者componentも既存widgetの組合せで編集画面を提供できます．表結合を含むMNLの`linear-utility` editorは後方互換として残します．
+
 大きなschemaを分割したい場合は，inline値の代わりに安全なpackage相対pathを指定できます．JSONとYAMLの両方を利用できます．inlineと参照を同時に指定することはできません．
 
 ```yaml

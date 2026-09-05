@@ -89,7 +89,12 @@ fn component_editor_definitions(
     let editors = list_components(&repository)
         .into_iter()
         .filter_map(|(path, manifest)| editor_response(&path, manifest).ok())
-        .filter(|editor| editor.ui_schema["ui:editor"] == "linear-utility")
+        .filter(|editor| {
+            matches!(
+                editor.ui_schema["ui:editor"].as_str(),
+                Some("linear-utility" | "schema-form")
+            )
+        })
         .collect();
     Ok(editors)
 }
@@ -173,11 +178,125 @@ fn editor_response(
             || Value::Object(serde_json::Map::new()),
             |document| document.value,
         );
+    validate_editor_presentation(&manifest, &config_schema, &ui_schema)?;
     Ok(ComponentEditorResponse {
         manifest,
         config_schema,
         ui_schema,
     })
+}
+
+fn validate_editor_presentation(
+    manifest: &ComponentManifest,
+    config_schema: &Value,
+    ui_schema: &Value,
+) -> Result<(), String> {
+    if ui_schema["ui:editor"] != "schema-form" {
+        return Ok(());
+    }
+    let form = ui_schema["ui:form"]
+        .as_object()
+        .ok_or("schema-form requires ui:form")?;
+    let inputs = form
+        .get("inputs")
+        .and_then(Value::as_object)
+        .ok_or("schema-form requires ui:form.inputs")?;
+    let declared_inputs: std::collections::BTreeSet<_> = manifest
+        .inputs
+        .iter()
+        .map(|input| input.name.as_str())
+        .collect();
+    if inputs.values().any(|metadata| !metadata.is_object()) {
+        return Err("every ui:form input must be an object".to_owned());
+    }
+    if inputs
+        .keys()
+        .any(|name| !declared_inputs.contains(name.as_str()))
+    {
+        return Err("ui:form.inputs contains a slot not declared by the component".to_owned());
+    }
+    if manifest
+        .inputs
+        .iter()
+        .any(|input| input.required && !inputs.contains_key(&input.name))
+    {
+        return Err("ui:form.inputs must contain every required component input".to_owned());
+    }
+    let sections = form
+        .get("sections")
+        .and_then(Value::as_array)
+        .filter(|sections| !sections.is_empty())
+        .ok_or("schema-form requires at least one ui:form.sections item")?;
+    let mut section_paths = std::collections::BTreeSet::new();
+    for section in sections {
+        let section = section
+            .as_object()
+            .ok_or("every ui:form section must be an object")?;
+        let path = section.get("path").and_then(Value::as_str).unwrap_or("");
+        if path.is_empty() {
+            return Err("every ui:form section requires path".to_owned());
+        }
+        if !section_paths.insert(path) {
+            return Err(format!("duplicate schema-form section path `{path}`"));
+        }
+        if !schema_contains_path(config_schema, path) {
+            return Err(format!(
+                "schema-form section `{path}` does not exist in configuration.schema"
+            ));
+        }
+        let widget = section.get("widget").and_then(Value::as_str).unwrap_or("");
+        if !matches!(
+            widget,
+            "column-map" | "utility-terms" | "nests" | "parameter-settings" | "object"
+        ) {
+            return Err(format!(
+                "unsupported schema-form widget `{widget}` at `{path}`"
+            ));
+        }
+        if let Some(input) = section.get("input").and_then(Value::as_str) {
+            if !inputs.contains_key(input) {
+                return Err(format!(
+                    "schema-form section `{path}` refers to input `{input}` missing from ui:form.inputs"
+                ));
+            }
+        } else if matches!(widget, "column-map" | "utility-terms") {
+            return Err(format!(
+                "schema-form widget `{widget}` at `{path}` requires input"
+            ));
+        }
+        if let Some(reference) = section.get("alternatives_from").and_then(Value::as_str) {
+            if !schema_contains_path(config_schema, reference) {
+                return Err(format!(
+                    "schema-form section `{path}` has invalid alternatives_from `{reference}`"
+                ));
+            }
+        }
+        if let Some(reference) = section.get("parameters_from").and_then(Value::as_str) {
+            if !schema_contains_path(config_schema, reference) {
+                return Err(format!(
+                    "schema-form section `{path}` has invalid parameters_from `{reference}`"
+                ));
+            }
+        } else if widget == "parameter-settings" {
+            return Err(format!(
+                "schema-form widget `parameter-settings` at `{path}` requires parameters_from"
+            ));
+        }
+        if widget == "nests" && section.get("alternatives_from").is_none() {
+            return Err(format!(
+                "schema-form widget `nests` at `{path}` requires alternatives_from"
+            ));
+        }
+    }
+    Ok(())
+}
+
+fn schema_contains_path(schema: &Value, path: &str) -> bool {
+    path.split('.')
+        .try_fold(schema, |current, segment| {
+            current.get("properties")?.get(segment)
+        })
+        .is_some()
 }
 
 #[tauri::command]
@@ -442,6 +561,7 @@ mod tests {
     use super::{
         component_editor_definitions, editor_definition, editor_response,
         load_analysis_plan_for_editing, preview_csv, render_plan, save_analysis_plan_yaml,
+        validate_editor_presentation, ComponentManifest, Value,
     };
 
     fn repository() -> PathBuf {
@@ -509,6 +629,65 @@ mod tests {
         assert!(editor.config_schema["properties"]["roles"]["required"].is_array());
         let editors = component_editor_definitions(repository()).unwrap();
         assert!(editors.iter().any(|item| item.manifest.id == "davis/mnl"));
+        assert!(editors.iter().any(|item| item.manifest.id == "davis/nl"));
+        assert!(editors.iter().any(|item| item.manifest.id == "davis/rl"));
+    }
+
+    #[test]
+    fn loads_schema_forms_for_nested_and_recursive_logit() {
+        let repository = repository();
+        let nested = editor_definition(&repository, "davis/nl", "0.1.0").unwrap();
+        assert_eq!(nested.ui_schema["ui:editor"], "schema-form");
+        assert!(nested.ui_schema["ui:form"]["sections"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|section| section["widget"] == "nests"));
+
+        let recursive = editor_definition(&repository, "davis/rl", "0.1.0").unwrap();
+        assert_eq!(recursive.ui_schema["ui:editor"], "schema-form");
+        assert_eq!(
+            recursive.ui_schema["ui:form"]["inputs"]
+                .as_object()
+                .unwrap()
+                .len(),
+            2
+        );
+        assert!(recursive.ui_schema["ui:form"]["sections"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|section| section["widget"] == "parameter-settings"));
+
+        let nested_plan = repository.join("components/davis-nl/examples/minimal/model.yaml");
+        let loaded_nested =
+            load_analysis_plan_for_editing(repository.clone(), nested_plan).unwrap();
+        assert!(loaded_nested.resolved_sources["choice_data"].is_file());
+
+        let recursive_plan = repository.join("components/davis-rl/examples/minimal/model.yaml");
+        let loaded_recursive = load_analysis_plan_for_editing(repository, recursive_plan).unwrap();
+        assert!(loaded_recursive.resolved_sources["network"].is_file());
+        assert!(loaded_recursive.resolved_sources["observations"].is_file());
+    }
+
+    #[test]
+    fn rejects_an_unknown_schema_form_widget() {
+        let manifest_path = repository().join("components/davis-nl/component.yaml");
+        let manifest = ComponentManifest::read(&manifest_path).unwrap();
+        let mut ui = manifest
+            .resolve_presentation(&manifest_path)
+            .unwrap()
+            .unwrap()
+            .value;
+        ui["ui:form"]["sections"][0]["widget"] = Value::String("mystery".to_owned());
+
+        let config = manifest
+            .resolve_configuration(&manifest_path)
+            .unwrap()
+            .value;
+        let error = validate_editor_presentation(&manifest, &config, &ui).unwrap_err();
+
+        assert!(error.contains("unsupported schema-form widget"));
     }
 
     #[test]
