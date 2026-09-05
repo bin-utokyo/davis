@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
-  "latest": "0.4.0",
+  "latest": "0.5.0",
   "minimum_supported": "0.2.2",
   "released_at": "2026-09-05",
-  "release_url": "https://github.com/bin-utokyo/davis/releases/tag/v0.4.0",
+  "release_url": "https://github.com/bin-utokyo/davis/releases/tag/v0.5.0",
   "message": {
-    "ja": "local component実行，複数sourceを結合するMNL推定，CSV／Parquet変換，宣言的joinとRun接続，desktop prototype，componentのinstallと公式registry取得を追加しました．",
-    "en": "Davis adds local component execution, multi-source MNL data binding, CSV and Parquet transformation, declarative joins and run chaining, a desktop prototype, component installation, and official registry retrieval."
+    "ja": "CLIを起点とするDesktopの導入・起動，cwdに依存しないsoftware管理領域，整合性検証付きsoftware registryを追加しました．",
+    "en": "Davis adds CLI-managed Desktop installation and launch, a working-directory-independent software store, and an integrity-checked software registry."
   }
 }

@@ -2345,10 +2345,11 @@ Webだけを使う参加者は何もインストールしません．CLI利用�
 
 ```text
 davis install component mnl
-davis install app
+davis install desktop
+davis desktop
 ```
 
-localで開発中のcomponentは，`davis install component ./my-component`でManifestとpackageを検証してper-user領域へinstallできます．公式名からの取得とapp installはregistry実装後に同じcommandへ接続します．
+`davis install app`は`davis install desktop`のaliasです．localで開発中のcomponentは，`davis install component ./my-component`でManifestとpackageを検証してper-user領域へinstallできます．公式componentとDesktopはそれぞれGitHub Releaseに含まれるregistryから取得し，sizeとdigestを検証します．`davis installed`はCLI管理領域へ導入したsoftwareとcomponentをcwdに依存せず一覧します．Desktop packageが要求するsoftware registry契約はDavis 0.5.0で導入し，最初のpackageは`requires_davis: ">=0.5.0"`を宣言します．
 
 基本binaryとcomponentは独立してSemVerで版管理します．更新情報の正本は，各GitHub Releaseへ添付する`latest-version.json`とし，release workflowがbinary，installer，checksumと同時に公開します．CLI releaseのためにWebを再build・deployしません．CLIは対話端末で1日1回以下の頻度でこの情報を確認し，新版がある場合だけ変更概要と`davis update`を案内します．`davis update`は更新内容を表示して`y/N`で確認し，承認後にOS対応installerを実行します．`--yes`を指定した場合だけ確認を省略できます．通常command後の自動確認から，利用者の承認なしにbinaryを置換しません．非対話実行とoffline利用では通知を抑止できます．更新時はrelease artifactのSHA-256 checksumを検証します．Catalog protocolと互換である限り旧CLIを直ちに使用不能にはしません．
 
@@ -2387,7 +2388,7 @@ P3  その他の拡張
 | P0-B | 一部完了 | `verify`，公式運営session利用時の`main`以外の個人作業branch限定`push`，filesystem・S3互換storageへの独立した直接`push`，決定的PDF生成，R2同期，Git commit・push，review済み`main`限定の`publish`，運営session | 公開revisionとの差分をまとめる`status`と`verify --remote`は未実装です |
 | P1 | ほぼ完了 | 日英Web，schema検索・filter，複数選択，利用条件確認，200並列認証test，認証付きdownload | D1は使わず署名済みstateless sessionを採用し，R2署名URLの直接返却ではなく短寿命DownloadGrantをWorkerが検証してstreamします |
 | P2 | 一部完了 | ComponentManifest，AnalysisPlan，RunRequest，RunResult，local・run artifact Input Resolver，process Runner，標準MNL，CSV transform参考component，推定時の複数source table binding，単一・複合keyによる宣言的join・列選択，CSV／Parquet出力，Manifestによる出力artifact検証，CSV inspection，成果物・log・digest記録，local component installer，公式component registry client，決定的bundle・registry生成，release添付workflow | catalog入力，宣言的filter・group，追加source間の連鎖join，disk-backed大量データ処理，Davis管理Python runtime，registry署名・trust policyは未実装です．公式artifactは次のrelease tag公開時に添付されます |
-| P3 | 一部着手 | 低頻度のCLI更新通知，Tauri desktop prototype，clone非依存project workspace，入力カード内CSV inspection，Manifest／config schema／UI schema駆動のlinear utility editor，複数CSVのstar型join，選択肢候補combobox，AnalysisPlan作成・Form再編集・YAML fallback，preview・保存・検証・実行，Manifest駆動result viewと結果directory表示 | 複合key・連鎖join editor，配布用app installer，run比較，高度な結果可視化，論文authoring，汎用fmt・viz，GC，履歴通知等は未実装です |
+| P3 | 一部着手 | 低頻度のCLI更新通知，Tauri desktop prototype，clone非依存project workspace，CLIからのDesktop導入・起動，cwd非依存software store，platform別software registry，入力カード内CSV inspection，Manifest／config schema／UI schema駆動のlinear utility editor，複数CSVのstar型join，選択肢候補combobox，AnalysisPlan作成・Form再編集・YAML fallback，preview・保存・検証・実行，Manifest駆動result viewと結果directory表示 | OS標準のapp bundle／shortcut生成，複合key・連鎖join editor，managed runtime，run比較，高度な結果可視化，論文authoring，汎用fmt・viz，GC，履歴通知等は未実装です |
 
 この表を実装状況の正とし，目標仕様との差分が解消された時点で同時に更新します．
 

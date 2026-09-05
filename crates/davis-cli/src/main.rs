@@ -5,6 +5,7 @@ mod git_workflow;
 mod model;
 mod remote;
 mod session;
+mod software;
 mod update;
 
 use std::collections::{HashMap, HashSet};
@@ -76,6 +77,18 @@ enum Command {
     Install {
         #[command(subcommand)]
         command: InstallCommand,
+    },
+    /// Launch the installed Davis desktop application.
+    Desktop {
+        /// Select an exact installed desktop version.
+        #[arg(long)]
+        version: Option<String>,
+    },
+    /// List software and components managed by this Davis installation.
+    Installed {
+        /// Print structured JSON.
+        #[arg(long)]
+        json: bool,
     },
     /// Inspect and manage installed analysis components.
     Component {
@@ -313,6 +326,19 @@ enum InstallCommand {
         #[arg(long)]
         json: bool,
     },
+    /// Install the Davis desktop application for this computer.
+    #[command(alias = "app")]
+    Desktop {
+        /// Select an exact desktop version.
+        #[arg(long)]
+        version: Option<String>,
+        /// Override the official software registry URL.
+        #[arg(long)]
+        registry: Option<String>,
+        /// Print structured JSON.
+        #[arg(long)]
+        json: bool,
+    },
 }
 
 #[derive(Debug, Subcommand)]
@@ -385,6 +411,8 @@ async fn main() {
     }
 }
 
+// The top-level dispatch intentionally keeps every public CLI command visible in one match.
+#[allow(clippy::too_many_lines)]
 async fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
     match cli.command {
         Command::Login {
@@ -395,7 +423,9 @@ async fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
         Command::Update { yes } => update::check_explicitly(yes).await?,
         Command::Operator { command } => handle_operator(command).await?,
         Command::Model { command } => model::handle(&cli.repository, command)?,
-        Command::Install { command } => component::handle_install(command).await?,
+        Command::Install { command } => handle_install(command).await?,
+        Command::Desktop { version } => software::launch_desktop(version.as_deref())?,
+        Command::Installed { json } => software::print_installed(json)?,
         Command::Component { command } => component::handle_component(command)?,
         Command::List { json } => handle_list(&cli.repository, json).await?,
         Command::Info { dataset_id, json } => {
@@ -484,6 +514,23 @@ async fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
+    Ok(())
+}
+
+async fn handle_install(command: InstallCommand) -> Result<(), Box<dyn std::error::Error>> {
+    match command {
+        InstallCommand::Component {
+            source,
+            version,
+            registry,
+            json,
+        } => component::handle_install(source, version, registry, json).await?,
+        InstallCommand::Desktop {
+            version,
+            registry,
+            json,
+        } => software::install_desktop(version.as_deref(), registry.as_deref(), json).await?,
+    }
     Ok(())
 }
 
@@ -1965,6 +2012,54 @@ mod tests {
                 command: ComponentCommand::Registry { entries, out, json: false }
             } if entries == [PathBuf::from("dist/mnl.entry.json")]
                 && out == Path::new("dist/component-registry.json")
+        ));
+    }
+
+    #[test]
+    fn desktop_bootstrap_commands_parse() {
+        let install = Cli::try_parse_from([
+            "davis",
+            "install",
+            "desktop",
+            "--version",
+            "0.5.0",
+            "--registry",
+            "https://example.com/software-registry.json",
+        ])
+        .expect("desktop install should parse");
+        assert!(matches!(
+            install.command,
+            Command::Install {
+                command: InstallCommand::Desktop {
+                    version,
+                    registry,
+                    json: false
+                }
+            } if version.as_deref() == Some("0.5.0")
+                && registry.as_deref() == Some("https://example.com/software-registry.json")
+        ));
+
+        let alias = Cli::try_parse_from(["davis", "install", "app"])
+            .expect("legacy app spelling should parse");
+        assert!(matches!(
+            alias.command,
+            Command::Install {
+                command: InstallCommand::Desktop { .. }
+            }
+        ));
+
+        let launch = Cli::try_parse_from(["davis", "desktop", "--version", "0.5.0"])
+            .expect("desktop launch should parse");
+        assert!(matches!(
+            launch.command,
+            Command::Desktop { version } if version.as_deref() == Some("0.5.0")
+        ));
+
+        let installed =
+            Cli::try_parse_from(["davis", "installed", "--json"]).expect("list should parse");
+        assert!(matches!(
+            installed.command,
+            Command::Installed { json: true }
         ));
     }
 

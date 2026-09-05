@@ -134,9 +134,102 @@ jobs:
             dist/component-registry.json
           if-no-files-found: error
 
+  build-desktop-unix:
+    name: Build ${{ matrix.asset }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-24.04
+            target: x86_64-unknown-linux-gnu
+            asset: davis-desktop-linux-x86_64.tar.gz
+            entrypoint: davis-app
+          - runner: ubuntu-24.04-arm
+            target: aarch64-unknown-linux-gnu
+            asset: davis-desktop-linux-aarch64.tar.gz
+            entrypoint: davis-app
+          - runner: macos-15-intel
+            target: x86_64-apple-darwin
+            asset: davis-desktop-macos-x86_64.tar.gz
+            entrypoint: davis-app
+          - runner: macos-15
+            target: aarch64-apple-darwin
+            asset: davis-desktop-macos-aarch64.tar.gz
+            entrypoint: davis-app
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: apps/davis-app/pnpm-lock.yaml
+      - name: Install Linux desktop dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev
+      - name: Build frontend
+        run: |
+          pnpm --dir apps/davis-app install --frozen-lockfile
+          pnpm --dir apps/davis-app build
+      - name: Build desktop executable
+        run: cargo build --release --locked --package davis-app
+      - name: Package desktop executable
+        run: tar -C target/release -czf "${{ matrix.asset }}" "${{ matrix.entrypoint }}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.asset }}
+          path: ${{ matrix.asset }}
+          if-no-files-found: error
+
+  build-desktop-windows:
+    name: Build ${{ matrix.asset }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: windows-2025
+            asset: davis-desktop-windows-x86_64.tar.gz
+          - runner: windows-11-arm
+            asset: davis-desktop-windows-aarch64.tar.gz
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: apps/davis-app/pnpm-lock.yaml
+      - name: Build frontend
+        shell: pwsh
+        run: |
+          pnpm --dir apps/davis-app install --frozen-lockfile
+          pnpm --dir apps/davis-app build
+      - name: Build desktop executable
+        shell: pwsh
+        run: cargo build --release --locked --package davis-app
+      - name: Package desktop executable
+        shell: pwsh
+        run: tar -C target/release -czf "${{ matrix.asset }}" davis-app.exe
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.asset }}
+          path: ${{ matrix.asset }}
+          if-no-files-found: error
+
   release:
     name: Publish GitHub Release
-    needs: [build-unix, build-windows, build-components]
+    needs:
+      [build-unix, build-windows, build-components, build-desktop-unix, build-desktop-windows]
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5
@@ -158,7 +251,37 @@ jobs:
           cp scripts/install.sh scripts/install.ps1 dist/
           cp release/latest-version.json dist/
           cd dist
-          sha256sum davis-* component-registry.json latest-version.json > SHA256SUMS
+          sudo apt-get update
+          sudo apt-get install -y b3sum
+          version="${GITHUB_REF_NAME#v}"
+          base_url="https://github.com/${GITHUB_REPOSITORY}/releases/download/${GITHUB_REF_NAME}"
+          jq -n \
+            --arg version "$version" \
+            --arg requires_davis ">=0.5.0" \
+            --arg base_url "$base_url" \
+            --argjson artifacts "$(
+              for asset in davis-desktop-*.tar.gz; do
+                case "$asset" in
+                  davis-desktop-linux-x86_64.tar.gz) target=x86_64-unknown-linux-gnu; entrypoint=davis-app ;;
+                  davis-desktop-linux-aarch64.tar.gz) target=aarch64-unknown-linux-gnu; entrypoint=davis-app ;;
+                  davis-desktop-macos-x86_64.tar.gz) target=x86_64-apple-darwin; entrypoint=davis-app ;;
+                  davis-desktop-macos-aarch64.tar.gz) target=aarch64-apple-darwin; entrypoint=davis-app ;;
+                  davis-desktop-windows-x86_64.tar.gz) target=x86_64-pc-windows-msvc; entrypoint=davis-app.exe ;;
+                  davis-desktop-windows-aarch64.tar.gz) target=aarch64-pc-windows-msvc; entrypoint=davis-app.exe ;;
+                  *) exit 1 ;;
+                esac
+                jq -n \
+                  --arg target "$target" \
+                  --arg url "$base_url/$asset" \
+                  --argjson size "$(stat -c%s "$asset")" \
+                  --arg blake3 "blake3:$(b3sum "$asset" | cut -d' ' -f1)" \
+                  --arg entrypoint "$entrypoint" \
+                  '{target: $target, url: $url, size: $size, blake3: $blake3, entrypoint: $entrypoint}'
+              done | jq -s .
+            )" \
+            '{schema_version: 1, packages: [{id: "desktop", name: "Davis Desktop", version: $version, requires_davis: $requires_davis, artifacts: $artifacts}]}' \
+            > software-registry.json
+          sha256sum davis-* component-registry.json software-registry.json latest-version.json > SHA256SUMS
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:

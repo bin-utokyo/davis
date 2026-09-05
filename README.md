@@ -17,6 +17,8 @@ Davis本体の開発・buildを行う場合だけ，RustとCargoが必要です�
 
 CLIは，通常commandの完了後に24時間に1回だけ最新版を確認します．更新情報の正本はGitHub Releaseへ添付する`latest-version.json`であり，CLI releaseのたびにWebを再deployする必要はありません．新しいreleaseがある場合は，通常処理やJSON出力を妨げずに更新案内を表示します．`davis update`を実行すると，更新内容を表示してinstallするか`y/N`で確認し，承認後にOS対応installerを実行します．確認を省く場合は`davis update --yes`を使用します．
 
+CLIはDavisのbootstrapでもあります．Desktopが必要になった時点で`davis install desktop`を実行し，以後は任意のdirectoryから`davis desktop`で起動できます．通常利用者がrepositoryをcloneしたり，Rust，Cargo，`pnpm`を導入したりする必要はありません．
+
 ## 現在の構成
 
 ```text
