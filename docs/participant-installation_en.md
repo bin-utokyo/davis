@@ -45,9 +45,10 @@ The installation is complete when `davis --help` lists `login`, `list`, `info`, 
 
 ## Adding Davis Desktop
 
-After installing the CLI, you can add and launch Davis Desktop from any directory. You do not need to clone the GitHub repository or install Rust, Cargo, or `pnpm`.
+After installing the CLI, you can add and launch Davis Desktop from any directory. You do not need to clone the GitHub repository or install Rust, Cargo, or `pnpm`. If you already use Davis CLI v0.4 or earlier, update the CLI before invoking the new `desktop` command.
 
 ```text
+davis update
 davis install desktop
 davis desktop
 ```

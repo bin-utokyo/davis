@@ -192,7 +192,7 @@ fn print_release_status(release: &ReleaseInfo, explicit: bool) {
     };
     match (language, status) {
         (Language::Japanese, UpdateStatus::Required) => eprintln!(
-            "\n警告: Davis v{}は現在のserviceの最低対応versionを下回っています．\n最新版: v{} ({})\n{}",
+            "\n警告: Davis v{}は現在のDavis releaseの最低対応versionを下回っています．\n最新版: v{} ({})\n{}",
             env!("CARGO_PKG_VERSION"),
             release.latest,
             release.released_at,
@@ -205,7 +205,7 @@ fn print_release_status(release: &ReleaseInfo, explicit: bool) {
             message
         ),
         (Language::English, UpdateStatus::Required) => eprintln!(
-            "\nWarning: Davis v{} is older than the minimum version supported by this service.\nLatest: v{} ({})\n{}",
+            "\nWarning: Davis v{} is older than the minimum version supported by the current Davis release.\nLatest: v{} ({})\n{}",
             env!("CARGO_PKG_VERSION"),
             release.latest,
             release.released_at,
@@ -428,6 +428,17 @@ mod tests {
             classify(&release("99.0.0", "99.0.0")).unwrap(),
             UpdateStatus::Required
         );
+    }
+
+    #[test]
+    fn bundled_release_metadata_requires_the_current_cli_contract() {
+        let release: ReleaseInfo =
+            serde_json::from_str(include_str!("../../../release/latest-version.json"))
+                .expect("release metadata should be valid");
+
+        assert_eq!(release.latest, env!("CARGO_PKG_VERSION"));
+        assert_eq!(release.minimum_supported, env!("CARGO_PKG_VERSION"));
+        assert_eq!(classify(&release).unwrap(), UpdateStatus::Current);
     }
 
     #[test]

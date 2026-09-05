@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "latest": "0.5.0",
-  "minimum_supported": "0.2.2",
+  "minimum_supported": "0.5.0",
   "released_at": "2026-09-05",
   "release_url": "https://github.com/bin-utokyo/davis/releases/tag/v0.5.0",
   "message": {

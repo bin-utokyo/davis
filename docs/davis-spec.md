@@ -2349,7 +2349,7 @@ davis install desktop
 davis desktop
 ```
 
-`davis install app`は`davis install desktop`のaliasです．localで開発中のcomponentは，`davis install component ./my-component`でManifestとpackageを検証してper-user領域へinstallできます．公式componentとDesktopはそれぞれGitHub Releaseに含まれるregistryから取得し，sizeとdigestを検証します．`davis installed`はCLI管理領域へ導入したsoftwareとcomponentをcwdに依存せず一覧します．Desktop packageが要求するsoftware registry契約はDavis 0.5.0で導入し，最初のpackageは`requires_davis: ">=0.5.0"`を宣言します．
+`davis install app`は`davis install desktop`のaliasです．localで開発中のcomponentは，`davis install component ./my-component`でManifestとpackageを検証してper-user領域へinstallできます．公式componentとDesktopはそれぞれGitHub Releaseに含まれるregistryから取得し，sizeとdigestを検証します．`davis installed`はCLI管理領域へ導入したsoftwareとcomponentをcwdに依存せず一覧します．Desktop packageが要求するsoftware registry契約はDavis 0.5.0で導入し，最初のpackageは`requires_davis: ">=0.5.0"`を宣言します．clone前提からCLI管理領域へ配布境界を変更するv0.5.0では，release metadataの`minimum_supported`も`0.5.0`とし，旧CLIへ必須更新を案内します．
 
 基本binaryとcomponentは独立してSemVerで版管理します．更新情報の正本は，各GitHub Releaseへ添付する`latest-version.json`とし，release workflowがbinary，installer，checksumと同時に公開します．CLI releaseのためにWebを再build・deployしません．CLIは対話端末で1日1回以下の頻度でこの情報を確認し，新版がある場合だけ変更概要と`davis update`を案内します．`davis update`は更新内容を表示して`y/N`で確認し，承認後にOS対応installerを実行します．`--yes`を指定した場合だけ確認を省略できます．通常command後の自動確認から，利用者の承認なしにbinaryを置換しません．非対話実行とoffline利用では通知を抑止できます．更新時はrelease artifactのSHA-256 checksumを検証します．Catalog protocolと互換である限り旧CLIを直ちに使用不能にはしません．
 

@@ -45,9 +45,10 @@ davis --help
 
 ## Desktopも使う場合
 
-CLI導入後，任意のdirectoryからDesktopを追加して起動できます．GitHub repositoryのclone，Rust，Cargo，`pnpm`は不要です．
+CLI導入後，任意のdirectoryからDesktopを追加して起動できます．GitHub repositoryのclone，Rust，Cargo，`pnpm`は不要です．既にv0.4以前のDavis CLIを利用している場合は，新しい`desktop` commandを実行する前にCLIを更新してください．
 
 ```text
+davis update
 davis install desktop
 davis desktop
 ```

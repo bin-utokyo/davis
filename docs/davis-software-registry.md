@@ -47,6 +47,8 @@ DesktopはOS標準のDavis user data directory以下の`software/desktop/<versio
 
 `requires_davis`はpackageが要求するCLI・software registry契約のSemVer条件です．この契約を導入した最初のDesktop packageは`>=0.5.0`を要求します．componentの`requires_davis`とは同じ記法ですが，各packageは独立して互換性を宣言します．
 
+v0.5.0ではclone前提からCLI管理領域へ配布境界を変更するため，release metadataの`minimum_supported`も`0.5.0`とします．旧CLIは既存command完了後の更新確認で必須更新として案内し，利用者は`davis update`後に`davis install desktop`を実行します．旧CLIが知らない新commandは構文解析できないため，移行案内では更新を先に記載します．
+
 CLIは自身のversionと実行環境に合う最新packageを選択し，download sizeとBLAKE3 digestを検証してから安全に展開します．絶対path，親directoryへの脱出，symlink，未定義entrypointを拒否し，検証がすべて成功した場合だけinstall記録を確定します．Registry URLはHTTPSのみを許可します(local test用のlocalhostを除きます)．
 
 ## 3. Release生成
