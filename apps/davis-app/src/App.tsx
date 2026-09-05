@@ -207,7 +207,7 @@ export default function App() {
     });
   }
 
-  function buildPlan(): Record<string, unknown> {
+  function buildPlan(outputPath?: string): Record<string, unknown> {
     if (!editor) throw new Error("Workspaceを選択してComponentManifestを読み込んでください．");
     if (!sources.length) throw new Error("少なくとも1つのCSVを追加してください．");
     if (!baseSource) throw new Error("基準データを選択してください．");
@@ -227,8 +227,10 @@ export default function App() {
     const counts = uniqueRefs.reduce<Record<string, number>>((result, ref) => ({ ...result, [ref.column]: (result[ref.column] ?? 0) + 1 }), {});
     const aliases = new Map(uniqueRefs.map((ref) => [`${ref.source}\0${ref.column}`, counts[ref.column] > 1 ? `${ref.source}_${ref.column}` : ref.column]));
     const aliasFor = (ref: ColumnRef) => aliases.get(`${ref.source}\0${ref.column}`)!;
+    const saveAsDifferentFile = Boolean(outputPath && planPath && outputPath !== planPath);
     const sourceMap: Record<string, Record<string, unknown>> = Object.fromEntries(sources.map((source) => [source.id, {
-      kind: "local", path: source.serializedPath, ...(source.read ? { read: source.read } : {}),
+      kind: "local", path: saveAsDifferentFile ? source.path : source.serializedPath,
+      ...(source.read ? { read: source.read } : {}),
     }]));
     let choiceData: Record<string, unknown> = sourceMap[sources[0].id];
     if (sources.length > 1) {
@@ -279,7 +281,7 @@ export default function App() {
         filters: [{ name: "Davis analysis plan", extensions: ["yaml", "yml"] }],
       });
       if (!target) return;
-      const plan = buildPlan();
+      const plan = buildPlan(target);
       const saved = await invoke<string>("save_analysis_plan", { repository, path: target, plan });
       setPlanPath(saved); setYamlPreview(await invoke<string>("render_analysis_plan", { plan }));
       setValidation(await invoke<Validation>("validate_analysis_plan", { repository, plan: saved }));
