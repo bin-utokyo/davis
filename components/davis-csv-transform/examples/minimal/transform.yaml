@@ -3,7 +3,7 @@ name: minimal-feature-transform
 
 component:
   id: davis/csv-transform
-  version: 0.2.0
+  version: 0.3.0
   operation: transform
 
 inputs:

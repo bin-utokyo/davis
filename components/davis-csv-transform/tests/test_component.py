@@ -1,8 +1,16 @@
 from __future__ import annotations
 
 import unittest
+from pathlib import Path
+from tempfile import TemporaryDirectory
 
-from davis_csv_transform.__main__ import apply_calculations, join_tables
+import pyarrow.parquet as pq
+
+from davis_csv_transform.__main__ import (
+    apply_calculations,
+    join_tables,
+    write_transformed_table,
+)
 
 
 class CalculationTest(unittest.TestCase):
@@ -108,6 +116,31 @@ class JoinTest(unittest.TestCase):
         self.assertEqual(fields, ["id", "value"])
         self.assertEqual(rows, [{"id": "missing", "value": ""}])
         self.assertEqual(summary["unmatched_rows"], 1)
+
+
+class ParquetOutputTest(unittest.TestCase):
+    def test_preserves_leading_zero_ids_and_writes_typed_nulls(self) -> None:
+        rows = [
+            {"person_id": "001", "travel_time": "12.5", "income": "100"},
+            {"person_id": "002", "travel_time": "", "income": "200"},
+        ]
+        with TemporaryDirectory() as temporary:
+            name, media_type, schema = write_transformed_table(
+                Path(temporary),
+                ["person_id", "travel_time", "income"],
+                rows,
+                "parquet",
+                {"null_values": [""]},
+            )
+            table = pq.read_table(Path(temporary) / name)
+
+        self.assertEqual(name, "transformed.parquet")
+        self.assertEqual(media_type, "application/vnd.apache.parquet")
+        self.assertEqual(schema["person_id"], "string")
+        self.assertEqual(schema["travel_time"], "double")
+        self.assertEqual(schema["income"], "int64")
+        self.assertEqual(table.column("person_id").to_pylist(), ["001", "002"])
+        self.assertEqual(table.column("travel_time").to_pylist(), [12.5, None])
 
 
 if __name__ == "__main__":

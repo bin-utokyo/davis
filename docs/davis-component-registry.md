@@ -6,7 +6,7 @@
 
 ```console
 davis install component mnl
-davis install component davis/mnl --version 0.1.0
+davis install component davis/mnl --version 0.2.0
 ```
 
 CLIは既存directoryを指定された場合はlocal packageとしてinstallし，それ以外は公式名またはcomponent IDとしてregistryを検索します．registry URLは次の順で決定します．
@@ -26,10 +26,10 @@ CLIは既存directoryを指定された場合はlocal packageとしてinstallし
     {
       "name": "mnl",
       "id": "davis/mnl",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "requires_davis": ">=0.3.5",
       "bundle": {
-        "url": "davis-mnl-0.1.0.tar.gz",
+        "url": "davis-mnl-0.2.0.tar.gz",
         "size": 12345,
         "blake3": "blake3:..."
       }
@@ -76,7 +76,7 @@ Python runtime，native executable等のplatform差が必要になった場合�
 
 ```console
 davis component pack components/davis-mnl --name mnl --out dist
-davis component registry dist/davis-mnl-0.1.0.entry.json \
+davis component registry dist/davis-mnl-0.2.0.entry.json \
   --out dist/component-registry.json
 ```
 

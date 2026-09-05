@@ -167,6 +167,23 @@ cargo run -p davis-cli -- \
   model run components/davis-csv-transform/examples/join/transform.yaml
 ```
 
+### CSV／Parquet出力
+
+既定では人間が確認しやすいCSVを出力します．容量，読込速度，列型の保持を優先する場合はParquetを指定できます．
+
+```yaml
+config:
+  output:
+    format: parquet
+    compression: zstd
+    null_values: [""]
+    column_types:
+      person_id: string
+      travel_time: float64
+```
+
+`column_types`を省略した列は，`string`，`int64`，`float64`，`boolean`から安全側に型推定します．`001`のように先頭0がある整数風の値はIDとみなして`string`を維持します．曖昧さを避けたい場合は型を明示してください．実際の形式とParquet schemaは`transformation-summary.json`へ記録されます．`examples/mnl-chain`はParquetを出力し，そのartifactをMNL 0.2.0へ直接渡します．
+
 ## 検証と公開
 
 ```console
@@ -182,4 +199,4 @@ davis component registry dist/my-component-0.1.0.entry.json \
 
 ## 現在の境界
 
-実装済みなのはlocal input，`run_artifact` input，宣言的な複数CSV join，線形結合，process実行，artifact検証，local／registry installです．catalog input，filter，group，pipeline DAG，Davis管理Python，sandboxは未実装です．QGIS等の手作業は生成済みfileをlocal inputとして利用し，自動実行できるalgorithmは同じprocess contractでtransform componentとして包めます．
+実装済みなのはlocal input，`run_artifact` input，宣言的な複数CSV join，線形結合，CSV／Parquet出力，process実行，artifact検証，local／registry installです．catalog input，filter，group，pipeline DAG，Davis管理Python，sandboxは未実装です．QGIS等の手作業は生成済みfileをlocal inputとして利用し，自動実行できるalgorithmは同じprocess contractでtransform componentとして包めます．

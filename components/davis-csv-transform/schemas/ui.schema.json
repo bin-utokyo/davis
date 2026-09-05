@@ -1,5 +1,8 @@
 {
-  "ui:order": ["joins", "calculations"],
+  "ui:order": ["output", "joins", "calculations"],
+  "output": {
+    "ui:description": "Write a human-readable CSV or a typed, compressed Parquet artifact. CSV is the default."
+  },
   "joins": {
     "ui:description": "Join additional CSV inputs by one or more exact key columns. Duplicate and unmatched keys are checked explicitly."
   },

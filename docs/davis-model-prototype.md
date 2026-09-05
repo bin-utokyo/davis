@@ -21,6 +21,7 @@
 * 過去Runのartifactをsize・BLAKE3検証して次のRunへ渡す入力resolver
 * CSVへ再現可能な計算列を追加する参考transform component
 * 単一・複合key，関係性，未一致方針を明示する複数CSV join
+* 先頭0を保護する型推定と明示的schemaによるCSV／Parquet出力
 
 catalog input，filter，group，Parquetへの内部materializeは型または拡張点だけを用意しており，まだ実行できません．未実装入力を指定した場合は明示的に失敗します．component作成方法は[`davis-component-authoring.md`](davis-component-authoring.md)に記載します．
 
@@ -38,11 +39,11 @@ davis model run components/davis-mnl/examples/minimal/model.yaml
 install後はDavis repository外の分析projectでも，同じ`component` IDとversionを指定した`model.yaml`を実行できます．componentは分析projectの`components/`，per-user install領域の順に探索します．application bundle内の組み込みcomponent探索は後続実装です．
 
 ```console
-davis component inspect davis/mnl --version 0.1.0
-davis component remove davis/mnl --version 0.1.0
+davis component inspect davis/mnl --version 0.2.0
+davis component remove davis/mnl --version 0.2.0
 ```
 
-公式registryがreleaseへ公開された後は，`davis install component mnl`または`davis install component davis/mnl --version 0.1.0`で取得できます．registryとbundleの公開契約は[`davis-component-registry.md`](davis-component-registry.md)に記載します．生成・実動作検証・release添付workflowは実装済みで，公式artifactは次のrelease tag公開時に利用可能になります．
+公式registryがreleaseへ公開された後は，`davis install component mnl`または`davis install component davis/mnl --version 0.2.0`で取得できます．registryとbundleの公開契約は[`davis-component-registry.md`](davis-component-registry.md)に記載します．生成・実動作検証・release添付workflowは実装済みで，公式artifactは次のrelease tag公開時に利用可能になります．
 
 per-user install先はmacOSでは`~/Library/Application Support/Davis/components/`，Windowsではlocal application data，Linuxでは`$XDG_DATA_HOME/davis/components/`または`~/.local/share/davis/components/`です．開発・test時は`DAVIS_DATA_HOME`で変更できます．installは`.venv`，`__pycache__`，Git metadata等を除外し，component ID，version，schema，lockfile，symlink，重複を検証してから同一filesystem内でatomicに配置します．
 
@@ -104,4 +105,4 @@ RunnerはManifestの`runtime.command`へ`request_argument`と`request.json`の�
 
 localまたはregistry componentは任意codeを実行するため，現在のprototypeでは信頼できるcomponentだけをinstallしてください．sandboxとregistry署名は後続実装です．現在のPython componentは実行時に`uv`を必要とし，Davis管理runtimeの自動installはまだ実装していません．
 
-ComponentManifestの`requires_davis`はcomponentが必要とするDavis contractのSemVer条件です．本体のrelease versionとは独立しており，互換性が維持されている限り，本体のminor updateに合わせて機械的に上げません．MNL 0.1.0は`>=0.3.5`を宣言します．旧packageの`model-manifest.yaml`と`davis.model/v1alpha1`も後方互換として読み込めます．
+ComponentManifestの`requires_davis`はcomponentが必要とするDavis contractのSemVer条件です．本体のrelease versionとは独立しており，互換性が維持されている限り，本体のminor updateに合わせて機械的に上げません．MNL 0.2.0は`>=0.3.5`を宣言します．旧packageの`model-manifest.yaml`と`davis.model/v1alpha1`も後方互換として読み込めます．

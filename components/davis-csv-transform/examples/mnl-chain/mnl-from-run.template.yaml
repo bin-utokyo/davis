@@ -3,7 +3,7 @@ name: mnl-from-transform-run
 
 component:
   id: davis/mnl
-  version: 0.1.0
+  version: 0.2.0
   operation: estimate
 
 inputs:
