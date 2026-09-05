@@ -1,0 +1,6 @@
+link_id,from_node,to_node,time,toll
+oa,O,A,1.0,0
+ob,O,B,1.5,0
+ab,A,B,0.7,0
+ad,A,D,2.0,1
+bd,B,D,1.0,0

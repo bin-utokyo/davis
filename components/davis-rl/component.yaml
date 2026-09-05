@@ -1,0 +1,99 @@
+api_version: davis.component/v1
+id: davis/rl
+name: Davis Recursive Logit
+version: 0.1.0
+kind: model
+requires_davis: '>=0.5.0'
+runtime:
+  executor: process
+  command:
+  - uv
+  - run
+  - --frozen
+  - python
+  - -m
+  - davis_rl
+  request_argument: --request
+  lockfile: uv.lock
+  requirements:
+  - command: uv
+    version: '>=0.8'
+    install:
+      macos: https://docs.astral.sh/uv/getting-started/installation/
+      windows: https://docs.astral.sh/uv/getting-started/installation/
+      linux: https://docs.astral.sh/uv/getting-started/installation/
+operations:
+- validate
+- estimate
+inputs:
+- name: network
+  media_types: [text/csv, application/vnd.apache.parquet]
+  required: true
+- name: observations
+  media_types: [text/csv, application/vnd.apache.parquet]
+  required: true
+configuration:
+  schema:
+    $schema: https://json-schema.org/draft/2020-12/schema
+    title: Davis Recursive Logit configuration
+    additionalProperties: false
+    type: object
+    required: [network_roles, observation_roles, terms]
+    properties:
+      network_roles:
+        type: object
+        additionalProperties: false
+        required: [link_id, from_node, to_node]
+        properties:
+          link_id: {type: string}
+          from_node: {type: string}
+          to_node: {type: string}
+      observation_roles:
+        type: object
+        additionalProperties: false
+        required: [trip_id, step, link_id, destination]
+        properties:
+          trip_id: {type: string}
+          step: {type: string}
+          link_id: {type: string}
+          destination: {type: string}
+      terms:
+        type: array
+        minItems: 1
+        items:
+          type: object
+          additionalProperties: false
+          required: [parameter, column]
+          properties:
+            parameter: {type: string, minLength: 1}
+            column: {type: string, minLength: 1}
+            coefficient: {type: number, default: 1.0}
+      parameters:
+        type: object
+        additionalProperties:
+          type: object
+          additionalProperties: false
+          properties:
+            initial: {type: number}
+            lower: {type: number}
+            upper: {type: number}
+      estimation:
+        type: object
+        additionalProperties: false
+        properties:
+          max_iterations: {type: integer, minimum: 1}
+          tolerance: {type: number, exclusiveMinimum: 0}
+presentation:
+  ui:
+    ui:editor: recursive-utility
+    ui:description: Map a directed link network and observed link sequences to recursive-logit utility terms.
+    ui:results:
+    - {artifact: metrics, title: 推定指標, widget: key-value}
+    - {artifact: parameters, title: 推定係数, widget: table}
+    - {artifact: predictions, title: 観測link選択確率, widget: table}
+outputs:
+  artifacts:
+    parameters: {media_types: [text/csv], required: false}
+    metrics: {media_types: [application/json], required: false}
+    predictions: {media_types: [text/csv], required: false}
+    sample_summary: {media_types: [application/json], required: true}

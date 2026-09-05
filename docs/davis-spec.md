@@ -1814,6 +1814,7 @@ Dataset IDは人間が読めるglobalに一意な値とし，初回移行時は`
 | `davis-model-runner` | モデルprocess起動，log，結果検証 | P2 |
 | `davis-mnl` | 標準MNLの参考component | P2 |
 | `davis-nl` | 2段階Nested Logitの参考component | P2 |
+| `davis-rl` | node状態・link加法型Recursive Logitの参考component | P2 |
 | `davis-model-sdk-python` | Pythonモデル向け補助関数と型 | P2 |
 | `davis-fmt` | 既知の変換recipeと外部変換process | 互換に必要な最小処理をP2，一般化をP3 |
 | `davis-viz` | 共通結果とモデル固有表示の接続 | P3 |
@@ -2408,7 +2409,7 @@ P3  その他の拡張
 | P0-A | 完了 | `list`，`info`，`get`，`pull`，File・directory単位取得，取得前license表示，schema・日英PDF取得，3 OS向けrelease | loginはbrowser起動ではなくterminal入力，sessionはOS credential storeではなく権限を限定したuser設定fileへ保存します |
 | P0-B | 一部完了 | `verify`，公式運営session利用時の`main`以外の個人作業branch限定`push`，filesystem・S3互換storageへの独立した直接`push`，決定的PDF生成，R2同期，Git commit・push，review済み`main`限定の`publish`，運営session | 公開revisionとの差分をまとめる`status`と`verify --remote`は未実装です |
 | P1 | ほぼ完了 | 日英Web，schema検索・filter，複数選択，利用条件確認，200並列認証test，認証付きdownload | D1は使わず署名済みstateless sessionを採用し，R2署名URLの直接返却ではなく短寿命DownloadGrantをWorkerが検証してstreamします |
-| P2 | 一部完了 | ComponentManifest，AnalysisPlan，RunRequest，RunResult，local・run artifact Input Resolver，言語非依存process Runner，標準MNL，2段階NL参考component，CSV transform参考component，推定時の複数source table binding，単一・複合keyによる宣言的join・列選択，CSV／Parquet出力，Manifestによる出力artifact検証，CSV inspection，成果物・log・digest記録，非破壊package検証・scaffold，local component installer，公式component registry client，決定的bundle・registry生成，release添付workflow | catalog入力，宣言的filter・group，追加source間の連鎖join，disk-backed大量データ処理，registry署名・trust policyは未実装です．公式artifactは次のrelease tag公開時に添付されます |
+| P2 | 一部完了 | ComponentManifest，AnalysisPlan，RunRequest，RunResult，local・run artifact Input Resolver，言語非依存process Runner，標準MNL，2段階NL参考component，node状態・link加法型RL参考component，CSV transform参考component，推定時の複数source table binding，単一・複合keyによる宣言的join・列選択，CSV／Parquet出力，Manifestによる出力artifact検証，CSV inspection，成果物・log・digest記録，非破壊package検証・scaffold，local component installer，公式component registry client，決定的bundle・registry生成，release添付workflow | catalog入力，宣言的filter・group，追加source間の連鎖join，disk-backed大量データ処理，registry署名・trust policyは未実装です．公式artifactは次のrelease tag公開時に添付されます |
 | P3 | 一部着手 | 低頻度のCLI更新通知，Tauri desktop prototype，clone非依存project workspace，CLIからのDesktop導入・起動，cwd非依存software store，platform別software registry，入力カード内CSV inspection，Manifest／config schema／UI schema駆動のlinear utility editor，複数CSVのstar型join，選択肢候補combobox，AnalysisPlan作成・Form再編集・YAML fallback，preview・保存・検証・実行，Manifest駆動result viewと結果directory表示 | OS標準のapp bundle／shortcut生成，複合key・連鎖join editor，managed runtime，run比較，高度な結果可視化，論文authoring，汎用fmt・viz，GC，履歴通知等は未実装です |
 
 この表を実装状況の正とし，目標仕様との差分が解消された時点で同時に更新します．

@@ -1,0 +1,35 @@
+api_version: davis.analysis/v1alpha1
+name: minimal-recursive-route-choice
+component:
+  id: davis/rl
+  version: 0.1.0
+  operation: estimate
+inputs:
+  network:
+    kind: local
+    path: network.csv
+  observations:
+    kind: local
+    path: observations.csv
+config:
+  network_roles:
+    link_id: link_id
+    from_node: from_node
+    to_node: to_node
+  observation_roles:
+    trip_id: trip_id
+    step: step
+    link_id: link_id
+    destination: destination
+  terms:
+  - {parameter: beta_time, column: time}
+  - {parameter: beta_toll, column: toll}
+  parameters:
+    beta_time: {initial: -1.0, lower: -10.0, upper: -0.000001}
+    beta_toll: {initial: -0.5, lower: -10.0, upper: 0.0}
+  estimation:
+    max_iterations: 500
+    tolerance: 1.0e-8
+run:
+  label: minimal-rl-example
+  tags: [example, rl]

@@ -347,6 +347,34 @@ cargo run -p davis-cli -- \
   model run components/davis-nl/examples/minimal/model.yaml
 ```
 
+## 参考Recursive Logit component
+
+[`components/davis-rl`](../components/davis-rl/)は，経路全体の選択肢集合を先に列挙せず，各nodeで次のlinkを選ぶ標準Recursive Logitの参考実装です．入力は，有向networkの全linkを持つ`network`と，実際に通ったlink列をlong形式で持つ`observations`の2つです．
+
+```text
+network.csv
+link_id,from_node,to_node,time,toll
+oa,O,A,1.0,0
+ad,A,D,2.0,1
+
+observations.csv
+trip_id,step,link_id,destination
+1,1,oa,D
+1,2,ad,D
+```
+
+`network_roles`と`observation_roles`で実際の列名を役割へ対応させ，`terms`でlink効用を定義します．各観測経路はlinkが順番につながり，最後のlinkが宣言した目的地へ到達する必要があります．
+
+初版は，nodeを状態とし，誤差scaleを1へ正規化したlink-additive RLです．Bellman方程式を指数変換した線形方程式として目的地ごとに解きます．turn固有属性，時間依存network，Nested RL，link-size属性の自動生成には未対応です．cycleを含むnetworkでは，設定した効用parameterの範囲でvalue functionが有限になる必要があります．
+
+```console
+cargo run -p davis-cli -- \
+  --repository . \
+  model run components/davis-rl/examples/minimal/model.yaml
+```
+
+この実装は，Fosgerau，Frejinger，Karlströmによるlink-based Recursive Logitを最小構成で扱います．理論上の対象と拡張を判断する場合は，[原論文](https://doi.org/10.1016/j.trb.2013.08.010)も確認してください．
+
 ### 複数CSVのjoin
 
 `davis/csv-transform`は，`table`を基準表として任意名の追加CSV inputを受け取れます．join keyは単一列または複数列で指定します．次の例では，tripの`origin_zone`とzone表の`zone_code`が同じ行を結合します．
