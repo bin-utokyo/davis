@@ -1,0 +1,31 @@
+api_version: davis.component/v1alpha1
+id: davis/csv-transform
+name: Davis CSV Transform
+version: 0.1.0
+kind: transform
+requires_davis: ">=0.3.5"
+
+runtime:
+  kind: python
+  command: ["uv", "run", "--frozen", "python", "-m", "davis_csv_transform"]
+  request_argument: "--request"
+  lockfile: uv.lock
+
+operations: [transform]
+
+inputs:
+  - name: table
+    media_types: [text/csv]
+    required: true
+
+config_schema: schemas/config.schema.json
+ui_schema: schemas/ui.schema.json
+
+outputs:
+  artifacts:
+    transformed_table:
+      media_types: [text/csv]
+      required: true
+    transformation_summary:
+      media_types: [application/json]
+      required: true

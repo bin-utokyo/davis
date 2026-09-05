@@ -49,6 +49,7 @@ pub(crate) fn handle(
                         "component": {
                             "id": validated.manifest.id,
                             "version": validated.manifest.version,
+                            "kind": validated.manifest.kind,
                             "manifest": validated.manifest_path,
                         }
                     })
@@ -60,6 +61,7 @@ pub(crate) fn handle(
                     "Component: {} {}",
                     validated.manifest.id, validated.manifest.version
                 );
+                println!("Kind: {:?}", validated.manifest.kind);
                 println!("Manifest: {}", validated.manifest_path.display());
             }
         }

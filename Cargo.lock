@@ -910,6 +910,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_yaml",
+ "tempfile",
  "thiserror 2.0.20",
 ]
 
@@ -920,6 +921,7 @@ dependencies = [
  "blake3",
  "davis-model-api",
  "serde_json",
+ "tempfile",
  "thiserror 2.0.20",
 ]
 

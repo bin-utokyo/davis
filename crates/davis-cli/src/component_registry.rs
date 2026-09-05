@@ -3,7 +3,7 @@ use std::io::Write;
 use std::path::{Component, Path, PathBuf};
 use std::time::Duration;
 
-use davis_model_api::ModelManifest;
+use davis_model_api::ComponentManifest;
 use flate2::read::GzDecoder;
 use futures::StreamExt;
 use reqwest::{Client, Url};
@@ -60,7 +60,9 @@ pub enum RegistryError {
     UnsupportedArchiveEntry(PathBuf),
     #[error("expanded component exceeds the {MAX_EXPANDED_BYTES} byte limit")]
     ExpandedTooLarge,
-    #[error("component bundle must contain model-manifest.yaml at its root")]
+    #[error(
+        "component bundle must contain component-manifest.yaml (or legacy model-manifest.yaml) at its root"
+    )]
     MissingManifest,
     #[error(
         "downloaded component identity `{actual_id}` `{actual_version}` does not match registry `{expected_id}` `{expected_version}`"
@@ -169,11 +171,16 @@ pub async fn download(
         source,
     })?;
     extract_bundle(&archive_path, &directory)?;
-    let manifest_path = directory.join("model-manifest.yaml");
-    if !manifest_path.is_file() {
+    let has_manifest = directory
+        .join(davis_model_api::COMPONENT_MANIFEST_FILENAME)
+        .is_file()
+        || directory
+            .join(davis_model_api::LEGACY_MODEL_MANIFEST_FILENAME)
+            .is_file();
+    if !has_manifest {
         return Err(RegistryError::MissingManifest);
     }
-    let manifest = ModelManifest::read(&manifest_path)?;
+    let (_, manifest) = ComponentManifest::read_from_directory(&directory)?;
     if manifest.id != selected.id || manifest.version != selected.version {
         return Err(RegistryError::IdentityMismatch {
             expected_id: selected.id,
@@ -423,8 +430,8 @@ mod tests {
         let source = temporary.path().join("source");
         fs::create_dir_all(source.join("schemas")).unwrap();
         fs::write(
-            source.join("model-manifest.yaml"),
-            r"api_version: davis.model/v1alpha1
+            source.join("component-manifest.yaml"),
+            r"api_version: davis.component/v1alpha1
 id: davis/test
 name: Davis Test
 version: 0.1.0
@@ -445,7 +452,10 @@ outputs: {}
         let encoder = GzEncoder::new(Vec::new(), Compression::default());
         let mut archive = tar::Builder::new(encoder);
         archive
-            .append_path_with_name(source.join("model-manifest.yaml"), "model-manifest.yaml")
+            .append_path_with_name(
+                source.join("component-manifest.yaml"),
+                "component-manifest.yaml",
+            )
             .unwrap();
         archive
             .append_path_with_name(source.join("schemas/config.json"), "schemas/config.json")
@@ -495,7 +505,7 @@ outputs: {}
         let downloaded = download("test", None, Some(&registry_url)).await.unwrap();
         assert_eq!(downloaded.id(), "davis/test");
         assert_eq!(downloaded.version(), "0.1.0");
-        assert!(downloaded.path().join("model-manifest.yaml").is_file());
+        assert!(downloaded.path().join("component-manifest.yaml").is_file());
         server.join().unwrap();
     }
 }

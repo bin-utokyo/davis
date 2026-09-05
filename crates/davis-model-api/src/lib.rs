@@ -1,4 +1,4 @@
-//! Versioned file contracts shared by Davis model clients, runtimes, and components.
+//! Versioned file contracts shared by Davis clients, runtimes, and components.
 
 use std::collections::BTreeMap;
 use std::fs;
@@ -9,9 +9,12 @@ use serde_json::Value;
 use thiserror::Error;
 
 pub const ANALYSIS_API_VERSION: &str = "davis.analysis/v1alpha1";
+pub const COMPONENT_API_VERSION: &str = "davis.component/v1alpha1";
 pub const MODEL_API_VERSION: &str = "davis.model/v1alpha1";
 pub const RUN_API_VERSION: &str = "davis.run/v1alpha1";
 pub const RESULT_API_VERSION: &str = "davis.result/v1alpha1";
+pub const COMPONENT_MANIFEST_FILENAME: &str = "component-manifest.yaml";
+pub const LEGACY_MODEL_MANIFEST_FILENAME: &str = "model-manifest.yaml";
 
 #[derive(Debug, Error)]
 pub enum ContractError {
@@ -32,22 +35,27 @@ pub enum ContractError {
     },
     #[error("analysis plan must contain at least one input source")]
     MissingSources,
-    #[error("model manifest ID and version must not be empty")]
-    InvalidModelIdentity,
-    #[error("model manifest must declare at least one operation")]
+    #[error("component manifest ID and version must not be empty")]
+    InvalidComponentIdentity,
+    #[error("component manifest must declare at least one operation")]
     MissingOperations,
     #[error("invalid Davis version requirement `{value}`: {source}")]
     InvalidDavisRequirement {
         value: String,
         source: semver::Error,
     },
+    #[error("artifact declaration `{0}` must contain at least one valid media type")]
+    InvalidArtifactDeclaration(String),
+    #[error("component package contains both component-manifest.yaml and model-manifest.yaml")]
+    AmbiguousComponentManifest,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct AnalysisPlan {
     pub api_version: String,
     pub name: String,
-    pub model: ModelSelection,
+    #[serde(alias = "model")]
+    pub component: ComponentSelection,
     #[serde(alias = "sources")]
     pub inputs: BTreeMap<String, InputSource>,
     #[serde(default)]
@@ -91,11 +99,15 @@ impl AnalysisPlan {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct ModelSelection {
+pub struct ComponentSelection {
+    #[serde(rename = "id", alias = "component")]
     pub component: String,
     pub version: String,
     pub operation: String,
 }
+
+/// Backward-compatible Rust name for [`ComponentSelection`].
+pub type ModelSelection = ComponentSelection;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "kind", rename_all = "snake_case")]
@@ -136,16 +148,18 @@ pub struct RunMetadata {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct ModelManifest {
+pub struct ComponentManifest {
     pub api_version: String,
     pub id: String,
     pub name: String,
     pub version: String,
     #[serde(default)]
+    pub kind: ComponentKind,
+    #[serde(default)]
     pub requires_davis: Option<String>,
     pub runtime: RuntimeDeclaration,
     pub operations: Vec<String>,
-    pub inputs: Vec<ModelInput>,
+    pub inputs: Vec<ComponentInput>,
     pub config_schema: PathBuf,
     #[serde(default)]
     pub ui_schema: Option<PathBuf>,
@@ -153,8 +167,20 @@ pub struct ModelManifest {
     pub outputs: OutputDeclaration,
 }
 
-impl ModelManifest {
-    /// Reads and validates a model-component manifest from YAML.
+/// Backward-compatible Rust name for [`ComponentManifest`].
+pub type ModelManifest = ComponentManifest;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ComponentKind {
+    #[default]
+    Model,
+    Transform,
+    Visualize,
+}
+
+impl ComponentManifest {
+    /// Reads and validates a component manifest from YAML.
     ///
     /// # Errors
     ///
@@ -173,6 +199,22 @@ impl ModelManifest {
         Ok(manifest)
     }
 
+    /// Finds and reads the canonical or legacy manifest in a component directory.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when both manifest filenames are present, neither file
+    /// can be read, or the selected manifest is invalid.
+    pub fn read_from_directory(directory: &Path) -> Result<(PathBuf, Self), ContractError> {
+        let canonical = directory.join(COMPONENT_MANIFEST_FILENAME);
+        let legacy = directory.join(LEGACY_MODEL_MANIFEST_FILENAME);
+        match (canonical.is_file(), legacy.is_file()) {
+            (true, true) => Err(ContractError::AmbiguousComponentManifest),
+            (_, false) => Ok((canonical.clone(), Self::read(&canonical)?)),
+            (false, true) => Ok((legacy.clone(), Self::read(&legacy)?)),
+        }
+    }
+
     /// Validates the common, runtime-independent manifest fields.
     ///
     /// # Errors
@@ -180,9 +222,14 @@ impl ModelManifest {
     /// Returns an error for an unsupported API version, an empty identity, or
     /// a manifest without operations.
     pub fn validate(&self) -> Result<(), ContractError> {
-        require_version(&self.api_version, MODEL_API_VERSION)?;
+        if self.api_version != COMPONENT_API_VERSION && self.api_version != MODEL_API_VERSION {
+            return Err(ContractError::ApiVersion {
+                actual: self.api_version.clone(),
+                expected: COMPONENT_API_VERSION,
+            });
+        }
         if self.id.trim().is_empty() || self.version.trim().is_empty() {
-            return Err(ContractError::InvalidModelIdentity);
+            return Err(ContractError::InvalidComponentIdentity);
         }
         if self.operations.is_empty() {
             return Err(ContractError::MissingOperations);
@@ -194,6 +241,17 @@ impl ModelManifest {
                     source,
                 }
             })?;
+        }
+        for (name, declaration) in &self.outputs.artifacts {
+            if name.trim().is_empty()
+                || declaration.media_types.is_empty()
+                || declaration
+                    .media_types
+                    .iter()
+                    .any(|media_type| media_type.trim().is_empty())
+            {
+                return Err(ContractError::InvalidArtifactDeclaration(name.clone()));
+            }
         }
         Ok(())
     }
@@ -221,12 +279,15 @@ pub enum RuntimeKind {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct ModelInput {
+pub struct ComponentInput {
     pub name: String,
     pub media_types: Vec<String>,
     #[serde(default = "default_true")]
     pub required: bool,
 }
+
+/// Backward-compatible Rust name for [`ComponentInput`].
+pub type ModelInput = ComponentInput;
 
 const fn default_true() -> bool {
     true
@@ -238,6 +299,16 @@ pub struct OutputDeclaration {
     pub standard: Vec<String>,
     #[serde(default)]
     pub extensions: Vec<String>,
+    #[serde(default)]
+    pub artifacts: BTreeMap<String, ArtifactDeclaration>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ArtifactDeclaration {
+    #[serde(default)]
+    pub media_types: Vec<String>,
+    #[serde(default = "default_true")]
+    pub required: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -255,6 +326,8 @@ pub struct RunRequest {
 pub struct ResolvedComponent {
     pub id: String,
     pub version: String,
+    #[serde(default)]
+    pub kind: ComponentKind,
     pub manifest_path: PathBuf,
     pub source_digest: String,
 }
@@ -323,7 +396,10 @@ fn require_version(actual: &str, expected: &'static str) -> Result<(), ContractE
 
 #[cfg(test)]
 mod tests {
-    use super::{AnalysisPlan, ContractError, InputSource, ModelManifest, ANALYSIS_API_VERSION};
+    use super::{
+        AnalysisPlan, ComponentKind, ComponentManifest, ContractError, InputSource, ModelManifest,
+        ANALYSIS_API_VERSION,
+    };
 
     #[test]
     fn analysis_plan_accepts_sources_alias() {
@@ -350,10 +426,10 @@ sources:
     }
 
     #[test]
-    fn model_manifest_validates_optional_davis_requirement() {
-        let valid: ModelManifest = serde_yaml::from_str(
+    fn component_manifest_validates_optional_davis_requirement() {
+        let valid: ComponentManifest = serde_yaml::from_str(
             r"
-api_version: davis.model/v1alpha1
+api_version: davis.component/v1alpha1
 id: example/native
 name: Example Native
 version: 1.0.0
@@ -374,6 +450,77 @@ config_schema: schemas/config.json
         assert!(matches!(
             invalid.validate(),
             Err(ContractError::InvalidDavisRequirement { .. })
+        ));
+    }
+
+    #[test]
+    fn component_alias_and_kinds_preserve_model_compatibility() {
+        let plan: AnalysisPlan = serde_yaml::from_str(
+            r"
+api_version: davis.analysis/v1alpha1
+name: transform-example
+component:
+  id: example/transform
+  version: 0.1.0
+  operation: transform
+inputs:
+  table:
+    kind: local
+    path: input.csv
+",
+        )
+        .unwrap();
+        assert_eq!(plan.component.component, "example/transform");
+        let serialized = serde_yaml::to_string(&plan).unwrap();
+        assert!(serialized.contains("component:\n  id: example/transform"));
+        assert!(!serialized.contains("model:"));
+
+        let legacy: ModelManifest = serde_yaml::from_str(
+            r"
+api_version: davis.model/v1alpha1
+id: example/model
+name: Legacy model
+version: 1.0.0
+runtime:
+  kind: native
+  command: [example]
+operations: [estimate]
+inputs: []
+config_schema: schemas/config.json
+",
+        )
+        .unwrap();
+        assert_eq!(legacy.kind, ComponentKind::Model);
+    }
+
+    #[test]
+    fn directory_reader_accepts_legacy_filename_and_rejects_ambiguity() {
+        let temporary = tempfile::tempdir().unwrap();
+        let legacy_path = temporary.path().join("model-manifest.yaml");
+        let manifest = r"api_version: davis.model/v1alpha1
+id: example/legacy
+name: Legacy
+version: 1.0.0
+runtime:
+  kind: native
+  command: [example]
+operations: [run]
+inputs: []
+config_schema: config.json
+";
+        std::fs::write(&legacy_path, manifest).unwrap();
+        let (selected, loaded) = ComponentManifest::read_from_directory(temporary.path()).unwrap();
+        assert_eq!(selected, legacy_path);
+        assert_eq!(loaded.id, "example/legacy");
+
+        std::fs::write(
+            temporary.path().join("component-manifest.yaml"),
+            manifest.replace("davis.model/v1alpha1", "davis.component/v1alpha1"),
+        )
+        .unwrap();
+        assert!(matches!(
+            ComponentManifest::read_from_directory(temporary.path()),
+            Err(ContractError::AmbiguousComponentManifest)
         ));
     }
 }

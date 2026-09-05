@@ -5,7 +5,7 @@
 ## 現在動作する範囲
 
 * local CSVのencoding，delimiter，列型，欠損，先頭0のinspection
-* `AnalysisPlan` (`model.yaml`)と`ModelManifest`の読込
+* `AnalysisPlan` (`model.yaml`)と`ComponentManifest`の読込
 * component固有JSON Schemaによるconfig検証
 * local inputのpath解決，BLAKE3 digest，media type検査
 * Pythonまたはnative processの起動とlog保存
@@ -16,8 +16,12 @@
 * 決定的component bundle，registry entry，公式registryの生成
 * 公式registryからの互換version選択，安全なdownload・検証・install
 * 分析project固有componentとinstall済みcomponentの優先探索
+* `model`，`transform`，`visualize`のcomponent種別
+* Manifestによる出力artifact名，media type，必須条件の検証
+* 過去Runのartifactをsize・BLAKE3検証して次のRunへ渡す入力resolver
+* CSVへ再現可能な計算列を追加する参考transform component
 
-catalog input，run artifact input，join，filter，Parquetへの内部materializeは型または拡張点だけを用意しており，まだ実行できません．未実装入力を指定した場合は明示的に失敗します．
+catalog input，join，filter，Parquetへの内部materializeは型または拡張点だけを用意しており，まだ実行できません．未実装入力を指定した場合は明示的に失敗します．component作成方法は[`davis-component-authoring.md`](davis-component-authoring.md)に記載します．
 
 ## 最小example
 
@@ -86,7 +90,7 @@ componentは最低限，次を含みます．
 
 ```text
 component/
-├── model-manifest.yaml
+├── component-manifest.yaml
 ├── pyproject.tomlまたはnative executable
 ├── lockfile
 ├── schemas/
@@ -99,4 +103,4 @@ RunnerはManifestの`runtime.command`へ`request_argument`と`request.json`の�
 
 localまたはregistry componentは任意codeを実行するため，現在のprototypeでは信頼できるcomponentだけをinstallしてください．sandboxとregistry署名は後続実装です．現在のPython componentは実行時に`uv`を必要とし，Davis管理runtimeの自動installはまだ実装していません．
 
-ModelManifestの`requires_davis`はcomponentが必要とするDavis contractのSemVer条件です．本体のrelease versionとは独立しており，互換性が維持されている限り，本体のminor updateに合わせて機械的に上げません．MNL 0.1.0は`>=0.3.5`を宣言します．
+ComponentManifestの`requires_davis`はcomponentが必要とするDavis contractのSemVer条件です．本体のrelease versionとは独立しており，互換性が維持されている限り，本体のminor updateに合わせて機械的に上げません．MNL 0.1.0は`>=0.3.5`を宣言します．旧packageの`model-manifest.yaml`と`davis.model/v1alpha1`も後方互換として読み込めます．

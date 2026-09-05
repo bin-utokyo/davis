@@ -79,15 +79,20 @@ jobs:
       - uses: astral-sh/setup-uv@v6
       - name: Build component tooling
         run: cargo build --release --locked --package davis-cli
-      - name: Package MNL and generate registry
+      - name: Package official components and generate registry
         shell: bash
         run: |
           mkdir -p dist
           target/release/davis component pack components/davis-mnl --name mnl --out dist
+          target/release/davis component pack \
+            components/davis-csv-transform \
+            --name csv-transform \
+            --out dist
           target/release/davis component registry \
             dist/davis-mnl-0.1.0.entry.json \
+            dist/davis-csv-transform-0.1.0.entry.json \
             --out dist/component-registry.json
-      - name: Verify registry install and model execution
+      - name: Verify transform-to-model execution through the registry
         shell: bash
         env:
           DAVIS_DISABLE_UPDATE_CHECK: "1"
@@ -103,9 +108,21 @@ jobs:
           export DAVIS_DATA_HOME="$test_root/user-data"
           target/release/davis install component mnl \
             --registry http://127.0.0.1:8765/component-registry.json
+          target/release/davis install component csv-transform \
+            --registry http://127.0.0.1:8765/component-registry.json
           mkdir -p "$test_root/project"
-          cp components/davis-mnl/examples/minimal/model.yaml "$test_root/project/model.yaml"
-          cp components/davis-mnl/examples/minimal/choice.csv "$test_root/project/choice.csv"
+          cp components/davis-csv-transform/examples/mnl-chain/choice.csv \
+            "$test_root/project/choice.csv"
+          cp components/davis-csv-transform/examples/mnl-chain/transform.yaml \
+            "$test_root/project/transform.yaml"
+          target/release/davis --repository "$test_root/project" model run \
+            "$test_root/project/transform.yaml" \
+            --run-root "$test_root/project/davis-runs" \
+            --json > "$test_root/transform-run.json"
+          transform_run_id=$(jq -r '.request.run_id' "$test_root/transform-run.json")
+          sed "s/REPLACE_WITH_TRANSFORM_RUN_ID/$transform_run_id/" \
+            components/davis-csv-transform/examples/mnl-chain/mnl-from-run.template.yaml \
+            > "$test_root/project/model.yaml"
           target/release/davis --repository "$test_root/project" model run \
             "$test_root/project/model.yaml" \
             --run-root "$test_root/project/davis-runs"
@@ -115,6 +132,7 @@ jobs:
           name: official-components
           path: |
             dist/davis-mnl-0.1.0.tar.gz
+            dist/davis-csv-transform-0.1.0.tar.gz
             dist/component-registry.json
           if-no-files-found: error
 

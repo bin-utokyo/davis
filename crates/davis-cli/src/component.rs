@@ -116,6 +116,7 @@ fn print_installed(
     } else {
         println!("{label}: {} {}", component.id, component.version);
         println!("Name: {}", component.name);
+        println!("Kind: {:?}", component.kind);
         println!("Path: {}", component.path.display());
         println!("Source: {}", component.source);
         println!("Digest: {}", component.source_digest);

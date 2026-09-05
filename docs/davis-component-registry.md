@@ -38,16 +38,16 @@ CLIは既存directoryを指定された場合はlocal packageとしてinstallし
 }
 ```
 
-`name`は短いinstall名，`id`はModelManifestの完全なIDです．同じ`name`と`id`で複数versionを掲載できます．versionを省略した場合，実行中のDavis versionが`requires_davis`を満たす最新SemVerを選択します．相対bundle URLはregistry URLを基準に解決します．
+`name`は短いinstall名，`id`はComponentManifestの完全なIDです．同じ`name`と`id`で複数versionを掲載できます．versionを省略した場合，実行中のDavis versionが`requires_davis`を満たす最新SemVerを選択します．相対bundle URLはregistry URLを基準に解決します．
 
-`requires_davis`はcomponentが利用するcontractやRuntime APIの互換性範囲です．Davis本体やcomponent packerのrelease versionから自動生成せず，component作者がModelManifestまたは`--requires-davis`で明示します．Davis本体がminor updateされてもcomponentの互換性が失われない限り，この最低要求versionを上げる必要はありません．例えばDavis 0.4.0でbundleを公開しても，MNLが0.3.5以降のcontractで動作するなら`>=0.3.5`のままです．
+`requires_davis`はcomponentが利用するcontractやRuntime APIの互換性範囲です．Davis本体やcomponent packerのrelease versionから自動生成せず，component作者がComponentManifestまたは`--requires-davis`で明示します．Davis本体がminor updateされてもcomponentの互換性が失われない限り，この最低要求versionを上げる必要はありません．例えばDavis 0.4.0でbundleを公開しても，MNLが0.3.5以降のcontractで動作するなら`>=0.3.5`のままです．
 
 ## Bundle contract
 
-bundleはgzip圧縮tarで，archive rootに`model-manifest.yaml`を置きます．
+bundleはgzip圧縮tarで，archive rootに`component-manifest.yaml`を置きます．旧bundleの`model-manifest.yaml`もinstallできますが，新しく公開するbundleでは正規名を使用します．
 
 ```text
-model-manifest.yaml
+component-manifest.yaml
 pyproject.toml
 uv.lock
 schemas/
@@ -61,7 +61,7 @@ src/
 3. bundle全体のBLAKE3がregistryと一致します．
 4. 展開後の通常file合計は2 GiB以下です．
 5. archive pathが展開先から脱出しません．
-6. ModelManifestのIDとversionがregistry entryと一致します．
+6. ComponentManifestのIDとversionがregistry entryと一致します．
 7. config schema，UI schema，lockfile等のpackage参照が安全で実在します．
 
 registryのdigestはtransport破損とrelease metadataの不一致を検出しますが，registry自体の署名ではありません．公式releaseの署名とtrust policyは後続実装です．local componentと同様，信頼できないcomponentはinstall・実行しないでください．

@@ -12,5 +12,8 @@ serde_yaml.workspace = true
 semver.workspace = true
 thiserror.workspace = true
 
+[dev-dependencies]
+tempfile.workspace = true
+
 [lints]
 workspace = true

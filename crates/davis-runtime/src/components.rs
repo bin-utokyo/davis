@@ -2,7 +2,7 @@ use std::fs;
 use std::path::{Component, Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use davis_model_api::ModelManifest;
+use davis_model_api::{ComponentKind, ComponentManifest};
 use serde::{Deserialize, Serialize};
 use tempfile::Builder;
 use thiserror::Error;
@@ -59,6 +59,8 @@ pub struct InstalledComponent {
     pub id: String,
     pub name: String,
     pub version: String,
+    #[serde(default)]
+    pub kind: ComponentKind,
     pub path: PathBuf,
     pub source: String,
     pub source_digest: String,
@@ -90,7 +92,7 @@ impl ComponentStore {
         &self.root
     }
 
-    /// Validates and atomically installs a local model component package.
+    /// Validates and atomically installs a local component package.
     ///
     /// # Errors
     ///
@@ -123,8 +125,7 @@ impl ComponentStore {
         if !source.is_dir() {
             return Err(ComponentStoreError::InvalidSource(source));
         }
-        let manifest_path = source.join("model-manifest.yaml");
-        let manifest = ModelManifest::read(&manifest_path)?;
+        let (_, manifest) = ComponentManifest::read_from_directory(&source)?;
         validate_package(&source, &manifest)?;
         let destination = self.destination(&manifest.id, &manifest.version)?;
         if destination.exists() {
@@ -155,6 +156,7 @@ impl ComponentStore {
             id: manifest.id,
             name: manifest.name,
             version: manifest.version,
+            kind: manifest.kind,
             path: destination.clone(),
             source: origin.unwrap_or_else(|| source.to_string_lossy().into_owned()),
             source_digest: digest,
@@ -217,7 +219,7 @@ impl ComponentStore {
                     entry.path().display()
                 ))
             })?;
-            let manifest = ModelManifest::read(&package_path.join("model-manifest.yaml"))?;
+            let (_, manifest) = ComponentManifest::read_from_directory(package_path)?;
             if manifest.id != item.id || manifest.version != item.version {
                 return Err(ComponentStoreError::InvalidPackage(format!(
                     "install record identity does not match manifest at {}",
@@ -327,7 +329,7 @@ pub fn user_data_directory() -> Result<PathBuf, ComponentStoreError> {
         .ok_or(ComponentStoreError::DirectoryUnavailable)
 }
 
-fn validate_package(root: &Path, manifest: &ModelManifest) -> Result<(), ComponentStoreError> {
+fn validate_package(root: &Path, manifest: &ComponentManifest) -> Result<(), ComponentStoreError> {
     if manifest.runtime.command.is_empty() {
         return Err(ComponentStoreError::InvalidPackage(
             "runtime.command must not be empty".to_owned(),
@@ -458,8 +460,8 @@ mod tests {
         fs::create_dir_all(source.join("schemas")).unwrap();
         fs::create_dir_all(source.join(".venv/bin")).unwrap();
         fs::write(
-            source.join("model-manifest.yaml"),
-            r"api_version: davis.model/v1alpha1
+            source.join("component-manifest.yaml"),
+            r"api_version: davis.component/v1alpha1
 id: example/native
 name: Example Native
 version: 1.0.0
@@ -481,7 +483,7 @@ outputs: {}
 
         let installed = store.install(&source).unwrap();
         assert_eq!(installed.id, "example/native");
-        assert!(installed.path.join("model-manifest.yaml").is_file());
+        assert!(installed.path.join("component-manifest.yaml").is_file());
         assert!(!installed.path.join(".venv").exists());
         assert!(matches!(
             store.install(&source),
@@ -493,10 +495,10 @@ outputs: {}
         assert_eq!(removed.id, "example/native");
         assert!(store.list().unwrap().is_empty());
 
-        let unsafe_manifest = fs::read_to_string(source.join("model-manifest.yaml"))
+        let unsafe_manifest = fs::read_to_string(source.join("component-manifest.yaml"))
             .unwrap()
             .replace("example/native", "../escape");
-        fs::write(source.join("model-manifest.yaml"), unsafe_manifest).unwrap();
+        fs::write(source.join("component-manifest.yaml"), unsafe_manifest).unwrap();
         assert!(matches!(
             store.install(&source),
             Err(ComponentStoreError::InvalidIdentity(_))

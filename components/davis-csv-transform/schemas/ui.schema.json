@@ -1,0 +1,6 @@
+{
+  "ui:order": ["calculations"],
+  "calculations": {
+    "ui:description": "Create reproducible numeric columns without embedding arbitrary code in YAML."
+  }
+}

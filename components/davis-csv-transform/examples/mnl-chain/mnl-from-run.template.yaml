@@ -1,5 +1,5 @@
 api_version: davis.analysis/v1alpha1
-name: minimal-mode-choice
+name: mnl-from-transform-run
 
 component:
   id: davis/mnl
@@ -8,8 +8,9 @@ component:
 
 inputs:
   choice_data:
-    kind: local
-    path: choice.csv
+    kind: run_artifact
+    run_id: REPLACE_WITH_TRANSFORM_RUN_ID
+    artifact: transformed_table
 
 config:
   roles:
@@ -17,25 +18,20 @@ config:
     alternative_id: alternative
     chosen: chosen
     available: available
-
   terms:
-    - parameter: beta_time
-      column: time
-    - parameter: beta_cost
-      column: cost
-      alternatives: [train, car]
+    - parameter: beta_generalized_cost
+      column: generalized_cost
     - parameter: asc_car
       constant: 1
       alternatives: [car]
     - parameter: asc_walk
       constant: 1
       alternatives: [walk]
-
   estimation:
     optimizer: bfgs
     max_iterations: 500
     tolerance: 1.0e-8
 
 run:
-  label: minimal-example
-  tags: [example, mnl]
+  label: chained-mnl-example
+  tags: [example, mnl, run-artifact]

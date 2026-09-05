@@ -67,7 +67,7 @@ enum Command {
         #[command(subcommand)]
         command: OperatorCommand,
     },
-    /// Validate and run local behavioral model components.
+    /// Validate and run local analysis components.
     Model {
         #[command(subcommand)]
         command: ModelCommand,
@@ -77,7 +77,7 @@ enum Command {
         #[command(subcommand)]
         command: InstallCommand,
     },
-    /// Inspect and manage installed model components.
+    /// Inspect and manage installed analysis components.
     Component {
         #[command(subcommand)]
         command: ComponentCommand,
@@ -268,14 +268,14 @@ enum ModelCommand {
         #[arg(long)]
         json: bool,
     },
-    /// Validate an analysis plan and resolve its model component.
+    /// Validate an analysis plan and resolve its component.
     Validate {
         plan: PathBuf,
         /// Print structured JSON.
         #[arg(long)]
         json: bool,
     },
-    /// Resolve local inputs and print the exact request without running the model.
+    /// Resolve inputs and print the exact request without running the component.
     Plan {
         plan: PathBuf,
         /// Root where the eventual run directory will be created.
@@ -285,7 +285,7 @@ enum ModelCommand {
         #[arg(long)]
         json: bool,
     },
-    /// Resolve inputs and execute a local model component.
+    /// Resolve inputs and execute a local component.
     Run {
         plan: PathBuf,
         /// Directory below which immutable run records are written.
@@ -299,7 +299,7 @@ enum ModelCommand {
 
 #[derive(Debug, Subcommand)]
 enum InstallCommand {
-    /// Install an official or local model component package.
+    /// Install an official or local component package.
     Component {
         /// Official component name, ID, or local package directory.
         source: String,

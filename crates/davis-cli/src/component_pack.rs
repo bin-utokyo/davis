@@ -3,7 +3,7 @@ use std::fs::{self, File};
 use std::io::{Read, Write};
 use std::path::{Component, Path, PathBuf};
 
-use davis_model_api::ModelManifest;
+use davis_model_api::ComponentManifest;
 use davis_runtime::ComponentStore;
 use flate2::{Compression, GzBuilder};
 use semver::{Version, VersionReq};
@@ -110,7 +110,7 @@ pub(crate) fn pack(
         str::to_owned,
     );
     validate_name(&short_name)?;
-    let manifest = ModelManifest::read(&installed.path.join("model-manifest.yaml"))?;
+    let (_, manifest) = ComponentManifest::read_from_directory(&installed.path)?;
     let requirement = requires_davis
         .map(str::to_owned)
         .or(manifest.requires_davis)
@@ -473,8 +473,8 @@ mod tests {
         let source = temporary.path().join("source");
         fs::create_dir_all(source.join("schemas")).unwrap();
         fs::write(
-            source.join("model-manifest.yaml"),
-            r"api_version: davis.model/v1alpha1
+            source.join("component-manifest.yaml"),
+            r"api_version: davis.component/v1alpha1
 id: example/native
 name: Example Native
 version: 1.2.3

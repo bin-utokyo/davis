@@ -1,0 +1,25 @@
+api_version: davis.analysis/v1alpha1
+name: prepare-generalized-cost
+
+component:
+  id: davis/csv-transform
+  version: 0.1.0
+  operation: transform
+
+inputs:
+  table:
+    kind: local
+    path: choice.csv
+
+config:
+  calculations:
+    - output: generalized_cost
+      operation: linear_combination
+      terms:
+        - column: time
+        - column: cost
+          coefficient: 0.02
+
+run:
+  label: prepare-mnl-input
+  tags: [example, transform, mnl]

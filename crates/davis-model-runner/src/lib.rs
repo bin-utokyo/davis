@@ -5,39 +5,49 @@ use std::io::Read;
 use std::path::{Component, Path, PathBuf};
 use std::process::{Command, Stdio};
 
-use davis_model_api::{ModelManifest, RunRequest, RunResult, RunStatus, RESULT_API_VERSION};
+use davis_model_api::{ComponentManifest, RunRequest, RunResult, RunStatus, RESULT_API_VERSION};
 use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum RunnerError {
-    #[error("model runtime command is empty")]
+    #[error("component runtime command is empty")]
     EmptyCommand,
-    #[error("failed to prepare model run file {path}: {source}")]
+    #[error("failed to prepare component run file {path}: {source}")]
     Io {
         path: PathBuf,
         source: std::io::Error,
     },
-    #[error("failed to serialize model request: {0}")]
+    #[error("failed to serialize component request: {0}")]
     Serialize(#[from] serde_json::Error),
-    #[error("failed to start model process `{command}`: {source}")]
+    #[error("failed to start component process `{command}`: {source}")]
     Spawn {
         command: String,
         source: std::io::Error,
     },
-    #[error("model process exited with code {code}; see {stderr}")]
+    #[error("component process exited with code {code}; see {stderr}")]
     ProcessFailed { code: i32, stderr: PathBuf },
-    #[error("model did not write {0}")]
+    #[error("component did not write {0}")]
     MissingResult(PathBuf),
-    #[error("model result uses run ID `{actual}` instead of `{expected}`")]
+    #[error("component result uses run ID `{actual}` instead of `{expected}`")]
     WrongRunId { actual: String, expected: String },
-    #[error("model result uses unsupported API version `{0}`")]
+    #[error("component result uses unsupported API version `{0}`")]
     WrongResultVersion(String),
-    #[error("model result declared success but returned status `{0:?}`")]
+    #[error("component result declared success but returned status `{0:?}`")]
     UnsuccessfulResult(RunStatus),
     #[error("artifact `{name}` escapes the output directory: {path}")]
     UnsafeArtifact { name: String, path: PathBuf },
     #[error("artifact `{name}` does not exist: {path}")]
     MissingArtifact { name: String, path: PathBuf },
+    #[error("component did not return required artifact `{0}`")]
+    MissingRequiredArtifact(String),
+    #[error("component returned undeclared artifact `{0}`")]
+    UndeclaredArtifact(String),
+    #[error("artifact `{name}` uses media type `{media_type}`; expected one of {expected:?}")]
+    UnsupportedArtifactMediaType {
+        name: String,
+        media_type: String,
+        expected: Vec<String>,
+    },
 }
 
 pub struct RunOutput {
@@ -54,7 +64,7 @@ pub struct RunOutput {
 /// omits a result, or declares an unsafe or missing artifact.
 pub fn run_component(
     manifest_path: &Path,
-    manifest: &ModelManifest,
+    manifest: &ComponentManifest,
     request: &RunRequest,
     run_directory: &Path,
 ) -> Result<RunOutput, RunnerError> {
@@ -132,7 +142,7 @@ pub fn run_component(
     if result.status != RunStatus::Succeeded {
         return Err(RunnerError::UnsuccessfulResult(result.status));
     }
-    validate_artifacts(&request.output_directory, &mut result)?;
+    validate_artifacts(&request.output_directory, manifest, &mut result)?;
     Ok(RunOutput {
         result,
         stdout_path,
@@ -140,7 +150,30 @@ pub fn run_component(
     })
 }
 
-fn validate_artifacts(output_directory: &Path, result: &mut RunResult) -> Result<(), RunnerError> {
+fn validate_artifacts(
+    output_directory: &Path,
+    manifest: &ComponentManifest,
+    result: &mut RunResult,
+) -> Result<(), RunnerError> {
+    for (name, declaration) in &manifest.outputs.artifacts {
+        if declaration.required && !result.artifacts.contains_key(name) {
+            return Err(RunnerError::MissingRequiredArtifact(name.clone()));
+        }
+    }
+    if !manifest.outputs.artifacts.is_empty() {
+        for (name, artifact) in &result.artifacts {
+            let Some(declaration) = manifest.outputs.artifacts.get(name) else {
+                return Err(RunnerError::UndeclaredArtifact(name.clone()));
+            };
+            if !declaration.media_types.contains(&artifact.media_type) {
+                return Err(RunnerError::UnsupportedArtifactMediaType {
+                    name: name.clone(),
+                    media_type: artifact.media_type.clone(),
+                    expected: declaration.media_types.clone(),
+                });
+            }
+        }
+    }
     for (name, artifact) in result
         .artifacts
         .iter_mut()
@@ -187,4 +220,91 @@ fn hash_file(path: &Path) -> Result<blake3::Hash, RunnerError> {
         hasher.update(&buffer[..read]);
     }
     Ok(hasher.finalize())
+}
+
+#[cfg(test)]
+mod tests {
+    use std::collections::BTreeMap;
+    use std::fs;
+    use std::path::PathBuf;
+
+    use davis_model_api::{
+        ArtifactDescriptor, ComponentManifest, RunResult, RunStatus, RESULT_API_VERSION,
+    };
+
+    use super::{validate_artifacts, RunnerError};
+
+    fn manifest() -> ComponentManifest {
+        serde_json::from_value(serde_json::json!({
+            "api_version": "davis.component/v1alpha1",
+            "id": "example/transform",
+            "name": "Example transform",
+            "version": "0.1.0",
+            "kind": "transform",
+            "runtime": {"kind": "native", "command": ["example"]},
+            "operations": ["transform"],
+            "inputs": [],
+            "config_schema": "schemas/config.json",
+            "outputs": {
+                "artifacts": {
+                    "table": {"media_types": ["text/csv"], "required": true}
+                }
+            }
+        }))
+        .unwrap()
+    }
+
+    fn result(media_type: &str) -> RunResult {
+        RunResult {
+            api_version: RESULT_API_VERSION.to_owned(),
+            run_id: "run".to_owned(),
+            status: RunStatus::Succeeded,
+            artifacts: BTreeMap::from([(
+                "table".to_owned(),
+                ArtifactDescriptor {
+                    path: PathBuf::from("table.csv"),
+                    media_type: media_type.to_owned(),
+                    size: None,
+                    object_id: None,
+                },
+            )]),
+            extensions: BTreeMap::new(),
+            error: None,
+        }
+    }
+
+    #[test]
+    fn enforces_declared_artifact_names_media_types_and_integrity() {
+        let temporary = tempfile::tempdir().unwrap();
+        fs::write(temporary.path().join("table.csv"), "value\n1\n").unwrap();
+        let manifest = manifest();
+        let mut valid = result("text/csv");
+        validate_artifacts(temporary.path(), &manifest, &mut valid).unwrap();
+        assert_eq!(valid.artifacts["table"].size, Some(8));
+        assert!(valid.artifacts["table"]
+            .object_id
+            .as_deref()
+            .is_some_and(|value| value.starts_with("blake3:")));
+
+        let mut missing = result("text/csv");
+        missing.artifacts.clear();
+        assert!(matches!(
+            validate_artifacts(temporary.path(), &manifest, &mut missing),
+            Err(RunnerError::MissingRequiredArtifact(name)) if name == "table"
+        ));
+
+        let mut wrong_media_type = result("application/json");
+        assert!(matches!(
+            validate_artifacts(temporary.path(), &manifest, &mut wrong_media_type),
+            Err(RunnerError::UnsupportedArtifactMediaType { .. })
+        ));
+
+        let mut undeclared = result("text/csv");
+        let descriptor = undeclared.artifacts["table"].clone();
+        undeclared.artifacts.insert("other".to_owned(), descriptor);
+        assert!(matches!(
+            validate_artifacts(temporary.path(), &manifest, &mut undeclared),
+            Err(RunnerError::UndeclaredArtifact(name)) if name == "other"
+        ));
+    }
 }

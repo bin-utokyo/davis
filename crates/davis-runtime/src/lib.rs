@@ -6,15 +6,15 @@ mod inspect;
 use std::collections::BTreeMap;
 use std::fs::{self, File};
 use std::io::{self, Read};
-use std::path::{Path, PathBuf};
+use std::path::{Component, Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 pub use components::{
     user_data_directory, ComponentStore, ComponentStoreError, InstalledComponent,
 };
 use davis_model_api::{
-    AnalysisPlan, InputSource, ModelManifest, ResolvedComponent, ResolvedFile, ResolvedInput,
-    RunRequest, RunResult, RUN_API_VERSION,
+    AnalysisPlan, ComponentManifest, InputSource, ResolvedComponent, ResolvedFile, ResolvedInput,
+    RunRequest, RunResult, RunStatus, RESULT_API_VERSION, RUN_API_VERSION,
 };
 use davis_model_runner::{run_component, RunnerError};
 pub use inspect::{inspect_csv, ColumnProfile, CsvProfile, InspectError};
@@ -33,31 +33,47 @@ pub enum RuntimeError {
         path: PathBuf,
         source: std::io::Error,
     },
-    #[error("model component `{id}` version `{version}` was not found; searched {roots:?}")]
+    #[error("component `{id}` version `{version}` was not found; searched {roots:?}")]
     ModelNotFound {
         id: String,
         version: String,
         roots: Vec<PathBuf>,
     },
-    #[error("model `{id}` does not support operation `{operation}`")]
+    #[error("component `{id}` does not support operation `{operation}`")]
     UnsupportedOperation { id: String, operation: String },
-    #[error("required model input `{0}` was not provided")]
+    #[error("required component input `{0}` was not provided")]
     MissingInput(String),
-    #[error("analysis input `{0}` is not declared by the model manifest")]
+    #[error("analysis input `{0}` is not declared by the component manifest")]
     UnexpectedInput(String),
-    #[error("model input `{name}` does not accept media type `{media_type}`")]
+    #[error("component input `{name}` does not accept media type `{media_type}`")]
     UnsupportedMediaType { name: String, media_type: String },
     #[error("catalog inputs are not implemented in this prototype: {dataset_id}/{file_id}")]
     CatalogNotImplemented { dataset_id: String, file_id: String },
-    #[error("run artifact inputs are not implemented in this prototype: {run_id}/{artifact}")]
-    RunArtifactNotImplemented { run_id: String, artifact: String },
+    #[error("invalid run ID `{0}`")]
+    InvalidRunId(String),
+    #[error("run result does not exist: {0}")]
+    MissingRunResult(PathBuf),
+    #[error("run `{run_id}` does not contain artifact `{artifact}`")]
+    MissingRunArtifact { run_id: String, artifact: String },
+    #[error("run artifact `{run_id}/{artifact}` has an unsafe path: {path}")]
+    UnsafeRunArtifact {
+        run_id: String,
+        artifact: String,
+        path: PathBuf,
+    },
+    #[error("run artifact `{run_id}/{artifact}` failed integrity verification: {message}")]
+    RunArtifactIntegrity {
+        run_id: String,
+        artifact: String,
+        message: String,
+    },
     #[error("local input does not exist: {0}")]
     MissingLocalInput(PathBuf),
     #[error("failed to serialize run record: {0}")]
     Serialize(#[from] serde_json::Error),
     #[error("invalid JSON schema {path}: {message}")]
     InvalidConfigSchema { path: PathBuf, message: String },
-    #[error("model configuration does not match {path}: {errors}")]
+    #[error("component configuration does not match {path}: {errors}")]
     InvalidModelConfig { path: PathBuf, errors: String },
     #[error("runtime generated an invalid output directory: {0}")]
     InvalidOutputDirectory(PathBuf),
@@ -67,7 +83,7 @@ pub enum RuntimeError {
 pub struct ValidatedPlan {
     pub plan: AnalysisPlan,
     pub plan_path: PathBuf,
-    pub manifest: ModelManifest,
+    pub manifest: ComponentManifest,
     pub manifest_path: PathBuf,
 }
 
@@ -94,12 +110,15 @@ pub struct CompletedRun {
 pub fn validate_plan(repository: &Path, plan_path: &Path) -> Result<ValidatedPlan, RuntimeError> {
     let plan_path = absolute_path(plan_path)?;
     let plan = AnalysisPlan::read(&plan_path)?;
-    let (manifest_path, manifest) =
-        find_manifest(repository, &plan.model.component, &plan.model.version)?;
-    if !manifest.operations.contains(&plan.model.operation) {
+    let (manifest_path, manifest) = find_manifest(
+        repository,
+        &plan.component.component,
+        &plan.component.version,
+    )?;
+    if !manifest.operations.contains(&plan.component.operation) {
         return Err(RuntimeError::UnsupportedOperation {
             id: manifest.id.clone(),
-            operation: plan.model.operation.clone(),
+            operation: plan.component.operation.clone(),
         });
     }
     for input in &manifest.inputs {
@@ -140,6 +159,7 @@ pub fn plan_run(
     run_root: &Path,
 ) -> Result<PlannedRun, RuntimeError> {
     let validated = validate_plan(repository, plan_path)?;
+    let run_root = absolute_path(run_root)?;
     let plan_directory = validated
         .plan_path
         .parent()
@@ -180,10 +200,7 @@ pub fn plan_run(
                 });
             }
             InputSource::RunArtifact { run_id, artifact } => {
-                return Err(RuntimeError::RunArtifactNotImplemented {
-                    run_id: run_id.clone(),
-                    artifact: artifact.clone(),
-                });
+                resolve_run_artifact(&run_root, run_id, artifact)?
             }
         };
         let declaration = validated
@@ -207,7 +224,7 @@ pub fn plan_run(
         );
     }
     let run_id = new_run_id();
-    let run_directory = absolute_path(run_root)?.join(&run_id);
+    let run_directory = run_root.join(&run_id);
     let output_directory = run_directory.join("artifacts");
     let component_directory = validated
         .manifest_path
@@ -218,10 +235,11 @@ pub fn plan_run(
         request: RunRequest {
             api_version: RUN_API_VERSION.to_owned(),
             run_id,
-            operation: validated.plan.model.operation.clone(),
+            operation: validated.plan.component.operation.clone(),
             component: ResolvedComponent {
                 id: validated.manifest.id,
                 version: validated.manifest.version,
+                kind: validated.manifest.kind,
                 manifest_path: validated.manifest_path.clone(),
                 source_digest: format!("blake3:{component_digest}"),
             },
@@ -232,6 +250,136 @@ pub fn plan_run(
         plan_path: validated.plan_path,
         manifest_path: validated.manifest_path,
     })
+}
+
+fn resolve_run_artifact(
+    run_root: &Path,
+    run_id: &str,
+    artifact_name: &str,
+) -> Result<ResolvedFile, RuntimeError> {
+    let run_id_path = Path::new(run_id);
+    if run_id_path.components().count() != 1
+        || !matches!(run_id_path.components().next(), Some(Component::Normal(_)))
+    {
+        return Err(RuntimeError::InvalidRunId(run_id.to_owned()));
+    }
+    let run_directory = run_root.join(run_id);
+    let result_path = run_directory.join("result.json");
+    let result = read_run_result(&result_path, run_id, artifact_name)?;
+    let descriptor = result
+        .artifacts
+        .get(artifact_name)
+        .or_else(|| result.extensions.get(artifact_name))
+        .ok_or_else(|| RuntimeError::MissingRunArtifact {
+            run_id: run_id.to_owned(),
+            artifact: artifact_name.to_owned(),
+        })?;
+    if descriptor.path.is_absolute()
+        || descriptor
+            .path
+            .components()
+            .any(|component| !matches!(component, Component::Normal(_)))
+    {
+        return Err(RuntimeError::UnsafeRunArtifact {
+            run_id: run_id.to_owned(),
+            artifact: artifact_name.to_owned(),
+            path: descriptor.path.clone(),
+        });
+    }
+    let output_directory = run_directory.join("artifacts");
+    let path = output_directory.join(&descriptor.path);
+    if !path.is_file() {
+        return Err(RuntimeError::MissingLocalInput(path));
+    }
+    let canonical_output =
+        fs::canonicalize(&output_directory).map_err(|source| RuntimeError::Io {
+            path: output_directory.clone(),
+            source,
+        })?;
+    let canonical_path = fs::canonicalize(&path).map_err(|source| RuntimeError::Io {
+        path: path.clone(),
+        source,
+    })?;
+    if !canonical_path.starts_with(&canonical_output) {
+        return Err(RuntimeError::UnsafeRunArtifact {
+            run_id: run_id.to_owned(),
+            artifact: artifact_name.to_owned(),
+            path,
+        });
+    }
+    let metadata = fs::metadata(&canonical_path).map_err(|source| RuntimeError::Io {
+        path: canonical_path.clone(),
+        source,
+    })?;
+    let digest = format!("blake3:{}", hash_file(&canonical_path)?);
+    verify_artifact_integrity(run_id, artifact_name, descriptor, metadata.len(), &digest)?;
+    Ok(ResolvedFile {
+        path: canonical_path,
+        object_id: digest,
+        size: metadata.len(),
+        media_type: descriptor.media_type.clone(),
+    })
+}
+
+fn read_run_result(
+    result_path: &Path,
+    run_id: &str,
+    artifact_name: &str,
+) -> Result<RunResult, RuntimeError> {
+    if !result_path.is_file() {
+        return Err(RuntimeError::MissingRunResult(result_path.to_owned()));
+    }
+    let result_bytes = fs::read(result_path).map_err(|source| RuntimeError::Io {
+        path: result_path.to_owned(),
+        source,
+    })?;
+    let result: RunResult = serde_json::from_slice(&result_bytes)?;
+    if result.api_version != RESULT_API_VERSION || result.status != RunStatus::Succeeded {
+        return Err(RuntimeError::RunArtifactIntegrity {
+            run_id: run_id.to_owned(),
+            artifact: artifact_name.to_owned(),
+            message: format!(
+                "result has API version `{}` and status `{:?}`",
+                result.api_version, result.status
+            ),
+        });
+    }
+    if result.run_id != run_id {
+        return Err(RuntimeError::RunArtifactIntegrity {
+            run_id: run_id.to_owned(),
+            artifact: artifact_name.to_owned(),
+            message: format!("result records run ID `{}`", result.run_id),
+        });
+    }
+    Ok(result)
+}
+
+fn verify_artifact_integrity(
+    run_id: &str,
+    artifact_name: &str,
+    descriptor: &davis_model_api::ArtifactDescriptor,
+    actual_size: u64,
+    actual_digest: &str,
+) -> Result<(), RuntimeError> {
+    if let Some(expected) = descriptor.size {
+        if expected != actual_size {
+            return Err(RuntimeError::RunArtifactIntegrity {
+                run_id: run_id.to_owned(),
+                artifact: artifact_name.to_owned(),
+                message: format!("recorded size {expected} differs from {actual_size}"),
+            });
+        }
+    }
+    if let Some(expected) = &descriptor.object_id {
+        if expected != actual_digest {
+            return Err(RuntimeError::RunArtifactIntegrity {
+                run_id: run_id.to_owned(),
+                artifact: artifact_name.to_owned(),
+                message: format!("recorded digest does not match {actual_digest}"),
+            });
+        }
+    }
+    Ok(())
 }
 
 /// Compiles and executes one local analysis plan and persists its run record.
@@ -264,7 +412,7 @@ pub fn execute_plan(
             source,
         }
     })?;
-    let manifest = ModelManifest::read(&planned.manifest_path)?;
+    let manifest = ComponentManifest::read(&planned.manifest_path)?;
     let output = run_component(
         &planned.manifest_path,
         &manifest,
@@ -295,7 +443,7 @@ fn find_manifest(
     repository: &Path,
     id: &str,
     version: &str,
-) -> Result<(PathBuf, ModelManifest), RuntimeError> {
+) -> Result<(PathBuf, ComponentManifest), RuntimeError> {
     let mut roots = vec![repository.join("components")];
     if let Ok(store) = ComponentStore::for_user() {
         if !roots.iter().any(|root| root == store.root()) {
@@ -308,12 +456,18 @@ fn find_manifest(
             .filter_entry(|entry| !is_temporary_install_entry(entry))
             .filter_map(Result::ok)
         {
-            if entry.file_name() != "model-manifest.yaml" {
+            let is_manifest = entry.file_name() == davis_model_api::COMPONENT_MANIFEST_FILENAME
+                || entry.file_name() == davis_model_api::LEGACY_MODEL_MANIFEST_FILENAME;
+            if !is_manifest {
                 continue;
             }
-            if let Ok(manifest) = ModelManifest::read(entry.path()) {
+            let Some(directory) = entry.path().parent() else {
+                continue;
+            };
+            if let Ok((manifest_path, manifest)) = ComponentManifest::read_from_directory(directory)
+            {
                 if manifest.id == id && manifest.version == version {
-                    return Ok((absolute_path(entry.path())?, manifest));
+                    return Ok((absolute_path(&manifest_path)?, manifest));
                 }
             }
         }
@@ -443,4 +597,99 @@ fn hash_component(directory: &Path) -> Result<blake3::Hash, RuntimeError> {
         }
     }
     Ok(hasher.finalize())
+}
+
+#[cfg(test)]
+mod tests {
+    use std::fs;
+
+    use davis_model_api::InputSource;
+
+    use super::{plan_run, RuntimeError};
+
+    #[test]
+    fn resolves_and_verifies_a_prior_run_artifact() {
+        let temporary = tempfile::tempdir().unwrap();
+        let repository = temporary.path().join("project");
+        let component = repository.join("components/example/transform");
+        fs::create_dir_all(component.join("schemas")).unwrap();
+        fs::write(
+            component.join("component-manifest.yaml"),
+            r"api_version: davis.component/v1alpha1
+id: example/transform
+name: Example transform
+version: 0.1.0
+kind: transform
+runtime:
+  kind: native
+  command: [true]
+operations: [transform]
+inputs:
+  - name: table
+    media_types: [text/csv]
+config_schema: schemas/config.json
+outputs:
+  artifacts:
+    table:
+      media_types: [text/csv]
+",
+        )
+        .unwrap();
+        fs::write(component.join("schemas/config.json"), "{}").unwrap();
+
+        let run_root = repository.join("davis-runs");
+        let prior_output = run_root.join("prior/artifacts");
+        fs::create_dir_all(&prior_output).unwrap();
+        let artifact_path = prior_output.join("table.csv");
+        fs::write(&artifact_path, "value\n1\n").unwrap();
+        let bytes = fs::read(&artifact_path).unwrap();
+        let digest = blake3::hash(&bytes);
+        fs::write(
+            run_root.join("prior/result.json"),
+            serde_json::to_vec_pretty(&serde_json::json!({
+                "api_version": "davis.result/v1alpha1",
+                "run_id": "prior",
+                "status": "succeeded",
+                "artifacts": {
+                    "table": {
+                        "path": "table.csv",
+                        "media_type": "text/csv",
+                        "size": bytes.len(),
+                        "object_id": format!("blake3:{digest}")
+                    }
+                }
+            }))
+            .unwrap(),
+        )
+        .unwrap();
+        let plan_path = repository.join("transform.yaml");
+        fs::write(
+            &plan_path,
+            r"api_version: davis.analysis/v1alpha1
+name: chained
+component:
+  id: example/transform
+  version: 0.1.0
+  operation: transform
+inputs:
+  table:
+    kind: run_artifact
+    run_id: prior
+    artifact: table
+config: {}
+",
+        )
+        .unwrap();
+
+        let planned = plan_run(&repository, &plan_path, &run_root).unwrap();
+        let input = planned.request.inputs.get("table").unwrap();
+        assert!(matches!(input.source, InputSource::RunArtifact { .. }));
+        assert_eq!(input.resolved.object_id, format!("blake3:{digest}"));
+
+        fs::write(&artifact_path, "value\n2\n").unwrap();
+        assert!(matches!(
+            plan_run(&repository, &plan_path, &run_root),
+            Err(RuntimeError::RunArtifactIntegrity { .. })
+        ));
+    }
 }
