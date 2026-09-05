@@ -1,11 +1,9 @@
 api_version: davis.analysis/v1alpha1
 name: multi-source-mode-choice
-
 component:
   id: davis/mnl
   version: 0.2.0
   operation: estimate
-
 inputs:
   choice_data:
     kind: table_binding
@@ -16,64 +14,74 @@ inputs:
       choices:
         kind: local
         path: choices.csv
+        read: null
       persons:
         kind: local
         path: persons.csv
+        read: null
     base: choices
     joins:
-      - source: persons
-        relationship: many_to_one
-        left_on: case_id
-        right_on: person_id
+    - source: persons
+      left_on: case_id
+      right_on: person_id
+      relationship: many_to_one
+      how: left
+      allow_unmatched: false
     columns:
-      case_id:
-        source: choices
-        column: case_id
       alternative:
         source: choices
         column: alternative
-      chosen:
-        source: choices
-        column: chosen
       available:
         source: choices
         column: available
-      time:
+      case_id:
         source: choices
-        column: time
+        column: case_id
+      chosen:
+        source: choices
+        column: chosen
       cost:
         source: choices
         column: cost
       income:
         source: persons
         column: income
-
+      time:
+        source: choices
+        column: time
 config:
-  roles:
-    case_id: case_id
-    alternative_id: alternative
-    chosen: chosen
-    available: available
-  terms:
-    - parameter: beta_time
-      column: time
-    - parameter: beta_cost
-      column: cost
-      alternatives: [train, car]
-    - parameter: beta_income_car
-      column: income
-      alternatives: [car]
-    - parameter: asc_car
-      constant: 1
-      alternatives: [car]
-    - parameter: asc_walk
-      constant: 1
-      alternatives: [walk]
   estimation:
-    optimizer: bfgs
     max_iterations: 500
-    tolerance: 1.0e-8
-
+    optimizer: bfgs
+    tolerance: 1e-8
+  roles:
+    alternative_id: alternative
+    available: available
+    case_id: case_id
+    chosen: chosen
+  terms:
+  - column: time
+    parameter: beta_time
+  - alternatives:
+    - train
+    - car
+    column: cost
+    parameter: beta_cost
+  - alternatives:
+    - car
+    column: income
+    parameter: beta_income_car
+  - alternatives:
+    - car
+    constant: 1
+    parameter: asc_car
+  - alternatives:
+    - walk
+    constant: 1
+    parameter: asc_walk
 run:
   label: multi-source-example
-  tags: [example, mnl, data-binding]
+  tags:
+  - example
+  - mnl
+  - data-binding
