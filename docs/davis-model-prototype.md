@@ -20,8 +20,9 @@
 * Manifestによる出力artifact名，media type，必須条件の検証
 * 過去Runのartifactをsize・BLAKE3検証して次のRunへ渡す入力resolver
 * CSVへ再現可能な計算列を追加する参考transform component
+* 単一・複合key，関係性，未一致方針を明示する複数CSV join
 
-catalog input，join，filter，Parquetへの内部materializeは型または拡張点だけを用意しており，まだ実行できません．未実装入力を指定した場合は明示的に失敗します．component作成方法は[`davis-component-authoring.md`](davis-component-authoring.md)に記載します．
+catalog input，filter，group，Parquetへの内部materializeは型または拡張点だけを用意しており，まだ実行できません．未実装入力を指定した場合は明示的に失敗します．component作成方法は[`davis-component-authoring.md`](davis-component-authoring.md)に記載します．
 
 ## 最小example
 

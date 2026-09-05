@@ -1,5 +1,8 @@
 {
-  "ui:order": ["calculations"],
+  "ui:order": ["joins", "calculations"],
+  "joins": {
+    "ui:description": "Join additional CSV inputs by one or more exact key columns. Duplicate and unmatched keys are checked explicitly."
+  },
   "calculations": {
     "ui:description": "Create reproducible numeric columns without embedding arbitrary code in YAML."
   }

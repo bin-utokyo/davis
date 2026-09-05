@@ -1,6 +1,6 @@
 [project]
 name = "davis-csv-transform"
-version = "0.1.0"
+version = "0.2.0"
 description = "Reference CSV feature transformation component for Davis"
 requires-python = ">=3.11"
 dependencies = []

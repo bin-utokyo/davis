@@ -54,6 +54,8 @@ outputs:
 
 `kind`は`model`，`transform`，`visualize`のいずれかです．省略時は既存Manifestとの互換性のため`model`です．`operations`の名前はcomponentが定義します．`requires_davis`はDavis本体のrelease versionから自動生成せず，利用するcontractの互換範囲をcomponent作者が宣言します．
 
+通常は`inputs`でslot名を固定します．CSV joinのように利用者が任意名の追加inputを与えるcomponentだけは，`additional_inputs.media_types`で許可する形式を限定できます．追加inputもDavisがpath，media type，size，BLAKE3を解決・記録してからcomponentへ渡します．
+
 `outputs.artifacts`を宣言したcomponentは，未宣言artifact，必須artifactの欠落，異なるmedia typeを返せません．Davisは各成果物のpath，size，BLAKE3も検証して`result.json`へ記録します．既存componentの`outputs.standard`と`outputs.extensions`は引き続き読めます．
 
 ## Analysis plan
@@ -132,6 +134,39 @@ cargo run -p davis-cli -- \
 
 `examples/mnl-chain`には，CSV変換Runの`transformed_table`をMNLへ渡す2段階exampleがあります．
 
+### 複数CSVのjoin
+
+`davis/csv-transform`は，`table`を基準表として任意名の追加CSV inputを受け取れます．join keyは単一列または複数列で指定します．次の例では，tripの`origin_zone`とzone表の`zone_code`が同じ行を結合します．
+
+```yaml
+inputs:
+  table:
+    kind: local
+    path: trips.csv
+  zones:
+    kind: local
+    path: zones.csv
+config:
+  joins:
+    - input: zones
+      how: left
+      relationship: many_to_one
+      left_on: origin_zone
+      right_on: zone_code
+      columns:
+        origin_population: population
+```
+
+`columns`は「出力列名: join元の列名」の対応です．複合keyでは`left_on: [person_id, date]`のように配列を使います．`many_to_one`では右表のkey重複を拒否し，`one_to_one`では左右両方の重複を拒否します．一致しないkeyは既定でerrorです．意図的に許可する場合だけ`allow_unmatched: true`を指定し，`left` joinでは空欄を補い，`inner` joinでは該当行を除外します．
+
+動作例は次で実行できます．
+
+```console
+cargo run -p davis-cli -- \
+  --repository . \
+  model run components/davis-csv-transform/examples/join/transform.yaml
+```
+
 ## 検証と公開
 
 ```console
@@ -147,4 +182,4 @@ davis component registry dist/my-component-0.1.0.entry.json \
 
 ## 現在の境界
 
-実装済みなのはlocal input，`run_artifact` input，process実行，artifact検証，local／registry installです．catalog input，宣言的join，filter，group，pipeline DAG，Davis管理Python，sandboxは未実装です．QGIS等の手作業は生成済みfileをlocal inputとして利用し，自動実行できるalgorithmは同じprocess contractでtransform componentとして包めます．
+実装済みなのはlocal input，`run_artifact` input，宣言的な複数CSV join，線形結合，process実行，artifact検証，local／registry installです．catalog input，filter，group，pipeline DAG，Davis管理Python，sandboxは未実装です．QGIS等の手作業は生成済みfileをlocal inputとして利用し，自動実行できるalgorithmは同じprocess contractでtransform componentとして包めます．

@@ -1,0 +1,36 @@
+api_version: davis.analysis/v1alpha1
+name: join-zone-attributes
+
+component:
+  id: davis/csv-transform
+  version: 0.2.0
+  operation: transform
+
+inputs:
+  table:
+    kind: local
+    path: trips.csv
+  zones:
+    kind: local
+    path: zones.csv
+
+config:
+  joins:
+    - input: zones
+      how: left
+      relationship: many_to_one
+      left_on: origin_zone
+      right_on: zone_code
+      columns:
+        origin_access_time: access_time
+        origin_population: population
+  calculations:
+    - output: total_time
+      operation: linear_combination
+      terms:
+        - column: travel_time
+        - column: origin_access_time
+
+run:
+  label: join-example
+  tags: [example, transform, join]

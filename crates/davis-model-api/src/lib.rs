@@ -46,6 +46,8 @@ pub enum ContractError {
     },
     #[error("artifact declaration `{0}` must contain at least one valid media type")]
     InvalidArtifactDeclaration(String),
+    #[error("additional input declaration must contain at least one valid media type")]
+    InvalidAdditionalInputDeclaration,
     #[error("component package contains both component-manifest.yaml and model-manifest.yaml")]
     AmbiguousComponentManifest,
 }
@@ -160,6 +162,8 @@ pub struct ComponentManifest {
     pub runtime: RuntimeDeclaration,
     pub operations: Vec<String>,
     pub inputs: Vec<ComponentInput>,
+    #[serde(default)]
+    pub additional_inputs: Option<AdditionalInputDeclaration>,
     pub config_schema: PathBuf,
     #[serde(default)]
     pub ui_schema: Option<PathBuf>,
@@ -253,6 +257,15 @@ impl ComponentManifest {
                 return Err(ContractError::InvalidArtifactDeclaration(name.clone()));
             }
         }
+        if self.additional_inputs.as_ref().is_some_and(|declaration| {
+            declaration.media_types.is_empty()
+                || declaration
+                    .media_types
+                    .iter()
+                    .any(|media_type| media_type.trim().is_empty())
+        }) {
+            return Err(ContractError::InvalidAdditionalInputDeclaration);
+        }
         Ok(())
     }
 }
@@ -284,6 +297,11 @@ pub struct ComponentInput {
     pub media_types: Vec<String>,
     #[serde(default = "default_true")]
     pub required: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct AdditionalInputDeclaration {
+    pub media_types: Vec<String>,
 }
 
 /// Backward-compatible Rust name for [`ComponentInput`].
@@ -397,8 +415,8 @@ fn require_version(actual: &str, expected: &'static str) -> Result<(), ContractE
 #[cfg(test)]
 mod tests {
     use super::{
-        AnalysisPlan, ComponentKind, ComponentManifest, ContractError, InputSource, ModelManifest,
-        ANALYSIS_API_VERSION,
+        AdditionalInputDeclaration, AnalysisPlan, ComponentKind, ComponentManifest, ContractError,
+        InputSource, ModelManifest, ANALYSIS_API_VERSION,
     };
 
     #[test]
@@ -445,11 +463,20 @@ config_schema: schemas/config.json
         .unwrap();
         valid.validate().unwrap();
 
-        let mut invalid = valid;
+        let mut invalid = valid.clone();
         invalid.requires_davis = Some("not-a-requirement".to_owned());
         assert!(matches!(
             invalid.validate(),
             Err(ContractError::InvalidDavisRequirement { .. })
+        ));
+
+        let mut invalid_additional_inputs = valid;
+        invalid_additional_inputs.additional_inputs = Some(AdditionalInputDeclaration {
+            media_types: Vec::new(),
+        });
+        assert!(matches!(
+            invalid_additional_inputs.validate(),
+            Err(ContractError::InvalidAdditionalInputDeclaration)
         ));
     }
 

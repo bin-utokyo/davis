@@ -90,7 +90,7 @@ jobs:
             --out dist
           target/release/davis component registry \
             dist/davis-mnl-0.1.0.entry.json \
-            dist/davis-csv-transform-0.1.0.entry.json \
+            dist/davis-csv-transform-0.2.0.entry.json \
             --out dist/component-registry.json
       - name: Verify transform-to-model execution through the registry
         shell: bash
@@ -132,7 +132,7 @@ jobs:
           name: official-components
           path: |
             dist/davis-mnl-0.1.0.tar.gz
-            dist/davis-csv-transform-0.1.0.tar.gz
+            dist/davis-csv-transform-0.2.0.tar.gz
             dist/component-registry.json
           if-no-files-found: error
 

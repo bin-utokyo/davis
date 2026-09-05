@@ -101,7 +101,7 @@ pub struct CompletedRun {
     pub result: RunResult,
 }
 
-/// Validates an analysis plan and resolves its declared model component.
+/// Validates an analysis plan and resolves its declared component.
 ///
 /// # Errors
 ///
@@ -127,7 +127,9 @@ pub fn validate_plan(repository: &Path, plan_path: &Path) -> Result<ValidatedPla
         }
     }
     for name in plan.inputs.keys() {
-        if !manifest.inputs.iter().any(|input| &input.name == name) {
+        if !manifest.inputs.iter().any(|input| &input.name == name)
+            && manifest.additional_inputs.is_none()
+        {
             return Err(RuntimeError::UnexpectedInput(name.clone()));
         }
     }
@@ -203,13 +205,21 @@ pub fn plan_run(
                 resolve_run_artifact(&run_root, run_id, artifact)?
             }
         };
-        let declaration = validated
+        let declared_media_types = validated
             .manifest
             .inputs
             .iter()
             .find(|input| input.name == *name)
+            .map(|input| &input.media_types)
+            .or_else(|| {
+                validated
+                    .manifest
+                    .additional_inputs
+                    .as_ref()
+                    .map(|input| &input.media_types)
+            })
             .ok_or_else(|| RuntimeError::UnexpectedInput(name.clone()))?;
-        if !declaration.media_types.contains(&resolved.media_type) {
+        if !declared_media_types.contains(&resolved.media_type) {
             return Err(RuntimeError::UnsupportedMediaType {
                 name: name.clone(),
                 media_type: resolved.media_type,
