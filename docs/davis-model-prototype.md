@@ -115,6 +115,6 @@ component/
 
 RunnerはManifestの`runtime.command`へ`request_argument`と`request.json`の絶対pathを追加して起動します．processは指定されたoutput directoryへ`run-result.json`を書きます．artifact pathはoutput directoryからの安全な相対pathでなければなりません．
 
-localまたはregistry componentは任意codeを実行するため，現在のprototypeでは信頼できるcomponentだけをinstallしてください．sandboxとregistry署名は後続実装です．現在のPython componentは実行時に`uv`を必要とし，Davis管理runtimeの自動installはまだ実装していません．
+localまたはregistry componentは任意codeを実行するため，現在のprototypeでは信頼できるcomponentだけをinstallしてください．sandboxとregistry署名は後続実装です．Runtimeの正規形は言語非依存の`executor: process`です．現在のPython componentは実行時に`uv`を必要とし，Davisは一般言語環境を自動installせず，Manifestの`requirements`に基づいて不足commandと導入方法を案内します．
 
 ComponentManifestの`requires_davis`はcomponentが必要とするDavis contractのSemVer条件です．本体のrelease versionとは独立しており，互換性が維持されている限り，本体のminor updateに合わせて機械的に上げません．MNL 0.2.0は`>=0.3.5`を宣言します．正規の`component.yaml`はconfig schemaとpresentationをinlineに保持でき，旧packageの`component-manifest.yaml`，`model-manifest.yaml`，`davis.component/v1alpha1`，`davis.model/v1alpha1`も後方互換として読み込めます．

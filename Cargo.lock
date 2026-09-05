@@ -924,6 +924,7 @@ version = "0.5.0"
 dependencies = [
  "blake3",
  "davis-model-api",
+ "semver",
  "serde_json",
  "tempfile",
  "thiserror 2.0.20",

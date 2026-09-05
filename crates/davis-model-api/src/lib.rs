@@ -41,6 +41,17 @@ pub enum ContractError {
     InvalidComponentIdentity,
     #[error("component manifest must declare at least one operation")]
     MissingOperations,
+    #[error("component runtime command must not be empty")]
+    EmptyRuntimeCommand,
+    #[error("runtime requirement command must not be empty")]
+    EmptyRuntimeRequirement,
+    #[error("runtime version requirement must declare version_arguments")]
+    EmptyRuntimeVersionArguments,
+    #[error("invalid runtime version requirement `{value}`: {source}")]
+    InvalidRuntimeRequirement {
+        value: String,
+        source: semver::Error,
+    },
     #[error("invalid Davis version requirement `{value}`: {source}")]
     InvalidDavisRequirement {
         value: String,
@@ -518,54 +529,8 @@ impl ComponentManifest {
         if self.operations.is_empty() {
             return Err(ContractError::MissingOperations);
         }
-        let inline_configuration = self
-            .configuration
-            .as_ref()
-            .is_some_and(|declaration| declaration.schema.is_some());
-        let referenced_configuration = self
-            .configuration
-            .as_ref()
-            .is_some_and(|declaration| declaration.schema_ref.is_some());
-        if usize::from(inline_configuration)
-            + usize::from(referenced_configuration)
-            + usize::from(self.config_schema.is_some())
-            != 1
-        {
-            return Err(ContractError::InvalidConfigurationDeclaration);
-        }
-        for reference in self
-            .configuration
-            .as_ref()
-            .and_then(|declaration| declaration.schema_ref.as_ref())
-            .into_iter()
-            .chain(self.config_schema.iter())
-        {
-            validate_document_reference(reference)?;
-        }
-        let inline_presentation = self
-            .presentation
-            .as_ref()
-            .is_some_and(|declaration| declaration.ui.is_some());
-        let referenced_presentation = self
-            .presentation
-            .as_ref()
-            .is_some_and(|declaration| declaration.ui_ref.is_some());
-        if usize::from(inline_presentation)
-            + usize::from(referenced_presentation)
-            + usize::from(self.ui_schema.is_some())
-            > 1
-        {
-            return Err(ContractError::InvalidPresentationDeclaration);
-        }
-        for reference in self
-            .presentation
-            .as_ref()
-            .and_then(|declaration| declaration.ui_ref.as_ref())
-            .into_iter()
-            .chain(self.ui_schema.iter())
-        {
-            validate_document_reference(reference)?;
-        }
+        validate_runtime_declaration(&self.runtime)?;
+        validate_manifest_documents(self)?;
         if let Some(requirement) = &self.requires_davis {
             semver::VersionReq::parse(requirement).map_err(|source| {
                 ContractError::InvalidDavisRequirement {
@@ -596,6 +561,66 @@ impl ComponentManifest {
         }
         Ok(())
     }
+}
+
+fn validate_runtime_declaration(runtime: &RuntimeDeclaration) -> Result<(), ContractError> {
+    if runtime.command.is_empty() || runtime.command[0].trim().is_empty() {
+        return Err(ContractError::EmptyRuntimeCommand);
+    }
+    for requirement in &runtime.requirements {
+        if requirement.command.trim().is_empty() {
+            return Err(ContractError::EmptyRuntimeRequirement);
+        }
+        if let Some(version) = &requirement.version {
+            if requirement.version_arguments.is_empty() {
+                return Err(ContractError::EmptyRuntimeVersionArguments);
+            }
+            semver::VersionReq::parse(version).map_err(|source| {
+                ContractError::InvalidRuntimeRequirement {
+                    value: version.clone(),
+                    source,
+                }
+            })?;
+        }
+    }
+    Ok(())
+}
+
+fn validate_manifest_documents(manifest: &ComponentManifest) -> Result<(), ContractError> {
+    let configuration = manifest.configuration.as_ref();
+    let configuration_sources =
+        usize::from(configuration.is_some_and(|declaration| declaration.schema.is_some()))
+            + usize::from(
+                configuration.is_some_and(|declaration| declaration.schema_ref.is_some()),
+            )
+            + usize::from(manifest.config_schema.is_some());
+    if configuration_sources != 1 {
+        return Err(ContractError::InvalidConfigurationDeclaration);
+    }
+    for reference in configuration
+        .and_then(|declaration| declaration.schema_ref.as_ref())
+        .into_iter()
+        .chain(manifest.config_schema.iter())
+    {
+        validate_document_reference(reference)?;
+    }
+
+    let presentation = manifest.presentation.as_ref();
+    let presentation_sources =
+        usize::from(presentation.is_some_and(|declaration| declaration.ui.is_some()))
+            + usize::from(presentation.is_some_and(|declaration| declaration.ui_ref.is_some()))
+            + usize::from(manifest.ui_schema.is_some());
+    if presentation_sources > 1 {
+        return Err(ContractError::InvalidPresentationDeclaration);
+    }
+    for reference in presentation
+        .and_then(|declaration| declaration.ui_ref.as_ref())
+        .into_iter()
+        .chain(manifest.ui_schema.iter())
+    {
+        validate_document_reference(reference)?;
+    }
+    Ok(())
 }
 
 #[must_use]
@@ -660,12 +685,17 @@ fn validate_document_reference(reference: &Path) -> Result<(), ContractError> {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct RuntimeDeclaration {
-    pub kind: RuntimeKind,
+    #[serde(default)]
+    pub executor: RuntimeExecutor,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub kind: Option<RuntimeKind>,
     pub command: Vec<String>,
     #[serde(default = "default_request_argument")]
     pub request_argument: String,
     #[serde(default)]
     pub lockfile: Option<PathBuf>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub requirements: Vec<RuntimeRequirement>,
 }
 
 fn default_request_argument() -> String {
@@ -677,6 +707,28 @@ fn default_request_argument() -> String {
 pub enum RuntimeKind {
     Python,
     Native,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum RuntimeExecutor {
+    #[default]
+    Process,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct RuntimeRequirement {
+    pub command: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub version: Option<String>,
+    #[serde(default = "default_version_arguments")]
+    pub version_arguments: Vec<String>,
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub install: BTreeMap<String, String>,
+}
+
+fn default_version_arguments() -> Vec<String> {
+    vec!["--version".to_owned()]
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -804,7 +856,7 @@ fn require_version(actual: &str, expected: &'static str) -> Result<(), ContractE
 mod tests {
     use super::{
         AdditionalInputDeclaration, AnalysisPlan, ComponentKind, ComponentManifest, ContractError,
-        InputSource, ModelManifest, ANALYSIS_API_VERSION,
+        InputSource, ModelManifest, RuntimeExecutor, ANALYSIS_API_VERSION,
     };
 
     #[test]
@@ -865,6 +917,41 @@ config_schema: schemas/config.json
         assert!(matches!(
             invalid_additional_inputs.validate(),
             Err(ContractError::InvalidAdditionalInputDeclaration)
+        ));
+    }
+
+    #[test]
+    fn process_runtime_is_language_independent_and_validates_requirements() {
+        let valid: ComponentManifest = serde_yaml::from_str(
+            r"api_version: davis.component/v1
+id: example/r-model
+name: Example R model
+version: 1.0.0
+runtime:
+  executor: process
+  command: [Rscript, model.R]
+  requirements:
+    - command: Rscript
+      version: '>=4.4'
+      install:
+        macos: https://cran.r-project.org/
+operations: [estimate]
+inputs: []
+configuration:
+  schema: {type: object}
+outputs: {}
+",
+        )
+        .unwrap();
+        valid.validate().unwrap();
+        assert_eq!(valid.runtime.executor, RuntimeExecutor::Process);
+        assert!(valid.runtime.kind.is_none());
+
+        let mut invalid = valid;
+        invalid.runtime.requirements[0].version = Some("not-semver".to_owned());
+        assert!(matches!(
+            invalid.validate(),
+            Err(ContractError::InvalidRuntimeRequirement { .. })
         ));
     }
 

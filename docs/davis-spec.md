@@ -1946,10 +1946,17 @@ kind: model
 requires_davis: ">=0.5.0"
 
 runtime:
-  kind: python
+  executor: process
   command: ["uv", "run", "--frozen", "python", "-m", "scale_mnl"]
   request_argument: "--request"
   lockfile: uv.lock
+  requirements:
+    - command: uv
+      version: ">=0.8"
+      install:
+        macos: https://docs.astral.sh/uv/getting-started/installation/
+        windows: https://docs.astral.sh/uv/getting-started/installation/
+        linux: https://docs.astral.sh/uv/getting-started/installation/
 
 operations: [validate, estimate, predict]
 inputs:
@@ -1988,7 +1995,7 @@ outputs:
 
 入力slotは原則として`inputs`で固定します．join等で任意名の補助入力を扱うcomponentは`additional_inputs.media_types`を宣言できます．Runtimeは固定・追加のどちらでも同じFile解決，media type検査，digest記録を適用します．
 
-MVPは`python`と`native`から始め，`wasm`と`container`を後から追加します．
+正規の実行契約は`runtime.executor: process`であり，言語名を中央contractへ列挙しません．Python，R，Julia，Node.js，Java，Rust，C++等はすべて同じ外部process境界を利用します．`requirements`は必要command，任意のSemVer条件，`version_arguments`，OS別導入案内を宣言します．Davisは実行前検査と案内だけを行い，一般言語環境を自動installしません．旧`runtime.kind: python`と`runtime.kind: native`はprocess実行として読み込みます．sandboxが必要な用途では`wasm`と`container`を後から追加できます．
 
 ## 55.3 AnalysisPlan
 

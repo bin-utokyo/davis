@@ -25,10 +25,17 @@ kind: transform
 requires_davis: ">=0.5.0"
 
 runtime:
-  kind: python
+  executor: process
   command: ["uv", "run", "--frozen", "python", "-m", "accessibility"]
   request_argument: "--request"
   lockfile: uv.lock
+  requirements:
+    - command: uv
+      version: ">=0.8"
+      install:
+        macos: https://docs.astral.sh/uv/getting-started/installation/
+        windows: https://docs.astral.sh/uv/getting-started/installation/
+        linux: https://docs.astral.sh/uv/getting-started/installation/
 
 operations: [transform]
 inputs:
@@ -60,6 +67,10 @@ outputs:
 ```
 
 `kind`は`model`，`transform`，`visualize`のいずれかです．省略時は既存Manifestとの互換性のため`model`です．`operations`の名前はcomponentが定義します．`requires_davis`はDavis本体のrelease versionから自動生成せず，利用するcontractの互換範囲をcomponent作者が宣言します．
+
+`runtime.executor: process`はprogramming言語に依存しません．`command`が`request.json`を読み，`run-result.json`を返せば，Python，R，Julia，Node.js，Java，Rust，C++等を同じcomponentとして実行できます．Davisは一般言語環境をinstallしません．`requirements`に必要commandと任意のSemVer条件，OS別の導入案内を宣言し，Davisは実行前に存在とversionを確認します．`version_arguments`を省略すると`--version`を使用します．
+
+旧Manifestの`runtime.kind: python`と`runtime.kind: native`は，どちらもprocess実行として後方互換で読み込まれます．
 
 desktop Form editorを提供するcomponentは，`presentation.ui`で`ui:editor`を宣言します．標準MNLの`linear-utility` editorは，roleの表示名を`roles.ui:labels`，選択肢候補を得るroleを`terms.ui:alternativesFromRole`，table bindingに使うtransformを`ui:inputPreparation`から読みます．設定項目と必須性の正本は引き続き`configuration.schema`です．presentationは契約の妥当性を緩めず，表示方法だけを補います．
 

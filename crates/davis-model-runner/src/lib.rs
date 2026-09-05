@@ -12,6 +12,21 @@ use thiserror::Error;
 pub enum RunnerError {
     #[error("component runtime command is empty")]
     EmptyCommand,
+    #[error("required command `{command}` was not found{install_hint}")]
+    MissingRequirement {
+        command: String,
+        install_hint: String,
+    },
+    #[error("could not determine the version of required command `{command}`")]
+    UnknownRequirementVersion { command: String },
+    #[error(
+        "required command `{command}` has version {actual}, but the component requires {required}"
+    )]
+    IncompatibleRequirementVersion {
+        command: String,
+        actual: String,
+        required: String,
+    },
     #[error("failed to prepare component run file {path}: {source}")]
     Io {
         path: PathBuf,
@@ -74,6 +89,7 @@ pub fn run_component(
         .split_first()
         .ok_or(RunnerError::EmptyCommand)?;
     let component_directory = manifest_path.parent().unwrap_or_else(|| Path::new("."));
+    validate_runtime_requirements(manifest, component_directory)?;
     let request_path = run_directory.join("request.json");
     let logs_directory = run_directory.join("logs");
     fs::create_dir_all(&logs_directory).map_err(|source| RunnerError::Io {
@@ -147,6 +163,131 @@ pub fn run_component(
         result,
         stdout_path,
         stderr_path,
+    })
+}
+
+fn validate_runtime_requirements(
+    manifest: &ComponentManifest,
+    component_directory: &Path,
+) -> Result<(), RunnerError> {
+    let program = manifest
+        .runtime
+        .command
+        .first()
+        .ok_or(RunnerError::EmptyCommand)?;
+    if !command_exists(program, component_directory) {
+        let hint = manifest
+            .runtime
+            .requirements
+            .iter()
+            .find(|requirement| requirement.command == *program)
+            .and_then(install_hint);
+        return Err(missing_requirement(program, hint));
+    }
+    for requirement in &manifest.runtime.requirements {
+        if !command_exists(&requirement.command, component_directory) {
+            return Err(missing_requirement(
+                &requirement.command,
+                install_hint(requirement),
+            ));
+        }
+        let Some(required) = &requirement.version else {
+            continue;
+        };
+        let output = Command::new(&requirement.command)
+            .args(&requirement.version_arguments)
+            .current_dir(component_directory)
+            .env_clear()
+            .env("PATH", std::env::var_os("PATH").unwrap_or_default())
+            .env("HOME", std::env::var_os("HOME").unwrap_or_default())
+            .env("LANG", std::env::var_os("LANG").unwrap_or_default())
+            .output()
+            .map_err(|_| RunnerError::UnknownRequirementVersion {
+                command: requirement.command.clone(),
+            })?;
+        if !output.status.success() {
+            return Err(RunnerError::UnknownRequirementVersion {
+                command: requirement.command.clone(),
+            });
+        }
+        let text = format!(
+            "{} {}",
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
+        );
+        let actual =
+            parse_command_version(&text).ok_or_else(|| RunnerError::UnknownRequirementVersion {
+                command: requirement.command.clone(),
+            })?;
+        let requirement_version = semver::VersionReq::parse(required)
+            .expect("runtime requirement was validated with the manifest");
+        if !requirement_version.matches(&actual) {
+            return Err(RunnerError::IncompatibleRequirementVersion {
+                command: requirement.command.clone(),
+                actual: actual.to_string(),
+                required: required.clone(),
+            });
+        }
+    }
+    Ok(())
+}
+
+fn install_hint(requirement: &davis_model_api::RuntimeRequirement) -> Option<&String> {
+    requirement
+        .install
+        .get(std::env::consts::OS)
+        .or_else(|| requirement.install.get("default"))
+}
+
+fn missing_requirement(command: &str, hint: Option<&String>) -> RunnerError {
+    RunnerError::MissingRequirement {
+        command: command.to_owned(),
+        install_hint: hint.map_or_else(String::new, |value| format!("; install: {value}")),
+    }
+}
+
+fn command_exists(command: &str, component_directory: &Path) -> bool {
+    let path = Path::new(command);
+    if path.is_absolute() || path.components().count() > 1 {
+        return if path.is_absolute() {
+            path.is_file()
+        } else {
+            component_directory.join(path).is_file()
+        };
+    }
+    std::env::var_os("PATH").is_some_and(|paths| {
+        std::env::split_paths(&paths).any(|directory| command_candidates(&directory, command))
+    })
+}
+
+fn command_candidates(directory: &Path, command: &str) -> bool {
+    if directory.join(command).is_file() {
+        return true;
+    }
+    #[cfg(target_os = "windows")]
+    {
+        for extension in ["exe", "cmd", "bat", "com"] {
+            if directory.join(format!("{command}.{extension}")).is_file() {
+                return true;
+            }
+        }
+    }
+    false
+}
+
+fn parse_command_version(output: &str) -> Option<semver::Version> {
+    output.split_whitespace().find_map(|token| {
+        let candidate = token
+            .trim_matches(|character: char| !character.is_ascii_alphanumeric() && character != '.')
+            .trim_start_matches(|character: char| !character.is_ascii_digit())
+            .trim_end_matches(|character: char| !character.is_ascii_alphanumeric());
+        semver::Version::parse(candidate).ok().or_else(|| {
+            if candidate.matches('.').count() == 1 {
+                semver::Version::parse(&format!("{candidate}.0")).ok()
+            } else {
+                None
+            }
+        })
     })
 }
 
@@ -232,7 +373,9 @@ mod tests {
         ArtifactDescriptor, ComponentManifest, RunResult, RunStatus, RESULT_API_VERSION,
     };
 
-    use super::{validate_artifacts, RunnerError};
+    use super::{
+        parse_command_version, validate_artifacts, validate_runtime_requirements, RunnerError,
+    };
 
     fn manifest() -> ComponentManifest {
         serde_json::from_value(serde_json::json!({
@@ -305,6 +448,52 @@ mod tests {
         assert!(matches!(
             validate_artifacts(temporary.path(), &manifest, &mut undeclared),
             Err(RunnerError::UndeclaredArtifact(name)) if name == "other"
+        ));
+    }
+
+    #[test]
+    fn parses_common_runtime_version_outputs() {
+        assert_eq!(
+            parse_command_version("Python 3.12.4").unwrap().to_string(),
+            "3.12.4"
+        );
+        assert_eq!(
+            parse_command_version("node v22.5.1").unwrap().to_string(),
+            "22.5.1"
+        );
+        assert_eq!(
+            parse_command_version("R version 4.4.0")
+                .unwrap()
+                .to_string(),
+            "4.4.0"
+        );
+        assert_eq!(
+            parse_command_version("tool 2.7").unwrap().to_string(),
+            "2.7.0"
+        );
+    }
+
+    #[test]
+    fn reports_a_missing_runtime_without_installing_it() {
+        let mut manifest = manifest();
+        manifest.runtime.command = vec![std::env::current_exe().unwrap().display().to_string()];
+        manifest.runtime.requirements = vec![davis_model_api::RuntimeRequirement {
+            command: "davis-command-that-does-not-exist".to_owned(),
+            version: None,
+            version_arguments: vec!["--version".to_owned()],
+            install: BTreeMap::from([(
+                std::env::consts::OS.to_owned(),
+                "https://example.test/install".to_owned(),
+            )]),
+        }];
+
+        let error = validate_runtime_requirements(&manifest, PathBuf::from(".").as_path())
+            .expect_err("missing command should fail before execution");
+        assert!(matches!(
+            error,
+            RunnerError::MissingRequirement { command, install_hint }
+                if command == "davis-command-that-does-not-exist"
+                    && install_hint.contains("https://example.test/install")
         ));
     }
 }
