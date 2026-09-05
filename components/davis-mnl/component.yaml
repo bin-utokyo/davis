@@ -1,0 +1,171 @@
+---
+api_version: davis.component/v1
+id: davis/mnl
+name: Davis Multinomial Logit
+version: 0.2.0
+kind: model
+requires_davis: ">=0.3.5"
+runtime:
+  executor: process
+  command:
+  - uv
+  - run
+  - "--frozen"
+  - python
+  - "-m"
+  - davis_mnl
+  request_argument: "--request"
+  lockfile: uv.lock
+  requirements:
+  - command: uv
+    version: ">=0.8"
+    install:
+      macos: https://docs.astral.sh/uv/getting-started/installation/
+      windows: https://docs.astral.sh/uv/getting-started/installation/
+      linux: https://docs.astral.sh/uv/getting-started/installation/
+operations:
+- validate
+- estimate
+inputs:
+- name: choice_data
+  media_types:
+  - text/csv
+  - application/vnd.apache.parquet
+  required: true
+outputs:
+  artifacts:
+    parameters:
+      media_types:
+      - text/csv
+      required: false
+    covariance:
+      media_types:
+      - text/csv
+      required: false
+    metrics:
+      media_types:
+      - application/json
+      required: false
+    predictions:
+      media_types:
+      - text/csv
+      required: false
+    sample_summary:
+      media_types:
+      - application/json
+      required: true
+  extensions: []
+configuration:
+  schema:
+    "$schema": https://json-schema.org/draft/2020-12/schema
+    "$id": https://davis.example/schemas/mnl-config-v1alpha1.json
+    title: Davis MNL configuration
+    type: object
+    additionalProperties: false
+    required:
+    - roles
+    - terms
+    properties:
+      roles:
+        type: object
+        additionalProperties: false
+        required:
+        - case_id
+        - alternative_id
+        - chosen
+        properties:
+          case_id:
+            type: string
+          alternative_id:
+            type: string
+          chosen:
+            type: string
+          available:
+            type: string
+          weight:
+            type: string
+      terms:
+        type: array
+        minItems: 1
+        items:
+          type: object
+          additionalProperties: false
+          required:
+          - parameter
+          properties:
+            parameter:
+              type: string
+            column:
+              type: string
+            constant:
+              type: number
+            alternatives:
+              type: array
+              items:
+                type:
+                - string
+                - number
+          oneOf:
+          - required:
+            - column
+          - required:
+            - constant
+      parameters:
+        type: object
+        additionalProperties:
+          type: object
+          additionalProperties: false
+          properties:
+            initial:
+              type: number
+      estimation:
+        type: object
+        additionalProperties: false
+        properties:
+          optimizer:
+            enum:
+            - bfgs
+            - l-bfgs-b
+          max_iterations:
+            type: integer
+            minimum: 1
+          tolerance:
+            type: number
+            exclusiveMinimum: 0
+presentation:
+  ui:
+    ui:editor: linear-utility
+    ui:inputPreparation:
+      component: davis/csv-transform
+      version: 0.4.0
+    ui:order:
+    - roles
+    - terms
+    - parameters
+    - estimation
+    roles:
+      ui:widget: role-columns
+      ui:description: Map semantic roles to columns in the long-format choice table.
+      ui:labels:
+        case_id: ケースID
+        alternative_id: 選択肢ID
+        chosen: 選択結果
+        available: 利用可能性 (任意)
+        weight: 重み (任意)
+    terms:
+      ui:widget: linear-utility-terms
+      ui:description: Define the variables contributing to each alternative utility.
+      ui:alternativesFromRole: alternative_id
+    ui:results:
+    - artifact: metrics
+      title: 推定指標
+      widget: key-value
+    - artifact: parameters
+      title: 推定係数
+      widget: table
+    - artifact: sample_summary
+      title: 標本
+      widget: key-value
+    - artifact: predictions
+      title: 予測確率
+      widget: table
