@@ -829,10 +829,12 @@ dependencies = [
 name = "davis-app"
 version = "0.1.0"
 dependencies = [
+ "davis-model-api",
  "davis-runtime",
  "open",
  "serde",
  "serde_json",
+ "serde_yaml",
  "tauri",
  "tauri-build",
  "tauri-plugin-dialog",

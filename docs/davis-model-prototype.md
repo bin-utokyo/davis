@@ -86,15 +86,18 @@ cargo run -p davis-app
 
 React画面自体を変更する開発者だけが，`apps/davis-app`でNode.js packageをinstallしてFrontendを再buildします．
 
-初期画面は次を提供します．
+desktop画面は次を提供します．
 
 1. Davis repositoryの選択
-2. local CSVのinspection
-3. 既存`model.yaml`の選択・検証
-4. model componentの実行
-5. run directoryとartifact一覧の表示
+2. 複数local CSVの追加と列確認
+3. 基準表，join key，関係性，join方式の指定
+4. MNLのroleと線形効用termのForm編集
+5. 型付きAnalysisPlanから生成した`model.yaml`のpreview，保存，検証，実行
+6. 既存`model.yaml`の選択・検証・実行
+7. 単一CSVのinspection
+8. run directoryとartifact一覧の表示
 
-GUI上で効用termを編集して`model.yaml`を生成する機能は次のsliceです．
+初版editorは標準MNLと，追加表を基準表へ直接結合するstar型のtable bindingを対象とします．生成YAMLはFrontend固有形式ではなく，Rust側で共通`AnalysisPlan`へdeserializeして契約検証してから保存します．既存YAMLをFormへ読み戻す機能，複合key，追加source間の連鎖joinは後続sliceです．
 
 ## Component package
 
