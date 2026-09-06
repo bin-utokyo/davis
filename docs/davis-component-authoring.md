@@ -44,7 +44,32 @@ Davisは入力fileの場所を解決し，programを起動し，logと結果を�
 
 ## 最初の作成手順
 
-まず，componentを入れる新しいdirectoryと`component.yaml`を自動生成します．次の例は，Python module `my_component`を起動するデータ加工componentです．既に同名のdirectoryがある場合は上書きしません．
+最初は，そのまま実行できる小さなPython componentを生成する方法が簡単です．Manifest，実program，入力CSV，Analysis Plan，READMEが一度に作られます．既に同名のdirectoryがある場合は上書きしません．
+
+```console
+davis component scaffold ./my-component \
+  --id example/my-component \
+  --kind transform \
+  --template python
+```
+
+生成物を変更する前に，最小例が動くことを確認します．
+
+```console
+davis component validate ./my-component
+davis model run ./my-component/examples/minimal/analysis.yaml
+```
+
+次に，`component.py`の計算，`component.yaml`の入力・設定・出力，`examples/minimal/analysis.yaml`の実行条件を目的に合わせて変更します．生成された例はCSVの指定列を合計するだけなので，計算内容を置き換えるための教材です．完成したらinstallできます．
+
+```console
+davis install component ./my-component
+davis component inspect example/my-component
+```
+
+`validate`が確認するのは，YAMLの形式，IDとversion，schema，参照file等です．計算内容が正しいかまでは判断しないため，小さな入力例を使ったtestも残してください．実行時には，Python等の必要なcommandがPCにあるかも確認されます．Davisの開発repositoryへcomponentを置く必要はありません．同梱したexample Planは親directoryの`component.yaml`を見つけられるため，install前でも生成場所やcurrent working directoryに依存せず実行できます．通常利用時はinstall済みcomponentをIDとversionで解決します．
+
+Python以外，または最初から独自構成で作る場合は，起動commandを複数の`--command`で指定するとManifestだけを生成できます．次の例はPython moduleを使いますが，`Rscript component.R`やnative executable等も同じ方法で指定できます．
 
 ```console
 davis component scaffold ./my-component \
@@ -55,16 +80,7 @@ davis component scaffold ./my-component \
   --command my_component
 ```
 
-次に，生成されたdirectoryへ実programを追加します．`component.yaml`を書き換えたら，installする前に説明書の間違いを検査します．
-
-```console
-davis component validate ./my-component
-davis install component ./my-component
-davis component inspect example/my-component
-davis model run ./analysis.yaml
-```
-
-`validate`が確認するのは，YAMLの形式，IDとversion，schema，参照file等です．計算内容が正しいかまでは判断しないため，小さな入力例を使ったtestも作ってください．実行時には，Python等の必要なcommandがPCにあるかも確認されます．Davisの開発repositoryへcomponentを置く必要はありません．
+人間，GUI，外部AIのそれぞれで作成・変更できるかを判定する手順は，[Component Authoring Acceptance](davis-component-authoring-acceptance.md)にまとめています．
 
 ### AIに作成を頼む場合
 

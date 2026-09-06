@@ -180,8 +180,9 @@ pub fn list_components(repository: &Path) -> Vec<(PathBuf, ComponentManifest)> {
 pub fn validate_plan(repository: &Path, plan_path: &Path) -> Result<ValidatedPlan, RuntimeError> {
     let plan_path = absolute_path(plan_path)?;
     let plan = AnalysisPlan::read(&plan_path)?;
-    let (manifest_path, manifest) = find_manifest(
+    let (manifest_path, manifest) = find_manifest_for_plan(
         repository,
+        &plan_path,
         &plan.component.component,
         &plan.component.version,
     )?;
@@ -800,6 +801,25 @@ fn find_manifest(
         version: version.to_owned(),
         roots,
     })
+}
+
+fn find_manifest_for_plan(
+    repository: &Path,
+    plan_path: &Path,
+    id: &str,
+    version: &str,
+) -> Result<(PathBuf, ComponentManifest), RuntimeError> {
+    if let Some(parent) = plan_path.parent() {
+        for directory in parent.ancestors() {
+            if let Ok((manifest_path, manifest)) = ComponentManifest::read_from_directory(directory)
+            {
+                if manifest.id == id && manifest.version == version {
+                    return Ok((absolute_path(&manifest_path)?, manifest));
+                }
+            }
+        }
+    }
+    find_manifest(repository, id, version)
 }
 
 fn is_temporary_install_entry(entry: &walkdir::DirEntry) -> bool {

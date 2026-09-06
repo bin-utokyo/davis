@@ -357,8 +357,15 @@ enum ComponentCommand {
         /// Component role.
         #[arg(long, value_enum, default_value_t = ScaffoldKind::Model)]
         kind: ScaffoldKind,
+        /// Generate a runnable teaching package instead of a manifest-only package.
+        #[arg(long, value_enum)]
+        template: Option<ScaffoldTemplate>,
         /// One runtime command argument. Repeat this option for every argument.
-        #[arg(long = "command", required = true, allow_hyphen_values = true)]
+        #[arg(
+            long = "command",
+            required_unless_present = "template",
+            allow_hyphen_values = true
+        )]
         runtime_command: Vec<String>,
         /// Supported operation. Repeat to declare multiple operations.
         #[arg(long = "operation")]
@@ -434,6 +441,11 @@ enum ScaffoldKind {
     Model,
     Transform,
     Visualize,
+}
+
+#[derive(Debug, Clone, Copy, ValueEnum)]
+enum ScaffoldTemplate {
+    Python,
 }
 
 #[tokio::main]
@@ -1898,7 +1910,7 @@ fn update_transfer_progress(progress_bar: &ProgressBar, label: &str, progress: T
 
 #[cfg(test)]
 mod tests {
-    use super::{Cli, Command, ComponentCommand, InstallCommand};
+    use super::{Cli, Command, ComponentCommand, InstallCommand, ScaffoldTemplate};
     use clap::Parser;
     use std::io::Cursor;
     use std::path::{Path, PathBuf};
@@ -2068,6 +2080,30 @@ mod tests {
 
     #[test]
     fn component_authoring_commands_parse() {
+        let template = Cli::try_parse_from([
+            "davis",
+            "component",
+            "scaffold",
+            "my-python-component",
+            "--id",
+            "example/my-python-component",
+            "--kind",
+            "transform",
+            "--template",
+            "python",
+        ])
+        .expect("component template scaffold should parse without --command");
+        assert!(matches!(
+            template.command,
+            Command::Component {
+                command: ComponentCommand::Scaffold {
+                    template: Some(ScaffoldTemplate::Python),
+                    runtime_command,
+                    ..
+                }
+            } if runtime_command.is_empty()
+        ));
+
         let scaffold = Cli::try_parse_from([
             "davis",
             "component",
