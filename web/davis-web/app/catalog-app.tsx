@@ -446,7 +446,29 @@ export function CatalogApp() {
           <p className="method-recommendation"><strong>{tr("迷った場合", "If you are unsure")}</strong>{tr("数ファイルを試す段階ではWeb，実際の研究フォルダへ保存する段階ではCLIがおすすめです．Webで選択してから，そのままCLIコマンドをコピーできます．", "Start with the web when trying a few files, then use the CLI when saving them into a real research folder. You can make the selection on the web and copy the matching CLI command directly.")}</p>
         </div>
       </section>
-      <footer id="about"><a className="brand" href="#top"><span className="brand-mark">D</span><span>Davis</span></a><p>{tr("交通データの取得から行動モデルの研究までを，一つの流れにつなぐためのプラットフォームです．", "A platform connecting transport data discovery and travel behavior model research in one workflow.")}</p><a href="https://github.com/bin-utokyo/davis">GitHub</a></footer>
+      <section className="desktop-section" id="about">
+        <div className="desktop-intro">
+          <p className="section-kicker">DAVIS DESKTOP</p>
+          <h2>{tr("取得したデータを，そのまま分析へ．", "Take downloaded data straight into analysis.")}</h2>
+          <p>{tr("Davis Desktopは，コードを書かずにデータとモデルを組み合わせ，分析の設定から実行，結果確認までを進められるローカルアプリです．設定は再利用可能なAnalysis Planとして保存されるため，GUIで始めた分析を人やAIが引き継げます．", "Davis Desktop is a local app for combining data and models without writing code, configuring and running an analysis, and reviewing its results. Settings are saved as reusable Analysis Plans, so work started in the GUI can be continued by people or AI assistants.")}</p>
+          <a className="desktop-cta" href={language === "ja" ? "https://github.com/bin-utokyo/davis/blob/main/docs/participant-installation.md" : "https://github.com/bin-utokyo/davis/blob/main/docs/participant-installation_en.md"} target="_blank" rel="noreferrer">{tr("Desktopの導入方法を見る", "See how to install Desktop")} <span aria-hidden="true">→</span></a>
+        </div>
+        <div className="desktop-capabilities" aria-label={tr("Davis Desktopでできること", "What Davis Desktop can do")}>
+          <div><span>01</span><strong>{tr("データを選ぶ・組み合わせる", "Select and combine data")}</strong><p>{tr("ローカルCSVとCatalogのデータを選び，複数ファイルをキーで結合して説明変数へ割り当てられます．", "Select local CSV or Catalog data, join multiple files by key, and assign columns to explanatory variables.")}</p></div>
+          <div><span>02</span><strong>{tr("モデルと変換を実行する", "Run models and transformations")}</strong><p>{tr("公式のMNL・NL・RL・CSV変換に加え，Component Manifestに従った独自コンポーネントも利用できます．", "Use the official MNL, NL, RL, and CSV transformation components, or add custom components that follow the Component Manifest contract.")}</p></div>
+          <div><span>03</span><strong>{tr("設定と結果を残す", "Keep plans and results")}</strong><p>{tr("Analysis Planを保存・編集・再実行し，推定値や指標など，コンポーネントが定義した成果物をアプリ内で確認できます．", "Save, edit, and rerun Analysis Plans, then review component-defined outputs such as estimates and metrics in the app.")}</p></div>
+        </div>
+      </section>
+      <footer>
+        <a className="brand" href="#top"><span className="brand-mark">D</span><span>Davis</span></a>
+        <p>{tr("交通データの取得から行動モデルの研究までを，一つの流れにつなぐためのプラットフォームです．", "A platform connecting transport data discovery and travel behavior model research in one workflow.")}</p>
+        <nav className="manual-links" aria-label={tr("マニュアル", "Manuals")}>
+          <a href={language === "ja" ? "https://github.com/bin-utokyo/davis/blob/main/docs/participant-installation.md" : "https://github.com/bin-utokyo/davis/blob/main/docs/participant-installation_en.md"} target="_blank" rel="noreferrer">{tr("利用者向け導入", "Installation")}</a>
+          <a href={language === "ja" ? "https://github.com/bin-utokyo/davis/blob/main/docs/official-components-guide.md" : "https://github.com/bin-utokyo/davis/blob/main/docs/official-components-guide_en.md"} target="_blank" rel="noreferrer">{tr("公式コンポーネント", "Official components")}</a>
+          <a href={language === "ja" ? "https://github.com/bin-utokyo/davis/blob/main/docs/davis-component-authoring.md" : "https://github.com/bin-utokyo/davis/blob/main/docs/davis-component-authoring_en.md"} target="_blank" rel="noreferrer">{tr("コンポーネント作成", "Component authoring")}</a>
+          <a href={language === "ja" ? "https://github.com/bin-utokyo/davis/blob/main/docs/operator-installation.md" : "https://github.com/bin-utokyo/davis/blob/main/docs/operator-installation_en.md"} target="_blank" rel="noreferrer">{tr("運営者向け", "For operators")}</a>
+        </nav>
+      </footer>
 
       {activeDataset && <div className="overlay"><button className="overlay-dismiss" type="button" aria-label={tr("ファイル一覧を閉じる", "Close file list")} onClick={() => setActiveDataset(null)}/><aside className="drawer" role="dialog" aria-modal="true" aria-label={tr(`${activeDataset}のファイル`, `${activeDataset} files`)}>
         <div className="drawer-heading"><div><p className="dataset-id">{activeDataset}</p><h2>{datasetLabel(activeDataset)}</h2></div><button type="button" aria-label={tr("閉じる", "Close")} onClick={() => setActiveDataset(null)}>×</button></div>

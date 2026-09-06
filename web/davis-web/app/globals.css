@@ -117,9 +117,22 @@ h2 { font-family: Georgia, "Yu Mincho", serif; font-size: 35px; font-weight: 500
 .method-card > a { color: white; display: inline-block; font-size: 12px; font-weight: 700; margin-top: 10px; }
 .method-recommendation { background: rgba(9,31,23,.38); color: rgba(255,255,255,.78); font-size: 12px; line-height: 1.75; margin: 18px 0 0; padding: 18px 20px; }
 .method-recommendation strong { color: white; display: block; margin-bottom: 4px; }
-footer { align-items: center; background: #102c22; color: white; display: grid; gap: 30px; grid-template-columns: auto 1fr auto; padding: 32px 8vw; }
-footer p { color: rgba(255,255,255,.62); font-size: 12px; margin: 0; text-align: center; }
-footer > a:last-child { color: #f0a27d; font-family: var(--font-geist-mono), monospace; font-size: 11px; }
+.desktop-section { background: var(--paper); display: grid; gap: 72px; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); padding: 92px 8vw 100px; }
+.desktop-intro { max-width: 600px; }
+.desktop-intro .section-kicker { color: var(--orange); }
+.desktop-intro h2 { font-size: 42px; line-height: 1.35; }
+.desktop-intro > p:not(.section-kicker) { color: var(--muted); font-size: 15px; line-height: 1.9; margin: 24px 0 30px; }
+.desktop-cta { align-items: center; background: var(--green); color: white; display: inline-flex; font-size: 13px; font-weight: 700; gap: 26px; padding: 14px 18px; }
+.desktop-capabilities { border-top: 1px solid var(--line); }
+.desktop-capabilities > div { border-bottom: 1px solid var(--line); display: grid; gap: 20px; grid-template-columns: 34px minmax(170px, .8fr) minmax(240px, 1.2fr); padding: 25px 0; }
+.desktop-capabilities span { color: var(--orange); font-family: var(--font-geist-mono), monospace; font-size: 11px; }
+.desktop-capabilities strong { font-family: Georgia, "Yu Mincho", serif; font-size: 19px; font-weight: 500; line-height: 1.55; }
+.desktop-capabilities p { color: var(--muted); font-size: 12px; line-height: 1.75; margin: 0; }
+footer { align-items: start; background: #102c22; color: white; display: grid; gap: 42px; grid-template-columns: auto minmax(220px, 1fr) minmax(290px, auto); padding: 38px 8vw; }
+footer > p { color: rgba(255,255,255,.62); font-size: 12px; line-height: 1.7; margin: 5px auto 0; max-width: 520px; text-align: center; }
+.manual-links { display: grid; gap: 10px 24px; grid-template-columns: repeat(2, minmax(120px, 1fr)); }
+.manual-links a { color: #f0a27d; font-family: var(--font-geist-mono), monospace; font-size: 11px; padding: 4px 0; }
+.manual-links a:hover { color: white; }
 
 .overlay { background: rgba(18, 29, 24, .48); inset: 0; position: fixed; z-index: 20; }
 .detail-overlay { background: rgba(18, 29, 24, .66); z-index: 30; }
@@ -211,10 +224,12 @@ footer > a:last-child { color: #f0a27d; font-family: var(--font-geist-mono), mon
   .guide-grid { grid-template-columns: 1fr; }
   .guide-grid > div { border-bottom: 1px solid rgba(255,255,255,.2); }
   .method-grid { grid-template-columns: 1fr; }
+  .desktop-section { gap: 48px; grid-template-columns: 1fr; padding: 72px 24px 80px; }
   .selection-dock { gap: 10px; grid-template-columns: 1fr auto auto; }
   .selection-dock > p { display: none; }
-  footer { grid-template-columns: 1fr auto; }
-  footer p { display: none; }
+  footer { grid-template-columns: auto 1fr; padding: 34px 24px; }
+  footer > p { display: none; }
+  .manual-links { justify-self: end; }
 }
 
 @media (max-width: 520px) {
@@ -227,6 +242,11 @@ footer > a:last-child { color: #f0a27d; font-family: var(--font-geist-mono), mon
   .search-row button { grid-column: 1 / -1; }
   .hero-stats { justify-content: space-between; }
   .filter-panel { grid-template-columns: 1fr; }
+  .desktop-intro h2 { font-size: 34px; }
+  .desktop-capabilities > div { gap: 10px; grid-template-columns: 28px 1fr; }
+  .desktop-capabilities p { grid-column: 2; }
+  footer { grid-template-columns: 1fr; }
+  .manual-links { grid-template-columns: 1fr; justify-self: stretch; }
   .drawer { padding: 28px 20px; }
   .column-table > div { grid-template-columns: 1fr 70px; }
   .column-table p { grid-column: 1 / -1; }

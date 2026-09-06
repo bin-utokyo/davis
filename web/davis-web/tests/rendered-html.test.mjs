@@ -35,6 +35,14 @@ test("server-renders the Davis catalog shell", async () => {
   assert.match(html, /データセットを探す/);
   assert.match(html, /二つの取得方法がある理由/);
   assert.match(html, /CLIは階層構造と再現性を優先しています/);
+  assert.match(html, /取得したデータを，そのまま分析へ/);
+  assert.match(html, /Davis Desktopは/);
+  assert.match(html, /公式コンポーネント/);
+  assert.match(html, /コンポーネント作成/);
+  assert.match(html, /docs\/participant-installation\.md/);
+  assert.match(html, /docs\/official-components-guide\.md/);
+  assert.match(html, /docs\/davis-component-authoring\.md/);
+  assert.match(html, /docs\/operator-installation\.md/);
   assert.match(html, /確認中/);
   assert.match(html, /日本語/);
   assert.match(html, /English/);
