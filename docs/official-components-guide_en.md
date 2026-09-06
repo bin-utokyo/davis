@@ -43,10 +43,10 @@ davis installed
 
 | Name | ID | Version | Purpose |
 | --- | --- | --- | --- |
-| Multinomial Logit | `davis/mnl` | `0.3.1` | Estimate an MNL from long-format choice data |
-| Nested Logit | `davis/nl` | `0.1.1` | Estimate a two-level, non-overlapping NL |
-| Recursive Logit | `davis/rl` | `0.1.1` | Estimate an RL from a link network and observed paths |
-| CSV Transform | `davis/csv-transform` | `0.4.0` | Join CSVs, create linear-combination columns, select columns, and write CSV or Parquet |
+| Multinomial Logit | `davis/mnl` | `0.3.2` | Estimate an MNL from long-format choice data |
+| Nested Logit | `davis/nl` | `0.1.2` | Estimate a two-level, non-overlapping NL |
+| Recursive Logit | `davis/rl` | `0.1.2` | Estimate an RL from a link network and observed paths |
+| CSV Transform | `davis/csv-transform` | `0.4.1` | Join CSVs, create linear-combination columns, select columns, and write CSV or Parquet |
 
 When multiple CSV files are joined into a model input, Desktop uses `davis/csv-transform` internally. Install both the selected model and CSV Transform.
 
@@ -119,7 +119,7 @@ Estimation settings include `optimizer` (`bfgs` or `l-bfgs-b`), `max_iterations`
 ```yaml
 api_version: davis.analysis/v1alpha1
 name: mode-choice-mnl
-component: {id: davis/mnl, version: 0.3.1, operation: estimate}
+component: {id: davis/mnl, version: 0.3.2, operation: estimate}
 inputs:
   choice_data: {kind: local, path: choice.csv}
 config:
@@ -143,7 +143,7 @@ This component normalizes the top-level scale to 1 and uses `dissimilarity` as Î
 ```yaml
 api_version: davis.analysis/v1alpha1
 name: mode-choice-nl
-component: {id: davis/nl, version: 0.1.1, operation: estimate}
+component: {id: davis/nl, version: 0.1.2, operation: estimate}
 inputs:
   choice_data: {kind: local, path: choice.csv}
 config:
@@ -176,7 +176,7 @@ A utility term refers to a numeric column of the network table. `coefficient` is
 ```yaml
 api_version: davis.analysis/v1alpha1
 name: route-choice-rl
-component: {id: davis/rl, version: 0.1.1, operation: estimate}
+component: {id: davis/rl, version: 0.1.2, operation: estimate}
 inputs:
   network: {kind: local, path: network.csv}
   observations: {kind: local, path: observations.csv}
@@ -207,7 +207,7 @@ The join `relationship` is `many_to_one` or `one_to_one`; unexpected duplicates 
 ```yaml
 api_version: davis.analysis/v1alpha1
 name: prepare-choice-data
-component: {id: davis/csv-transform, version: 0.4.0, operation: transform}
+component: {id: davis/csv-transform, version: 0.4.1, operation: transform}
 inputs:
   table: {kind: local, path: choices.csv}
   persons: {kind: local, path: persons.csv}

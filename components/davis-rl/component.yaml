@@ -1,7 +1,7 @@
 api_version: davis.component/v1
 id: davis/rl
 name: Davis Recursive Logit
-version: 0.1.1
+version: 0.1.2
 kind: model
 requires_davis: '>=0.5.0'
 runtime:
@@ -93,12 +93,12 @@ presentation:
         title: {ja: Network link表, en: Network link table}
         description: {ja: link ID，始点node，終点node，link属性を含む表です．, en: "Contains link IDs, from-nodes, to-nodes, and link attributes."}
         widget: table-binding
-        preparation: {component: davis/csv-transform, version: 0.4.0}
+        preparation: {component: davis/csv-transform, version: 0.4.1}
       observations:
         title: {ja: 観測経路表, en: Observed route table}
         description: {ja: tripごとの通過linkを順番に並べたlong形式の表です．, en: A long-format table listing traversed links in order for each trip.}
         widget: table-binding
-        preparation: {component: davis/csv-transform, version: 0.4.0}
+        preparation: {component: davis/csv-transform, version: 0.4.1}
     sections:
       - bind: /network_roles
         widget: column-map

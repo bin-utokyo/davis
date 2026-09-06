@@ -43,10 +43,10 @@ davis installed
 
 | 名前 | ID | Version | 目的 |
 | --- | --- | --- | --- |
-| Multinomial Logit | `davis/mnl` | `0.3.1` | 選択肢long形式データからMNLを推定 |
-| Nested Logit | `davis/nl` | `0.1.1` | 2段階・非重複nestのNLを推定 |
-| Recursive Logit | `davis/rl` | `0.1.1` | link networkと観測経路からRLを推定 |
-| CSV Transform | `davis/csv-transform` | `0.4.0` | CSV結合，線形結合列，列選択，CSV／Parquet出力 |
+| Multinomial Logit | `davis/mnl` | `0.3.2` | 選択肢long形式データからMNLを推定 |
+| Nested Logit | `davis/nl` | `0.1.2` | 2段階・非重複nestのNLを推定 |
+| Recursive Logit | `davis/rl` | `0.1.2` | link networkと観測経路からRLを推定 |
+| CSV Transform | `davis/csv-transform` | `0.4.1` | CSV結合，線形結合列，列選択，CSV／Parquet出力 |
 
 複数CSVをモデル入力として結合する場合，Desktopは内部で`davis/csv-transform`を使用するため，対象モデルとCSV Transformの両方をinstallしてください．
 
@@ -121,7 +121,7 @@ terms:
 ```yaml
 api_version: davis.analysis/v1alpha1
 name: mode-choice-mnl
-component: {id: davis/mnl, version: 0.3.1, operation: estimate}
+component: {id: davis/mnl, version: 0.3.2, operation: estimate}
 inputs:
   choice_data: {kind: local, path: choice.csv}
 config:
@@ -145,7 +145,7 @@ run: {label: mnl-baseline, tags: [mnl, baseline]}
 ```yaml
 api_version: davis.analysis/v1alpha1
 name: mode-choice-nl
-component: {id: davis/nl, version: 0.1.1, operation: estimate}
+component: {id: davis/nl, version: 0.1.2, operation: estimate}
 inputs:
   choice_data: {kind: local, path: choice.csv}
 config:
@@ -178,7 +178,7 @@ Networkの必須roleは`link_id`，`from_node`，`to_node`です．観測経路�
 ```yaml
 api_version: davis.analysis/v1alpha1
 name: route-choice-rl
-component: {id: davis/rl, version: 0.1.1, operation: estimate}
+component: {id: davis/rl, version: 0.1.2, operation: estimate}
 inputs:
   network: {kind: local, path: network.csv}
   observations: {kind: local, path: observations.csv}
@@ -209,7 +209,7 @@ CSV Transformは推定器ではなく，入力データを再現可能な規則�
 ```yaml
 api_version: davis.analysis/v1alpha1
 name: prepare-choice-data
-component: {id: davis/csv-transform, version: 0.4.0, operation: transform}
+component: {id: davis/csv-transform, version: 0.4.1, operation: transform}
 inputs:
   table: {kind: local, path: choices.csv}
   persons: {kind: local, path: persons.csv}

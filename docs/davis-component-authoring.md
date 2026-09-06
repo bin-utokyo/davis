@@ -202,7 +202,7 @@ presentation:
       choice_data:
         title: 選択データ
         widget: table-binding
-        preparation: {component: davis/csv-transform, version: 0.4.0}
+        preparation: {component: davis/csv-transform, version: 0.4.1}
     sections:
       - bind: /roles
         widget: column-map
@@ -487,7 +487,7 @@ inputs:
     kind: table_binding
     processor:
       id: davis/csv-transform
-      version: 0.4.0
+      version: 0.4.1
     sources:
       choices:
         kind: local

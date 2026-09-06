@@ -2,7 +2,7 @@ api_version: davis.analysis/v1alpha1
 name: minimal-nested-mode-choice
 component:
   id: davis/nl
-  version: 0.1.1
+  version: 0.1.2
   operation: estimate
 inputs:
   choice_data:

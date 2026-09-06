@@ -2,7 +2,7 @@
 api_version: davis.component/v1
 id: davis/csv-transform
 name: Davis CSV Transform
-version: 0.4.0
+version: 0.4.1
 kind: transform
 requires_davis: ">=0.4.0"
 runtime:
@@ -204,19 +204,32 @@ configuration:
             minLength: 1
 presentation:
   ui:
-    ui:order:
-    - output
-    - joins
-    - calculations
-    - select
-    output:
-      ui:description: Write a human-readable CSV or a typed, compressed Parquet artifact.
-        CSV is the default.
-    joins:
-      ui:description: Join additional CSV inputs by one or more exact key columns.
-        Duplicate and unmatched keys are checked explicitly.
-    calculations:
-      ui:description: Create reproducible numeric columns without embedding arbitrary
-        code in YAML.
-    select:
-      ui:description: Select and rename the final columns after joins and calculations.
+    version: davis.ui/v1
+    component_name: {ja: Davis CSV変換, en: Davis CSV Transform}
+    inputs:
+      table:
+        title: {ja: 入力表, en: Input table}
+        description: {ja: 変換する基準CSVです．複数CSVを選ぶ場合はDavis共通のtable bindingで先に結合します．, en: "The base CSV to transform. When selecting multiple CSV files, Davis first joins them through the shared table binding."}
+        widget: table-binding
+    sections:
+    - bind: /output
+      widget: auto
+      title: {ja: 出力設定, en: Output settings}
+      description: {ja: CSVまたは型付き圧縮Parquetとして出力します．, en: Write CSV or typed, compressed Parquet output.}
+    - bind: /joins
+      widget: auto
+      title: {ja: 追加結合設定, en: Additional join settings}
+      description: {ja: 高度な追加input結合をYAMLで設定します．通常の複数CSV結合は上の入力欄で設定できます．, en: "Configure advanced additional-input joins in YAML. Use the input area above for ordinary multi-CSV joins."}
+    - bind: /calculations
+      widget: auto
+      title: {ja: 列計算, en: Column calculations}
+      description: {ja: 任意codeを埋め込まず，再現可能な数値列を作成します．, en: "Create reproducible numeric columns without embedding arbitrary code."}
+    - bind: /select
+      widget: auto
+      title: {ja: 出力列, en: Output columns}
+      description: {ja: 結合・計算後に残す列と出力列名を指定します．, en: "Select and rename columns after joins and calculations."}
+    defaults:
+      output: {format: csv, compression: zstd, null_values: [], column_types: {}}
+    results:
+    - {artifact: transformation_summary, title: {ja: 変換概要, en: Transformation summary}, widget: key-value}
+    - {artifact: transformed_table, title: {ja: 変換結果, en: Transformed table}, widget: table}

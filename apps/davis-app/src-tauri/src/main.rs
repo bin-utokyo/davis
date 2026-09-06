@@ -467,48 +467,6 @@ fn normalize_editor_presentation(
         }
         return Ok(Value::Object(normalized));
     }
-    if let Some(order) = ui_schema.get("ui:order").and_then(Value::as_array) {
-        let inputs = manifest
-            .inputs
-            .iter()
-            .map(|input| {
-                (
-                    input.name.clone(),
-                    serde_json::json!({"title": input.name, "widget": "table-binding"}),
-                )
-            })
-            .collect::<serde_json::Map<_, _>>();
-        let sections = order
-            .iter()
-            .filter_map(Value::as_str)
-            .filter(|name| schema_contains_pointer(config_schema, &format!("/{name}")))
-            .map(|name| {
-                let mut section = serde_json::Map::from_iter([
-                    ("bind".to_owned(), Value::String(format!("/{name}"))),
-                    ("widget".to_owned(), Value::String("auto".to_owned())),
-                    (
-                        "title".to_owned(),
-                        config_schema["properties"][name]
-                            .get("title")
-                            .cloned()
-                            .unwrap_or_else(|| Value::String(name.to_owned())),
-                    ),
-                ]);
-                if let Some(description) = ui_schema[name].get("ui:description") {
-                    section.insert("description".to_owned(), description.clone());
-                }
-                Value::Object(section)
-            })
-            .collect::<Vec<_>>();
-        if !sections.is_empty() {
-            return Ok(serde_json::json!({
-                "version": "davis.ui/v1",
-                "component_name": manifest.name,
-                "inputs": inputs,
-                "sections": sections
-            }));
-        }
-    }
     if editor != "linear-utility" {
         return Ok(ui_schema);
     }
@@ -1198,10 +1156,10 @@ run:
         let yaml = render_plan(json!({
             "api_version": "davis.analysis/v1alpha1",
             "name": "gui-plan",
-            "component": {"id": "davis/mnl", "version": "0.3.1", "operation": "estimate"},
+            "component": {"id": "davis/mnl", "version": "0.3.2", "operation": "estimate"},
             "inputs": {"choice_data": {
                 "kind": "table_binding",
-                "processor": {"id": "davis/csv-transform", "version": "0.4.0"},
+                "processor": {"id": "davis/csv-transform", "version": "0.4.1"},
                 "sources": {
                     "choices": {"kind": "local", "path": "/tmp/choices.csv"},
                     "persons": {"kind": "local", "path": "/tmp/persons.csv"}
@@ -1232,10 +1190,10 @@ run:
         let error = render_plan(json!({
             "api_version": "davis.analysis/v1alpha1",
             "name": "invalid",
-            "component": {"id": "davis/mnl", "version": "0.3.1", "operation": "estimate"},
+            "component": {"id": "davis/mnl", "version": "0.3.2", "operation": "estimate"},
             "inputs": {"choice_data": {
                 "kind": "table_binding",
-                "processor": {"id": "davis/csv-transform", "version": "0.4.0"},
+                "processor": {"id": "davis/csv-transform", "version": "0.4.1"},
                 "sources": {"choices": {"kind": "local", "path": "/tmp/choices.csv"}},
                 "base": "missing",
                 "columns": {"case_id": {"source": "choices", "column": "case_id"}}
@@ -1248,7 +1206,7 @@ run:
 
     #[test]
     fn loads_manifest_driven_editor_metadata() {
-        let editor = editor_definition(&repository(), "davis/mnl", "0.3.1").unwrap();
+        let editor = editor_definition(&repository(), "davis/mnl", "0.3.2").unwrap();
         assert_eq!(editor.manifest.id, "davis/mnl");
         assert_eq!(editor.ui_schema["version"], "davis.ui/v1");
         assert_eq!(
@@ -1267,7 +1225,7 @@ run:
         let transform = editors
             .iter()
             .find(|item| item.manifest.id == "davis/csv-transform")
-            .expect("the legacy ui:order presentation should be adapted");
+            .expect("CSV Transform should declare a composed editor");
         assert_eq!(transform.ui_schema["version"], "davis.ui/v1");
         assert_eq!(
             transform.ui_schema["inputs"]["table"]["widget"],
@@ -1286,7 +1244,7 @@ run:
             .value;
         let legacy = json!({
             "ui:editor": "linear-utility",
-            "ui:inputPreparation": {"component": "davis/csv-transform", "version": "0.4.0"},
+            "ui:inputPreparation": {"component": "davis/csv-transform", "version": "0.4.1"},
             "roles": {"ui:labels": {"case_id": "ケースID"}},
             "ui:results": []
         });
@@ -1315,7 +1273,7 @@ run:
     #[test]
     fn loads_schema_forms_for_nested_and_recursive_logit() {
         let repository = repository();
-        let nested = editor_definition(&repository, "davis/nl", "0.1.1").unwrap();
+        let nested = editor_definition(&repository, "davis/nl", "0.1.2").unwrap();
         assert_eq!(nested.ui_schema["version"], "davis.ui/v1");
         assert!(nested.ui_schema["sections"]
             .as_array()
@@ -1352,7 +1310,7 @@ run:
             .html
             .contains("set-value"));
 
-        let recursive = editor_definition(&repository, "davis/rl", "0.1.1").unwrap();
+        let recursive = editor_definition(&repository, "davis/rl", "0.1.2").unwrap();
         assert_eq!(recursive.ui_schema["version"], "davis.ui/v1");
         assert_eq!(recursive.ui_schema["inputs"].as_object().unwrap().len(), 2);
         assert!(recursive.ui_schema["sections"]
@@ -1471,17 +1429,17 @@ outputs: {}
             format!(
                 r"api_version: davis.analysis/v1alpha1
 name: namespaced-bindings
-component: {{id: davis/rl, version: 0.1.1, operation: estimate}}
+component: {{id: davis/rl, version: 0.1.2, operation: estimate}}
 inputs:
   network:
     kind: table_binding
-    processor: {{id: davis/csv-transform, version: 0.4.0}}
+    processor: {{id: davis/csv-transform, version: 0.4.1}}
     sources: {{data: {{kind: local, path: {}}}}}
     base: data
     columns: {{link_id: {{source: data, column: link_id}}}}
   observations:
     kind: table_binding
-    processor: {{id: davis/csv-transform, version: 0.4.0}}
+    processor: {{id: davis/csv-transform, version: 0.4.1}}
     sources: {{data: {{kind: local, path: {}}}}}
     base: data
     columns: {{trip_id: {{source: data, column: trip_id}}}}
@@ -1506,7 +1464,7 @@ config: {{}}
         std::fs::write(&target, "original").unwrap();
         let choices = repository().join("components/davis-mnl/examples/multi-source/choices.csv");
         let yaml = format!(
-            "api_version: davis.analysis/v1alpha1\nname: invalid\ncomponent:\n  id: davis/mnl\n  version: 0.3.1\n  operation: estimate\ninputs:\n  choice_data:\n    kind: local\n    path: {}\nconfig:\n  roles:\n    case_id: case_id\n    alternative_id: alternative\n    chosen: chosen\n",
+            "api_version: davis.analysis/v1alpha1\nname: invalid\ncomponent:\n  id: davis/mnl\n  version: 0.3.2\n  operation: estimate\ninputs:\n  choice_data:\n    kind: local\n    path: {}\nconfig:\n  roles:\n    case_id: case_id\n    alternative_id: alternative\n    chosen: chosen\n",
             choices.display()
         );
         let error = save_analysis_plan_yaml(repository(), target.clone(), yaml).unwrap_err();

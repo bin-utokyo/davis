@@ -2,7 +2,7 @@
 api_version: davis.component/v1
 id: davis/mnl
 name: Davis Multinomial Logit
-version: 0.3.1
+version: 0.3.2
 kind: model
 requires_davis: ">=0.5.0"
 runtime:
@@ -163,7 +163,7 @@ presentation:
         title: {ja: 選択データ, en: Choice data}
         description: {ja: 1行が1ケース内の1選択肢を表すlong形式の表です．複数CSVを結合できます．, en: A long-format table where each row represents one alternative in one choice case. Multiple CSV files can be joined.}
         widget: table-binding
-        preparation: {component: davis/csv-transform, version: 0.4.0}
+        preparation: {component: davis/csv-transform, version: 0.4.1}
     sections:
     - bind: /roles
       widget: column-map

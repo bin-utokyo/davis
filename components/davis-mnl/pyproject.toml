@@ -1,6 +1,6 @@
 [project]
 name = "davis-mnl"
-version = "0.3.1"
+version = "0.3.2"
 description = "Reference multinomial logit component for Davis"
 requires-python = ">=3.11"
 dependencies = [
