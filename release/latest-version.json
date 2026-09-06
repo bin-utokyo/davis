@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
-  "latest": "0.5.2",
+  "latest": "0.5.3",
   "minimum_supported": "0.5.0",
   "released_at": "2026-09-07",
-  "release_url": "https://github.com/bin-utokyo/davis/releases/tag/v0.5.2",
+  "release_url": "https://github.com/bin-utokyo/davis/releases/tag/v0.5.3",
   "message": {
-    "ja": "Davis DesktopにRun履歴・比較を追加し，空のProject workspaceもcomponent未導入状態として正しく開けるようにしました．",
-    "en": "Davis Desktop adds run history and comparison, and now opens an empty project workspace correctly when no components are installed."
+    "ja": "Davis DesktopのRL画面とRun結果表示を修正し，空のProject workspaceから公式componentを導入・再読み込みしやすくしました．",
+    "en": "Davis Desktop fixes the RL editor and run result views, and improves official component setup and reloading from an empty project workspace."
   }
 }
