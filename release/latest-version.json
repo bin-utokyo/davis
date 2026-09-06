@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
-  "latest": "0.5.0",
+  "latest": "0.5.1",
   "minimum_supported": "0.5.0",
   "released_at": "2026-09-06",
-  "release_url": "https://github.com/bin-utokyo/davis/releases/tag/v0.5.0",
+  "release_url": "https://github.com/bin-utokyo/davis/releases/tag/v0.5.1",
   "message": {
-    "ja": "clone非依存のDesktop，local・Catalogデータを用いたManifest駆動のモデル実行，MNL・NL・RL・CSV変換component，検証済み成果物と作成支援を追加しました．",
-    "en": "Davis adds a clone-independent desktop, manifest-driven model runs with local or catalog data, MNL, NL, RL, and CSV transform components, verified artifacts, and component authoring support."
+    "ja": "Davis Desktopに日本語・英語の切替と，Component Manifest由来の多言語表示を追加しました．",
+    "en": "Davis Desktop adds Japanese and English language switching and localized presentation text supplied by Component Manifests."
   }
 }

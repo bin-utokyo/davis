@@ -2,7 +2,7 @@
 
 [日本語](official-components-guide.md)
 
-This guide is for users of the four official components distributed with Davis v0.5.0. It explains how to transform data or estimate models; it is not a guide for creating a new component. A user or an AI assistant can rely on this document as the usage specification without knowing the Davis development repository or its internal implementation.
+This guide is for users of the four official components distributed with Davis v0.5.1. It explains how to transform data or estimate models; it is not a guide for creating a new component. A user or an AI assistant can rely on this document as the usage specification without knowing the Davis development repository or its internal implementation.
 
 ## 1. Concepts
 
@@ -16,7 +16,7 @@ When asking an AI assistant for help, provide this guide, the intended model or 
 
 ## 2. Requirements
 
-Update the Davis CLI to v0.5.0.
+Update the Davis CLI to v0.5.1.
 
 ```console
 davis update
@@ -43,9 +43,9 @@ davis installed
 
 | Name | ID | Version | Purpose |
 | --- | --- | --- | --- |
-| Multinomial Logit | `davis/mnl` | `0.3.0` | Estimate an MNL from long-format choice data |
-| Nested Logit | `davis/nl` | `0.1.0` | Estimate a two-level, non-overlapping NL |
-| Recursive Logit | `davis/rl` | `0.1.0` | Estimate an RL from a link network and observed paths |
+| Multinomial Logit | `davis/mnl` | `0.3.1` | Estimate an MNL from long-format choice data |
+| Nested Logit | `davis/nl` | `0.1.1` | Estimate a two-level, non-overlapping NL |
+| Recursive Logit | `davis/rl` | `0.1.1` | Estimate an RL from a link network and observed paths |
 | CSV Transform | `davis/csv-transform` | `0.4.0` | Join CSVs, create linear-combination columns, select columns, and write CSV or Parquet |
 
 When multiple CSV files are joined into a model input, Desktop uses `davis/csv-transform` internally. Install both the selected model and CSV Transform.
@@ -119,7 +119,7 @@ Estimation settings include `optimizer` (`bfgs` or `l-bfgs-b`), `max_iterations`
 ```yaml
 api_version: davis.analysis/v1alpha1
 name: mode-choice-mnl
-component: {id: davis/mnl, version: 0.3.0, operation: estimate}
+component: {id: davis/mnl, version: 0.3.1, operation: estimate}
 inputs:
   choice_data: {kind: local, path: choice.csv}
 config:
@@ -143,7 +143,7 @@ This component normalizes the top-level scale to 1 and uses `dissimilarity` as �
 ```yaml
 api_version: davis.analysis/v1alpha1
 name: mode-choice-nl
-component: {id: davis/nl, version: 0.1.0, operation: estimate}
+component: {id: davis/nl, version: 0.1.1, operation: estimate}
 inputs:
   choice_data: {kind: local, path: choice.csv}
 config:
@@ -176,7 +176,7 @@ A utility term refers to a numeric column of the network table. `coefficient` is
 ```yaml
 api_version: davis.analysis/v1alpha1
 name: route-choice-rl
-component: {id: davis/rl, version: 0.1.0, operation: estimate}
+component: {id: davis/rl, version: 0.1.1, operation: estimate}
 inputs:
   network: {kind: local, path: network.csv}
   observations: {kind: local, path: observations.csv}
@@ -251,7 +251,7 @@ CSV Transform returns `transformed.csv` or `transformed.parquet` and a transform
 
 When a run fails, check:
 
-1. `davis --version` is 0.5.0 or later.
+1. `davis --version` is 0.5.1 or later.
 2. `uv --version` is 0.8 or later.
 3. `davis installed` lists every required component.
 4. Every Plan column name exactly matches the CSV header.

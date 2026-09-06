@@ -2,7 +2,7 @@
 
 [English](official-components-guide_en.md)
 
-このガイドは，Davis v0.5.0で配布する4つの公式componentを使って，データ変換またはモデル推定を行う人向けです．新しいcomponentを作るための文書ではありません．Davisの開発repositoryや内部実装を知らない人，およびその人を支援するAIは，このガイドだけを公式componentの利用仕様として参照できます．
+このガイドは，Davis v0.5.1で配布する4つの公式componentを使って，データ変換またはモデル推定を行う人向けです．新しいcomponentを作るための文書ではありません．Davisの開発repositoryや内部実装を知らない人，およびその人を支援するAIは，このガイドだけを公式componentの利用仕様として参照できます．
 
 ## 1．最初に理解すること
 
@@ -16,7 +16,7 @@ AIに支援を依頼する場合は，このガイド，実施したいモデル
 
 ## 2．必要な環境
 
-Davis CLIをv0.5.0へ更新します．
+Davis CLIをv0.5.1へ更新します．
 
 ```console
 davis update
@@ -43,9 +43,9 @@ davis installed
 
 | 名前 | ID | Version | 目的 |
 | --- | --- | --- | --- |
-| Multinomial Logit | `davis/mnl` | `0.3.0` | 選択肢long形式データからMNLを推定 |
-| Nested Logit | `davis/nl` | `0.1.0` | 2段階・非重複nestのNLを推定 |
-| Recursive Logit | `davis/rl` | `0.1.0` | link networkと観測経路からRLを推定 |
+| Multinomial Logit | `davis/mnl` | `0.3.1` | 選択肢long形式データからMNLを推定 |
+| Nested Logit | `davis/nl` | `0.1.1` | 2段階・非重複nestのNLを推定 |
+| Recursive Logit | `davis/rl` | `0.1.1` | link networkと観測経路からRLを推定 |
 | CSV Transform | `davis/csv-transform` | `0.4.0` | CSV結合，線形結合列，列選択，CSV／Parquet出力 |
 
 複数CSVをモデル入力として結合する場合，Desktopは内部で`davis/csv-transform`を使用するため，対象モデルとCSV Transformの両方をinstallしてください．
@@ -121,7 +121,7 @@ terms:
 ```yaml
 api_version: davis.analysis/v1alpha1
 name: mode-choice-mnl
-component: {id: davis/mnl, version: 0.3.0, operation: estimate}
+component: {id: davis/mnl, version: 0.3.1, operation: estimate}
 inputs:
   choice_data: {kind: local, path: choice.csv}
 config:
@@ -145,7 +145,7 @@ run: {label: mnl-baseline, tags: [mnl, baseline]}
 ```yaml
 api_version: davis.analysis/v1alpha1
 name: mode-choice-nl
-component: {id: davis/nl, version: 0.1.0, operation: estimate}
+component: {id: davis/nl, version: 0.1.1, operation: estimate}
 inputs:
   choice_data: {kind: local, path: choice.csv}
 config:
@@ -178,7 +178,7 @@ Networkの必須roleは`link_id`，`from_node`，`to_node`です．観測経路�
 ```yaml
 api_version: davis.analysis/v1alpha1
 name: route-choice-rl
-component: {id: davis/rl, version: 0.1.0, operation: estimate}
+component: {id: davis/rl, version: 0.1.1, operation: estimate}
 inputs:
   network: {kind: local, path: network.csv}
   observations: {kind: local, path: observations.csv}
@@ -253,7 +253,7 @@ CSV Transformは`transformed.csv`または`transformed.parquet`と，変換summa
 
 error時は，まず次を確認してください．
 
-1. `davis --version`が0.5.0以上か．
+1. `davis --version`が0.5.1以上か．
 2. `uv --version`が0.8以上か．
 3. `davis installed`に必要なcomponentがあるか．
 4. CSV headerとPlanの列名が完全に一致しているか．

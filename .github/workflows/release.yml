@@ -91,10 +91,10 @@ jobs:
           target/release/davis component pack components/davis-nl --name nl --out dist
           target/release/davis component pack components/davis-rl --name rl --out dist
           target/release/davis component registry \
-            dist/davis-mnl-0.3.0.entry.json \
+            dist/davis-mnl-0.3.1.entry.json \
             dist/davis-csv-transform-0.4.0.entry.json \
-            dist/davis-nl-0.1.0.entry.json \
-            dist/davis-rl-0.1.0.entry.json \
+            dist/davis-nl-0.1.1.entry.json \
+            dist/davis-rl-0.1.1.entry.json \
             --out dist/component-registry.json
       - name: Verify integrated multi-source model execution through the registry
         shell: bash
@@ -149,10 +149,10 @@ jobs:
         with:
           name: official-components
           path: |
-            dist/davis-mnl-0.3.0.tar.gz
+            dist/davis-mnl-0.3.1.tar.gz
             dist/davis-csv-transform-0.4.0.tar.gz
-            dist/davis-nl-0.1.0.tar.gz
-            dist/davis-rl-0.1.0.tar.gz
+            dist/davis-nl-0.1.1.tar.gz
+            dist/davis-rl-0.1.1.tar.gz
             dist/component-registry.json
           if-no-files-found: error
 

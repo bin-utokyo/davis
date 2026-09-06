@@ -2,7 +2,7 @@ api_version: davis.analysis/v1alpha1
 name: multi-source-mode-choice
 component:
   id: davis/mnl
-  version: 0.3.0
+  version: 0.3.1
   operation: estimate
 inputs:
   choice_data:

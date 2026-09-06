@@ -431,13 +431,15 @@ mod tests {
     }
 
     #[test]
-    fn bundled_release_metadata_requires_the_current_cli_contract() {
+    fn bundled_release_metadata_supports_the_current_cli_contract() {
         let release: ReleaseInfo =
             serde_json::from_str(include_str!("../../../release/latest-version.json"))
                 .expect("release metadata should be valid");
 
         assert_eq!(release.latest, env!("CARGO_PKG_VERSION"));
-        assert_eq!(release.minimum_supported, env!("CARGO_PKG_VERSION"));
+        let current = semver::Version::parse(env!("CARGO_PKG_VERSION")).unwrap();
+        let minimum = semver::Version::parse(&release.minimum_supported).unwrap();
+        assert!(minimum <= current);
         assert_eq!(classify(&release).unwrap(), UpdateStatus::Current);
     }
 
