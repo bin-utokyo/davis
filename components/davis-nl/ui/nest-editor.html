@@ -1,0 +1,83 @@
+<style>
+  * { box-sizing: border-box; }
+  body { color: #243c31; font: 13px system-ui, sans-serif; margin: 0; }
+  button, input, select { border: 1px solid #ccd3cc; border-radius: 9px; font: inherit; padding: 9px 10px; }
+  button { background: #e5ebe5; color: #274537; cursor: pointer; font-weight: 700; }
+  .toolbar { display: flex; justify-content: flex-end; margin-bottom: 8px; }
+  .row { align-items: start; background: #f7f8f5; border-radius: 11px; display: grid; gap: 8px; grid-template-columns: minmax(120px,.7fr) minmax(260px,1.5fr) minmax(160px,.8fr) 100px auto; margin-top: 8px; padding: 10px; }
+  .row > input, .row > select { min-height: 42px; width: 100%; }
+  .picker { min-width: 0; position: relative; }
+  .control { align-items: center; background: white; border: 1px solid #ccd3cc; border-radius: 9px; display: flex; gap: 5px; min-height: 42px; overflow-x: auto; padding: 5px 7px; }
+  .control input { border: 0; flex: 1; min-width: 80px; outline: 0; padding: 5px; }
+  .tag { flex: 0 0 auto; font-size: 11px; padding: 5px 7px; }
+  .menu { background: white; border: 1px solid #ccd3cc; border-radius: 9px; box-shadow: 0 10px 24px #22382c22; display: none; flex-wrap: wrap; gap: 5px; left: 0; max-height: 150px; overflow: auto; padding: 7px; position: absolute; right: 0; top: 47px; z-index: 3; }
+  .picker:focus-within .menu { display: flex; }
+  .menu button { font-size: 11px; padding: 6px 8px; }
+  .delete { background: transparent; border: 0; color: #994c3a; }
+  .context-error { color: #994c3a; font-size: 12px; margin: 0 0 8px; }
+  .empty { border: 1px dashed #cbd3ca; border-radius: 11px; color: #738078; padding: 18px; text-align: center; }
+  @media (max-width: 760px) { .row { grid-template-columns: 1fr 1fr; } }
+</style>
+<div class="toolbar"><button id="add" type="button">Nestを追加</button></div>
+<div class="context-error" id="context-error"></div>
+<div id="rows"></div>
+<script>
+  (() => {
+    let value = [];
+    let candidates = [];
+    let labels = {};
+    const rows = document.getElementById("rows");
+    const message = (type, extra = {}) => parent.postMessage({ source: "davis-widget", api_version: "davis.widget/v1", type, ...extra }, "*");
+    const commit = () => message("set-value", { value });
+    const resize = () => requestAnimationFrame(() => message("resize", { height: document.documentElement.scrollHeight + 4 }));
+    const button = (text, className, action) => { const item = document.createElement("button"); item.type = "button"; item.className = className; item.textContent = text; item.addEventListener("mousedown", event => event.preventDefault()); item.addEventListener("click", action); return item; };
+
+    function draw() {
+      rows.replaceChildren();
+      if (!value.length) { const empty = document.createElement("div"); empty.className = "empty"; empty.textContent = "2つ以上のNestを追加してください．"; rows.append(empty); resize(); return; }
+      value.forEach((nest, index) => {
+        const row = document.createElement("div"); row.className = "row";
+        const name = document.createElement("input"); name.value = String(nest.name ?? ""); name.placeholder = "motorized";
+        name.addEventListener("change", () => { value[index] = { ...value[index], name: name.value }; commit(); });
+
+        const picker = document.createElement("div"); picker.className = "picker";
+        const control = document.createElement("div"); control.className = "control";
+        const selected = Array.isArray(nest.alternatives) ? nest.alternatives.map(String) : [];
+        selected.forEach(alternative => control.append(button(`${alternative} ×`, "tag", () => { value[index] = { ...value[index], alternatives: selected.filter(item => item !== alternative) }; commit(); draw(); })));
+        const search = document.createElement("input"); search.placeholder = candidates.length ? "選択肢を検索" : "候補列を先に指定"; search.disabled = !candidates.length; control.append(search);
+        const menu = document.createElement("div"); menu.className = "menu";
+        const showOptions = () => { const query = search.value.toLocaleLowerCase(); menu.replaceChildren(); candidates.filter(item => !selected.includes(item) && item.toLocaleLowerCase().includes(query)).slice(0, 50).forEach(alternative => menu.append(button(alternative, "", () => { value[index] = { ...value[index], alternatives: [...selected, alternative] }; commit(); draw(); }))); resize(); };
+        search.addEventListener("input", showOptions); search.addEventListener("focus", showOptions); picker.append(control, menu);
+
+        const dissimilarity = nest.dissimilarity && typeof nest.dissimilarity === "object" ? nest.dissimilarity : {};
+        const fixed = Object.prototype.hasOwnProperty.call(dissimilarity, "fixed");
+        const mode = document.createElement("select");
+        [["initial", labels.estimate ?? "推定"], ["fixed", labels.fixed ?? "固定"]].forEach(([key, text]) => { const option = document.createElement("option"); option.value = key; option.textContent = text; mode.append(option); });
+        mode.value = fixed ? "fixed" : "initial";
+        mode.addEventListener("change", () => { value[index] = { ...value[index], dissimilarity: mode.value === "fixed" ? { fixed: 1 } : { initial: .8 } }; commit(); draw(); });
+
+        const number = document.createElement("input"); number.type = "number"; number.min = ".05"; number.max = "1"; number.step = ".05";
+        number.value = String(dissimilarity[fixed ? "fixed" : "initial"] ?? (fixed ? 1 : .8));
+        number.title = fixed ? (labels.fixed_value ?? "非類似度λの固定値") : (labels.estimate_value ?? "非類似度λの推定初期値");
+        number.setAttribute("aria-label", number.title);
+        number.addEventListener("change", () => { value[index] = { ...value[index], dissimilarity: { [fixed ? "fixed" : "initial"]: Number(number.value) } }; commit(); });
+        row.append(name, picker, mode, number, button("削除", "delete", () => { value = value.filter((_, current) => current !== index); commit(); draw(); }));
+        rows.append(row);
+      });
+      resize();
+    }
+
+    document.getElementById("add").addEventListener("click", () => { value = [...value, { name: `nest_${value.length + 1}`, alternatives: [], dissimilarity: { initial: .8 } }]; commit(); draw(); });
+    addEventListener("message", event => {
+      const data = event.data;
+      if (!data || data.source !== "davis-host" || data.api_version !== "davis.widget/v1" || data.type !== "render") return;
+      value = Array.isArray(data.payload.value) ? structuredClone(data.payload.value) : [];
+      const alternatives = data.payload.context?.alternatives;
+      candidates = Array.isArray(alternatives?.values) ? alternatives.values.map(String) : [];
+      document.getElementById("context-error").textContent = data.payload.context_errors?.alternatives ?? "";
+      labels = data.payload.section?.labels ?? {};
+      draw();
+    });
+    message("ready");
+  })();
+</script>

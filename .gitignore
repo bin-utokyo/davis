@@ -103,6 +103,9 @@ target/
 
 # Davis local cache (generated content-addressed objects)
 .davis/cache/
+.davis/runs/
+/davis-runs/
+apps/davis-app/src-tauri/gen/
 
 # Davis local execution results
 /davis-runs/
@@ -189,6 +192,7 @@ libpeerconnection.log
 *.seed
 *.log
 *.csv
+!components/**/examples/**/*.csv
 *.dat
 *.out
 *.pid
@@ -196,3 +200,7 @@ libpeerconnection.log
 
 # Custom
 # !.gitkeep
+
+# Embed the prototype desktop frontend so users can run it with Cargo alone.
+!apps/davis-app/dist/
+!apps/davis-app/dist/**

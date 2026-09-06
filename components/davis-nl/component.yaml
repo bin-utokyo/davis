@@ -1,0 +1,153 @@
+api_version: davis.component/v1
+id: davis/nl
+name: Davis Nested Logit
+version: 0.1.0
+kind: model
+requires_davis: '>=0.5.0'
+runtime:
+  executor: process
+  command:
+  - uv
+  - run
+  - --frozen
+  - python
+  - -m
+  - davis_nl
+  request_argument: --request
+  lockfile: uv.lock
+  requirements:
+  - command: uv
+    version: '>=0.8'
+    install:
+      macos: https://docs.astral.sh/uv/getting-started/installation/
+      windows: https://docs.astral.sh/uv/getting-started/installation/
+      linux: https://docs.astral.sh/uv/getting-started/installation/
+operations:
+- validate
+- estimate
+inputs:
+- name: choice_data
+  media_types: [text/csv, application/vnd.apache.parquet]
+  required: true
+configuration:
+  schema:
+    $schema: https://json-schema.org/draft/2020-12/schema
+    title: Davis Nested Logit configuration
+    additionalProperties: false
+    type: object
+    required: [roles, terms, nests]
+    properties:
+      roles:
+        type: object
+        additionalProperties: false
+        required: [case_id, alternative_id, chosen]
+        properties:
+          case_id: {type: string}
+          alternative_id: {type: string}
+          chosen: {type: string}
+          available: {type: string}
+      terms:
+        type: array
+        minItems: 1
+        items:
+          type: object
+          additionalProperties: false
+          required: [parameter]
+          properties:
+            parameter: {type: string}
+            column: {type: string}
+            constant: {type: number}
+            alternatives:
+              type: array
+              items: {type: [string, number]}
+          oneOf:
+          - required: [column]
+          - required: [constant]
+      nests:
+        type: array
+        minItems: 2
+        items:
+          type: object
+          additionalProperties: false
+          required: [name, alternatives]
+          properties:
+            name: {type: string, minLength: 1}
+            alternatives:
+              type: array
+              minItems: 1
+              uniqueItems: true
+              items: {type: [string, number]}
+            dissimilarity:
+              type: object
+              title: 非類似度 λ
+              description: このcomponentでは最上位scaleを1に正規化し，各nestの非類似度λを0より大きく1以下で指定します．
+              additionalProperties: false
+              properties:
+                initial: {type: number, title: 推定初期値, exclusiveMinimum: 0, maximum: 1}
+                fixed: {type: number, title: 固定値, exclusiveMinimum: 0, maximum: 1}
+      estimation:
+        type: object
+        additionalProperties: false
+        properties:
+          max_iterations: {type: integer, minimum: 1}
+          tolerance: {type: number, exclusiveMinimum: 0}
+presentation:
+  ui:
+    version: davis.ui/v1
+    ui:description: Define linear utility terms and a partition of alternatives into nests.
+    extensions:
+      - id: nest-editor
+        api_version: davis.widget/v1
+        source: ui/nest-editor.html
+    inputs:
+      choice_data:
+        title: 選択データ
+        description: 1行が1ケース内の1選択肢を表すlong形式の表です．複数CSVを結合できます．
+        widget: table-binding
+        preparation: {component: davis/csv-transform, version: 0.4.0}
+    sections:
+      - bind: /roles
+        widget: column-map
+        input: choice_data
+        title: 役割列
+        labels:
+          case_id: ケースID
+          alternative_id: 選択肢ID
+          chosen: 選択結果
+          available: 利用可能性 (任意)
+      - bind: /terms
+        widget: utility-terms
+        input: choice_data
+        title: 効用term
+        allow_constant: true
+        alternatives_from: /roles/alternative_id
+      - bind: /nests
+        widget: extension:nest-editor
+        title: Nest構造と非類似度 λ
+        description: 最上位scaleは1に正規化済みです．推定時の数値は結果ではなく初期値です．選択肢が1つだけのnestは実行時にλ=1へ固定されます．
+        context:
+          alternatives:
+            provider: distinct-values
+            input: choice_data
+            column_from: /roles/alternative_id
+        labels:
+          mode: 非類似度λの扱い
+          estimate: 推定 (右は初期値)
+          fixed: 固定 (右は固定値)
+          estimate_value: 非類似度λの推定初期値
+          fixed_value: 非類似度λの固定値
+      - bind: /estimation
+        widget: auto
+        title: 推定設定
+    defaults:
+      estimation: {max_iterations: 500, tolerance: 1.0e-8}
+    results:
+    - {artifact: metrics, title: 推定指標, widget: key-value}
+    - {artifact: parameters, title: 推定係数・非類似度, widget: table}
+    - {artifact: predictions, title: 予測確率, widget: table}
+outputs:
+  artifacts:
+    parameters: {profile: parameters, media_types: [text/csv], required: false}
+    metrics: {profile: metrics, media_types: [application/json], required: false}
+    predictions: {profile: predictions, media_types: [text/csv], required: false}
+    sample_summary: {profile: diagnostics, media_types: [application/json], required: true}

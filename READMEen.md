@@ -17,6 +17,8 @@ Rust and Cargo are required only when developing or building Davis itself.
 
 After a normal command completes, the CLI checks for a newer release at most once every 24 hours. The source of truth for update metadata is `latest-version.json`, attached to each GitHub Release, so a CLI release does not require a Web redeployment. When an update is available, Davis prints guidance without interrupting the command or corrupting JSON output. Run `davis update` to review the release and answer `y/N`; after approval, Davis runs the installer for the current operating system. Use `davis update --yes` to skip confirmation.
 
+The CLI also acts as the Davis bootstrap. When you need the Desktop application, run `davis install desktop`, then launch it from any directory with `davis desktop`. Regular users do not need to clone the repository or install Rust, Cargo, or `pnpm`.
+
 ## Current structure
 
 ```text

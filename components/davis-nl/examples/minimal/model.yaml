@@ -1,0 +1,34 @@
+api_version: davis.analysis/v1alpha1
+name: minimal-nested-mode-choice
+component:
+  id: davis/nl
+  version: 0.1.0
+  operation: estimate
+inputs:
+  choice_data:
+    kind: local
+    path: choice.csv
+config:
+  roles:
+    case_id: case_id
+    alternative_id: alternative
+    chosen: chosen
+    available: available
+  terms:
+  - {parameter: beta_time, column: time}
+  - {parameter: beta_cost, column: cost, alternatives: [train, car]}
+  - {parameter: asc_car, constant: 1, alternatives: [car]}
+  - {parameter: asc_walk, constant: 1, alternatives: [walk]}
+  nests:
+  - name: motorized
+    alternatives: [train, car]
+    dissimilarity: {initial: 0.8}
+  - name: active
+    alternatives: [walk]
+    dissimilarity: {fixed: 1.0}
+  estimation:
+    max_iterations: 500
+    tolerance: 1.0e-8
+run:
+  label: minimal-nl-example
+  tags: [example, nl]

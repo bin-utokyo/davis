@@ -70,9 +70,188 @@ jobs:
           path: ${{ matrix.asset }}
           if-no-files-found: error
 
+  build-components:
+    name: Build and verify official components
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: astral-sh/setup-uv@v6
+      - name: Build component tooling
+        run: cargo build --release --locked --package davis-cli
+      - name: Package official components and generate registry
+        shell: bash
+        run: |
+          mkdir -p dist
+          target/release/davis component pack components/davis-mnl --name mnl --out dist
+          target/release/davis component pack \
+            components/davis-csv-transform \
+            --name csv-transform \
+            --out dist
+          target/release/davis component pack components/davis-nl --name nl --out dist
+          target/release/davis component pack components/davis-rl --name rl --out dist
+          target/release/davis component registry \
+            dist/davis-mnl-0.3.0.entry.json \
+            dist/davis-csv-transform-0.4.0.entry.json \
+            dist/davis-nl-0.1.0.entry.json \
+            dist/davis-rl-0.1.0.entry.json \
+            --out dist/component-registry.json
+      - name: Verify integrated multi-source model execution through the registry
+        shell: bash
+        env:
+          DAVIS_DISABLE_UPDATE_CHECK: "1"
+        run: |
+          python3 -m http.server 8765 --directory dist >component-server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid"' EXIT
+          for _ in $(seq 1 20); do
+            curl --fail --silent http://127.0.0.1:8765/component-registry.json >/dev/null && break
+            sleep 1
+          done
+          test_root=$(mktemp -d)
+          export DAVIS_DATA_HOME="$test_root/user-data"
+          target/release/davis install component mnl \
+            --registry http://127.0.0.1:8765/component-registry.json
+          target/release/davis install component csv-transform \
+            --registry http://127.0.0.1:8765/component-registry.json
+          target/release/davis install component nl \
+            --registry http://127.0.0.1:8765/component-registry.json
+          target/release/davis install component rl \
+            --registry http://127.0.0.1:8765/component-registry.json
+          mkdir -p "$test_root/project"
+          cp components/davis-mnl/examples/multi-source/choices.csv \
+            "$test_root/project/choices.csv"
+          cp components/davis-mnl/examples/multi-source/persons.csv \
+            "$test_root/project/persons.csv"
+          cp components/davis-mnl/examples/multi-source/model.yaml \
+            "$test_root/project/model.yaml"
+          target/release/davis --repository "$test_root/project" model run \
+            "$test_root/project/model.yaml" \
+            --run-root "$test_root/project/davis-runs" \
+            --json > "$test_root/model-run.json"
+          jq -e '.result.extensions["prepared_input:choice_data"].media_type == "application/vnd.apache.parquet"' \
+            "$test_root/model-run.json" >/dev/null
+          test -f "$test_root/project/davis-runs"/*/artifacts/parameters.csv
+          test -f "$test_root/project/davis-runs"/*/artifacts/prepared/input-0/transformed.parquet
+          mkdir -p "$test_root/nl-project" "$test_root/rl-project"
+          cp components/davis-nl/examples/minimal/{choice.csv,model.yaml} "$test_root/nl-project/"
+          cp components/davis-rl/examples/minimal/{network.csv,observations.csv,model.yaml} \
+            "$test_root/rl-project/"
+          target/release/davis --repository "$test_root/nl-project" model run \
+            "$test_root/nl-project/model.yaml" \
+            --run-root "$test_root/nl-project/davis-runs"
+          target/release/davis --repository "$test_root/rl-project" model run \
+            "$test_root/rl-project/model.yaml" \
+            --run-root "$test_root/rl-project/davis-runs"
+          test -f "$test_root/nl-project/davis-runs"/*/artifacts/parameters.csv
+          test -f "$test_root/rl-project/davis-runs"/*/artifacts/parameters.csv
+      - uses: actions/upload-artifact@v4
+        with:
+          name: official-components
+          path: |
+            dist/davis-mnl-0.3.0.tar.gz
+            dist/davis-csv-transform-0.4.0.tar.gz
+            dist/davis-nl-0.1.0.tar.gz
+            dist/davis-rl-0.1.0.tar.gz
+            dist/component-registry.json
+          if-no-files-found: error
+
+  build-desktop-unix:
+    name: Build ${{ matrix.asset }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-24.04
+            target: x86_64-unknown-linux-gnu
+            asset: davis-desktop-linux-x86_64.tar.gz
+            entrypoint: davis-app
+          - runner: ubuntu-24.04-arm
+            target: aarch64-unknown-linux-gnu
+            asset: davis-desktop-linux-aarch64.tar.gz
+            entrypoint: davis-app
+          - runner: macos-15-intel
+            target: x86_64-apple-darwin
+            asset: davis-desktop-macos-x86_64.tar.gz
+            entrypoint: davis-app
+          - runner: macos-15
+            target: aarch64-apple-darwin
+            asset: davis-desktop-macos-aarch64.tar.gz
+            entrypoint: davis-app
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: apps/davis-app/pnpm-lock.yaml
+      - name: Install Linux desktop dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev
+      - name: Build frontend
+        run: |
+          pnpm --dir apps/davis-app install --frozen-lockfile
+          pnpm --dir apps/davis-app build
+      - name: Build desktop executable
+        run: cargo build --release --locked --package davis-app
+      - name: Package desktop executable
+        run: tar -C target/release -czf "${{ matrix.asset }}" "${{ matrix.entrypoint }}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.asset }}
+          path: ${{ matrix.asset }}
+          if-no-files-found: error
+
+  build-desktop-windows:
+    name: Build ${{ matrix.asset }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: windows-2025
+            asset: davis-desktop-windows-x86_64.tar.gz
+          - runner: windows-11-arm
+            asset: davis-desktop-windows-aarch64.tar.gz
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: apps/davis-app/pnpm-lock.yaml
+      - name: Build frontend
+        shell: pwsh
+        run: |
+          pnpm --dir apps/davis-app install --frozen-lockfile
+          pnpm --dir apps/davis-app build
+      - name: Build desktop executable
+        shell: pwsh
+        run: cargo build --release --locked --package davis-app
+      - name: Package desktop executable
+        shell: pwsh
+        run: tar -C target/release -czf "${{ matrix.asset }}" davis-app.exe
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.asset }}
+          path: ${{ matrix.asset }}
+          if-no-files-found: error
+
   release:
     name: Publish GitHub Release
-    needs: [build-unix, build-windows]
+    needs:
+      [build-unix, build-windows, build-components, build-desktop-unix, build-desktop-windows]
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5
@@ -94,7 +273,37 @@ jobs:
           cp scripts/install.sh scripts/install.ps1 dist/
           cp release/latest-version.json dist/
           cd dist
-          sha256sum davis-* latest-version.json > SHA256SUMS
+          sudo apt-get update
+          sudo apt-get install -y b3sum
+          version="${GITHUB_REF_NAME#v}"
+          base_url="https://github.com/${GITHUB_REPOSITORY}/releases/download/${GITHUB_REF_NAME}"
+          jq -n \
+            --arg version "$version" \
+            --arg requires_davis ">=0.5.0" \
+            --arg base_url "$base_url" \
+            --argjson artifacts "$(
+              for asset in davis-desktop-*.tar.gz; do
+                case "$asset" in
+                  davis-desktop-linux-x86_64.tar.gz) target=x86_64-unknown-linux-gnu; entrypoint=davis-app ;;
+                  davis-desktop-linux-aarch64.tar.gz) target=aarch64-unknown-linux-gnu; entrypoint=davis-app ;;
+                  davis-desktop-macos-x86_64.tar.gz) target=x86_64-apple-darwin; entrypoint=davis-app ;;
+                  davis-desktop-macos-aarch64.tar.gz) target=aarch64-apple-darwin; entrypoint=davis-app ;;
+                  davis-desktop-windows-x86_64.tar.gz) target=x86_64-pc-windows-msvc; entrypoint=davis-app.exe ;;
+                  davis-desktop-windows-aarch64.tar.gz) target=aarch64-pc-windows-msvc; entrypoint=davis-app.exe ;;
+                  *) exit 1 ;;
+                esac
+                jq -n \
+                  --arg target "$target" \
+                  --arg url "$base_url/$asset" \
+                  --argjson size "$(stat -c%s "$asset")" \
+                  --arg blake3 "blake3:$(b3sum "$asset" | cut -d' ' -f1)" \
+                  --arg entrypoint "$entrypoint" \
+                  '{target: $target, url: $url, size: $size, blake3: $blake3, entrypoint: $entrypoint}'
+              done | jq -s .
+            )" \
+            '{schema_version: 1, packages: [{id: "desktop", name: "Davis Desktop", version: $version, requires_davis: $requires_davis, artifacts: $artifacts}]}' \
+            > software-registry.json
+          sha256sum davis-* component-registry.json software-registry.json latest-version.json > SHA256SUMS
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:

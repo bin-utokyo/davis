@@ -1,0 +1,633 @@
+# Davis Component Authoring Guide
+
+この文書を読むと，自分で作った計算programをDavisの画面やCLIから実行できるようになります．統計モデルだけでなく，「2つのCSVを結合する」「説明変数を計算する」「推定結果を図にする」といった処理も追加できます．Python以外の言語でも構いません．
+
+Davisでは，このような追加処理一式を**component**と呼びます．componentは，普通のprogramに「何を入力し，どの設定を使い，何を出力するか」という説明書を付けたものです．その説明書が`component.yaml`です．
+
+初学者は「最初の作成手順」と「それぞれの言葉の意味」から読んでください．既に実装したい処理が決まっている方やAIは，「Manifest」以降を仕様書として使えます．
+
+## それぞれの言葉の意味
+
+| 言葉 | 意味 | 例 |
+| --- | --- | --- |
+| component | Davisから実行できるようにまとめた計算処理一式 | MNL推定，CSV結合 |
+| Manifest | componentの説明書．filenameは`component.yaml` | 入力はCSV，出力はparameters.csv |
+| input | programへ渡す入力file | `persons.csv` |
+| config | 実行する人が毎回決める設定 | ID列名，説明変数，反復回数 |
+| artifact | programが作った出力file | 推定係数CSV，指標JSON |
+| runtime command | programを起動するcommand | `python -m my_model` |
+| Analysis plan | 1回の実行内容を保存するYAML | 使用file，列，設定 |
+| schema | configに何を書けるかを示す規則 | `max_iterations`は1以上の整数 |
+| presentation | configや結果をGUIでどう見せるかという補助情報 | 結果CSVをtable表示 |
+
+関係は次のとおりです．
+
+```text
+component.yaml  ──「このprogramは何を受け取り，何を返すか」
+実program       ── 実際の計算
+analysis.yaml   ──「今回はどのfileと設定で実行するか」
+       │
+       └── Davisが実行し，結果と実行記録をdavis-runsへ保存
+```
+
+## 基本構造
+
+最小componentは，説明書と実programの2つで構成できます．次の`model.py`という名前は一例であり，R，Julia，Node.js，native executable等でも構いません．
+
+```text
+component/
+├── component.yaml
+└── model.py
+```
+
+Davisは入力fileの場所を解決し，programを起動し，logと結果を保存します．さらに，宣言した出力が本当に作られたかを確認します．モデル固有の計算は実programが担当します．
+
+## 最初の作成手順
+
+最初は，そのまま実行できる小さなPython componentを生成する方法が簡単です．Manifest，実program，入力CSV，Analysis Plan，READMEが一度に作られます．既に同名のdirectoryがある場合は上書きしません．
+
+```console
+davis component scaffold ./my-component \
+  --id example/my-component \
+  --kind transform \
+  --template python
+```
+
+生成物を変更する前に，最小例が動くことを確認します．
+
+```console
+davis component validate ./my-component
+davis model run ./my-component/examples/minimal/analysis.yaml
+```
+
+次に，`component.py`の計算，`component.yaml`の入力・設定・出力，`examples/minimal/analysis.yaml`の実行条件を目的に合わせて変更します．生成された例はCSVの指定列を合計するだけなので，計算内容を置き換えるための教材です．完成したらinstallできます．
+
+```console
+davis install component ./my-component
+davis component inspect example/my-component
+```
+
+`validate`が確認するのは，YAMLの形式，IDとversion，schema，参照file等です．計算内容が正しいかまでは判断しないため，小さな入力例を使ったtestも残してください．実行時には，Python等の必要なcommandがPCにあるかも確認されます．Davisの開発repositoryへcomponentを置く必要はありません．同梱したexample Planは親directoryの`component.yaml`を見つけられるため，install前でも生成場所やcurrent working directoryに依存せず実行できます．通常利用時はinstall済みcomponentをIDとversionで解決します．
+
+Python以外，または最初から独自構成で作る場合は，起動commandを複数の`--command`で指定するとManifestだけを生成できます．次の例はPython moduleを使いますが，`Rscript component.R`やnative executable等も同じ方法で指定できます．
+
+```console
+davis component scaffold ./my-component \
+  --id example/my-component \
+  --kind transform \
+  --command python \
+  --command -m \
+  --command my_component
+```
+
+人間，GUI，外部AIのそれぞれで作成・変更できるかを判定する手順は，[Component Authoring Acceptance](davis-component-authoring-acceptance.md)にまとめています．
+
+### AIに作成を頼む場合
+
+AIにはこの文書全体と，少なくとも次の情報を渡してください．Davisの内部実装や開発経緯を説明する必要はありません．
+
+1. componentの目的と`kind`
+2. 入力slotごとの名前，media type，意味
+3. 設定項目と制約
+4. 出力artifactごとの名前，media type，意味
+5. 利用可能なruntime commandと必要な外部環境
+
+依頼文では「推測でDavis独自fieldを追加せず，このガイドに書かれた契約だけを使う」「完成後に`davis component validate`と既知入力による実行手順を示す」と指定してください．AIが生成した任意codeは，実行前に内容を確認してください．
+
+次の依頼文を出発点にできます．
+
+```text
+添付したDavis Component Authoring GuideだけをDavis固有仕様の根拠として，
+次の処理を行うcomponentを作成してください．
+
+目的: (行いたい推定や計算)
+入力: (file名，形式，各列の意味)
+実行時に変更したい設定: (説明変数等)
+出力: (必要な表や指標)
+使用できる言語・command: (Python，R等)
+
+component.yaml，実program，最小sample，Analysis plan，testを作成してください．
+未記載のDavis独自fieldは推測で追加しないでください．
+davis component validateとsample実行の手順も示してください．
+```
+
+## Manifest
+
+Manifestは「このcomponentの取扱説明書」です．利用者が毎回選ぶ値はManifestへ直接書かず，`configuration.schema`で項目だけ定義します．実際に選んだ値は後述するAnalysis planへ保存します．
+
+```yaml
+api_version: davis.component/v1
+id: example/accessibility
+name: Accessibility calculator
+version: 0.1.0
+kind: transform
+requires_davis: ">=0.5.0"
+
+runtime:
+  executor: process
+  command: ["uv", "run", "--frozen", "python", "-m", "accessibility"]
+  request_argument: "--request"
+  lockfile: uv.lock
+  requirements:
+    - command: uv
+      version: ">=0.8"
+      install:
+        macos: https://docs.astral.sh/uv/getting-started/installation/
+        windows: https://docs.astral.sh/uv/getting-started/installation/
+        linux: https://docs.astral.sh/uv/getting-started/installation/
+
+operations: [transform]
+inputs:
+  - name: persons
+    media_types: [text/csv]
+    required: true
+
+configuration:
+  schema:
+    type: object
+    required: [person_id]
+    properties:
+      person_id:
+        type: string
+
+presentation:
+  ui:
+    version: davis.ui/v1
+    inputs:
+      persons: {title: Persons, widget: table-binding}
+    sections:
+      - {bind: /person_id, widget: auto, title: Person ID column}
+    results:
+      - artifact: explanatory_variables
+        title: Explanatory variables
+        widget: table
+
+outputs:
+  artifacts:
+    explanatory_variables:
+      media_types: [text/csv]
+      required: true
+```
+
+`kind`は`model`，`transform`，`visualize`のいずれかです．省略時は既存Manifestとの互換性のため`model`です．`operations`の名前はcomponentが定義します．`requires_davis`はDavis本体のrelease versionから自動生成せず，利用するcontractの互換範囲をcomponent作者が宣言します．
+
+`runtime.executor: process`はprogramming言語に依存しません．`command`が`request.json`を読み，`run-result.json`を返せば，Python，R，Julia，Node.js，Java，Rust，C++等を同じcomponentとして実行できます．Davisは一般言語環境をinstallしません．`requirements`に必要commandと任意のSemVer条件，OS別の導入案内を宣言し，Davisは実行前に存在とversionを確認します．`version_arguments`を省略すると`--version`を使用します．
+
+旧Manifestの`runtime.kind: python`と`runtime.kind: native`は，どちらもprocess実行として後方互換で読み込まれます．
+
+desktop Formを提供するcomponentは，`presentation.ui.version: davis.ui/v1`を宣言します．画面全体を選ぶ`ui:editor`は新規componentでは使用しません．`inputs`で入力slotを，`sections`でconfigの一部分と再利用可能widgetの対応を宣言します．設定項目と必須性の正本は引き続き`configuration.schema`です．presentationは契約の妥当性を緩めず，表示方法だけを補います．
+
+MNL，NL，RLはいずれも同じrendererを使います．新しいモデルを追加するときにDesktopへモデルID固有の分岐を追加する必要はありません．新しいFrontend実装が必要なのは，Davis全体で再利用する新widgetを追加するときだけです．旧`linear-utility`／`schema-form`宣言はbackendの互換adapterが`davis.ui/v1`へ変換します．
+
+| widget | 用途 |
+| --- | --- |
+| `table-binding` | 入力slotへ1つ以上のCSVを追加し，基準表，join key，関係性，join方式を設定します |
+| `column-map` | schemaに並ぶ役割名を，指定した入力表の列へ対応させます |
+| `utility-terms` | parameter，説明変数列，定数，対象選択肢，係数を編集します |
+| `nests` | 選択肢のnest所属と非類似度の固定／推定を編集します |
+| `parameter-settings` | termからparameter名を取り出し，初期値と上下限を編集します |
+| `auto` | JSON Schemaから文字列，数値，真偽値，列挙等の入力欄を生成します |
+| `extension:<id>` | componentに同梱した外部UI extensionでsectionを編集します |
+| 未知のwidget | 画面全体を失敗させず，そのsectionだけYAML editorへfallbackします |
+
+```yaml
+presentation:
+  ui:
+    version: davis.ui/v1
+    inputs:
+      choice_data:
+        title: 選択データ
+        widget: table-binding
+        preparation: {component: davis/csv-transform, version: 0.4.0}
+    sections:
+      - bind: /roles
+        widget: column-map
+        input: choice_data
+      - bind: /terms
+        widget: utility-terms
+        input: choice_data
+      - bind: /nests
+        widget: nests
+        alternatives_from: /roles/alternative_id
+      - bind: /estimation
+        widget: auto
+    defaults:
+      estimation:
+        max_iterations: 500
+```
+
+`bind`は`configuration.schema`内を指すJSON Pointerです．`widget`を省略すると`auto`になります．GUIで表現しきれない自由形式objectや配列も，該当sectionだけYAMLとして編集できます．複数CSV結合はモデル固有機能ではなく，各入力slotで利用できるDavis共通の`table_binding`としてAnalysis Planへ保存されます．
+
+sectionの`title`と`description`はcomponent固有の意味を説明します．`nests` widgetでは`labels.mode`，`labels.estimate`，`labels.fixed`，`labels.estimate_value`，`labels.fixed_value`を指定できるため，scaleの記号や正規化方法をDesktopへハードコードする必要はありません．未指定時は汎用表示へ戻ります．
+
+### Component同梱UI extension
+
+組み込みwidgetで表現できない操作のために，Davis本体を変更せずcomponent自身がUIを追加できます．`presentation.ui.extensions`へpackage相対pathを宣言し，sectionから`extension:<id>`として参照します．初版は依存fileを持たない自己完結HTML fragmentを最大512 KiBまで読み込みます．
+
+```yaml
+presentation:
+  ui:
+    version: davis.ui/v1
+    extensions:
+      - id: nest-editor
+        api_version: davis.widget/v1
+        source: ui/nest-editor.html
+    inputs: {}
+    sections:
+      - bind: /nests
+        widget: extension:nest-editor
+        context:
+          alternatives:
+            provider: distinct-values
+            input: choice_data
+            column_from: /roles/alternative_id
+```
+
+extensionはsandbox化した`iframe`で動きます．network，親画面のDOM，filesystem，shellへ直接アクセスできません．外部scriptやstylesheetも読み込めないため，HTML内へ必要なstyleとscriptを記述します．設定更新や高さ変更はversion付きmessageだけでDavisへ渡します．
+
+```html
+<div id="editor"></div>
+<script>
+  addEventListener("message", event => {
+    const message = event.data;
+    if (message?.source !== "davis-host" ||
+        message?.api_version !== "davis.widget/v1" ||
+        message?.type !== "render") return;
+    // message.payload.value，schema，context，sectionを使って描画します．
+  });
+
+  parent.postMessage({
+    source: "davis-widget",
+    api_version: "davis.widget/v1",
+    type: "ready"
+  }, "*");
+
+  function update(nextValue) {
+    parent.postMessage({
+      source: "davis-widget",
+      api_version: "davis.widget/v1",
+      type: "set-value",
+      value: nextValue
+    }, "*");
+  }
+</script>
+```
+
+Hostからの`render`には現在のsection値，該当JSON Schema，名前付きcontext，context解決error，sectionのpresentation宣言が入ります．extensionからは`ready`，`set-value`，`resize`を送れます．`set-value`で渡した値も保存・実行前にcomponentのJSON Schemaで検証されるため，extensionは契約を迂回できません．実例は[`components/davis-nl/ui/nest-editor.html`](../components/davis-nl/ui/nest-editor.html)です．組み込みwidgetは後方互換用に残しますが，モデル固有の複雑な操作はこの仕組みでcomponent側へ置けます．
+
+extensionが必要とする情報は，sectionの`context`へ名前付きで宣言します．初版は次のproviderを利用できます．
+
+| provider | 宣言 | 渡される値 |
+| --- | --- | --- |
+| `config` | `path` | Analysis Planの別config section |
+| `columns` | `input` | 入力slotで利用できる列とaliasの一覧 |
+| `distinct-values` | `input`と`column_from` | configが指す列のdistinct値，sample行数，打切り状態 |
+
+```yaml
+context:
+  roles:
+    provider: config
+    path: /roles
+  available_columns:
+    provider: columns
+    input: choice_data
+  alternatives:
+    provider: distinct-values
+    input: choice_data
+    column_from: /roles/alternative_id
+```
+
+入力fileのpathや全行はextensionへ渡しません．大量データの走査とdistinct値の上限管理はDavis側で行い，extensionは必要最小限のcontextだけを受け取ります．contextを解決できない場合もextension全体を停止せず，`context_errors`に名前ごとの理由を渡します．
+
+大きなschemaを分割したい場合は，inline値の代わりに安全なpackage相対pathを指定できます．JSONとYAMLの両方を利用できます．inlineと参照を同時に指定することはできません．
+
+```yaml
+configuration:
+  schema_ref: schemas/config.schema.json
+presentation:
+  ui_ref: schemas/ui.schema.json
+```
+
+旧Manifestのtop-level `config_schema`と`ui_schema`も同じ外部参照として解決されます．新規componentでは，Web上のLLM，人間，GUIのいずれからも1ファイルを扱いやすいinline形式を標準とします．
+
+結果をdesktop内に表示する場合は，`presentation.ui.results`へartifact名，title，widgetを列挙します．`key-value`はJSON object，`table`はCSVを表示します．これは成果物の中央契約を増やすものではなく，Manifestで宣言済みのartifactをどう提示するかというcomponent固有のhintです．未対応widgetや大きすぎるartifactは無理に表示せず，artifact一覧へ残します．
+
+通常は`inputs`でslot名を固定します．CSV joinのように利用者が任意名の追加inputを与えるcomponentだけは，`additional_inputs.media_types`で許可する形式を限定できます．追加inputもDavisがpath，media type，size，BLAKE3を解決・記録してからcomponentへ渡します．
+
+`outputs.artifacts`を宣言したcomponentは，未宣言artifact，必須artifactの欠落，異なるmedia typeを返せません．Davisは各成果物のpath，size，BLAKE3も検証して`result.json`へ記録します．既存componentの`outputs.standard`と`outputs.extensions`は引き続き読めます．
+
+### 標準artifact profile
+
+成果物へ任意の`profile`を付けると，Davisはそのfileの役割を名前に依存せず理解できます．profileは独自artifactを禁止する分類ではなく，共通preview，Run比較，後続componentとの接続を利用するための追加契約です．省略したartifactも従来どおり保存・表示できます．
+
+```yaml
+outputs:
+  artifacts:
+    coefficients:
+      profile: parameters
+      media_types: [text/csv]
+      required: true
+    fit:
+      profile: metrics
+      media_types: [application/json]
+      required: true
+```
+
+| profile | 意味 | 対応形式 |
+| --- | --- | --- |
+| `table` | 汎用表 | CSV，Parquet |
+| `metrics` | 指標名と値 | JSON object，CSV，Parquet |
+| `parameters` | 推定parameter | CSV，Parquet |
+| `predictions` | 予測値・選択確率等 | CSV，Parquet |
+| `figure` | 図または宣言的な図仕様 | JSON，Vega-Lite JSON，HTML，PNG，SVG |
+| `diagnostics` | sample情報，警告，収束情報 | JSON object，CSV，Parquet |
+| `report` | 人が読むreport | HTML，Markdown，PDF，JSON |
+
+`parameters`のCSVには最低限`name`と`estimate`列が必要です．`std_error`，`statistic`，`p_value`，`lower`，`upper`等は任意列です．`metrics`，`diagnostics`，JSON形式の`figure`はrootをobjectにします．DavisはManifestのprofileとmedia typeを検証し，実programが返した値を信用して決めるのではなく，確定したprofileを`result.json`へ記録します．そのため，将来component packageが更新されても，過去Runの成果物が持っていた意味を復元できます．
+
+Desktopでは`presentation.ui.results`による明示的な表示を優先します．そこに指定されていないprofile付きCSV・JSONも，profileからtableまたはkey-value表示を補完します．モデル固有の見せ方が必要な場合は，従来どおりpresentationまたはUI extensionで上書きできます．
+
+## Analysis plan
+
+Analysis planは「今回の実験条件」です．同じcomponentでも，入力fileや説明変数を変えるたびに別のplanとして保存できます．このため，`component.yaml`を毎回編集して実験履歴の代わりにする必要はありません．
+
+```yaml
+api_version: davis.analysis/v1alpha1
+name: calculate-accessibility
+component:
+  id: example/accessibility
+  version: 0.1.0
+  operation: transform
+inputs:
+  persons:
+    kind: local
+    path: persons.csv
+config:
+  person_id: person_id
+```
+
+既存planの`model.component`形式も互換です．新しい汎用表記ではtop-levelに`component`，その中に`id`を書けます．どちらも同じAnalysisPlanとして実行されます．
+
+## Process contract
+
+ここからは実programを書く人とAIが守る規則です．GUIだけで既存componentを使う人は読み飛ばせます．Davisとprogramは，関数呼出しではなく2つのJSON fileで情報を交換します．そのため，programming言語を限定しません．
+
+DavisはManifestの`runtime.command`をcomponent directoryで起動し，`request_argument`の直後に`request.json`の絶対pathを渡します．componentは次を行います．
+
+1. `request.json`を読みます．
+2. `inputs.<name>.resolved.path`だけから入力を読みます．
+3. `output_directory`以下へ成果物を書きます．
+4. `output_directory/run-result.json`を書きます．
+5. 成功時は終了code 0，失敗時は非0を返します．
+
+例えば，programには次のようなJSONが渡ります．`source`は利用者が指定した元情報，`resolved`はDavisが検証した実fileです．programは必ず`resolved.path`を読んでください．
+
+```json
+{
+  "api_version": "davis.run/v1alpha1",
+  "run_id": "run_123456",
+  "operation": "transform",
+  "component": {
+    "id": "example/accessibility",
+    "version": "0.1.0",
+    "kind": "transform",
+    "manifest_path": "/absolute/path/component.yaml",
+    "source_digest": "blake3:..."
+  },
+  "inputs": {
+    "persons": {
+      "source": {"kind": "local", "path": "persons.csv", "read": null},
+      "resolved": {
+        "path": "/absolute/path/persons.csv",
+        "object_id": "blake3:...",
+        "size": 1234,
+        "media_type": "text/csv"
+      }
+    }
+  },
+  "config": {"person_id": "person_id"},
+  "output_directory": "/absolute/path/davis-runs/run_123456/artifacts"
+}
+```
+
+実programは，例えば`python -m accessibility --request /.../request.json`のように起動されます．`--request`の値からJSONを読み，`run_id`と`output_directory`を取り出します．入力fileや出力directoryをcomponent directoryからの相対pathだと仮定しないでください．
+
+`run_id`はDavisが生成します．Analysis Planの`run.label`が人間向けprefixになり，未指定ならPlanの`name`が使われます．実際のIDには実行日時と短い一意suffixも付くため，同じlabelで繰り返し実行しても既存結果を上書きしません．component実programは形式を解析せず，requestで渡された`run_id`をそのままresultへ記録してください．
+
+成功結果の最小例です．
+
+```json
+{
+  "api_version": "davis.result/v1alpha1",
+  "run_id": "requestと同じrun ID",
+  "status": "succeeded",
+  "artifacts": {
+    "explanatory_variables": {
+      "path": "explanatory-variables.csv",
+      "media_type": "text/csv"
+    }
+  },
+  "extensions": {}
+}
+```
+
+componentがsizeやdigestを計算する必要はありません．Davisが実ファイルから計算して記録します．artifact pathは`output_directory`からの安全な相対pathに限定されます．
+
+## Runを接続する
+
+前処理の出力は，絶対pathではなく`run_artifact`で次の処理へ渡せます．
+
+```yaml
+inputs:
+  choice_data:
+    kind: run_artifact
+    run_id: run_123456
+    artifact: transformed_table
+```
+
+Davisは同じrun rootから`result.json`を読み，artifact名，成功状態，media type，size，BLAKE3，安全なpathを再検証します．記録後にファイルが変更されていた場合は次の処理を開始しません．
+
+現段階では1つ目のRunを実行し，得られたrun IDを2つ目のplanへ記入します．複数処理を1ファイルでDAGとして実行するpipeline記法はまだありません．
+
+## 推定時の複数source binding
+
+モデル入力を作る目的では，transformを先に手動実行する必要はありません．`table_binding`をモデルのinput slotへ指定すると，Davisが推定直前に複数sourceを結合し，選択列だけをParquetへmaterializeしてモデルcomponentへ渡します．
+
+```yaml
+inputs:
+  choice_data:
+    kind: table_binding
+    processor:
+      id: davis/csv-transform
+      version: 0.4.0
+    sources:
+      choices:
+        kind: local
+        path: choices.csv
+      persons:
+        kind: local
+        path: persons.csv
+    base: choices
+    joins:
+      - source: persons
+        relationship: many_to_one
+        left_on: case_id
+        right_on: person_id
+    columns:
+      travel_time:
+        source: choices
+        column: time
+      income:
+        source: persons
+        column: income
+```
+
+`columns`のkeyはモデル設定から参照する最終列名です．GUIではparameterごとにsourceとcolumnを選び，この対応を生成します．結合済み表はRunの`artifacts/prepared/`へ保存され，`result.json`の`prepared_input:<slot名>` extensionにpath，media type，size，BLAKE3が記録されます．前処理processのrequest，result，logも`preparation/`へ保存します．
+
+現在のbinding joinはbase表の列と各追加sourceの列を照合します．単一keyと複合key，`many_to_one`と`one_to_one`，left／inner，未一致許可を指定できます．bindingの入れ子と，追加source同士を順に結ぶjoinは未対応です．完全なpipeline DAGとは別に，モデル入力を組み立てるための限定された一段前処理です．実動作例は[`components/davis-mnl/examples/multi-source`](../components/davis-mnl/examples/multi-source/)にあります．
+
+## 参考transform component
+
+[`components/davis-csv-transform`](../components/davis-csv-transform/)は，任意codeをYAMLへ埋め込まず，数値列の線形結合を新しいCSV列として作る参考実装です．
+
+```console
+cargo run -p davis-cli -- \
+  --repository . \
+  model run components/davis-csv-transform/examples/minimal/transform.yaml
+```
+
+`examples/mnl-chain`には，CSV変換Runの`transformed_table`をMNLへ渡す2段階exampleがあります．
+
+## 参考Nested Logit component
+
+[`components/davis-nl`](../components/davis-nl/)は，選択肢をnestへ分ける2段階Nested Logitの読みやすい参考実装です．MNLと共通の`roles`と`terms`に加えて，`nests`で各選択肢が所属するnestを1つずつ指定します．この実装は最上位scaleを1に正規化し，各nestの`dissimilarity`を非類似度λとして扱います．`fixed`で固定するか，`initial`を初期値として推定できます．singleton nestは省略時にλ=1へ固定します．これは最下層scaleを1に固定して上位scaleをμとする表記とは異なるため，記号ではなく式と正規化を確認してください．
+
+```yaml
+nests:
+  - name: motorized
+    alternatives: [train, car]
+    dissimilarity:
+      initial: 0.8
+  - name: active
+    alternatives: [walk]
+    dissimilarity:
+      fixed: 1.0
+```
+
+全選択肢が重複なくいずれか1つのnestへ入る必要があります．推定する非類似度parameterは`0.05`から`1.0`へ制約されます．これはcross-nested logitではなく，2段階の非重複NLです．最小例は次で実行できます．
+
+```console
+cargo run -p davis-cli -- \
+  --repository . \
+  model run components/davis-nl/examples/minimal/model.yaml
+```
+
+## 参考Recursive Logit component
+
+[`components/davis-rl`](../components/davis-rl/)は，経路全体の選択肢集合を先に列挙せず，各nodeで次のlinkを選ぶ標準Recursive Logitの参考実装です．入力は，有向networkの全linkを持つ`network`と，実際に通ったlink列をlong形式で持つ`observations`の2つです．
+
+```text
+network.csv
+link_id,from_node,to_node,time,toll
+oa,O,A,1.0,0
+ad,A,D,2.0,1
+
+observations.csv
+trip_id,step,link_id,destination
+1,1,oa,D
+1,2,ad,D
+```
+
+`network_roles`と`observation_roles`で実際の列名を役割へ対応させ，`terms`でlink効用を定義します．各観測経路はlinkが順番につながり，最後のlinkが宣言した目的地へ到達する必要があります．
+
+初版は，nodeを状態とし，誤差scaleを1へ正規化したlink-additive RLです．Bellman方程式を指数変換した線形方程式として目的地ごとに解きます．turn固有属性，時間依存network，Nested RL，link-size属性の自動生成には未対応です．cycleを含むnetworkでは，設定した効用parameterの範囲でvalue functionが有限になる必要があります．
+
+```console
+cargo run -p davis-cli -- \
+  --repository . \
+  model run components/davis-rl/examples/minimal/model.yaml
+```
+
+この実装は，Fosgerau，Frejinger，Karlströmによるlink-based Recursive Logitを最小構成で扱います．理論上の対象と拡張を判断する場合は，[原論文](https://doi.org/10.1016/j.trb.2013.08.010)も確認してください．
+
+### 複数CSVのjoin
+
+`davis/csv-transform`は，`table`を基準表として任意名の追加CSV inputを受け取れます．join keyは単一列または複数列で指定します．次の例では，tripの`origin_zone`とzone表の`zone_code`が同じ行を結合します．
+
+```yaml
+inputs:
+  table:
+    kind: local
+    path: trips.csv
+  zones:
+    kind: local
+    path: zones.csv
+config:
+  joins:
+    - input: zones
+      how: left
+      relationship: many_to_one
+      left_on: origin_zone
+      right_on: zone_code
+      columns:
+        origin_population: population
+```
+
+`columns`は「出力列名: join元の列名」の対応です．複合keyでは`left_on: [person_id, date]`のように配列を使います．`many_to_one`では右表のkey重複を拒否し，`one_to_one`では左右両方の重複を拒否します．一致しないkeyは既定でerrorです．意図的に許可する場合だけ`allow_unmatched: true`を指定し，`left` joinでは空欄を補い，`inner` joinでは該当行を除外します．
+
+動作例は次で実行できます．
+
+```console
+cargo run -p davis-cli -- \
+  --repository . \
+  model run components/davis-csv-transform/examples/join/transform.yaml
+```
+
+### CSV／Parquet出力
+
+既定では人間が確認しやすいCSVを出力します．容量，読込速度，列型の保持を優先する場合はParquetを指定できます．
+
+```yaml
+config:
+  output:
+    format: parquet
+    compression: zstd
+    null_values: [""]
+    column_types:
+      person_id: string
+      travel_time: float64
+```
+
+`column_types`を省略した列は，`string`，`int64`，`float64`，`boolean`から安全側に型推定します．`001`のように先頭0がある整数風の値はIDとみなして`string`を維持します．曖昧さを避けたい場合は型を明示してください．実際の形式とParquet schemaは`transformation-summary.json`へ記録されます．`examples/mnl-chain`はParquetを出力し，そのartifactをMNL 0.3.0へ直接渡します．
+
+## 検証と公開
+
+```console
+davis install component ./my-component
+davis model validate analysis.yaml
+davis model run analysis.yaml
+davis component pack ./my-component --name my-component --out dist
+davis component registry dist/my-component-0.1.0.entry.json \
+  --out dist/component-registry.json
+```
+
+公開bundleには`.venv`，`__pycache__`，Git metadata，test cacheを含めません．dependencyをlockし，正常系，欠損列，不正値，成果物欠落をtestしてください．信頼できないcomponentは任意codeを実行できるため，現在はinstallしないでください．sandboxとregistry署名は未実装です．
+
+## Davisを知らないAIによる最終検証
+
+このframeworkの最終検証では，Davis開発の会話履歴やsource codeを見ていないブラウザAIを使います．AIへ渡してよいものは，このガイド，作りたいモデルの要件，入出力の小さなsampleだけです．既存componentを模写させることは必須にしません．
+
+次をすべて満たした場合に合格とします．
+
+1. AIが`component.yaml`と実programを作成できます．
+2. `davis component validate`が成功します．
+3. AIが作成したAnalysis planをGUIで開いて内容を理解・変更できます．
+4. sample dataによる実行が成功し，宣言したartifactをDavisが表示できます．
+5. 入力列不足等の失敗が，利用者の直せる説明として表示されます．
+6. 別の人がManifest，plan，結果を読み，使用file，設定，出力を説明できます．
+
+失敗した場合はAIだけを調整して通すのではなく，誤解された箇所をこのガイド，scaffold，validator，GUIのいずれかへ還元します．特定AIの事前知識に依存しないことが目的です．
+
+## 現在の境界
+
+実装済みなのはlocal input，Davis Catalog input，`run_artifact` input，推定時の複数source binding，宣言的な複数CSV join，列選択，線形結合，CSV／Parquet出力，process実行，artifact検証，local／registry installです．Catalog inputは`dataset_id`と`file_id`をPlanへ記録し，CLIまたはDesktopが取得した実体をuser共通cacheから解決します．revision pin，filter，group，任意pipeline DAG，sandboxは未実装です．DavisはPython等の一般言語環境をinstallしません．QGIS等の手作業は生成済みfileをlocal inputとして利用し，自動実行できるalgorithmは同じprocess contractでtransform componentとして包めます．

@@ -1,6 +1,9 @@
+mod component;
+mod component_pack;
+mod component_registry;
 mod git_workflow;
-mod remote;
-mod session;
+mod model;
+mod software;
 mod update;
 
 use std::collections::{HashMap, HashSet};
@@ -8,14 +11,18 @@ use std::io::{BufRead, IsTerminal, Read, Write};
 use std::path::PathBuf;
 use std::time::Duration;
 
-use clap::{Args, Parser, Subcommand};
+use clap::{Args, Parser, Subcommand, ValueEnum};
 use davis_catalog::{
     audit_datasets, build_catalog_index, ingest_dataset, read_file_schema, refresh_dataset,
     scan_repository, write_catalog_index, RefreshOptions,
 };
+use davis_client::{
+    remote::{DavisService, RemoteError},
+    session,
+};
 use davis_core::{
-    current_local_date, read_manifest, write_manifest, Dataset, LocalObjectStore, LocalizedText,
-    ObjectRef, SchemaStatus,
+    current_local_date, read_manifest, write_manifest, CatalogCache, Dataset, LocalObjectStore,
+    LocalizedText, ObjectRef, SchemaStatus,
 };
 use davis_document::{render_schema_pdf, write_pdf_if_changed, Language};
 use davis_storage::{
@@ -27,12 +34,11 @@ use git_workflow::{
     verify_publish_git_state,
 };
 use indicatif::{ProgressBar, ProgressStyle};
-use remote::{DavisService, RemoteError};
 
 #[derive(Debug, Parser)]
 #[command(name = "davis", version, about = "Davis data catalog client")]
 struct Cli {
-    /// Davis repository to read.
+    /// Davis repository or local analysis workspace to read.
     #[arg(long, global = true, default_value = ".")]
     repository: PathBuf,
 
@@ -62,6 +68,33 @@ enum Command {
     Operator {
         #[command(subcommand)]
         command: OperatorCommand,
+    },
+    /// Validate and run local analysis components.
+    Model {
+        #[command(subcommand)]
+        command: ModelCommand,
+    },
+    /// Install optional Davis applications and components.
+    Install {
+        #[command(subcommand)]
+        command: InstallCommand,
+    },
+    /// Launch the installed Davis desktop application.
+    Desktop {
+        /// Select an exact installed desktop version.
+        #[arg(long)]
+        version: Option<String>,
+    },
+    /// List software and components managed by this Davis installation.
+    Installed {
+        /// Print structured JSON.
+        #[arg(long)]
+        json: bool,
+    },
+    /// Inspect and manage installed analysis components.
+    Component {
+        #[command(subcommand)]
+        command: ComponentCommand,
     },
     /// List available datasets.
     List {
@@ -240,6 +273,181 @@ enum OperatorCommand {
     Logout,
 }
 
+#[derive(Debug, Subcommand)]
+enum ModelCommand {
+    /// Inspect the encoding, delimiter, and inferred columns of a local CSV file.
+    Inspect {
+        path: PathBuf,
+        /// Print structured JSON.
+        #[arg(long)]
+        json: bool,
+    },
+    /// Validate an analysis plan and resolve its component.
+    Validate {
+        plan: PathBuf,
+        /// Print structured JSON.
+        #[arg(long)]
+        json: bool,
+    },
+    /// Resolve inputs and print the exact request without running the component.
+    Plan {
+        plan: PathBuf,
+        /// Root where the eventual run directory will be created.
+        #[arg(long, default_value = "davis-runs")]
+        run_root: PathBuf,
+        /// Print structured JSON.
+        #[arg(long)]
+        json: bool,
+    },
+    /// Resolve inputs and execute a local component.
+    Run {
+        plan: PathBuf,
+        /// Directory below which immutable run records are written.
+        #[arg(long, default_value = "davis-runs")]
+        run_root: PathBuf,
+        /// Print structured JSON.
+        #[arg(long)]
+        json: bool,
+    },
+}
+
+#[derive(Debug, Subcommand)]
+enum InstallCommand {
+    /// Install an official or local component package.
+    Component {
+        /// Official component name, ID, or local package directory.
+        source: String,
+        /// Select an exact official component version.
+        #[arg(long)]
+        version: Option<String>,
+        /// Override the official component registry URL.
+        #[arg(long)]
+        registry: Option<String>,
+        /// Print structured JSON.
+        #[arg(long)]
+        json: bool,
+    },
+    /// Install the Davis desktop application for this computer.
+    #[command(alias = "app")]
+    Desktop {
+        /// Select an exact desktop version.
+        #[arg(long)]
+        version: Option<String>,
+        /// Override the official software registry URL.
+        #[arg(long)]
+        registry: Option<String>,
+        /// Print structured JSON.
+        #[arg(long)]
+        json: bool,
+    },
+}
+
+#[derive(Debug, Subcommand)]
+enum ComponentCommand {
+    /// Create a minimal self-contained component package.
+    Scaffold {
+        /// New component directory. It must not already exist.
+        path: PathBuf,
+        /// Stable component ID, for example `example/my-component`.
+        #[arg(long)]
+        id: String,
+        /// Human-readable name. Defaults to the final ID segment.
+        #[arg(long)]
+        name: Option<String>,
+        /// Component role.
+        #[arg(long, value_enum, default_value_t = ScaffoldKind::Model)]
+        kind: ScaffoldKind,
+        /// Generate a runnable teaching package instead of a manifest-only package.
+        #[arg(long, value_enum)]
+        template: Option<ScaffoldTemplate>,
+        /// One runtime command argument. Repeat this option for every argument.
+        #[arg(
+            long = "command",
+            required_unless_present = "template",
+            allow_hyphen_values = true
+        )]
+        runtime_command: Vec<String>,
+        /// Supported operation. Repeat to declare multiple operations.
+        #[arg(long = "operation")]
+        operations: Vec<String>,
+        /// Print structured JSON.
+        #[arg(long)]
+        json: bool,
+    },
+    /// Validate a component package without installing it.
+    Validate {
+        path: PathBuf,
+        /// Print structured JSON.
+        #[arg(long)]
+        json: bool,
+    },
+    /// List installed model components.
+    List {
+        /// Print structured JSON.
+        #[arg(long)]
+        json: bool,
+    },
+    /// Show one installed model component.
+    Inspect {
+        id: String,
+        /// Select an exact installed version.
+        #[arg(long)]
+        version: Option<String>,
+        /// Print structured JSON.
+        #[arg(long)]
+        json: bool,
+    },
+    /// Remove one installed model component.
+    Remove {
+        id: String,
+        /// Select an exact installed version.
+        #[arg(long)]
+        version: Option<String>,
+        /// Print structured JSON.
+        #[arg(long)]
+        json: bool,
+    },
+    /// Build a deterministic release bundle and registry entry.
+    Pack {
+        path: PathBuf,
+        /// Directory where the bundle and entry JSON are written.
+        #[arg(long)]
+        out: PathBuf,
+        /// Short official install name. Defaults to the final ID segment.
+        #[arg(long)]
+        name: Option<String>,
+        /// Compatible Davis `SemVer` requirement. Defaults to the manifest declaration.
+        #[arg(long)]
+        requires_davis: Option<String>,
+        /// Print structured JSON.
+        #[arg(long)]
+        json: bool,
+    },
+    /// Combine component entry files into a versioned registry.
+    Registry {
+        /// Entry JSON files emitted by `davis component pack`.
+        entries: Vec<PathBuf>,
+        /// Registry JSON destination.
+        #[arg(long)]
+        out: PathBuf,
+        /// Print structured JSON.
+        #[arg(long)]
+        json: bool,
+    },
+}
+
+#[derive(Debug, Clone, Copy, ValueEnum)]
+enum ScaffoldKind {
+    Model,
+    Transform,
+    Visualize,
+}
+
+#[derive(Debug, Clone, Copy, ValueEnum)]
+enum ScaffoldTemplate {
+    Python,
+}
+
 #[tokio::main]
 async fn main() {
     let cli = Cli::parse();
@@ -253,6 +461,8 @@ async fn main() {
     }
 }
 
+// The top-level dispatch intentionally keeps every public CLI command visible in one match.
+#[allow(clippy::too_many_lines)]
 async fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
     match cli.command {
         Command::Login {
@@ -262,6 +472,11 @@ async fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
         Command::Logout => handle_logout()?,
         Command::Update { yes } => update::check_explicitly(yes).await?,
         Command::Operator { command } => handle_operator(command).await?,
+        Command::Model { command } => model::handle(&cli.repository, command)?,
+        Command::Install { command } => handle_install(command).await?,
+        Command::Desktop { version } => software::launch_desktop(version.as_deref())?,
+        Command::Installed { json } => software::print_installed(json)?,
+        Command::Component { command } => component::handle_component(command)?,
         Command::List { json } => handle_list(&cli.repository, json).await?,
         Command::Info { dataset_id, json } => {
             handle_info(&cli.repository, &dataset_id, json).await?;
@@ -349,6 +564,23 @@ async fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
+    Ok(())
+}
+
+async fn handle_install(command: InstallCommand) -> Result<(), Box<dyn std::error::Error>> {
+    match command {
+        InstallCommand::Component {
+            source,
+            version,
+            registry,
+            json,
+        } => component::handle_install(source, version, registry, json).await?,
+        InstallCommand::Desktop {
+            version,
+            registry,
+            json,
+        } => software::install_desktop(version.as_deref(), registry.as_deref(), json).await?,
+    }
     Ok(())
 }
 
@@ -622,6 +854,7 @@ fn handle_ingest(
     Ok(())
 }
 
+#[allow(clippy::too_many_lines)]
 async fn handle_get(mut request: GetRequest) -> Result<(), Box<dyn std::error::Error>> {
     let stored_session = if request.config.is_none() {
         get_session(request.service_url.as_deref()).await?
@@ -654,7 +887,14 @@ async fn handle_get(mut request: GetRequest) -> Result<(), Box<dyn std::error::E
     if !request.documents.schema {
         eprintln!("Warning: schema.yaml will not be saved; future Davis formatting and modeling workflows may require it.");
     }
-    let object_store = LocalObjectStore::new(resolve(&request.repository, &request.store));
+    let catalog_cache = stored_session
+        .as_ref()
+        .map(|_| CatalogCache::for_user())
+        .transpose()?;
+    let object_store = catalog_cache.as_ref().map_or_else(
+        || LocalObjectStore::new(resolve(&request.repository, &request.store)),
+        CatalogCache::object_store,
+    );
     if let Some(config) = &request.config {
         let remote_store = open_remote(&request.repository, config, &request.remote)?;
         let progress_bar = transfer_progress_bar("Download");
@@ -702,6 +942,11 @@ async fn handle_get(mut request: GetRequest) -> Result<(), Box<dyn std::error::E
         };
         println!("Downloaded objects: {}", report.downloaded);
         println!("Cached objects: {}", report.cached);
+    }
+    if let Some(cache) = &catalog_cache {
+        for file in &manifest.files {
+            cache.materialize_file(&manifest, &file.id)?;
+        }
     }
     object_store.materialize(&manifest, &output, request.force)?;
     materialize_companion_documents(&request, &manifest, stored_session.as_ref(), &output).await?;
@@ -1665,10 +1910,10 @@ fn update_transfer_progress(progress_bar: &ProgressBar, label: &str, progress: T
 
 #[cfg(test)]
 mod tests {
-    use super::{Cli, Command};
+    use super::{Cli, Command, ComponentCommand, InstallCommand, ScaffoldTemplate};
     use clap::Parser;
     use std::io::Cursor;
-    use std::path::PathBuf;
+    use std::path::{Path, PathBuf};
 
     #[test]
     fn pull_accepts_first_retrieval_and_companion_options() {
@@ -1752,6 +1997,201 @@ mod tests {
             Cli::try_parse_from(["davis", "update", "--yes"]).expect("update command should parse");
 
         assert!(matches!(cli.command, Command::Update { yes: true }));
+    }
+
+    #[test]
+    fn component_management_commands_parse() {
+        let install = Cli::try_parse_from(["davis", "install", "component", "components/example"])
+            .expect("component install should parse");
+        assert!(matches!(
+            install.command,
+            Command::Install {
+                command: InstallCommand::Component {
+                    source,
+                    version: None,
+                    registry: None,
+                    json: false
+                }
+            } if source == "components/example"
+        ));
+
+        let inspect = Cli::try_parse_from([
+            "davis",
+            "component",
+            "inspect",
+            "davis/mnl",
+            "--version",
+            "0.1.0",
+        ])
+        .expect("component inspect should parse");
+        assert!(matches!(
+            inspect.command,
+            Command::Component {
+                command: ComponentCommand::Inspect { id, version, json: false }
+            } if id == "davis/mnl" && version.as_deref() == Some("0.1.0")
+        ));
+
+        let pack = Cli::try_parse_from([
+            "davis",
+            "component",
+            "pack",
+            "components/davis-mnl",
+            "--out",
+            "dist",
+            "--name",
+            "mnl",
+            "--requires-davis",
+            ">=0.3.5",
+        ])
+        .expect("component pack should parse");
+        assert!(matches!(
+            pack.command,
+            Command::Component {
+                command: ComponentCommand::Pack {
+                    path,
+                    out,
+                    name,
+                    requires_davis,
+                    json: false,
+                }
+            } if path == Path::new("components/davis-mnl")
+                && out == Path::new("dist")
+                && name.as_deref() == Some("mnl")
+                && requires_davis.as_deref() == Some(">=0.3.5")
+        ));
+
+        let registry = Cli::try_parse_from([
+            "davis",
+            "component",
+            "registry",
+            "dist/mnl.entry.json",
+            "--out",
+            "dist/component-registry.json",
+        ])
+        .expect("component registry should parse");
+        assert!(matches!(
+            registry.command,
+            Command::Component {
+                command: ComponentCommand::Registry { entries, out, json: false }
+            } if entries == [PathBuf::from("dist/mnl.entry.json")]
+                && out == Path::new("dist/component-registry.json")
+        ));
+    }
+
+    #[test]
+    fn component_authoring_commands_parse() {
+        let template = Cli::try_parse_from([
+            "davis",
+            "component",
+            "scaffold",
+            "my-python-component",
+            "--id",
+            "example/my-python-component",
+            "--kind",
+            "transform",
+            "--template",
+            "python",
+        ])
+        .expect("component template scaffold should parse without --command");
+        assert!(matches!(
+            template.command,
+            Command::Component {
+                command: ComponentCommand::Scaffold {
+                    template: Some(ScaffoldTemplate::Python),
+                    runtime_command,
+                    ..
+                }
+            } if runtime_command.is_empty()
+        ));
+
+        let scaffold = Cli::try_parse_from([
+            "davis",
+            "component",
+            "scaffold",
+            "my-component",
+            "--id",
+            "example/my-component",
+            "--kind",
+            "transform",
+            "--command",
+            "python",
+            "--command",
+            "-m",
+            "--command",
+            "my_component",
+        ])
+        .expect("component scaffold should parse");
+        assert!(matches!(
+            scaffold.command,
+            Command::Component {
+                command: ComponentCommand::Scaffold {
+                    path,
+                    id,
+                    runtime_command,
+                    ..
+                }
+            } if path == Path::new("my-component")
+                && id == "example/my-component"
+                && runtime_command == ["python", "-m", "my_component"]
+        ));
+
+        let validate =
+            Cli::try_parse_from(["davis", "component", "validate", "my-component", "--json"])
+                .expect("component validate should parse");
+        assert!(matches!(
+            validate.command,
+            Command::Component {
+                command: ComponentCommand::Validate { path, json: true }
+            } if path == Path::new("my-component")
+        ));
+    }
+
+    #[test]
+    fn desktop_bootstrap_commands_parse() {
+        let install = Cli::try_parse_from([
+            "davis",
+            "install",
+            "desktop",
+            "--version",
+            "0.5.0",
+            "--registry",
+            "https://example.com/software-registry.json",
+        ])
+        .expect("desktop install should parse");
+        assert!(matches!(
+            install.command,
+            Command::Install {
+                command: InstallCommand::Desktop {
+                    version,
+                    registry,
+                    json: false
+                }
+            } if version.as_deref() == Some("0.5.0")
+                && registry.as_deref() == Some("https://example.com/software-registry.json")
+        ));
+
+        let alias = Cli::try_parse_from(["davis", "install", "app"])
+            .expect("legacy app spelling should parse");
+        assert!(matches!(
+            alias.command,
+            Command::Install {
+                command: InstallCommand::Desktop { .. }
+            }
+        ));
+
+        let launch = Cli::try_parse_from(["davis", "desktop", "--version", "0.5.0"])
+            .expect("desktop launch should parse");
+        assert!(matches!(
+            launch.command,
+            Command::Desktop { version } if version.as_deref() == Some("0.5.0")
+        ));
+
+        let installed =
+            Cli::try_parse_from(["davis", "installed", "--json"]).expect("list should parse");
+        assert!(matches!(
+            installed.command,
+            Command::Installed { json: true }
+        ));
     }
 
     #[test]

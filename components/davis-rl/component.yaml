@@ -1,0 +1,143 @@
+api_version: davis.component/v1
+id: davis/rl
+name: Davis Recursive Logit
+version: 0.1.0
+kind: model
+requires_davis: '>=0.5.0'
+runtime:
+  executor: process
+  command:
+  - uv
+  - run
+  - --frozen
+  - python
+  - -m
+  - davis_rl
+  request_argument: --request
+  lockfile: uv.lock
+  requirements:
+  - command: uv
+    version: '>=0.8'
+    install:
+      macos: https://docs.astral.sh/uv/getting-started/installation/
+      windows: https://docs.astral.sh/uv/getting-started/installation/
+      linux: https://docs.astral.sh/uv/getting-started/installation/
+operations:
+- validate
+- estimate
+inputs:
+- name: network
+  media_types: [text/csv, application/vnd.apache.parquet]
+  required: true
+- name: observations
+  media_types: [text/csv, application/vnd.apache.parquet]
+  required: true
+configuration:
+  schema:
+    $schema: https://json-schema.org/draft/2020-12/schema
+    title: Davis Recursive Logit configuration
+    additionalProperties: false
+    type: object
+    required: [network_roles, observation_roles, terms]
+    properties:
+      network_roles:
+        type: object
+        additionalProperties: false
+        required: [link_id, from_node, to_node]
+        properties:
+          link_id: {type: string}
+          from_node: {type: string}
+          to_node: {type: string}
+      observation_roles:
+        type: object
+        additionalProperties: false
+        required: [trip_id, step, link_id, destination]
+        properties:
+          trip_id: {type: string}
+          step: {type: string}
+          link_id: {type: string}
+          destination: {type: string}
+      terms:
+        type: array
+        minItems: 1
+        items:
+          type: object
+          additionalProperties: false
+          required: [parameter, column]
+          properties:
+            parameter: {type: string, minLength: 1}
+            column: {type: string, minLength: 1}
+            coefficient: {type: number, default: 1.0}
+      parameters:
+        type: object
+        additionalProperties:
+          type: object
+          additionalProperties: false
+          properties:
+            initial: {type: number}
+            lower: {type: number}
+            upper: {type: number}
+      estimation:
+        type: object
+        additionalProperties: false
+        properties:
+          max_iterations: {type: integer, minimum: 1}
+          tolerance: {type: number, exclusiveMinimum: 0}
+presentation:
+  ui:
+    version: davis.ui/v1
+    ui:description: Map a directed link network and observed link sequences to recursive-logit utility terms.
+    inputs:
+      network:
+        title: Network link表
+        description: link ID，始点node，終点node，link属性を含む表です．
+        widget: table-binding
+        preparation: {component: davis/csv-transform, version: 0.4.0}
+      observations:
+        title: 観測経路表
+        description: tripごとの通過linkを順番に並べたlong形式の表です．
+        widget: table-binding
+        preparation: {component: davis/csv-transform, version: 0.4.0}
+    sections:
+      - bind: /network_roles
+        widget: column-map
+        input: network
+        title: Network列の役割
+        labels:
+          link_id: Link ID
+          from_node: 始点node
+          to_node: 終点node
+      - bind: /observation_roles
+        widget: column-map
+        input: observations
+        title: 観測経路列の役割
+        labels:
+          trip_id: Trip ID
+          step: 通過順序
+          link_id: Link ID
+          destination: 目的地node
+      - bind: /terms
+        widget: utility-terms
+        input: network
+        title: Link効用term
+        allow_constant: false
+        show_coefficient: true
+      - bind: /parameters
+        widget: parameter-settings
+        parameters_from: /terms
+        title: Parameter初期値・範囲
+      - bind: /estimation
+        widget: auto
+        title: 推定設定
+    defaults:
+      estimation: {max_iterations: 500, tolerance: 1.0e-8}
+    results:
+    - {artifact: metrics, title: 推定指標, widget: key-value}
+    - {artifact: parameters, title: 推定係数, widget: table}
+    - {artifact: predictions, title: 観測link選択確率, widget: table}
+outputs:
+  artifacts:
+    parameters: {profile: parameters, media_types: [text/csv], required: false}
+    metrics: {profile: metrics, media_types: [application/json], required: false}
+    predictions: {profile: predictions, media_types: [text/csv], required: false}
+    sample_summary: {profile: diagnostics, media_types: [application/json], required: true}

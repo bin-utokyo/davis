@@ -43,6 +43,18 @@ davis --help
 
 The installation is complete when `davis --help` lists `login`, `list`, `info`, and `get`.
 
+## Adding Davis Desktop
+
+After installing the CLI, you can add and launch Davis Desktop from any directory. You do not need to clone the GitHub repository or install Rust, Cargo, or `pnpm`. If you already use Davis CLI v0.4 or earlier, update the CLI before invoking the new `desktop` command.
+
+```text
+davis update
+davis install desktop
+davis desktop
+```
+
+Run `davis installed` to inspect the managed Desktop and model components. Desktop is stored in the Davis user data directory for the operating system, so launching it does not depend on the directory where it was installed.
+
 ## Participant login
 
 Specify the Davis Web URL provided by the organizers:

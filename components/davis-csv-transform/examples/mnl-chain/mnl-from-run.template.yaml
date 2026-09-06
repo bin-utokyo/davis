@@ -1,0 +1,37 @@
+api_version: davis.analysis/v1alpha1
+name: mnl-from-transform-run
+
+component:
+  id: davis/mnl
+  version: 0.3.0
+  operation: estimate
+
+inputs:
+  choice_data:
+    kind: run_artifact
+    run_id: REPLACE_WITH_TRANSFORM_RUN_ID
+    artifact: transformed_table
+
+config:
+  roles:
+    case_id: case_id
+    alternative_id: alternative
+    chosen: chosen
+    available: available
+  terms:
+    - parameter: beta_generalized_cost
+      column: generalized_cost
+    - parameter: asc_car
+      constant: 1
+      alternatives: [car]
+    - parameter: asc_walk
+      constant: 1
+      alternatives: [walk]
+  estimation:
+    optimizer: bfgs
+    max_iterations: 500
+    tolerance: 1.0e-8
+
+run:
+  label: chained-mnl-example
+  tags: [example, mnl, run-artifact]

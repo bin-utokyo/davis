@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
-  "latest": "0.3.5",
-  "minimum_supported": "0.2.2",
-  "released_at": "2026-08-24",
-  "release_url": "https://github.com/bin-utokyo/davis/releases/tag/v0.3.5",
+  "latest": "0.5.0",
+  "minimum_supported": "0.5.0",
+  "released_at": "2026-09-06",
+  "release_url": "https://github.com/bin-utokyo/davis/releases/tag/v0.5.0",
   "message": {
-    "ja": "実データのObject IDが変わった日をfileごとに記録し，Web Catalogでfileとdatasetの最終更新日を確認できるようにしました．",
-    "en": "Davis records when each real-data Object ID changes and shows file and dataset last-updated dates in the Web Catalog."
+    "ja": "clone非依存のDesktop，local・Catalogデータを用いたManifest駆動のモデル実行，MNL・NL・RL・CSV変換component，検証済み成果物と作成支援を追加しました．",
+    "en": "Davis adds a clone-independent desktop, manifest-driven model runs with local or catalog data, MNL, NL, RL, and CSV transform components, verified artifacts, and component authoring support."
   }
 }

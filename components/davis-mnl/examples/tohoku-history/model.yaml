@@ -1,0 +1,96 @@
+api_version: davis.analysis/v1alpha1
+name: tohoku-residential-choice
+component:
+  id: davis/mnl
+  version: 0.3.0
+  operation: estimate
+inputs:
+  choice_data:
+    kind: table_binding
+    processor:
+      id: davis/csv-transform
+      version: 0.4.0
+    sources:
+      alternatives:
+        kind: catalog
+        dataset_id: Tohoku_History
+        file_id: df_ex_var.csv
+      choices:
+        kind: catalog
+        dataset_id: Tohoku_History
+        file_id: df_individual.csv
+    base: alternatives
+    joins:
+    - source: choices
+      left_on:
+      - individual_id
+      - time
+      right_on:
+      - individual_id
+      - time
+      relationship: many_to_one
+      how: inner
+      allow_unmatched: false
+    columns:
+      individual_id:
+        source: alternatives
+        column: individual_id
+      time:
+        source: alternatives
+        column: time
+      city:
+        source: alternatives
+        column: city
+      target:
+        source: choices
+        column: target
+      density:
+        source: alternatives
+        column: density
+      distance:
+        source: alternatives
+        column: distance_array
+      man_commute:
+        source: alternatives
+        column: man_commute
+      woman_commute:
+        source: alternatives
+        column: woman_commute
+      man_family:
+        source: alternatives
+        column: man_family
+      woman_family:
+        source: alternatives
+        column: woman_family
+config:
+  roles:
+    case_id:
+    - individual_id
+    - time
+    alternative_id: city
+    chosen_alternative: target
+  terms:
+  - parameter: beta_density
+    column: density
+  - parameter: beta_distance
+    column: distance
+  - parameter: beta_man_commute
+    column: man_commute
+  - parameter: beta_woman_commute
+    column: woman_commute
+  - parameter: beta_man_family
+    column: man_family
+  - parameter: beta_woman_family
+    column: woman_family
+  estimation:
+    optimizer: l-bfgs-b
+    max_iterations: 200
+    tolerance: 1e-8
+    development_case_limit: 200
+run:
+  label: tohoku-history-mnl-example
+  tags:
+  - example
+  - mnl
+  - real-data
+  - catalog

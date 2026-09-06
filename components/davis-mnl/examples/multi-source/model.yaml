@@ -1,0 +1,87 @@
+api_version: davis.analysis/v1alpha1
+name: multi-source-mode-choice
+component:
+  id: davis/mnl
+  version: 0.3.0
+  operation: estimate
+inputs:
+  choice_data:
+    kind: table_binding
+    processor:
+      id: davis/csv-transform
+      version: 0.4.0
+    sources:
+      choices:
+        kind: local
+        path: choices.csv
+        read: null
+      persons:
+        kind: local
+        path: persons.csv
+        read: null
+    base: choices
+    joins:
+    - source: persons
+      left_on: case_id
+      right_on: person_id
+      relationship: many_to_one
+      how: left
+      allow_unmatched: false
+    columns:
+      alternative:
+        source: choices
+        column: alternative
+      available:
+        source: choices
+        column: available
+      case_id:
+        source: choices
+        column: case_id
+      chosen:
+        source: choices
+        column: chosen
+      cost:
+        source: choices
+        column: cost
+      income:
+        source: persons
+        column: income
+      time:
+        source: choices
+        column: time
+config:
+  estimation:
+    max_iterations: 500
+    optimizer: bfgs
+    tolerance: 1e-8
+  roles:
+    alternative_id: alternative
+    available: available
+    case_id: case_id
+    chosen: chosen
+  terms:
+  - column: time
+    parameter: beta_time
+  - alternatives:
+    - train
+    - car
+    column: cost
+    parameter: beta_cost
+  - alternatives:
+    - car
+    column: income
+    parameter: beta_income_car
+  - alternatives:
+    - car
+    constant: 1
+    parameter: asc_car
+  - alternatives:
+    - walk
+    constant: 1
+    parameter: asc_walk
+run:
+  label: multi-source-example
+  tags:
+  - example
+  - mnl
+  - data-binding

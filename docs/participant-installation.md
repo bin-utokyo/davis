@@ -43,6 +43,18 @@ davis --help
 
 `davis --help`に`login`，`list`，`info`，`get`が表示されれば導入完了です．
 
+## Desktopも使う場合
+
+CLI導入後，任意のdirectoryからDesktopを追加して起動できます．GitHub repositoryのclone，Rust，Cargo，`pnpm`は不要です．既にv0.4以前のDavis CLIを利用している場合は，新しい`desktop` commandを実行する前にCLIを更新してください．
+
+```text
+davis update
+davis install desktop
+davis desktop
+```
+
+導入済みのDesktopとmodel componentは`davis installed`で確認できます．DesktopはOSごとのDavis user data directoryへ保存されるため，installしたときのdirectoryへ移動して起動する必要はありません．
+
 ## 参加者ログイン
 
 運営から案内されたDavis WebのURLを指定します．
