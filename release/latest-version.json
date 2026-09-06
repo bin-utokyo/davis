@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
-  "latest": "0.5.1",
+  "latest": "0.5.2",
   "minimum_supported": "0.5.0",
-  "released_at": "2026-09-06",
-  "release_url": "https://github.com/bin-utokyo/davis/releases/tag/v0.5.1",
+  "released_at": "2026-09-07",
+  "release_url": "https://github.com/bin-utokyo/davis/releases/tag/v0.5.2",
   "message": {
-    "ja": "Davis Desktopに日本語・英語の切替と，Component Manifest由来の多言語表示を追加しました．",
-    "en": "Davis Desktop adds Japanese and English language switching and localized presentation text supplied by Component Manifests."
+    "ja": "Davis DesktopにRun履歴・比較を追加し，空のProject workspaceもcomponent未導入状態として正しく開けるようにしました．",
+    "en": "Davis Desktop adds run history and comparison, and now opens an empty project workspace correctly when no components are installed."
   }
 }
