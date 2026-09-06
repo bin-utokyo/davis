@@ -57,6 +57,8 @@ davis desktop
 
 公式のMNL，Nested Logit，Recursive Logit，CSV変換componentを使う場合は，[Davis公式Component利用ガイド](official-components-guide.md)を参照してください．入力データの形，GUIとCLIの操作，設定可能なroleとparameter，Analysis Plan例をまとめています．人だけでなく，分析を支援するAIにも同じガイドを渡せます．
 
+独自のモデル，データ変換，可視化をDavisへ追加したい場合は，[Davis Component作成ガイド](davis-component-authoring.md)を参照してください．Component Manifest，実program，Analysis Plan，入出力，検証，公開方法を，人とAIの双方が利用できる形で説明しています．
+
 ## 参加者ログイン
 
 運営から案内されたDavis WebのURLを指定します．

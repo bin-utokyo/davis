@@ -12,7 +12,7 @@ Davis separates a component from the settings of an individual analysis.
 - `model.yaml`, or another Analysis Plan filename: the files, columns, variables, and estimation settings for one analysis. A user or AI assistant creates and edits this file.
 - `davis-runs/`: the result directory created by Davis.
 
-When asking an AI assistant for help, provide this guide, the CSV headers and meaning of each column, and the intended model or transformation. You do not need to provide the data values. The AI assistant should create an Analysis Plan without modifying `component.yaml`.
+When asking an AI assistant for help, provide this guide, the intended model or transformation, and a schema file that describes the columns you intend to use. The schema file should contain no actual records; include only information such as column names, data types, units, missing-value rules, and the meaning of categorical values. If a schema file is unavailable, provide only a header detached from the data. If column names may themselves disclose confidential information, use anonymized names together with a separate name-to-meaning mapping. Do not provide the CSV itself, actual values, personal names, identifiers, or other confidential information to an AI assistant. The AI assistant should create an Analysis Plan without modifying `component.yaml`.
 
 ## 2. Requirements
 

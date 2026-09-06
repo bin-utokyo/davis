@@ -57,6 +57,8 @@ Run `davis installed` to inspect the managed Desktop and model components. Deskt
 
 To use the official MNL, Nested Logit, Recursive Logit, and CSV transformation components, see the [Davis Official Components User Guide](official-components-guide_en.md). It covers input data formats, GUI and CLI workflows, configurable roles and parameters, and example Analysis Plans. The same guide can be given to an AI assistant helping with an analysis.
 
+To add your own model, data transformation, or visualization to Davis, see the [Davis Component Authoring Guide](davis-component-authoring_en.md). It explains Component Manifests, implementation programs, Analysis Plans, inputs and outputs, validation, and distribution for both human authors and AI assistants.
+
 ## Participant login
 
 Specify the Davis Web URL provided by the organizers:
