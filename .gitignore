@@ -107,6 +107,9 @@ target/
 /davis-runs/
 apps/davis-app/src-tauri/gen/
 
+# Davis local execution results
+/davis-runs/
+
 # Local remote configuration (use config.example.toml as the tracked template)
 .davis/config.toml
 
