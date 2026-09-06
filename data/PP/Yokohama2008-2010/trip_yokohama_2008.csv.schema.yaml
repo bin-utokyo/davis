@@ -10,7 +10,9 @@ columns:
   name: monitorID
   type_:
     name: String
-- description: null
+- description:
+    en: "Purpose code: 0=--, 100=Going to work, 200=Returning home, 300=Returning to the office, 400=Business, 500=Shopping, 600=Dining, 700=Leisure, 800=Walking/Roaming, 900=Cycling, 910=Mobility Cafe, 999=Other."
+    ja: "目的コード：0=--、100=出勤、200=帰宅、300=帰社、400=業務、500=買い物、600=食事、700=娯楽、800=散歩・回遊、900=サイクリング、910=モビリティカフェ、999=その他。"
   name: purposeID
   type_:
     name: Int64
@@ -36,7 +38,9 @@ columns:
   name: time(second)
   type_:
     name: Int64
-- description: null
+- description:
+    en: "Validity code: 1=Valid, 0=Invalid."
+    ja: "有効性コード：1=有効、0=無効。"
   name: validity
   type_:
     name: Int64

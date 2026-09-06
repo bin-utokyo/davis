@@ -38,7 +38,9 @@ columns:
   name: validity
   type_:
     name: Int64
-- description: null
+- description:
+    en: "Purpose code: 110=Return home, 200=Shopping, 210=Dining/Entertainment, 220=Lodging, 300=Work, 700=Travel to station/bus stop, 710=Travel to airport, 800=Visit family/friends, 998=Other, 999=--."
+    ja: "目的コード：110=帰宅、200=買い物、210=食事・娯楽、220=宿泊、300=仕事、700=駅・バス停への移動、710=空港への移動、800=家族・友人の訪問、998=その他、999=--。"
   name: purposeCode
   type_:
     name: Int64
