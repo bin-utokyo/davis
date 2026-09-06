@@ -18,7 +18,7 @@
   .empty { border: 1px dashed #cbd3ca; border-radius: 11px; color: #738078; padding: 18px; text-align: center; }
   @media (max-width: 760px) { .row { grid-template-columns: 1fr 1fr; } }
 </style>
-<div class="toolbar"><button id="add" type="button">Nestを追加</button></div>
+<div class="toolbar"><button id="add" type="button"></button></div>
 <div class="context-error" id="context-error"></div>
 <div id="rows"></div>
 <script>
@@ -34,7 +34,7 @@
 
     function draw() {
       rows.replaceChildren();
-      if (!value.length) { const empty = document.createElement("div"); empty.className = "empty"; empty.textContent = "2つ以上のNestを追加してください．"; rows.append(empty); resize(); return; }
+      if (!value.length) { const empty = document.createElement("div"); empty.className = "empty"; empty.textContent = labels.empty ?? "Add at least two nests."; rows.append(empty); resize(); return; }
       value.forEach((nest, index) => {
         const row = document.createElement("div"); row.className = "row";
         const name = document.createElement("input"); name.value = String(nest.name ?? ""); name.placeholder = "motorized";
@@ -44,7 +44,7 @@
         const control = document.createElement("div"); control.className = "control";
         const selected = Array.isArray(nest.alternatives) ? nest.alternatives.map(String) : [];
         selected.forEach(alternative => control.append(button(`${alternative} ×`, "tag", () => { value[index] = { ...value[index], alternatives: selected.filter(item => item !== alternative) }; commit(); draw(); })));
-        const search = document.createElement("input"); search.placeholder = candidates.length ? "選択肢を検索" : "候補列を先に指定"; search.disabled = !candidates.length; control.append(search);
+        const search = document.createElement("input"); search.placeholder = candidates.length ? (labels.search ?? "Search alternatives") : (labels.select_source ?? "Select the source column first"); search.disabled = !candidates.length; control.append(search);
         const menu = document.createElement("div"); menu.className = "menu";
         const showOptions = () => { const query = search.value.toLocaleLowerCase(); menu.replaceChildren(); candidates.filter(item => !selected.includes(item) && item.toLocaleLowerCase().includes(query)).slice(0, 50).forEach(alternative => menu.append(button(alternative, "", () => { value[index] = { ...value[index], alternatives: [...selected, alternative] }; commit(); draw(); }))); resize(); };
         search.addEventListener("input", showOptions); search.addEventListener("focus", showOptions); picker.append(control, menu);
@@ -52,16 +52,16 @@
         const dissimilarity = nest.dissimilarity && typeof nest.dissimilarity === "object" ? nest.dissimilarity : {};
         const fixed = Object.prototype.hasOwnProperty.call(dissimilarity, "fixed");
         const mode = document.createElement("select");
-        [["initial", labels.estimate ?? "推定"], ["fixed", labels.fixed ?? "固定"]].forEach(([key, text]) => { const option = document.createElement("option"); option.value = key; option.textContent = text; mode.append(option); });
+        [["initial", labels.estimate ?? "Estimate"], ["fixed", labels.fixed ?? "Fixed"]].forEach(([key, text]) => { const option = document.createElement("option"); option.value = key; option.textContent = text; mode.append(option); });
         mode.value = fixed ? "fixed" : "initial";
         mode.addEventListener("change", () => { value[index] = { ...value[index], dissimilarity: mode.value === "fixed" ? { fixed: 1 } : { initial: .8 } }; commit(); draw(); });
 
         const number = document.createElement("input"); number.type = "number"; number.min = ".05"; number.max = "1"; number.step = ".05";
         number.value = String(dissimilarity[fixed ? "fixed" : "initial"] ?? (fixed ? 1 : .8));
-        number.title = fixed ? (labels.fixed_value ?? "非類似度λの固定値") : (labels.estimate_value ?? "非類似度λの推定初期値");
+        number.title = fixed ? (labels.fixed_value ?? "Fixed dissimilarity λ") : (labels.estimate_value ?? "Initial value for dissimilarity λ");
         number.setAttribute("aria-label", number.title);
         number.addEventListener("change", () => { value[index] = { ...value[index], dissimilarity: { [fixed ? "fixed" : "initial"]: Number(number.value) } }; commit(); });
-        row.append(name, picker, mode, number, button("削除", "delete", () => { value = value.filter((_, current) => current !== index); commit(); draw(); }));
+        row.append(name, picker, mode, number, button(labels.remove ?? "Remove", "delete", () => { value = value.filter((_, current) => current !== index); commit(); draw(); }));
         rows.append(row);
       });
       resize();
@@ -76,6 +76,7 @@
       candidates = Array.isArray(alternatives?.values) ? alternatives.values.map(String) : [];
       document.getElementById("context-error").textContent = data.payload.context_errors?.alternatives ?? "";
       labels = data.payload.section?.labels ?? {};
+      document.getElementById("add").textContent = labels.add ?? "Add nest";
       draw();
     });
     message("ready");

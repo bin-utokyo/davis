@@ -81,10 +81,12 @@ configuration:
               type: object
               title: 非類似度 λ
               description: このcomponentでは最上位scaleを1に正規化し，各nestの非類似度λを0より大きく1以下で指定します．
+              x-davis-title: {ja: 非類似度 λ, en: Dissimilarity λ}
+              x-davis-description: {ja: このcomponentでは最上位scaleを1に正規化し，各nestの非類似度λを0より大きく1以下で指定します．, en: This component normalizes the top-level scale to 1 and requires each nest dissimilarity λ to be greater than 0 and no greater than 1.}
               additionalProperties: false
               properties:
-                initial: {type: number, title: 推定初期値, exclusiveMinimum: 0, maximum: 1}
-                fixed: {type: number, title: 固定値, exclusiveMinimum: 0, maximum: 1}
+                initial: {type: number, title: 推定初期値, x-davis-title: {ja: 推定初期値, en: Initial estimate}, exclusiveMinimum: 0, maximum: 1}
+                fixed: {type: number, title: 固定値, x-davis-title: {ja: 固定値, en: Fixed value}, exclusiveMinimum: 0, maximum: 1}
       estimation:
         type: object
         additionalProperties: false
@@ -94,57 +96,63 @@ configuration:
 presentation:
   ui:
     version: davis.ui/v1
-    ui:description: Define linear utility terms and a partition of alternatives into nests.
+    component_name: {ja: Davisネステッドロジット, en: Davis Nested Logit}
+    ui:description: {ja: 線形効用termと選択肢のnest分割を設定します．, en: Define linear utility terms and a partition of alternatives into nests.}
     extensions:
       - id: nest-editor
         api_version: davis.widget/v1
         source: ui/nest-editor.html
     inputs:
       choice_data:
-        title: 選択データ
-        description: 1行が1ケース内の1選択肢を表すlong形式の表です．複数CSVを結合できます．
+        title: {ja: 選択データ, en: Choice data}
+        description: {ja: 1行が1ケース内の1選択肢を表すlong形式の表です．複数CSVを結合できます．, en: A long-format table where each row represents one alternative in one choice case. Multiple CSV files can be joined.}
         widget: table-binding
         preparation: {component: davis/csv-transform, version: 0.4.0}
     sections:
       - bind: /roles
         widget: column-map
         input: choice_data
-        title: 役割列
+        title: {ja: 役割列, en: Role columns}
         labels:
-          case_id: ケースID
-          alternative_id: 選択肢ID
-          chosen: 選択結果
-          available: 利用可能性 (任意)
+          case_id: {ja: ケースID, en: Case ID}
+          alternative_id: {ja: 選択肢ID, en: Alternative ID}
+          chosen: {ja: 選択結果, en: Choice outcome}
+          available: {ja: 利用可能性 (任意), en: Availability (optional)}
       - bind: /terms
         widget: utility-terms
         input: choice_data
-        title: 効用term
+        title: {ja: 効用term, en: Utility terms}
         allow_constant: true
         alternatives_from: /roles/alternative_id
       - bind: /nests
         widget: extension:nest-editor
-        title: Nest構造と非類似度 λ
-        description: 最上位scaleは1に正規化済みです．推定時の数値は結果ではなく初期値です．選択肢が1つだけのnestは実行時にλ=1へ固定されます．
+        title: {ja: Nest構造と非類似度 λ, en: Nest structure and dissimilarity λ}
+        description: {ja: 最上位scaleは1に正規化済みです．推定時の数値は結果ではなく初期値です．選択肢が1つだけのnestは実行時にλ=1へ固定されます．, en: The top-level scale is normalized to 1. An estimated value is an initial value rather than a result. A singleton nest is fixed to λ=1 at runtime.}
         context:
           alternatives:
             provider: distinct-values
             input: choice_data
             column_from: /roles/alternative_id
         labels:
-          mode: 非類似度λの扱い
-          estimate: 推定 (右は初期値)
-          fixed: 固定 (右は固定値)
-          estimate_value: 非類似度λの推定初期値
-          fixed_value: 非類似度λの固定値
+          mode: {ja: 非類似度λの扱い, en: Dissimilarity λ mode}
+          estimate: {ja: 推定 (右は初期値), en: Estimate (initial value at right)}
+          fixed: {ja: 固定 (右は固定値), en: Fixed (fixed value at right)}
+          estimate_value: {ja: 非類似度λの推定初期値, en: Initial value for dissimilarity λ}
+          fixed_value: {ja: 非類似度λの固定値, en: Fixed dissimilarity λ}
+          add: {ja: Nestを追加, en: Add nest}
+          empty: {ja: 2つ以上のNestを追加してください．, en: Add at least two nests.}
+          search: {ja: 選択肢を検索, en: Search alternatives}
+          select_source: {ja: 候補列を先に指定, en: Select the source column first}
+          remove: {ja: 削除, en: Remove}
       - bind: /estimation
         widget: auto
-        title: 推定設定
+        title: {ja: 推定設定, en: Estimation settings}
     defaults:
       estimation: {max_iterations: 500, tolerance: 1.0e-8}
     results:
-    - {artifact: metrics, title: 推定指標, widget: key-value}
-    - {artifact: parameters, title: 推定係数・非類似度, widget: table}
-    - {artifact: predictions, title: 予測確率, widget: table}
+    - {artifact: metrics, title: {ja: 推定指標, en: Estimation metrics}, widget: key-value}
+    - {artifact: parameters, title: {ja: 推定係数・非類似度, en: Parameters and dissimilarities}, widget: table}
+    - {artifact: predictions, title: {ja: 予測確率, en: Predicted probabilities}, widget: table}
 outputs:
   artifacts:
     parameters: {profile: parameters, media_types: [text/csv], required: false}

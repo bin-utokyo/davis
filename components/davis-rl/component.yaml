@@ -86,55 +86,56 @@ configuration:
 presentation:
   ui:
     version: davis.ui/v1
-    ui:description: Map a directed link network and observed link sequences to recursive-logit utility terms.
+    component_name: {ja: Davis再帰ロジット, en: Davis Recursive Logit}
+    ui:description: {ja: 有向link networkと観測link列をRecursive Logitの効用termへ対応させます．, en: Map a directed link network and observed link sequences to recursive-logit utility terms.}
     inputs:
       network:
-        title: Network link表
-        description: link ID，始点node，終点node，link属性を含む表です．
+        title: {ja: Network link表, en: Network link table}
+        description: {ja: link ID，始点node，終点node，link属性を含む表です．, en: Contains link IDs, from-nodes, to-nodes, and link attributes.}
         widget: table-binding
         preparation: {component: davis/csv-transform, version: 0.4.0}
       observations:
-        title: 観測経路表
-        description: tripごとの通過linkを順番に並べたlong形式の表です．
+        title: {ja: 観測経路表, en: Observed route table}
+        description: {ja: tripごとの通過linkを順番に並べたlong形式の表です．, en: A long-format table listing traversed links in order for each trip.}
         widget: table-binding
         preparation: {component: davis/csv-transform, version: 0.4.0}
     sections:
       - bind: /network_roles
         widget: column-map
         input: network
-        title: Network列の役割
+        title: {ja: Network列の役割, en: Network column roles}
         labels:
           link_id: Link ID
-          from_node: 始点node
-          to_node: 終点node
+          from_node: {ja: 始点node, en: From-node}
+          to_node: {ja: 終点node, en: To-node}
       - bind: /observation_roles
         widget: column-map
         input: observations
-        title: 観測経路列の役割
+        title: {ja: 観測経路列の役割, en: Observation column roles}
         labels:
           trip_id: Trip ID
-          step: 通過順序
+          step: {ja: 通過順序, en: Traversal order}
           link_id: Link ID
-          destination: 目的地node
+          destination: {ja: 目的地node, en: Destination node}
       - bind: /terms
         widget: utility-terms
         input: network
-        title: Link効用term
+        title: {ja: Link効用term, en: Link utility terms}
         allow_constant: false
         show_coefficient: true
       - bind: /parameters
         widget: parameter-settings
         parameters_from: /terms
-        title: Parameter初期値・範囲
+        title: {ja: Parameter初期値・範囲, en: Parameter initial values and bounds}
       - bind: /estimation
         widget: auto
-        title: 推定設定
+        title: {ja: 推定設定, en: Estimation settings}
     defaults:
       estimation: {max_iterations: 500, tolerance: 1.0e-8}
     results:
-    - {artifact: metrics, title: 推定指標, widget: key-value}
-    - {artifact: parameters, title: 推定係数, widget: table}
-    - {artifact: predictions, title: 観測link選択確率, widget: table}
+    - {artifact: metrics, title: {ja: 推定指標, en: Estimation metrics}, widget: key-value}
+    - {artifact: parameters, title: {ja: 推定係数, en: Estimated parameters}, widget: table}
+    - {artifact: predictions, title: {ja: 観測link選択確率, en: Observed-link choice probabilities}, widget: table}
 outputs:
   artifacts:
     parameters: {profile: parameters, media_types: [text/csv], required: false}

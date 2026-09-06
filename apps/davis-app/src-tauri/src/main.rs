@@ -73,18 +73,23 @@ struct DownloadedCatalogFileResponse {
     path: PathBuf,
 }
 
-fn catalog_service() -> Result<DavisService, String> {
+fn catalog_service(locale: &str) -> Result<DavisService, String> {
     let stored = session::load()
         .map_err(|error| error.to_string())?
         .ok_or_else(|| {
-            "Davis Catalogを使うには，先に`davis login <URL>`を実行してください．".to_owned()
+            if locale == "en" {
+                "Run `davis login <URL>` before using Davis Catalog.".to_owned()
+            } else {
+                "Davis Catalogを使うには，先に`davis login <URL>`を実行してください．".to_owned()
+            }
         })?;
     DavisService::new(&stored.service_url, Some(stored.token)).map_err(|error| error.to_string())
 }
 
 #[tauri::command]
-async fn catalog_files() -> Result<Vec<CatalogFileResponse>, String> {
-    let catalog = catalog_service()?
+async fn catalog_files(locale: String) -> Result<Vec<CatalogFileResponse>, String> {
+    let english = locale == "en";
+    let catalog = catalog_service(&locale)?
         .catalog()
         .await
         .map_err(|error| error.to_string())?;
@@ -105,10 +110,16 @@ async fn catalog_files() -> Result<Vec<CatalogFileResponse>, String> {
                 .map(move |file| CatalogFileResponse {
                     dataset_id: dataset_id.clone(),
                     file_id: file.id,
-                    title: file
-                        .schema
-                        .as_ref()
-                        .map_or_else(|| file.path.clone(), |schema| schema.name.ja.clone()),
+                    title: file.schema.as_ref().map_or_else(
+                        || file.path.clone(),
+                        |schema| {
+                            if english {
+                                schema.name.en.clone()
+                            } else {
+                                schema.name.ja.clone()
+                            }
+                        },
+                    ),
                     path: file.path,
                     size: file.size,
                     columns: file.schema.map_or_else(Vec::new, |schema| {
@@ -127,8 +138,9 @@ async fn catalog_files() -> Result<Vec<CatalogFileResponse>, String> {
 async fn download_catalog_file(
     dataset_id: String,
     file_id: String,
+    locale: String,
 ) -> Result<DownloadedCatalogFileResponse, String> {
-    let service = catalog_service()?;
+    let service = catalog_service(&locale)?;
     let manifest = service
         .manifest(&dataset_id)
         .await
@@ -1069,11 +1081,14 @@ mod tests {
             .iter()
             .find(|section| section["bind"] == "/nests")
             .unwrap();
-        assert!(nest_section["description"]
+        assert!(nest_section["description"]["ja"]
             .as_str()
             .unwrap()
             .contains("最上位scaleは1"));
-        assert_eq!(nest_section["labels"]["estimate"], "推定 (右は初期値)");
+        assert_eq!(
+            nest_section["labels"]["estimate"]["en"],
+            "Estimate (initial value at right)"
+        );
         assert_eq!(
             nest_section["context"]["alternatives"]["provider"],
             "distinct-values"

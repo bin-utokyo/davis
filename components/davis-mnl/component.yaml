@@ -153,47 +153,49 @@ configuration:
             type: integer
             minimum: 1
             description: 入力順の先頭Nケースだけを使う動作確認用設定です．本推定では省略してください．
+            x-davis-description: {ja: 入力順の先頭Nケースだけを使う動作確認用設定です．本推定では省略してください．, en: Uses only the first N cases for a development check. Omit this setting for actual estimation.}
 presentation:
   ui:
     version: davis.ui/v1
+    component_name: {ja: Davis多項ロジット, en: Davis Multinomial Logit}
     inputs:
       choice_data:
-        title: 選択データ
-        description: 1行が1ケース内の1選択肢を表すlong形式の表です．複数CSVを結合できます．
+        title: {ja: 選択データ, en: Choice data}
+        description: {ja: 1行が1ケース内の1選択肢を表すlong形式の表です．複数CSVを結合できます．, en: A long-format table where each row represents one alternative in one choice case. Multiple CSV files can be joined.}
         widget: table-binding
         preparation: {component: davis/csv-transform, version: 0.4.0}
     sections:
     - bind: /roles
       widget: column-map
       input: choice_data
-      title: 役割列
+      title: {ja: 役割列, en: Role columns}
       labels:
-        case_id: ケースキー
-        alternative_id: 選択肢ID
-        chosen: 選択済みフラグ
-        chosen_alternative: 選択された選択肢ID
-        available: 利用可能性 (任意)
-        weight: 重み (任意)
+        case_id: {ja: ケースキー, en: Case key}
+        alternative_id: {ja: 選択肢ID, en: Alternative ID}
+        chosen: {ja: 選択済みフラグ, en: Chosen flag}
+        chosen_alternative: {ja: 選択された選択肢ID, en: Chosen alternative ID}
+        available: {ja: 利用可能性 (任意), en: Availability (optional)}
+        weight: {ja: 重み (任意), en: Weight (optional)}
     - bind: /terms
       widget: utility-terms
       input: choice_data
-      title: 効用term
+      title: {ja: 効用term, en: Utility terms}
       allow_constant: true
       alternatives_from: /roles/alternative_id
-    - {bind: /parameters, widget: parameter-settings, parameters_from: /terms, title: Parameter設定}
-    - {bind: /estimation, widget: auto, title: 推定設定}
+    - {bind: /parameters, widget: parameter-settings, parameters_from: /terms, title: {ja: Parameter設定, en: Parameter settings}}
+    - {bind: /estimation, widget: auto, title: {ja: 推定設定, en: Estimation settings}}
     defaults:
       estimation: {optimizer: bfgs, max_iterations: 500, tolerance: 1.0e-8}
     results:
     - artifact: metrics
-      title: 推定指標
+      title: {ja: 推定指標, en: Estimation metrics}
       widget: key-value
     - artifact: parameters
-      title: 推定係数
+      title: {ja: 推定係数, en: Estimated parameters}
       widget: table
     - artifact: sample_summary
-      title: 標本
+      title: {ja: 標本, en: Sample summary}
       widget: key-value
     - artifact: predictions
-      title: 予測確率
+      title: {ja: 予測確率, en: Predicted probabilities}
       widget: table
