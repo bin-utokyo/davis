@@ -376,9 +376,63 @@ fn validate_package(
         ));
     }
     manifest.resolve_configuration(manifest_path)?;
-    manifest.resolve_presentation(manifest_path)?;
+    if let Some(presentation) = manifest.resolve_presentation(manifest_path)? {
+        validate_ui_extension_files(root, &presentation.value)?;
+    }
     if let Some(path) = &manifest.runtime.lockfile {
         require_package_file(root, path, "runtime.lockfile")?;
+    }
+    Ok(())
+}
+
+fn validate_ui_extension_files(
+    root: &Path,
+    presentation: &serde_json::Value,
+) -> Result<(), ComponentStoreError> {
+    let Some(extensions) = presentation.get("extensions") else {
+        return Ok(());
+    };
+    let extensions = extensions.as_array().ok_or_else(|| {
+        ComponentStoreError::InvalidPackage(
+            "presentation.ui.extensions must be an array".to_owned(),
+        )
+    })?;
+    let mut ids = std::collections::BTreeSet::new();
+    for extension in extensions {
+        let id = extension
+            .get("id")
+            .and_then(serde_json::Value::as_str)
+            .unwrap_or("");
+        if id.is_empty()
+            || !id.chars().all(|character| {
+                character.is_ascii_alphanumeric() || matches!(character, '-' | '_')
+            })
+            || !ids.insert(id)
+        {
+            return Err(ComponentStoreError::InvalidPackage(format!(
+                "UI extension id `{id}` must be unique and portable"
+            )));
+        }
+        if extension
+            .get("api_version")
+            .and_then(serde_json::Value::as_str)
+            != Some("davis.widget/v1")
+        {
+            return Err(ComponentStoreError::InvalidPackage(format!(
+                "UI extension `{id}` must use davis.widget/v1"
+            )));
+        }
+        let source = extension
+            .get("source")
+            .and_then(serde_json::Value::as_str)
+            .ok_or_else(|| {
+                ComponentStoreError::InvalidPackage(format!("UI extension `{id}` requires source"))
+            })?;
+        require_package_file(
+            root,
+            Path::new(source),
+            &format!("UI extension `{id}` source"),
+        )?;
     }
     Ok(())
 }
@@ -576,6 +630,52 @@ outputs: {}
 
         assert!(installed.path.join("component.yaml").is_file());
         assert_eq!(store.inspect("example/inline", None).unwrap(), installed);
+    }
+
+    #[test]
+    fn installs_a_component_bundled_ui_extension() {
+        let temporary = tempfile::tempdir().unwrap();
+        let source = temporary.path().join("source");
+        fs::create_dir_all(source.join("ui")).unwrap();
+        fs::write(
+            source.join("ui/editor.html"),
+            "<script>parent.postMessage({type:'ready'}, '*')</script>",
+        )
+        .unwrap();
+        fs::write(
+            source.join("component.yaml"),
+            r"api_version: davis.component/v1
+id: example/ui-extension
+name: UI extension component
+version: 1.0.0
+runtime:
+  executor: process
+  command: [example]
+operations: [estimate]
+inputs: []
+configuration:
+  schema:
+    type: object
+presentation:
+  ui:
+    version: davis.ui/v1
+    extensions:
+      - id: custom
+        api_version: davis.widget/v1
+        source: ui/editor.html
+    inputs: {}
+    sections:
+      - bind: /value
+        widget: extension:custom
+outputs: {}
+",
+        )
+        .unwrap();
+        let store = ComponentStore::new(temporary.path().join("store"));
+
+        let installed = store.install(&source).unwrap();
+
+        assert!(installed.path.join("ui/editor.html").is_file());
     }
 
     #[test]

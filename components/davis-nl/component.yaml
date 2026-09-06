@@ -95,6 +95,10 @@ presentation:
   ui:
     version: davis.ui/v1
     ui:description: Define linear utility terms and a partition of alternatives into nests.
+    extensions:
+      - id: nest-editor
+        api_version: davis.widget/v1
+        source: ui/nest-editor.html
     inputs:
       choice_data:
         title: 選択データ
@@ -118,7 +122,7 @@ presentation:
         allow_constant: true
         alternatives_from: /roles/alternative_id
       - bind: /nests
-        widget: nests
+        widget: extension:nest-editor
         title: Nest構造と非類似度 λ
         description: 最上位scaleは1に正規化済みです．推定時の数値は結果ではなく初期値です．選択肢が1つだけのnestは実行時にλ=1へ固定されます．
         alternatives_from: /roles/alternative_id

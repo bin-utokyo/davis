@@ -13,7 +13,7 @@ type CompletedRun = {
 };
 type ComponentEditor = {
   manifest: { id: string; name: string; version: string; kind: string; operations: string[]; inputs: Array<{ name: string; required: boolean }> };
-  config_schema: JsonSchema; ui_schema: FormDefinition;
+  config_schema: JsonSchema; ui_schema: FormDefinition; ui_extensions: Record<string, { api_version: string; html: string }>;
 };
 type PlanInput = {
   kind: string; path?: string; read?: unknown; processor?: { id: string; version: string }; sources?: Record<string, PlanInput>; base?: string;

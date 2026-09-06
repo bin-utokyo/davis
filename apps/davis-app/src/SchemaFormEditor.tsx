@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type ColumnProfile = { name: string; inferred_type: string };
 type CsvProfile = { path: string; encoding: string; rows_sampled: number; truncated: boolean; columns: ColumnProfile[] };
@@ -20,7 +20,8 @@ export type FormDefinition = {
   version?: string; inputs?: Record<string, InputPresentation>; sections?: FormSection[]; defaults?: Record<string, unknown>;
   results?: Array<{ artifact: string; title: string; widget: "key-value" | "table" }>;
 };
-type EditorDefinition = { config_schema: JsonSchema; ui_schema: FormDefinition };
+type UiExtension = { api_version: string; html: string };
+type EditorDefinition = { config_schema: JsonSchema; ui_schema: FormDefinition; ui_extensions?: Record<string, UiExtension> };
 type DistinctValues = { values: string[]; rows_sampled: number; truncated: boolean };
 
 export function SchemaFormEditor({ definition, inputs, config, onAddSources, onInputChange, onConfigChange }: {
@@ -54,17 +55,37 @@ export function SchemaFormEditor({ definition, inputs, config, onAddSources, onI
     {sections.map((section) => {
       const schema = schemaAt(definition.config_schema, section.bind); const value = getAt(config, section.bind);
       const input = section.input ? inputs[section.input] : undefined; const widget = section.widget ?? "auto";
+      const extensionId = widget.startsWith("extension:") ? widget.slice("extension:".length) : undefined;
+      const extension = extensionId ? definition.ui_extensions?.[extensionId] : undefined;
       return <div className="manifest-section" key={section.bind}>
         {widget === "column-map" && <ColumnMap section={section} schema={schema} value={asObject(value)} input={input} onChange={(next) => update(section.bind, next)} />}
         {widget === "utility-terms" && <UtilityTerms section={section} value={asArray(value)} input={input} candidates={alternatives?.values ?? []} onChange={(next) => update(section.bind, next)} />}
         {widget === "nests" && <NestEditor section={section} value={asArray(value)} candidates={alternatives?.values ?? []} onChange={(next) => update(section.bind, next)} />}
         {widget === "parameter-settings" && <ParameterSettings section={section} schema={schema} value={asObject(value)} config={config} onChange={(next) => update(section.bind, next)} />}
         {(widget === "auto" || widget === "object") && <AutoSection section={section} schema={schema} value={value} onChange={(next) => update(section.bind, next)} />}
-        {!knownWidget(widget) && <YamlFallback section={section} value={value} onChange={(next) => update(section.bind, next)} reason={`widget ${widget}はこのDesktopに未実装です．`} />}
+        {extension && <ExtensionWidget section={section} extension={extension} schema={schema} value={value} candidates={alternatives?.values ?? []} onChange={(next) => update(section.bind, next)} />}
+        {!knownWidget(widget) && !extension && <YamlFallback section={section} value={value} onChange={(next) => update(section.bind, next)} reason={extensionId ? `UI extension ${extensionId}を読み込めません．` : `widget ${widget}はこのDesktopに未実装です．`} />}
       </div>;
     })}
     {alternatives && <p className="hint">候補値: {alternatives.values.length}件，{alternatives.rows_sampled}行から取得{alternatives.truncated ? " (上限付きsample)" : ""}</p>}
   </>;
+}
+
+function ExtensionWidget({ section, extension, schema, value, candidates, onChange }: { section: FormSection; extension: UiExtension; schema?: JsonSchema; value: unknown; candidates: string[]; onChange: (value: unknown) => void }) {
+  const frame = useRef<HTMLIFrameElement>(null); const [height, setHeight] = useState(180);
+  const document = `<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; font-src data:; connect-src 'none';"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body>${extension.html}</body></html>`;
+  function render() { frame.current?.contentWindow?.postMessage({ source: "davis-host", api_version: "davis.widget/v1", type: "render", payload: { value, schema, candidates, section } }, "*"); }
+  useEffect(() => {
+    function receive(event: MessageEvent) {
+      if (event.source !== frame.current?.contentWindow || !event.data || typeof event.data !== "object" || event.data.source !== "davis-widget" || event.data.api_version !== "davis.widget/v1") return;
+      if (event.data.type === "ready") render();
+      if (event.data.type === "set-value") onChange(event.data.value);
+      if (event.data.type === "resize" && Number.isFinite(event.data.height)) setHeight(Math.min(900, Math.max(120, Number(event.data.height))));
+    }
+    window.addEventListener("message", receive); return () => window.removeEventListener("message", receive);
+  });
+  useEffect(render, [value, schema, candidates, section]);
+  return <><SectionTitle section={section} /><iframe className="ui-extension" ref={frame} title={section.title ?? section.bind} sandbox="allow-scripts" srcDoc={document} style={{ height }} onLoad={render} /></>;
 }
 
 function InputBindingEditor({ slot, metadata, input, onAdd, onChange }: { slot: string; metadata: InputPresentation; input?: FormInput; onAdd: () => void; onChange: (input: FormInput | undefined) => void }) {
@@ -83,7 +104,7 @@ function InputBindingEditor({ slot, metadata, input, onAdd, onChange }: { slot: 
   </article>;
 }
 
-function SectionTitle({ section }: { section: FormSection }) { return <div className="subsection-heading"><div><h3>{section.title ?? section.bind}</h3><p><code>{section.bind}</code>としてAnalysis Planへ保存します．</p></div></div>; }
+function SectionTitle({ section }: { section: FormSection }) { return <div className="subsection-heading"><div><h3>{section.title ?? section.bind}</h3><p>{section.description ?? <><code>{section.bind}</code>としてAnalysis Planへ保存します．</>}</p></div></div>; }
 function ColumnMap({ section, schema, value, input, onChange }: { section: FormSection; schema?: JsonSchema; value: Record<string, unknown>; input?: FormInput; onChange: (value: Record<string, unknown>) => void }) {
   const names = Object.keys(schema?.properties ?? {}); const required = schema?.required ?? []; const columns = input ? bindingColumns(input) : [];
   return <><SectionTitle section={section} /><div className="role-grid">{names.map((name) => <label key={name}><span>{section.labels?.[name] ?? name}{required.includes(name) ? " *" : " (任意)"}</span><select value={typeof value[name] === "string" ? value[name] as string : ""} disabled={!input} onChange={(event) => onChange(event.target.value ? { ...value, [name]: event.target.value } : without(value, name))}><option value="">列を選択</option>{columns.map((column) => <option key={column.alias} value={column.alias}>{column.label}</option>)}</select></label>)}</div></>;

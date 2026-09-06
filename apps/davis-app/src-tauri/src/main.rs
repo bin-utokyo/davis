@@ -30,6 +30,13 @@ struct ComponentEditorResponse {
     manifest: ComponentManifest,
     config_schema: Value,
     ui_schema: Value,
+    ui_extensions: BTreeMap<String, UiExtensionResponse>,
+}
+
+#[derive(Serialize)]
+struct UiExtensionResponse {
+    api_version: String,
+    html: String,
 }
 
 #[derive(Serialize)]
@@ -182,11 +189,102 @@ fn editor_response(
     if ui_schema["version"] == "davis.ui/v1" {
         validate_editor_presentation(&manifest, &config_schema, &ui_schema)?;
     }
+    let ui_extensions = load_ui_extensions(manifest_path, &ui_schema)?;
     Ok(ComponentEditorResponse {
         manifest,
         config_schema,
         ui_schema,
+        ui_extensions,
     })
+}
+
+fn load_ui_extensions(
+    manifest_path: &Path,
+    ui_schema: &Value,
+) -> Result<BTreeMap<String, UiExtensionResponse>, String> {
+    const EXTENSION_SIZE_LIMIT: u64 = 512 * 1024;
+    let mut loaded = BTreeMap::new();
+    let Some(extensions) = ui_schema.get("extensions") else {
+        return Ok(loaded);
+    };
+    let extensions = extensions
+        .as_array()
+        .ok_or("presentation.ui.extensions must be an array")?;
+    let package_root = manifest_path.parent().unwrap_or_else(|| Path::new("."));
+    let canonical_root = fs::canonicalize(package_root).map_err(|error| {
+        format!(
+            "failed to access component package {}: {error}",
+            package_root.display()
+        )
+    })?;
+    for extension in extensions {
+        let extension = extension
+            .as_object()
+            .ok_or("every UI extension must be an object")?;
+        let id = extension
+            .get("id")
+            .and_then(Value::as_str)
+            .filter(|value| !value.is_empty())
+            .ok_or("every UI extension requires id")?;
+        if !id
+            .chars()
+            .all(|character| character.is_ascii_alphanumeric() || matches!(character, '-' | '_'))
+        {
+            return Err(format!("UI extension id `{id}` is not portable"));
+        }
+        let api_version = extension
+            .get("api_version")
+            .and_then(Value::as_str)
+            .unwrap_or("");
+        if api_version != "davis.widget/v1" {
+            return Err(format!(
+                "UI extension `{id}` requires unsupported API `{api_version}`"
+            ));
+        }
+        let source = extension
+            .get("source")
+            .and_then(Value::as_str)
+            .map(Path::new)
+            .ok_or_else(|| format!("UI extension `{id}` requires source"))?;
+        if source.as_os_str().is_empty()
+            || source.is_absolute()
+            || source
+                .components()
+                .any(|component| !matches!(component, std::path::Component::Normal(_)))
+        {
+            return Err(format!(
+                "UI extension `{id}` source must be a safe package-relative path"
+            ));
+        }
+        let path = package_root.join(source);
+        let canonical_path = fs::canonicalize(&path).map_err(|error| {
+            format!("failed to access UI extension {}: {error}", path.display())
+        })?;
+        if !canonical_path.starts_with(&canonical_root) || !canonical_path.is_file() {
+            return Err(format!("UI extension `{id}` resolves outside its package"));
+        }
+        let size = fs::metadata(&canonical_path)
+            .map_err(|error| format!("failed to inspect {}: {error}", path.display()))?
+            .len();
+        if size > EXTENSION_SIZE_LIMIT {
+            return Err(format!("UI extension `{id}` exceeds 512 KiB"));
+        }
+        let html = fs::read_to_string(&canonical_path)
+            .map_err(|error| format!("failed to read UI extension {}: {error}", path.display()))?;
+        if loaded
+            .insert(
+                id.to_owned(),
+                UiExtensionResponse {
+                    api_version: api_version.to_owned(),
+                    html,
+                },
+            )
+            .is_some()
+        {
+            return Err(format!("duplicate UI extension id `{id}`"));
+        }
+    }
+    Ok(loaded)
 }
 
 fn normalize_editor_presentation(
@@ -365,6 +463,20 @@ fn validate_editor_presentation(
             return Err(format!(
                 "UI widget `nests` at `{path}` requires alternatives_from"
             ));
+        }
+        if let Some(extension_id) = widget.strip_prefix("extension:") {
+            let declared = ui_schema["extensions"]
+                .as_array()
+                .is_some_and(|extensions| {
+                    extensions
+                        .iter()
+                        .any(|extension| extension["id"] == extension_id)
+                });
+            if !declared {
+                return Err(format!(
+                    "UI section `{path}` refers to undeclared extension `{extension_id}`"
+                ));
+            }
         }
     }
     Ok(())
@@ -777,18 +889,25 @@ mod tests {
             .as_array()
             .unwrap()
             .iter()
-            .any(|section| section["widget"] == "nests"));
+            .any(|section| section["widget"] == "extension:nest-editor"));
         let nest_section = nested.ui_schema["sections"]
             .as_array()
             .unwrap()
             .iter()
-            .find(|section| section["widget"] == "nests")
+            .find(|section| section["bind"] == "/nests")
             .unwrap();
         assert!(nest_section["description"]
             .as_str()
             .unwrap()
             .contains("最上位scaleは1"));
         assert_eq!(nest_section["labels"]["estimate"], "推定 (右は初期値)");
+        assert_eq!(
+            nested.ui_extensions["nest-editor"].api_version,
+            "davis.widget/v1"
+        );
+        assert!(nested.ui_extensions["nest-editor"]
+            .html
+            .contains("set-value"));
 
         let recursive = editor_definition(&repository, "davis/rl", "0.1.0").unwrap();
         assert_eq!(recursive.ui_schema["version"], "davis.ui/v1");

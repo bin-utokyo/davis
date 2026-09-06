@@ -171,6 +171,7 @@ MNL，NL，RLはいずれも同じrendererを使います．新しいモデル�
 | `nests` | 選択肢のnest所属と非類似度の固定／推定を編集します |
 | `parameter-settings` | termからparameter名を取り出し，初期値と上下限を編集します |
 | `auto` | JSON Schemaから文字列，数値，真偽値，列挙等の入力欄を生成します |
+| `extension:<id>` | componentに同梱した外部UI extensionでsectionを編集します |
 | 未知のwidget | 画面全体を失敗させず，そのsectionだけYAML editorへfallbackします |
 
 ```yaml
@@ -202,6 +203,56 @@ presentation:
 `bind`は`configuration.schema`内を指すJSON Pointerです．`widget`を省略すると`auto`になります．GUIで表現しきれない自由形式objectや配列も，該当sectionだけYAMLとして編集できます．複数CSV結合はモデル固有機能ではなく，各入力slotで利用できるDavis共通の`table_binding`としてAnalysis Planへ保存されます．
 
 sectionの`title`と`description`はcomponent固有の意味を説明します．`nests` widgetでは`labels.mode`，`labels.estimate`，`labels.fixed`，`labels.estimate_value`，`labels.fixed_value`を指定できるため，scaleの記号や正規化方法をDesktopへハードコードする必要はありません．未指定時は汎用表示へ戻ります．
+
+### Component同梱UI extension
+
+組み込みwidgetで表現できない操作のために，Davis本体を変更せずcomponent自身がUIを追加できます．`presentation.ui.extensions`へpackage相対pathを宣言し，sectionから`extension:<id>`として参照します．初版は依存fileを持たない自己完結HTML fragmentを最大512 KiBまで読み込みます．
+
+```yaml
+presentation:
+  ui:
+    version: davis.ui/v1
+    extensions:
+      - id: nest-editor
+        api_version: davis.widget/v1
+        source: ui/nest-editor.html
+    inputs: {}
+    sections:
+      - bind: /nests
+        widget: extension:nest-editor
+```
+
+extensionはsandbox化した`iframe`で動きます．network，親画面のDOM，filesystem，shellへ直接アクセスできません．外部scriptやstylesheetも読み込めないため，HTML内へ必要なstyleとscriptを記述します．設定更新や高さ変更はversion付きmessageだけでDavisへ渡します．
+
+```html
+<div id="editor"></div>
+<script>
+  addEventListener("message", event => {
+    const message = event.data;
+    if (message?.source !== "davis-host" ||
+        message?.api_version !== "davis.widget/v1" ||
+        message?.type !== "render") return;
+    // message.payload.value，schema，candidates，sectionを使って描画します．
+  });
+
+  parent.postMessage({
+    source: "davis-widget",
+    api_version: "davis.widget/v1",
+    type: "ready"
+  }, "*");
+
+  function update(nextValue) {
+    parent.postMessage({
+      source: "davis-widget",
+      api_version: "davis.widget/v1",
+      type: "set-value",
+      value: nextValue
+    }, "*");
+  }
+</script>
+```
+
+Hostからの`render`には現在のsection値，該当JSON Schema，候補値，sectionのpresentation宣言が入ります．extensionからは`ready`，`set-value`，`resize`を送れます．`set-value`で渡した値も保存・実行前にcomponentのJSON Schemaで検証されるため，extensionは契約を迂回できません．実例は[`components/davis-nl/ui/nest-editor.html`](../components/davis-nl/ui/nest-editor.html)です．組み込みwidgetは後方互換用に残しますが，モデル固有の複雑な操作はこの仕組みでcomponent側へ置けます．
 
 大きなschemaを分割したい場合は，inline値の代わりに安全なpackage相対pathを指定できます．JSONとYAMLの両方を利用できます．inlineと参照を同時に指定することはできません．
 
