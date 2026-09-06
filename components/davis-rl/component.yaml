@@ -91,7 +91,7 @@ presentation:
     inputs:
       network:
         title: {ja: Network link表, en: Network link table}
-        description: {ja: link ID，始点node，終点node，link属性を含む表です．, en: Contains link IDs, from-nodes, to-nodes, and link attributes.}
+        description: {ja: link ID，始点node，終点node，link属性を含む表です．, en: "Contains link IDs, from-nodes, to-nodes, and link attributes."}
         widget: table-binding
         preparation: {component: davis/csv-transform, version: 0.4.0}
       observations:

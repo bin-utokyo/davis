@@ -1,7 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { open, save } from "@tauri-apps/plugin-dialog";
 import { useEffect, useRef, useState } from "react";
-import { bindingColumns, ColumnBinding, FormDefinition, FormInput, FormJoin, FormSource, JsonSchema, SchemaFormEditor } from "./SchemaFormEditor";
+import { bindingColumns, ColumnBinding, FormDefinition, FormInput, FormJoin, FormSource, JsonSchema, SchemaFormEditor, SchemaFormErrorBoundary } from "./SchemaFormEditor";
 import { localizedText, localizeTree, useI18n } from "./i18n";
 
 type ColumnProfile = { name: string; inferred_type: string; null_count: number; unique_sample: number; warnings: string[] };
@@ -65,6 +65,14 @@ export default function App() {
       setEditorOptions(definitions);
       if (definition) selectDefinition(definition); else { setEditor(undefined); setCompleted(undefined); setArtifactPreviews({}); }
       await refreshHistory(selected);
+    });
+  }
+  async function reloadComponents() {
+    if (!repository) return;
+    await perform(async () => {
+      const definitions = await invoke<ComponentEditor[]>("component_editor_definitions", { repository });
+      setEditorOptions(definitions);
+      if (definitions.length) selectDefinition(definitions[0]);
     });
   }
   function selectDefinition(definition: ComponentEditor) {
@@ -206,10 +214,13 @@ export default function App() {
     {error && <div className="error sticky-error">{error}</div>}
     <section><SectionHeading number="1" title="Project workspace" description={t("model.yamlとdavis-runsを置く作業folderです．Davis repositoryのcloneは不要です．")} /><PathField value={repository} placeholder="Project folder" onChange={(value) => { setRepository(value); setEditor(undefined); }} onChoose={chooseRepository} /></section>
     <section><div className="heading-with-actions"><SectionHeading number="2" title="Analysis plan editor" description={t("すべてのcomponentを同じdavis.ui/v1 rendererで編集します．")} /><div className="top-actions"><button className="secondary" onClick={newPlan}>{t("新規Plan")}</button><button className="secondary" disabled={!repository} onClick={openPlanForEditing}>{t("既存Planを開く")}</button></div></div>
-      {repository && !editorOptions.length && <div className="notice"><strong>{t("componentがまだインストールされていません．")}</strong><p>{t("Project workspaceは正しく選択されています．ターミナルで公式componentをインストールしてから，Workspaceを選択し直してください．")}</p><code>davis install component mnl</code><code>davis install component nl</code><code>davis install component rl</code><code>davis install component csv-transform</code></div>}
+      {repository && !editorOptions.length && <div className="notice component-install-notice"><strong>{t("componentがまだインストールされていません．")}</strong><p>{t("Project workspaceは正しく選択されています．次のcommandをターミナルへ貼り付けて公式componentをインストールしてください．")}</p><pre><code>{`davis install component mnl
+davis install component nl
+davis install component rl
+davis install component csv-transform`}</code></pre><button className="secondary" disabled={busy} onClick={reloadComponents}>{t("Componentを再読み込み")}</button></div>}
       <div className="field-grid compact-grid"><label><span>Plan name</span><input value={planName} onChange={(event) => setPlanName(event.target.value)} /></label><label><span>Run name (folder prefix)</span><input value={runLabel} disabled={codeMode} placeholder={t("空欄ならPlan name")} onChange={(event) => setRunLabel(event.target.value)} /></label><label><span>Component Manifest</span><select value={editor ? `${editor.manifest.id}@${editor.manifest.version}` : ""} disabled={!editorOptions.length || codeMode} onChange={(event) => selectEditor(event.target.value)}>{!editor && <option value="">{t("Workspaceを選択してください")}</option>}{editorOptions.map((item) => <option key={`${item.manifest.id}@${item.manifest.version}`} value={`${item.manifest.id}@${item.manifest.version}`}>{componentDisplayName(item, locale)} ({item.manifest.id} {item.manifest.version})</option>)}</select></label></div>
       {codeMode && <div className="code-mode"><div className="notice">{t("このcomponentにはdavis.ui/v1の画面定義がありません．内容を失わないYAML modeで開いています．")}</div><textarea className="yaml-preview editable" value={yamlPreview} onChange={(event) => setYamlPreview(event.target.value)} aria-label="model.yaml code editor" /><div className="actions"><button className="secondary" disabled={busy} onClick={() => saveCodePlan(false)}>{t("上書き保存・検証")}</button><button disabled={busy} onClick={() => saveCodePlan(true)}>{t("上書きして実行")}</button></div></div>}
-      {!codeMode && localizedEditor && isComposedEditor(localizedEditor) && <><SchemaFormEditor definition={localizedEditor} inputs={inputs} config={config} onAddSources={addSources} onAddCatalog={openCatalog} onInputChange={(slot, input) => setInputs((current) => ({ ...current, [slot]: input }))} onConfigChange={setConfig} />
+      {!codeMode && localizedEditor && isComposedEditor(localizedEditor) && <><SchemaFormErrorBoundary resetKey={`${localizedEditor.manifest.id}@${localizedEditor.manifest.version}`}><SchemaFormEditor definition={localizedEditor} inputs={inputs} config={config} onAddSources={addSources} onAddCatalog={openCatalog} onInputChange={(slot, input) => setInputs((current) => ({ ...current, [slot]: input }))} onConfigChange={setConfig} /></SchemaFormErrorBoundary>
         <div className="actions editor-actions"><button className="secondary" disabled={!editorReady || busy} onClick={previewPlan}>{t("YAMLを確認")}</button><button className="secondary" disabled={!editorReady || busy} onClick={() => saveDraft(false)}>{t("別名で保存")}</button><button className="secondary" disabled={!editorReady || !planPath || busy} onClick={() => saveDraft(false, true)}>{t("上書き保存")}</button><button disabled={!editorReady || busy} onClick={() => saveDraft(true, Boolean(planPath))}>{t(planPath ? "上書きして推定" : "保存して推定")}</button></div>
         {validation && <div className="success">{validation.component.id} {validation.component.version} {t("として保存・検証しました．")}</div>}{planPath && <div className="plan-path">{planPath}</div>}{yamlPreview && <textarea className="yaml-preview" readOnly value={yamlPreview} aria-label={t("生成されたmodel.yaml")} />}</>}
     </section>
@@ -255,7 +266,7 @@ function formatBytes(size: number) { if (size < 1024) return `${size} B`; if (si
 function formatRunDate(unixMs: number, locale: "ja" | "en") { if (!unixMs) return locale === "ja" ? "日時不明" : "Unknown date"; return new Intl.DateTimeFormat(locale === "ja" ? "ja-JP" : "en-US", { dateStyle: "medium", timeStyle: "short" }).format(new Date(unixMs)); }
 function PathField({ value, placeholder, onChange, onChoose }: { value: string; placeholder: string; onChange: (value: string) => void; onChoose: () => void }) { const { t } = useI18n(); return <div className="path-field"><input value={value} placeholder={placeholder} onChange={(event) => onChange(event.target.value)} /><button className="secondary" onClick={onChoose}>{t("選択")}</button></div>; }
 function resultDefinitions(editor: ComponentEditor | undefined, run: CompletedRun, locale: "ja" | "en" = "ja"): ResultDefinition[] {
-  const explicit = (editor?.ui_schema.results ?? []) as ResultDefinition[];
+  const explicit = (editor?.ui_schema.results ?? []).map((definition) => ({ ...definition, title: localizedText(definition.title, locale, definition.artifact) })) as ResultDefinition[];
   const names = new Set(explicit.map((definition) => definition.artifact));
   const inferred = [...Object.entries(run.result.artifacts), ...Object.entries(run.result.extensions)].flatMap(([artifact, descriptor]): ResultDefinition[] => {
     if (names.has(artifact) || !descriptor.profile || !["application/json", "text/csv"].includes(descriptor.media_type)) return [];

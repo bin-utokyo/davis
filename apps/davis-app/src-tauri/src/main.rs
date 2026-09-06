@@ -1308,6 +1308,10 @@ run:
             .unwrap()
             .iter()
             .any(|section| section["widget"] == "parameter-settings"));
+        assert_eq!(
+            recursive.ui_schema["inputs"]["network"]["description"]["en"],
+            "Contains link IDs, from-nodes, to-nodes, and link attributes."
+        );
 
         let nested_plan = repository.join("components/davis-nl/examples/minimal/model.yaml");
         let loaded_nested =

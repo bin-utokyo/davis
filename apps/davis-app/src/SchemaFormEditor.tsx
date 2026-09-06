@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import { useEffect, useRef, useState } from "react";
+import { Component, ErrorInfo, ReactNode, useEffect, useRef, useState } from "react";
 import { useI18n } from "./i18n";
 
 type ColumnProfile = { name: string; inferred_type: string };
@@ -29,6 +29,19 @@ export type FormDefinition = {
 type UiExtension = { api_version: string; html: string };
 type EditorDefinition = { config_schema: JsonSchema; ui_schema: FormDefinition; ui_extensions?: Record<string, UiExtension> };
 type DistinctValues = { values: string[]; rows_sampled: number; truncated: boolean };
+
+export class SchemaFormErrorBoundary extends Component<{ children: ReactNode; resetKey: string }, { error?: Error }> {
+  state: { error?: Error } = {};
+  static getDerivedStateFromError(error: Error) { return { error }; }
+  componentDidCatch(error: Error, info: ErrorInfo) { console.error("Davis component UI failed to render", error, info); }
+  componentDidUpdate(previous: Readonly<{ children: ReactNode; resetKey: string }>) {
+    if (this.state.error && previous.resetKey !== this.props.resetKey) this.setState({ error: undefined });
+  }
+  render() {
+    if (!this.state.error) return this.props.children;
+    return <div className="error component-ui-error"><strong>Component UI error</strong><p>{this.state.error.message}</p></div>;
+  }
+}
 
 export function SchemaFormEditor({ definition, inputs, config, onAddSources, onAddCatalog, onInputChange, onConfigChange }: {
   definition: EditorDefinition; inputs: Record<string, FormInput | undefined>; config: Record<string, unknown>;

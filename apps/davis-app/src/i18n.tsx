@@ -28,7 +28,8 @@ const english: Record<string, string> = {
   "davis.ui/v1に対応するcomponentが見つかりません．": "No component with a davis.ui/v1 presentation was found.",
   "利用できるcomponentがありません．先にDavis CLIで公式componentをインストールしてください．": "No components are available. Install the official components with Davis CLI first.",
   "componentがまだインストールされていません．": "No components are installed yet.",
-  "Project workspaceは正しく選択されています．ターミナルで公式componentをインストールしてから，Workspaceを選択し直してください．": "Your project workspace is valid. Install the official components in a terminal, then select the workspace again.",
+  "Project workspaceは正しく選択されています．次のcommandをターミナルへ貼り付けて公式componentをインストールしてください．": "Your project workspace is valid. Paste the following command into a terminal to install the official components.",
+  "Componentを再読み込み": "Reload components",
   "このcomponentはdavis.ui/v1に対応していません．": "This component does not support davis.ui/v1.",
   "{id}の入力データを選択してください．": "Select input data for {id}.", "{slot}の{source}について結合キーを選択してください．": "Select join keys for {source} in {slot}.",
   "先にWorkspaceを選択してください．": "Select a workspace first.", "読み込めませんでした": "Could not load",
@@ -77,7 +78,7 @@ export function localizeTree<T>(value: T, locale: Locale): T {
   if (Array.isArray(value)) return value.map((item) => localizeTree(item, locale)) as T;
   if (!value || typeof value !== "object") return value;
   const record = value as Record<string, unknown>;
-  if ((typeof record.ja === "string" || typeof record.en === "string") && Object.keys(record).every((key) => key === "ja" || key === "en")) return localizedText(record, locale) as T;
+  if (typeof record.ja === "string" || typeof record.en === "string") return localizedText(record, locale) as T;
   const localized = Object.fromEntries(Object.entries(record).map(([key, item]) => [key, localizeTree(item, locale)])) as Record<string, unknown>;
   if (record["x-davis-title"]) localized.title = localizedText(record["x-davis-title"], locale, typeof record.title === "string" ? record.title : "");
   if (record["x-davis-description"]) localized.description = localizedText(record["x-davis-description"], locale, typeof record.description === "string" ? record.description : "");
