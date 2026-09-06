@@ -2,7 +2,9 @@ city:
   en: Shibuya
   ja: 渋谷区
 columns:
-- description: null
+- description:
+    en: "Record identifier."
+    ja: "レコードの識別ID．"
   name: ID
   type_:
     name: Int64
@@ -24,7 +26,9 @@ columns:
   name: speed
   type_:
     name: Float64
-- description: null
+- description:
+    en: "User identifier."
+    ja: "利用者の識別ID．"
   name: user_id
   type_:
     name: Int64
@@ -58,7 +62,9 @@ columns:
   name: altitude
   type_:
     name: Int64
-- description: null
+- description:
+    en: "Third-level Japanese standard grid-square code."
+    ja: "3次メッシュコード．"
   name: Mesh3
   type_:
     name: Int64

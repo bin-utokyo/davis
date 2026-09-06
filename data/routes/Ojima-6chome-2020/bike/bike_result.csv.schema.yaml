@@ -2,7 +2,9 @@ city:
   en: Ojima 6-chome, Koto-ku
   ja: 江東区大島6丁目
 columns:
-- description: null
+- description:
+    en: "Record identifier."
+    ja: "レコードの識別ID．"
   name: ID
   type_:
     name: Int64

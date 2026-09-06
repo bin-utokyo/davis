@@ -2,11 +2,15 @@ city:
   en: Yokohama
   ja: 横浜
 columns:
-- description: null
+- description:
+    en: "Trip identifier."
+    ja: "トリップの識別ID．"
   name: TripID
   type_:
     name: Int64
-- description: null
+- description:
+    en: "Positioning record identifier."
+    ja: "測位レコードの識別ID．"
   name: PositioningDataID
   type_:
     name: Int64
@@ -16,7 +20,9 @@ columns:
   name: Mode
   type_:
     name: String
-- description: null
+- description:
+    en: "User identifier code."
+    ja: "利用者の識別コード．"
   name: UserCode
   type_:
     name: String

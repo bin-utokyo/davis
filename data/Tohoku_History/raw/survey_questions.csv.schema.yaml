@@ -16,19 +16,27 @@ columns:
   name: response_column_index
   type_:
     name: Int16
-- description: null
+- description:
+    en: Column label used in survey_responses.csv.
+    ja: survey_responses.csvで使用される回答列名．
   name: label
   type_:
     name: String
-- description: null
+- description:
+    en: Identifier assigned to the survey question.
+    ja: 調査質問に付与された識別コード．
   name: question_code
   type_:
     name: String
-- description: null
+- description:
+    en: Japanese survey question text.
+    ja: 日本語の調査質問文．
   name: question
   type_:
     name: String
-- description: null
+- description:
+    en: Survey response format code, such as SA for single answer, MA for multiple answer, or NU for numeric response.
+    ja: 回答形式コード．SAは単一回答，MAは複数回答，NUは数値回答を示します．
   name: question_type
   type_:
     name: String
@@ -44,7 +52,9 @@ columns:
   name: option_index
   type_:
     name: Int16
-- description: null
+- description:
+    en: Japanese text of the response option.
+    ja: 日本語の回答選択肢．
   name: option
   type_:
     name: String

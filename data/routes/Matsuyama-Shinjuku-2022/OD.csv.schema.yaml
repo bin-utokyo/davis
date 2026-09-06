@@ -2,11 +2,15 @@ city:
   en: Matsuyama-Shinjuku
   ja: 松山ー新宿
 columns:
-- description: null
+- description:
+    en: Sequence number of the OD record.
+    ja: ODレコードの連番．
   name: seq
   type_:
     name: Int64
-- description: null
+- description:
+    en: Identifier of the origin location used in the OD record.
+    ja: ODレコードで使用する出発地の識別ID．
   name: Oname
   type_:
     name: Int64
@@ -22,7 +26,9 @@ columns:
   name: OLat
   type_:
     name: Float64
-- description: null
+- description:
+    en: Identifier of the destination location used in the OD record.
+    ja: ODレコードで使用する到着地の識別ID．
   name: Dname
   type_:
     name: Int64

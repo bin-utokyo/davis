@@ -2,11 +2,15 @@ city:
   en: Shibuya
   ja: 渋谷区
 columns:
-- description: null
+- description:
+    en: "Record identifier."
+    ja: "レコードの識別ID．"
   name: ID
   type_:
     name: Int64
-- description: null
+- description:
+    en: "User identifier."
+    ja: "利用者の識別ID．"
   name: user_id
   type_:
     name: Int64
@@ -34,11 +38,15 @@ columns:
   name: updated_at
   type_:
     name: Datetime
-- description: null
+- description:
+    en: "Validity flag: 1=Valid, 0=Invalid."
+    ja: "有効性フラグ：1=有効，0=無効．"
   name: validity
   type_:
     name: Int64
-- description: null
+- description:
+    en: "Purpose code: 100=Commuting/School, 200=Business, 201=Returning to office/school, 300=Returning home, 400=Shopping, 401=Dining, 402=Lessons, 403=Medical, 404=Leisure, 405=Tourism, 406=Strolling, 407=Pickup/Drop-off, 500=Waiting, 501=Other, 999=Unknown."
+    ja: "目的コード：100=通勤・通学，200=業務，201=職場・学校へ戻る，300=帰宅，400=買い物，401=食事，402=習い事，403=通院，404=レジャー，405=観光，406=散歩，407=送迎，500=待機，501=その他，999=不明．"
   name: purpose_code_active
   type_:
     name: Int64

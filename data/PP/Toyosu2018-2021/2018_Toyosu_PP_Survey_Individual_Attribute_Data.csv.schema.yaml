@@ -8,7 +8,9 @@ columns:
   name: TF System ID
   type_:
     name: String
-- description: null
+- description:
+    en: "Monitor identifier."
+    ja: "モニターの識別ID．"
   name: Monitor ID
   type_:
     name: String
@@ -18,7 +20,9 @@ columns:
   name: Sex
   type_:
     name: Int8
-- description: null
+- description:
+    en: "Date of birth."
+    ja: "生年月日．"
   name: Date of Birth
   type_:
     name: Datetime
@@ -28,11 +32,15 @@ columns:
   name: Age
   type_:
     name: String
-- description: null
+- description:
+    en: "Registration date."
+    ja: "登録日．"
   name: Registration Date
   type_:
     name: Datetime
-- description: null
+- description:
+    en: "Withdrawal date."
+    ja: "退会日．"
   name: Withdrawal Date
   type_:
     name: Datetime
@@ -48,7 +56,9 @@ columns:
   name: Survey Response
   type_:
     name: Int8
-- description: null
+- description:
+    en: "Remarks recorded for the participant."
+    ja: "参加者に関する備考．"
   name: Remarks
   type_:
     name: String

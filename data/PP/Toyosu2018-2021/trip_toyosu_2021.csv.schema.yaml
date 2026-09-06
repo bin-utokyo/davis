@@ -2,11 +2,15 @@ city:
   en: Toyosu
   ja: 豊洲
 columns:
-- description: null
+- description:
+    en: "Trip identifier."
+    ja: "トリップの識別ID．"
   name: TripID
   type_:
     name: Int64
-- description: null
+- description:
+    en: "User identifier."
+    ja: "利用者の識別ID．"
   name: UserID
   type_:
     name: Int64
@@ -16,7 +20,9 @@ columns:
   name: PurposeID
   type_:
     name: Int64
-- description: null
+- description:
+    en: "Trip-purpose name corresponding to the purpose code."
+    ja: "目的コードに対応するトリップ目的名．"
   name: Purpose
   type_:
     name: String
@@ -44,7 +50,9 @@ columns:
   name: MainTransportationCode
   type_:
     name: Int64
-- description: null
+- description:
+    en: "Name of the main transportation mode corresponding to the mode code."
+    ja: "代表交通手段コードに対応する交通手段名．"
   name: MainTransportationName
   type_:
     name: String
@@ -66,7 +74,9 @@ columns:
   name: LatO
   type_:
     name: Float64
-- description: null
+- description:
+    en: "Network node identifier assigned to the trip origin."
+    ja: "トリップ出発地に割り当てられたネットワークノードID．"
   name: Node_nameO
   type_:
     name: Int64
@@ -82,11 +92,15 @@ columns:
   name: LatD
   type_:
     name: Float64
-- description: null
+- description:
+    en: "Network node identifier assigned to the trip destination."
+    ja: "トリップ到着地に割り当てられたネットワークノードID．"
   name: Node_nameD
   type_:
     name: Int64
-- description: null
+- description:
+    en: "Indicator of whether a car-route alternative can be generated."
+    ja: "自動車経路の代替案を生成できるかを示すフラグ．"
   name: Whether_alternatives_can_be_generated_Car
   type_:
     name: Float64
@@ -102,7 +116,9 @@ columns:
   name: Time_Car
   type_:
     name: Float64
-- description: null
+- description:
+    en: "Indicator of whether a rail-route alternative can be generated."
+    ja: "鉄道経路の代替案を生成できるかを示すフラグ．"
   name: Whether_alternatives_can_be_generated_Train
   type_:
     name: Float64
@@ -118,11 +134,15 @@ columns:
   name: Time_Train
   type_:
     name: Float64
-- description: null
+- description:
+    en: "Rail fare."
+    ja: "鉄道運賃．"
   name: Fare_Train
   type_:
     name: Float64
-- description: null
+- description:
+    en: "Number of rail transfers."
+    ja: "鉄道の乗換回数．"
   name: Number_of_Change_Transportation_Train
   type_:
     name: Float64
@@ -156,7 +176,9 @@ columns:
   name: Total_Time_Train
   type_:
     name: Float64
-- description: null
+- description:
+    en: "Indicator of whether a walking-route alternative can be generated."
+    ja: "徒歩経路の代替案を生成できるかを示すフラグ．"
   name: Whether_alternatives_can_be_generated_Walk
   type_:
     name: Float64
@@ -172,7 +194,9 @@ columns:
   name: Time_Walk
   type_:
     name: Float64
-- description: null
+- description:
+    en: "Indicator of whether a bus-route alternative can be generated."
+    ja: "バス経路の代替案を生成できるかを示すフラグ．"
   name: Whether_alternatives_can_be_generated_Bus
   type_:
     name: Float64
@@ -188,11 +212,15 @@ columns:
   name: Time_Bus
   type_:
     name: Float64
-- description: null
+- description:
+    en: "Bus fare."
+    ja: "バス運賃．"
   name: Fare_Bus
   type_:
     name: Float64
-- description: null
+- description:
+    en: "Number of bus transfers."
+    ja: "バスの乗換回数．"
   name: Number_of_Change_Transportation_Bus
   type_:
     name: Float64
@@ -226,11 +254,15 @@ columns:
   name: Total_Time_Bus
   type_:
     name: Float64
-- description: null
+- description:
+    en: "Third-level Japanese standard grid-square code of the trip origin."
+    ja: "トリップ出発地の3次メッシュコード．"
   name: Mesh3_O
   type_:
     name: Int64
-- description: null
+- description:
+    en: "Third-level Japanese standard grid-square code of the trip destination."
+    ja: "トリップ到着地の3次メッシュコード．"
   name: Mesh3_D
   type_:
     name: Int64

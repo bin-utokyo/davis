@@ -2,11 +2,15 @@ city:
   en: Matsuyama-Shinjuku
   ja: 松山ー新宿
 columns:
-- description: null
+- description:
+    en: Identifier for the individual.
+    ja: 個人を識別するID．
   name: MonitorID
   type_:
     name: Int64
-- description: null
+- description:
+    en: Identifier for the trip.
+    ja: トリップを識別するID．
   name: TripID
   type_:
     name: Int64
@@ -22,7 +26,9 @@ columns:
   name: Arr_Time
   type_:
     name: Datetime
-- description: null
+- description:
+    en: Identifier of the origin location used in the OD record.
+    ja: ODレコードで使用する出発地の識別ID．
   name: Oname
   type_:
     name: Int64
@@ -38,7 +44,9 @@ columns:
   name: OLat
   type_:
     name: Float64
-- description: null
+- description:
+    en: Identifier of the destination location used in the OD record.
+    ja: ODレコードで使用する到着地の識別ID．
   name: Dname
   type_:
     name: Int64
@@ -54,7 +62,9 @@ columns:
   name: DLat
   type_:
     name: Float64
-- description: null
+- description:
+    en: "Purpose code: 110=Return home, 200=Shopping, 210=Dining/Entertainment, 220=Lodging, 300=Work, 700=Travel to station/bus stop, 710=Travel to airport, 800=Visit family/friends, 998=Other, 999=--."
+    ja: "目的コード：110=帰宅，200=買い物，210=食事・娯楽，220=宿泊，300=仕事，700=駅・バス停への移動，710=空港への移動，800=家族・友人の訪問，998=その他，999=--．"
   name: Purpose_Code(active)
   type_:
     name: Int64

@@ -2,43 +2,63 @@ city:
   en: Shibuya
   ja: 渋谷
 columns:
-- description: null
+- description:
+    en: Identifier for the individual.
+    ja: 個人を識別するID．
   name: MonitorID
   type_:
     name: Int64
-- description: null
+- description:
+    en: Identifier for the trip date.
+    ja: トリップの日付を識別するID．
   name: DiaryID
   type_:
     name: String
-- description: null
+- description:
+    en: Identifier for the trip.
+    ja: トリップを識別するID．
   name: TripID
   type_:
     name: Float64
-- description: null
+- description:
+    en: "Transportation mode code. Values: 100=Rail, 101=Subway, 103=Monorail, 200=Tram, 201=Bus, 300=Car, 301=Freight car, 302=Taxi, 303=Motorcycle, 400=Bicycle, 401=Shared bicycle, 402=Velotaxi, 500=Walk, 600=Airplane, 601=Ship, 602=Other, 999=Unknown."
+    ja: "移動手段コード：100=鉄道，101=地下鉄，103=モノレール，200=路面電車，201=バス，300=自動車，301=貨物車，302=タクシー，303=バイク，400=自転車，401=シェアバイク，402=ベロタクシー，500=徒歩，600=飛行機，601=船，602=その他，999=不明．"
   name: Mode
   type_:
     name: Float64
-- description: null
+- description:
+    en: "Trip purpose code. Values: 0=Not assigned in this route dataset, 100=Commuting or schooling, 200=Business, 201=Returning to workplace or school, 300=Returning home, 400=Shopping, 401=Dining, 402=Lessons, 403=Hospital visit, 404=Leisure, 405=Sightseeing, 406=Strolling, 407=Escorting, 500=Waiting, 501=Other, 999=Unknown."
+    ja: "トリップ目的コード：0=この経路データでは未割当，100=通勤・通学，200=業務，201=帰社・帰校，300=帰宅，400=買物，401=食事，402=習い事，403=通院，404=娯楽，405=観光，406=散策，407=送迎，500=待ち時間，501=その他，999=不明．"
   name: Purpose
   type_:
     name: Float64
-- description: null
+- description:
+    en: Identifier of the origin node of the path; corresponds to a node ID in the relevant network dataset.
+    ja: 経路の起点nodeのID．対応するネットワークデータのnode IDに対応します．
   name: Path_Origin_nodeID
   type_:
     name: Float64
-- description: null
+- description:
+    en: Identifier of the destination node of the path; corresponds to a node ID in the relevant network dataset.
+    ja: 経路の終点nodeのID．対応するネットワークデータのnode IDに対応します．
   name: Path_Destination_nodeID
   type_:
     name: Float64
-- description: null
+- description:
+    en: Total length of the path in meters.
+    ja: 経路全体の長さ(m)．
   name: Path_Length(m)
   type_:
     name: Float64
-- description: null
+- description:
+    en: Travel time in seconds.
+    ja: 所要時間(秒)．
   name: Travel_Time(s)
   type_:
     name: Float64
-- description: null
+- description:
+    en: Average speed in kilometers per hour.
+    ja: 平均速度(km/h)．
   name: Speed(km/h)
   type_:
     name: Float64

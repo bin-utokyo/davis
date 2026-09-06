@@ -2,11 +2,15 @@ city:
   en: Toyosu
   ja: 豊洲
 columns:
-- description: null
+- description:
+    en: "Record identifier."
+    ja: "レコードの識別ID．"
   name: ID
   type_:
     name: String
-- description: null
+- description:
+    en: "Recorded gender category."
+    ja: "登録された性別区分．"
   name: Gender
   type_:
     name: Int8
@@ -16,27 +20,39 @@ columns:
   name: Age
   type_:
     name: Int8
-- description: null
+- description:
+    en: "Recorded transportation mode."
+    ja: "登録された交通手段．"
   name: Mode of Transport
   type_:
     name: Int8
-- description: null
+- description:
+    en: "Recorded occupation."
+    ja: "登録された職業．"
   name: Occupation
   type_:
     name: Int8
-- description: null
+- description:
+    en: "Nearest station to the workplace."
+    ja: "勤務先の最寄り駅．"
   name: Nearest Station to Workplace
   type_:
     name: String
-- description: null
+- description:
+    en: "Recorded income category."
+    ja: "登録された収入区分．"
   name: Income
   type_:
     name: Int8
-- description: null
+- description:
+    en: "Nearest station to the home."
+    ja: "自宅の最寄り駅．"
   name: Nearest Station to Home
   type_:
     name: String
-- description: null
+- description:
+    en: "Recorded type of residence."
+    ja: "登録された住居種別．"
   name: Type of Residence
   type_:
     name: Int8
@@ -52,7 +68,9 @@ columns:
   name: Rented Housing Floor
   type_:
     name: Int8
-- description: null
+- description:
+    en: "Recorded housing cost."
+    ja: "登録された住居費．"
   name: Housing Cost
   type_:
     name: Int8
@@ -68,79 +86,117 @@ columns:
   name: Months of Residence
   type_:
     name: Int8
-- description: null
+- description:
+    en: "Recorded floor plan of the home."
+    ja: "自宅の間取り．"
   name: Floor Plan (Home)
   type_:
     name: Int8
-- description: null
+- description:
+    en: "Recorded floor plan of another residence."
+    ja: "その他の住居の間取り．"
   name: Floor Plan (Other)
   type_:
     name: String
-- description: null
+- description:
+    en: "Indicator of living alone."
+    ja: "単身居住を示す項目．"
   name: Living Alone
   type_:
     name: Int8
-- description: null
+- description:
+    en: "Indicator of a spouse in the household."
+    ja: "同居する配偶者の有無を示す項目．"
   name: Spouse (Husband/Wife)
   type_:
     name: Int8
-- description: null
+- description:
+    en: "Indicator of parents of the respondent or spouse in the household."
+    ja: "本人または配偶者の親の同居有無を示す項目．"
   name: Parents (Self/Spouse)
   type_:
     name: Int8
-- description: null
+- description:
+    en: "Indicator of siblings of the respondent or spouse in the household."
+    ja: "本人または配偶者の兄弟姉妹の同居有無を示す項目．"
   name: Siblings (Self/Spouse)
   type_:
     name: Int8
-- description: null
+- description:
+    en: "Indicator of the respondent's children in the household."
+    ja: "本人の子どもの同居有無を示す項目．"
   name: Own Children
   type_:
     name: Int8
-- description: null
+- description:
+    en: "Indicator of other household members."
+    ja: "その他の同居者の有無を示す項目．"
   name: Others
   type_:
     name: Int8
-- description: null
+- description:
+    en: "Number of parents of the respondent or spouse in the household."
+    ja: "同居する本人または配偶者の親の人数．"
   name: Number of Parents (Self/Spouse)
   type_:
     name: Int8
-- description: null
+- description:
+    en: "Number of siblings of the respondent or spouse in the household."
+    ja: "同居する本人または配偶者の兄弟姉妹の人数．"
   name: Number of Siblings (Self/Spouse)
   type_:
     name: Int8
-- description: null
+- description:
+    en: "Number of children in the household."
+    ja: "同居する子どもの人数．"
   name: Number of Children
   type_:
     name: Int8
-- description: null
+- description:
+    en: "Number of other household members."
+    ja: "その他の同居者数．"
   name: Number of Others
   type_:
     name: Int8
-- description: null
+- description:
+    en: "Free-text specification of other household members."
+    ja: "その他の同居者に関する自由記述．"
   name: Others (Specify)
   type_:
     name: String
-- description: null
+- description:
+    en: "Recorded car-ownership status."
+    ja: "自動車の保有状況．"
   name: Car Ownership
   type_:
     name: Int8
-- description: null
+- description:
+    en: "Recorded motorcycle or scooter ownership status."
+    ja: "バイクまたはスクーターの保有状況．"
   name: Motorcycle/Scooter Ownership
   type_:
     name: Int8
-- description: null
+- description:
+    en: "Recorded bicycle-ownership status."
+    ja: "自転車の保有状況．"
   name: Bicycle Ownership
   type_:
     name: Int8
-- description: null
+- description:
+    en: "Indicator that none of the listed vehicles are owned."
+    ja: "記載された車両を保有していないことを示す項目．"
   name: None Owned
   type_:
     name: Int8
-- description: null
+- description:
+    en: "Recorded vaccination status."
+    ja: "ワクチン接種状況．"
   name: Vaccination
   type_:
     name: Int8
-- description: null
+- description:
+    en: "Recorded intention to receive vaccination."
+    ja: "ワクチン接種意向．"
   name: Vaccination Intention
   type_:
     name: Int8

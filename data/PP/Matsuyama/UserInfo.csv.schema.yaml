@@ -2,11 +2,15 @@ city:
   en: Matuyama
   ja: 松山
 columns:
-- description: null
+- description:
+    en: "Start date of the recorded participation period."
+    ja: "記録対象となる参加期間の開始日．"
   name: StartDate
   type_:
     name: String
-- description: null
+- description:
+    en: "Record identifier."
+    ja: "レコードの識別ID．"
   name: ID
   type_:
     name: String
@@ -16,15 +20,21 @@ columns:
   name: Age
   type_:
     name: String
-- description: null
+- description:
+    en: "Recorded gender category."
+    ja: "登録された性別区分．"
   name: Gender
   type_:
     name: String
-- description: null
+- description:
+    en: "Recorded occupation."
+    ja: "登録された職業．"
   name: Occupation
   type_:
     name: String
-- description: null
+- description:
+    en: "Notes recorded for the participant."
+    ja: "参加者に関する注記．"
   name: Notes
   type_:
     name: String

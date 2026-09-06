@@ -2,11 +2,15 @@ city:
   en: Yokohama
   ja: 横浜市
 columns:
-- description: null
+- description:
+    en: "Trip identifier."
+    ja: "トリップの識別ID．"
   name: tripID
   type_:
     name: Int64
-- description: null
+- description:
+    en: "Monitor identifier."
+    ja: "モニターの識別ID．"
   name: monitorID
   type_:
     name: String

@@ -2,19 +2,27 @@ city:
   en: Yokohama
   ja: 横浜
 columns:
-- description: null
+- description:
+    en: "Monitor identifier."
+    ja: "モニターの識別ID．"
   name: monitorID
   type_:
     name: String
-- description: null
+- description:
+    en: "Survey-type category."
+    ja: "調査種別．"
   name: survey type
   type_:
     name: String
-- description: null
+- description:
+    en: "Recorded address."
+    ja: "登録された住所．"
   name: address
   type_:
     name: String
-- description: null
+- description:
+    en: "Sex code: 1=Male, 2=Female."
+    ja: "性別コード：1=男性，2=女性．"
   name: sex (1:male, 2:female)
   type_:
     name: Int64
