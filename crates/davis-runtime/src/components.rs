@@ -339,26 +339,7 @@ impl ComponentStore {
 ///
 /// Returns an error when neither an override nor a home directory is present.
 pub fn user_data_directory() -> Result<PathBuf, ComponentStoreError> {
-    if let Some(directory) = std::env::var_os("DAVIS_DATA_HOME") {
-        return Ok(PathBuf::from(directory));
-    }
-    #[cfg(target_os = "windows")]
-    if let Some(directory) =
-        std::env::var_os("LOCALAPPDATA").or_else(|| std::env::var_os("APPDATA"))
-    {
-        return Ok(PathBuf::from(directory).join("Davis"));
-    }
-    #[cfg(target_os = "macos")]
-    if let Some(directory) = std::env::var_os("HOME") {
-        return Ok(PathBuf::from(directory).join("Library/Application Support/Davis"));
-    }
-    if let Some(directory) = std::env::var_os("XDG_DATA_HOME") {
-        return Ok(PathBuf::from(directory).join("davis"));
-    }
-    std::env::var_os("HOME")
-        .map(PathBuf::from)
-        .map(|directory| directory.join(".local/share/davis"))
-        .ok_or(ComponentStoreError::DirectoryUnavailable)
+    davis_core::user_data_directory().map_err(|_| ComponentStoreError::DirectoryUnavailable)
 }
 
 fn validate_package(

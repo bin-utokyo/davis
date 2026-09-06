@@ -583,4 +583,4 @@ davis component registry dist/my-component-0.1.0.entry.json \
 
 ## 現在の境界
 
-実装済みなのはlocal input，`run_artifact` input，推定時の複数source binding，宣言的な複数CSV join，列選択，線形結合，CSV／Parquet出力，process実行，artifact検証，local／registry installです．catalog input，filter，group，任意pipeline DAG，sandboxは未実装です．DavisはPython等の一般言語環境をinstallしません．QGIS等の手作業は生成済みfileをlocal inputとして利用し，自動実行できるalgorithmは同じprocess contractでtransform componentとして包めます．
+実装済みなのはlocal input，Davis Catalog input，`run_artifact` input，推定時の複数source binding，宣言的な複数CSV join，列選択，線形結合，CSV／Parquet出力，process実行，artifact検証，local／registry installです．Catalog inputは`dataset_id`と`file_id`をPlanへ記録し，CLIまたはDesktopが取得した実体をuser共通cacheから解決します．revision pin，filter，group，任意pipeline DAG，sandboxは未実装です．DavisはPython等の一般言語環境をinstallしません．QGIS等の手作業は生成済みfileをlocal inputとして利用し，自動実行できるalgorithmは同じprocess contractでtransform componentとして包めます．

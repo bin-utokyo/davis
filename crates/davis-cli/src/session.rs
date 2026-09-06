@@ -136,7 +136,7 @@ fn clear_path(path: PathBuf) -> Result<bool, SessionError> {
     }
 }
 
-pub(crate) fn config_path(filename: &str) -> Result<PathBuf, SessionError> {
+pub fn config_path(filename: &str) -> Result<PathBuf, SessionError> {
     if let Some(directory) = std::env::var_os("DAVIS_CONFIG_HOME") {
         return Ok(PathBuf::from(directory).join(filename));
     }

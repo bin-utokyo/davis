@@ -1,11 +1,13 @@
 //! Domain types and storage-independent use cases shared by Davis clients.
 
+mod catalog_cache;
 mod local_store;
 mod manifest;
 
 use std::fmt;
 use std::str::FromStr;
 
+pub use catalog_cache::{user_data_directory, CatalogCache, CatalogCacheError};
 pub use local_store::{hash_file, IngestedObject, LocalObjectStore, StoreError};
 pub use manifest::{
     read_manifest, write_manifest, DatasetManifest, ManifestDataset, ManifestError, ManifestFile,

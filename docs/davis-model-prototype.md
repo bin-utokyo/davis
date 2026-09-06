@@ -8,6 +8,7 @@
 * `AnalysisPlan` (`model.yaml`)と`ComponentManifest`の読込
 * component固有JSON Schemaによるconfig検証
 * local inputのpath解決，BLAKE3 digest，media type検査
+* Davis Catalog inputの検索，1 click download，共有cacheからのpath解決・整合性検査
 * Pythonまたはnative processの起動とlog保存
 * `RunResult`とartifactのpath，size，digest検証
 * long形式CSVを使う標準MNLの検証・推定
@@ -24,7 +25,7 @@
 * 先頭0を保護する型推定と明示的schemaによるCSV／Parquet出力
 * 1つのmodel.yamlで複数sourceを結合・列選択して推定するtable binding
 
-catalog input，filter，group，任意pipeline DAGは型または拡張点だけを用意しており，まだ実行できません．未実装入力を指定した場合は明示的に失敗します．component作成方法とtable bindingは[`davis-component-authoring.md`](davis-component-authoring.md)に記載します．
+Catalog inputは，先に`davis login <URL>`を済ませるとDesktopから検索・downloadでき，`kind: catalog`の論理参照としてPlanへ保存されます．CLIとDesktopはOSごとのDavis data directoryにある同じcontent-addressed cacheを使うため，作業directoryを変えても再利用できます．revision pin，filter，group，任意pipeline DAGはまだ実行できません．component作成方法とtable bindingは[`davis-component-authoring.md`](davis-component-authoring.md)に記載します．
 
 ## 最小example
 

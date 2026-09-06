@@ -8,6 +8,7 @@ repository.workspace = true
 [dependencies]
 blake3.workspace = true
 csv.workspace = true
+davis-core = { path = "../davis-core" }
 davis-model-api = { path = "../davis-model-api" }
 davis-model-runner = { path = "../davis-model-runner" }
 encoding_rs.workspace = true

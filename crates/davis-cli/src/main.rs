@@ -3,8 +3,6 @@ mod component_pack;
 mod component_registry;
 mod git_workflow;
 mod model;
-mod remote;
-mod session;
 mod software;
 mod update;
 
@@ -18,9 +16,13 @@ use davis_catalog::{
     audit_datasets, build_catalog_index, ingest_dataset, read_file_schema, refresh_dataset,
     scan_repository, write_catalog_index, RefreshOptions,
 };
+use davis_client::{
+    remote::{DavisService, RemoteError},
+    session,
+};
 use davis_core::{
-    current_local_date, read_manifest, write_manifest, Dataset, LocalObjectStore, LocalizedText,
-    ObjectRef, SchemaStatus,
+    current_local_date, read_manifest, write_manifest, CatalogCache, Dataset, LocalObjectStore,
+    LocalizedText, ObjectRef, SchemaStatus,
 };
 use davis_document::{render_schema_pdf, write_pdf_if_changed, Language};
 use davis_storage::{
@@ -32,7 +34,6 @@ use git_workflow::{
     verify_publish_git_state,
 };
 use indicatif::{ProgressBar, ProgressStyle};
-use remote::{DavisService, RemoteError};
 
 #[derive(Debug, Parser)]
 #[command(name = "davis", version, about = "Davis data catalog client")]
@@ -841,6 +842,7 @@ fn handle_ingest(
     Ok(())
 }
 
+#[allow(clippy::too_many_lines)]
 async fn handle_get(mut request: GetRequest) -> Result<(), Box<dyn std::error::Error>> {
     let stored_session = if request.config.is_none() {
         get_session(request.service_url.as_deref()).await?
@@ -873,7 +875,14 @@ async fn handle_get(mut request: GetRequest) -> Result<(), Box<dyn std::error::E
     if !request.documents.schema {
         eprintln!("Warning: schema.yaml will not be saved; future Davis formatting and modeling workflows may require it.");
     }
-    let object_store = LocalObjectStore::new(resolve(&request.repository, &request.store));
+    let catalog_cache = stored_session
+        .as_ref()
+        .map(|_| CatalogCache::for_user())
+        .transpose()?;
+    let object_store = catalog_cache.as_ref().map_or_else(
+        || LocalObjectStore::new(resolve(&request.repository, &request.store)),
+        CatalogCache::object_store,
+    );
     if let Some(config) = &request.config {
         let remote_store = open_remote(&request.repository, config, &request.remote)?;
         let progress_bar = transfer_progress_bar("Download");
@@ -921,6 +930,11 @@ async fn handle_get(mut request: GetRequest) -> Result<(), Box<dyn std::error::E
         };
         println!("Downloaded objects: {}", report.downloaded);
         println!("Cached objects: {}", report.cached);
+    }
+    if let Some(cache) = &catalog_cache {
+        for file in &manifest.files {
+            cache.materialize_file(&manifest, &file.id)?;
+        }
     }
     object_store.materialize(&manifest, &output, request.force)?;
     materialize_companion_documents(&request, &manifest, stored_session.as_ref(), &output).await?;

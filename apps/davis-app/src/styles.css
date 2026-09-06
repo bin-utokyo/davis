@@ -74,6 +74,7 @@ label > span { color: #5f7067; font-size: 12px; font-weight: 700; }
 .binding-heading > div { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .binding-heading code { color: #637269; font-size: 11px; }
 .binding-heading p { color: #718078; font-size: 12px; margin: 4px 0 0; }
+.source-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
 .binding-source { align-items: center; border-top: 1px solid #e6e9e4; display: grid; gap: 10px; grid-template-columns: minmax(180px, 1fr) auto auto; margin-top: 12px; padding-top: 12px; }
 .binding-source > div:first-child { display: flex; flex-direction: column; min-width: 0; }
 .binding-source small { color: #718078; overflow-wrap: anywhere; }
@@ -135,6 +136,17 @@ td { font-size: 13px; }
 .result-table { max-height: 390px; overflow: auto; }
 .result-table th { background: white; position: sticky; top: 0; }
 .busy { position: fixed; right: 24px; bottom: 24px; border-radius: 999px; background: #17231e; color: white; padding: 11px 18px; box-shadow: 0 8px 24px rgba(0, 0, 0, .18); }
+.modal-backdrop { align-items: center; background: rgba(20, 31, 26, .48); display: flex; inset: 0; justify-content: center; padding: 32px; position: fixed; z-index: 40; }
+.catalog-dialog { background: #fbfcf8; border-radius: 18px; box-shadow: 0 24px 70px rgba(16, 29, 23, .28); max-height: min(760px, calc(100vh - 64px)); overflow: hidden; padding: 24px; width: min(820px, 100%); }
+.catalog-heading { align-items: flex-start; display: flex; gap: 20px; justify-content: space-between; }
+.catalog-heading h2 { margin-top: 0; }
+.catalog-heading p { color: #66766e; font-size: 13px; margin: 4px 0 18px; }
+.catalog-search { width: 100%; }
+.catalog-list { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; max-height: 520px; overflow: auto; padding-right: 4px; }
+.catalog-item { align-items: flex-start; background: white; border: 1px solid #dce2db; color: #263d32; display: flex; flex-direction: column; gap: 4px; padding: 13px 15px; text-align: left; }
+.catalog-item:hover { border-color: #73937f; background: #f1f5ef; }
+.catalog-item span { color: #536a5f; font-family: ui-monospace, monospace; font-size: 11px; }
+.catalog-item small { color: #748078; overflow-wrap: anywhere; }
 
 @media (max-width: 980px) {
   .join-row { grid-template-columns: 1fr 1fr; }

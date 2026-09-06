@@ -830,6 +830,8 @@ name = "davis-app"
 version = "0.5.0"
 dependencies = [
  "csv",
+ "davis-cli",
+ "davis-core",
  "davis-model-api",
  "davis-runtime",
  "open",
@@ -937,6 +939,7 @@ version = "0.5.0"
 dependencies = [
  "blake3",
  "csv",
+ "davis-core",
  "davis-model-api",
  "davis-model-runner",
  "encoding_rs",

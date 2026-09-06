@@ -13,6 +13,7 @@ pub use components::{
     user_data_directory, validate_component_package, ComponentStore, ComponentStoreError,
     InstalledComponent, ValidatedComponentPackage,
 };
+use davis_core::{CatalogCache, CatalogCacheError};
 use davis_model_api::{
     AnalysisPlan, ArtifactDescriptor, ComponentKind, ComponentManifest, InputSource,
     ResolvedComponent, ResolvedFile, ResolvedInput, RunRequest, RunResult, RunStatus, TableBinding,
@@ -51,8 +52,8 @@ pub enum RuntimeError {
     UnexpectedInput(String),
     #[error("component input `{name}` does not accept media type `{media_type}`")]
     UnsupportedMediaType { name: String, media_type: String },
-    #[error("catalog inputs are not implemented in this prototype: {dataset_id}/{file_id}")]
-    CatalogNotImplemented { dataset_id: String, file_id: String },
+    #[error("catalog input could not be resolved: {0}")]
+    Catalog(#[from] CatalogCacheError),
     #[error("invalid run ID `{0}`")]
     InvalidRunId(String),
     #[error("run result does not exist: {0}")]
@@ -352,11 +353,22 @@ fn resolve_input_source(
         InputSource::Catalog {
             dataset_id,
             file_id,
-            ..
-        } => Err(RuntimeError::CatalogNotImplemented {
-            dataset_id: dataset_id.clone(),
-            file_id: file_id.clone(),
-        }),
+            revision,
+        } => {
+            let path =
+                CatalogCache::for_user()?.resolve_file(dataset_id, file_id, revision.as_deref())?;
+            let digest = hash_file(&path)?;
+            let metadata = fs::metadata(&path).map_err(|source| RuntimeError::Io {
+                path: path.clone(),
+                source,
+            })?;
+            Ok(ResolvedFile {
+                media_type: media_type(&path).to_owned(),
+                path,
+                object_id: format!("blake3:{digest}"),
+                size: metadata.len(),
+            })
+        }
         InputSource::RunArtifact { run_id, artifact } => {
             resolve_run_artifact(run_root, run_id, artifact)
         }

@@ -3,7 +3,10 @@ import { useEffect, useRef, useState } from "react";
 
 type ColumnProfile = { name: string; inferred_type: string };
 type CsvProfile = { path: string; encoding: string; rows_sampled: number; truncated: boolean; columns: ColumnProfile[] };
-export type FormSource = { id: string; path: string; serializedPath: string; read?: unknown; profile: CsvProfile };
+export type FormSource = {
+  id: string; path: string; serializedPath: string; read?: unknown; profile: CsvProfile;
+  origin?: { kind: "local" } | { kind: "catalog"; dataset_id: string; file_id: string; revision?: string };
+};
 export type FormJoin = { leftOn: string; rightOn: string; relationship: "many_to_one" | "one_to_one"; how: "left" | "inner"; allowUnmatched: boolean };
 export type ColumnBinding = { source: string; column: string };
 export type FormInput = { sources: FormSource[]; base: string; joins: Record<string, FormJoin>; columns?: Record<string, ColumnBinding>; processor?: { id: string; version: string }; forceBinding?: boolean };
@@ -25,9 +28,9 @@ type UiExtension = { api_version: string; html: string };
 type EditorDefinition = { config_schema: JsonSchema; ui_schema: FormDefinition; ui_extensions?: Record<string, UiExtension> };
 type DistinctValues = { values: string[]; rows_sampled: number; truncated: boolean };
 
-export function SchemaFormEditor({ definition, inputs, config, onAddSources, onInputChange, onConfigChange }: {
+export function SchemaFormEditor({ definition, inputs, config, onAddSources, onAddCatalog, onInputChange, onConfigChange }: {
   definition: EditorDefinition; inputs: Record<string, FormInput | undefined>; config: Record<string, unknown>;
-  onAddSources: (slot: string) => void; onInputChange: (slot: string, input: FormInput | undefined) => void;
+  onAddSources: (slot: string) => void; onAddCatalog: (slot: string) => void; onInputChange: (slot: string, input: FormInput | undefined) => void;
   onConfigChange: (config: Record<string, unknown>) => void;
 }) {
   const form = definition.ui_schema; const sections = form.sections ?? []; const [alternatives, setAlternatives] = useState<DistinctValues>();
@@ -52,7 +55,7 @@ export function SchemaFormEditor({ definition, inputs, config, onAddSources, onI
   return <>
     <div className="subsection-heading"><div><h3>入力データ</h3><p>入力と結合はモデルではなくDavis共通のtable bindingとして保存します．</p></div></div>
     {Object.entries(form.inputs ?? {}).map(([slot, metadata]) => <InputBindingEditor key={slot} slot={slot} metadata={metadata} input={inputs[slot]}
-      onAdd={() => onAddSources(slot)} onChange={(input) => onInputChange(slot, input)} />)}
+      onAdd={() => onAddSources(slot)} onAddCatalog={() => onAddCatalog(slot)} onChange={(input) => onInputChange(slot, input)} />)}
     {sections.map((section) => {
       const schema = schemaAt(definition.config_schema, section.bind); const value = getAt(config, section.bind);
       const input = section.input ? inputs[section.input] : undefined; const widget = section.widget ?? "auto";
@@ -121,13 +124,13 @@ function ExtensionWidget({ section, extension, schema, value, context, contextEr
   return <><SectionTitle section={section} /><iframe className="ui-extension" ref={frame} title={section.title ?? section.bind} sandbox="allow-scripts" srcDoc={document} style={{ height }} onLoad={render} /></>;
 }
 
-function InputBindingEditor({ slot, metadata, input, onAdd, onChange }: { slot: string; metadata: InputPresentation; input?: FormInput; onAdd: () => void; onChange: (input: FormInput | undefined) => void }) {
+function InputBindingEditor({ slot, metadata, input, onAdd, onAddCatalog, onChange }: { slot: string; metadata: InputPresentation; input?: FormInput; onAdd: () => void; onAddCatalog: () => void; onChange: (input: FormInput | undefined) => void }) {
   const sources = input?.sources ?? []; const base = sources.find((source) => source.id === input?.base) ?? sources[0];
   function remove(id: string) { if (!input) return; const remaining = input.sources.filter((source) => source.id !== id); if (!remaining.length) return onChange(undefined); const joins = { ...input.joins }; delete joins[id]; onChange({ ...input, sources: remaining, base: input.base === id ? remaining[0].id : input.base, joins }); }
   function updateJoin(id: string, patch: Partial<FormJoin>) { if (input) onChange({ ...input, joins: { ...input.joins, [id]: { ...defaultJoin(), ...input.joins[id], ...patch } } }); }
-  return <article className="binding-editor"><div className="binding-heading"><div><strong>{metadata.title ?? slot}</strong><code>{slot}</code>{metadata.description && <p>{metadata.description}</p>}</div><button className="secondary" onClick={onAdd}>CSVを追加</button></div>
+  return <article className="binding-editor"><div className="binding-heading"><div><strong>{metadata.title ?? slot}</strong><code>{slot}</code>{metadata.description && <p>{metadata.description}</p>}</div><div className="source-actions"><button className="secondary" onClick={onAdd}>ローカルCSV</button><button className="secondary" onClick={onAddCatalog}>Davis Catalog</button></div></div>
     {!sources.length && <div className="empty-state compact-empty">CSVを1つ以上選択してください．</div>}
-    {sources.map((source) => <div className="binding-source" key={source.id}><div><strong>{source.id}</strong><small>{source.path}</small></div><div className="profile-summary"><span>{source.profile.encoding}</span><span>{source.profile.rows_sampled}行</span><span>{source.profile.columns.length}列</span></div><button className="text-button danger-text" onClick={() => remove(source.id)}>削除</button></div>)}
+    {sources.map((source) => <div className="binding-source" key={source.id}><div><strong>{source.id}</strong><small>{source.origin?.kind === "catalog" ? `${source.origin.dataset_id} / ${source.origin.file_id}` : source.path}</small></div><div className="profile-summary">{source.origin?.kind === "catalog" && <span>Catalog</span>}<span>{source.profile.encoding}</span><span>{source.profile.rows_sampled}行</span><span>{source.profile.columns.length}列</span></div><button className="text-button danger-text" onClick={() => remove(source.id)}>削除</button></div>)}
     {sources.length > 1 && input && <><label className="wide-label"><span>基準データ</span><select value={input.base} onChange={(event) => onChange({ ...input, base: event.target.value })}>{sources.map((source) => <option key={source.id}>{source.id}</option>)}</select></label>
       {base && sources.filter((source) => source.id !== input.base).map((source) => { const join = { ...defaultJoin(), ...input.joins[source.id] }; return <div className="join-row" key={source.id}><strong>{base.id}</strong>
         <select value={join.leftOn} onChange={(event) => updateJoin(source.id, { leftOn: event.target.value })}><option value="">左キー</option>{base.profile.columns.map((column) => <option key={column.name}>{column.name}</option>)}</select><span className="join-mark">=</span><strong>{source.id}</strong>

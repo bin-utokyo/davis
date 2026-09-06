@@ -10,6 +10,8 @@ tauri-build = { version = "2", features = [] }
 
 [dependencies]
 csv.workspace = true
+davis-client = { package = "davis-cli", path = "../../../crates/davis-cli" }
+davis-core = { path = "../../../crates/davis-core" }
 davis-model-api = { path = "../../../crates/davis-model-api" }
 davis-runtime = { path = "../../../crates/davis-runtime" }
 open = "5"

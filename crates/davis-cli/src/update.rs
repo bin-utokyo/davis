@@ -8,7 +8,7 @@ use semver::Version;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
-use crate::session;
+use davis_client::session;
 
 const DEFAULT_UPDATE_URL: &str =
     "https://github.com/bin-utokyo/davis/releases/latest/download/latest-version.json";

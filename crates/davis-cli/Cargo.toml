@@ -9,6 +9,10 @@ repository.workspace = true
 name = "davis"
 path = "src/main.rs"
 
+[lib]
+name = "davis_client"
+path = "src/lib.rs"
+
 [dependencies]
 blake3.workspace = true
 clap.workspace = true

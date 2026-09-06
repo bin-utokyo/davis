@@ -3,6 +3,8 @@ use std::fs;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 
+use davis_client::{remote::DavisService, session};
+use davis_core::CatalogCache;
 use davis_model_api::{AnalysisPlan, ComponentManifest, InputSource, RunResult};
 use davis_runtime::{
     distinct_csv_values, execute_plan, inspect_csv, list_components, load_component, validate_plan,
@@ -52,6 +54,101 @@ struct ArtifactPreviewResponse {
     name: String,
     media_type: String,
     content: Value,
+}
+
+#[derive(Serialize)]
+struct CatalogFileResponse {
+    dataset_id: String,
+    file_id: String,
+    path: String,
+    title: String,
+    size: u64,
+    columns: Vec<String>,
+}
+
+#[derive(Serialize)]
+struct DownloadedCatalogFileResponse {
+    dataset_id: String,
+    file_id: String,
+    path: PathBuf,
+}
+
+fn catalog_service() -> Result<DavisService, String> {
+    let stored = session::load()
+        .map_err(|error| error.to_string())?
+        .ok_or_else(|| {
+            "Davis Catalogを使うには，先に`davis login <URL>`を実行してください．".to_owned()
+        })?;
+    DavisService::new(&stored.service_url, Some(stored.token)).map_err(|error| error.to_string())
+}
+
+#[tauri::command]
+async fn catalog_files() -> Result<Vec<CatalogFileResponse>, String> {
+    let catalog = catalog_service()?
+        .catalog()
+        .await
+        .map_err(|error| error.to_string())?;
+    Ok(catalog
+        .datasets
+        .into_iter()
+        .flat_map(|dataset| {
+            let dataset_id = dataset.id;
+            dataset
+                .files
+                .into_iter()
+                .filter(|file| {
+                    Path::new(&file.path).extension().is_some_and(|extension| {
+                        extension.eq_ignore_ascii_case("csv")
+                            || extension.eq_ignore_ascii_case("tsv")
+                    })
+                })
+                .map(move |file| CatalogFileResponse {
+                    dataset_id: dataset_id.clone(),
+                    file_id: file.id,
+                    title: file
+                        .schema
+                        .as_ref()
+                        .map_or_else(|| file.path.clone(), |schema| schema.name.ja.clone()),
+                    path: file.path,
+                    size: file.size,
+                    columns: file.schema.map_or_else(Vec::new, |schema| {
+                        schema
+                            .columns
+                            .into_iter()
+                            .map(|column| column.name)
+                            .collect()
+                    }),
+                })
+        })
+        .collect())
+}
+
+#[tauri::command]
+async fn download_catalog_file(
+    dataset_id: String,
+    file_id: String,
+) -> Result<DownloadedCatalogFileResponse, String> {
+    let service = catalog_service()?;
+    let manifest = service
+        .manifest(&dataset_id)
+        .await
+        .map_err(|error| error.to_string())?;
+    let selected = manifest
+        .select_files(std::slice::from_ref(&file_id))
+        .map_err(|error| error.to_string())?;
+    let cache = CatalogCache::for_user().map_err(|error| error.to_string())?;
+    service
+        .download_manifest(&cache.object_store(), &selected, |_, _, _, _| {})
+        .await
+        .map_err(|error| error.to_string())?;
+    let path = cache
+        .materialize_file(&manifest, &file_id)
+        .map_err(|error| error.to_string())?;
+    Ok(DownloadedCatalogFileResponse {
+        dataset_id,
+        file_id,
+        path,
+    })
 }
 
 #[tauri::command]
@@ -114,7 +211,7 @@ fn load_analysis_plan_for_editing(
     let plan_directory = path.parent().unwrap_or_else(|| Path::new("."));
     let mut resolved_sources = BTreeMap::new();
     for (slot, source) in &plan.inputs {
-        collect_local_sources(source, slot, plan_directory, &mut resolved_sources);
+        collect_resolved_sources(source, slot, plan_directory, &mut resolved_sources)?;
     }
     let editor = editor_definition(
         &repository,
@@ -129,12 +226,12 @@ fn load_analysis_plan_for_editing(
     })
 }
 
-fn collect_local_sources(
+fn collect_resolved_sources(
     source: &InputSource,
     name: &str,
     plan_directory: &Path,
     resolved: &mut BTreeMap<String, PathBuf>,
-) {
+) -> Result<(), String> {
     match source {
         InputSource::Local { path, .. } => {
             resolved.insert(
@@ -148,16 +245,27 @@ fn collect_local_sources(
         }
         InputSource::TableBinding { binding } => {
             for (nested_name, nested) in &binding.sources {
-                collect_local_sources(
+                collect_resolved_sources(
                     nested,
                     &format!("{name}/{nested_name}"),
                     plan_directory,
                     resolved,
-                );
+                )?;
             }
         }
-        InputSource::Catalog { .. } | InputSource::RunArtifact { .. } => {}
+        InputSource::Catalog {
+            dataset_id,
+            file_id,
+            revision,
+        } => {
+            let path = CatalogCache::for_user()
+                .and_then(|cache| cache.resolve_file(dataset_id, file_id, revision.as_deref()))
+                .map_err(|error| error.to_string())?;
+            resolved.insert(name.to_owned(), path);
+        }
+        InputSource::RunArtifact { .. } => {}
     }
+    Ok(())
 }
 
 fn editor_definition(
@@ -370,6 +478,7 @@ fn dot_path_to_pointer(path: &str) -> String {
     format!("/{}", path.replace('.', "/"))
 }
 
+#[allow(clippy::too_many_lines)]
 fn validate_editor_presentation(
     manifest: &ComponentManifest,
     config_schema: &Value,
@@ -797,6 +906,8 @@ fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .invoke_handler(tauri::generate_handler![
+            catalog_files,
+            download_catalog_file,
             inspect_csv_file,
             inspect_distinct_values,
             component_editor_definition,
