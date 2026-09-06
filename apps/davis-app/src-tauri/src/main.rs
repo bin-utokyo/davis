@@ -467,6 +467,48 @@ fn normalize_editor_presentation(
         }
         return Ok(Value::Object(normalized));
     }
+    if let Some(order) = ui_schema.get("ui:order").and_then(Value::as_array) {
+        let inputs = manifest
+            .inputs
+            .iter()
+            .map(|input| {
+                (
+                    input.name.clone(),
+                    serde_json::json!({"title": input.name, "widget": "table-binding"}),
+                )
+            })
+            .collect::<serde_json::Map<_, _>>();
+        let sections = order
+            .iter()
+            .filter_map(Value::as_str)
+            .filter(|name| schema_contains_pointer(config_schema, &format!("/{name}")))
+            .map(|name| {
+                let mut section = serde_json::Map::from_iter([
+                    ("bind".to_owned(), Value::String(format!("/{name}"))),
+                    ("widget".to_owned(), Value::String("auto".to_owned())),
+                    (
+                        "title".to_owned(),
+                        config_schema["properties"][name]
+                            .get("title")
+                            .cloned()
+                            .unwrap_or_else(|| Value::String(name.to_owned())),
+                    ),
+                ]);
+                if let Some(description) = ui_schema[name].get("ui:description") {
+                    section.insert("description".to_owned(), description.clone());
+                }
+                Value::Object(section)
+            })
+            .collect::<Vec<_>>();
+        if !sections.is_empty() {
+            return Ok(serde_json::json!({
+                "version": "davis.ui/v1",
+                "component_name": manifest.name,
+                "inputs": inputs,
+                "sections": sections
+            }));
+        }
+    }
     if editor != "linear-utility" {
         return Ok(ui_schema);
     }
@@ -1222,6 +1264,16 @@ run:
         assert!(editors.iter().any(|item| item.manifest.id == "davis/mnl"));
         assert!(editors.iter().any(|item| item.manifest.id == "davis/nl"));
         assert!(editors.iter().any(|item| item.manifest.id == "davis/rl"));
+        let transform = editors
+            .iter()
+            .find(|item| item.manifest.id == "davis/csv-transform")
+            .expect("the legacy ui:order presentation should be adapted");
+        assert_eq!(transform.ui_schema["version"], "davis.ui/v1");
+        assert_eq!(
+            transform.ui_schema["inputs"]["table"]["widget"],
+            "table-binding"
+        );
+        assert_eq!(transform.ui_schema["sections"][0]["bind"], "/output");
     }
 
     #[test]
