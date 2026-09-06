@@ -274,6 +274,8 @@ DavisはManifestの`runtime.command`をcomponent directoryで起動し，`reques
 
 実programは，例えば`python -m accessibility --request /.../request.json`のように起動されます．`--request`の値からJSONを読み，`run_id`と`output_directory`を取り出します．入力fileや出力directoryをcomponent directoryからの相対pathだと仮定しないでください．
 
+`run_id`はDavisが生成します．Analysis Planの`run.label`が人間向けprefixになり，未指定ならPlanの`name`が使われます．実際のIDには実行日時と短い一意suffixも付くため，同じlabelで繰り返し実行しても既存結果を上書きしません．component実programは形式を解析せず，requestで渡された`run_id`をそのままresultへ記録してください．
+
 成功結果の最小例です．
 
 ```json

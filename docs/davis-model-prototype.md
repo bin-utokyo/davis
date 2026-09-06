@@ -48,7 +48,7 @@ davis component remove davis/mnl --version 0.2.0
 
 per-user install先はmacOSでは`~/Library/Application Support/Davis/components/`，Windowsではlocal application data，Linuxでは`$XDG_DATA_HOME/davis/components/`または`~/.local/share/davis/components/`です．開発・test時は`DAVIS_DATA_HOME`で変更できます．installは`.venv`，`__pycache__`，Git metadata等を除外し，component ID，version，schema，lockfile，symlink，重複を検証してから同一filesystem内でatomicに配置します．
 
-結果は既定で`davis-runs/<run-id>/`へ保存されます．`davis-runs/`は通常のフォルダとして確認でき，repositoryの`.gitignore`によってGitの追跡対象から除外されます．
+結果は既定で`davis-runs/<run-id>/`へ保存されます．`run-id`は`朝ピーク-nl__20260906-153012__a1b2c3d4`のように，意味のあるprefix，実行日時，一意suffixから構成されます．prefixはAnalysis Planの`run.label`，未指定なら`name`から生成されます．`run.label`はGUIの`Run name (folder prefix)`，またはYAMLから個々に設定できます．pathとして危険な記号は自動的に`-`へ正規化され，日時とsuffixは衝突回避と追跡のためDavisが付与します．`davis-runs/`は通常のフォルダとして確認でき，repositoryの`.gitignore`によってGitの追跡対象から除外されます．
 
 ```text
 <run-id>/
@@ -85,6 +85,8 @@ cargo run -p davis-app
 ```
 
 React画面自体を変更する開発者だけが，`apps/davis-app`でNode.js packageをinstallしてFrontendを再buildします．
+
+React画面を変更した場合は，`pnpm run build`の完了後にDesktopを再起動してください．`cargo run -p davis-app`はrepositoryに含まれるprebuilt frontendを使うため，起動したままでは新しい画面へ切り替わりません．
 
 desktop画面は次を提供します．
 

@@ -238,7 +238,7 @@ pub fn plan_run(
         .plan_path
         .parent()
         .unwrap_or_else(|| Path::new("."));
-    let run_id = new_run_id();
+    let run_id = new_run_id(validated.plan.run.label.as_deref(), &validated.plan.name);
     let run_directory = run_root.join(&run_id);
     let output_directory = run_directory.join("artifacts");
     let mut inputs = BTreeMap::new();
@@ -843,12 +843,44 @@ fn validate_component_config(
     }
 }
 
-fn new_run_id() -> String {
-    let millis = SystemTime::now()
+fn new_run_id(label: Option<&str>, plan_name: &str) -> String {
+    let nanos = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .unwrap_or_default()
         .as_nanos();
-    format!("run_{millis}_{}", std::process::id())
+    let prefix = run_prefix(
+        label
+            .filter(|value| !value.trim().is_empty())
+            .unwrap_or(plan_name),
+    );
+    let timestamp = jiff::Zoned::now().strftime("%Y%m%d-%H%M%S");
+    let uniqueness = blake3::hash(format!("{nanos}:{}", std::process::id()).as_bytes());
+    format!("{prefix}__{timestamp}__{}", &uniqueness.to_hex()[..8])
+}
+
+fn run_prefix(value: &str) -> String {
+    let mut result = String::new();
+    let mut separator = false;
+    for character in value.trim().chars() {
+        if character.is_alphanumeric() || matches!(character, '-' | '_') {
+            if separator && !result.is_empty() {
+                result.push('-');
+            }
+            result.push(character.to_ascii_lowercase());
+            separator = false;
+        } else {
+            separator = true;
+        }
+        if result.chars().count() >= 48 {
+            break;
+        }
+    }
+    let result = result.trim_matches('-').to_owned();
+    if result.is_empty() {
+        "run".to_owned()
+    } else {
+        result
+    }
 }
 
 fn hash_file(path: &Path) -> Result<blake3::Hash, RuntimeError> {
@@ -908,11 +940,22 @@ fn hash_component(directory: &Path) -> Result<blake3::Hash, RuntimeError> {
 
 #[cfg(test)]
 mod tests {
-    use std::fs;
+    use std::{fs, path::Path};
 
     use davis_model_api::InputSource;
 
-    use super::{plan_run, RuntimeError};
+    use super::{new_run_id, plan_run, run_prefix, RuntimeError};
+
+    #[test]
+    fn gives_runs_a_safe_human_readable_identity() {
+        assert_eq!(run_prefix(" 朝ピーク / NL 基準 "), "朝ピーク-nl-基準");
+        assert_eq!(run_prefix("../"), "run");
+
+        let run_id = new_run_id(Some("朝ピーク / NL 基準"), "ignored-plan");
+        assert!(run_id.starts_with("朝ピーク-nl-基準__"));
+        assert_eq!(Path::new(&run_id).components().count(), 1);
+        assert_eq!(run_id.split("__").count(), 3);
+    }
 
     #[test]
     fn resolves_and_verifies_a_prior_run_artifact() {
@@ -989,6 +1032,7 @@ config: {}
         .unwrap();
 
         let planned = plan_run(&repository, &plan_path, &run_root).unwrap();
+        assert!(planned.request.run_id.starts_with("chained__"));
         let input = planned.request.inputs.get("table").unwrap();
         assert!(matches!(input.source, InputSource::RunArtifact { .. }));
         assert_eq!(input.resolved.object_id, format!("blake3:{digest}"));

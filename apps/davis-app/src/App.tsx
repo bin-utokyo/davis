@@ -68,6 +68,7 @@ const defaultRoleLabels: Record<string, string> = {
 export default function App() {
   const [repository, setRepository] = useState("");
   const [planPath, setPlanPath] = useState("");
+  const [runLabel, setRunLabel] = useState("");
   const [editor, setEditor] = useState<ComponentEditor>();
   const [editorOptions, setEditorOptions] = useState<ComponentEditor[]>([]);
   const [validation, setValidation] = useState<Validation>();
@@ -286,7 +287,7 @@ export default function App() {
         ...preservedConfig, roles: configRoles, terms: configTerms,
         estimation: preservedConfig.estimation ?? { optimizer: "bfgs", max_iterations: 500, tolerance: 1e-8 },
       },
-      run: Object.keys(preservedRun).length ? preservedRun : { label: name, tags: ["gui", "mnl"] },
+      run: buildRunMetadata(["gui", "mnl"]),
     };
   }
 
@@ -305,8 +306,16 @@ export default function App() {
       api_version: "davis.analysis/v1alpha1", name,
       component: { id: editor.manifest.id, version: editor.manifest.version, operation: editor.manifest.operations.includes("estimate") ? "estimate" : editor.manifest.operations[0] },
       inputs, config: schemaConfig,
-      run: Object.keys(preservedRun).length ? preservedRun : { label: name, tags: ["gui", editor.manifest.id.replace("/", "-")] },
+      run: buildRunMetadata(["gui", editor.manifest.id.replace("/", "-")]),
     };
+  }
+
+  function buildRunMetadata(defaultTags: string[]) {
+    const metadata = { ...preservedRun };
+    delete metadata.label;
+    if (runLabel.trim()) metadata.label = runLabel.trim();
+    if (!Array.isArray(metadata.tags)) metadata.tags = defaultTags;
+    return metadata;
   }
 
   async function chooseSchemaInput(slot: string) {
@@ -349,7 +358,7 @@ export default function App() {
         return;
       }
       if (!isLinearEditor(loaded.editor)) {
-        setEditor(loaded.editor); setPlanPath(selected); setYamlPreview(loaded.yaml); setCodeMode(true);
+        setEditor(loaded.editor); setPlanPath(selected); setRunLabel(loaded.plan.run?.label ?? ""); setYamlPreview(loaded.yaml); setCodeMode(true);
         setSources([]); setCompleted(undefined); setArtifactPreviews({}); setValidation(undefined);
         return;
       }
@@ -360,7 +369,7 @@ export default function App() {
   async function hydrateSchemaPlan(loaded: EditablePlan, path: string) {
     const loadedInputs: Record<string, FormInput | undefined> = {};
     const issues: string[] = [];
-    setEditor(loaded.editor); setPlanName(loaded.plan.name);
+    setEditor(loaded.editor); setPlanName(loaded.plan.name); setRunLabel(loaded.plan.run?.label ?? "");
     setSchemaConfig(structuredClone(loaded.plan.config)); setPreservedRun(loaded.plan.run ?? {});
     setPreparation(loaded.editor.ui_schema["ui:inputPreparation"]);
     setPlanPath(path); setYamlPreview(loaded.yaml); setCodeMode(false);
@@ -444,7 +453,7 @@ export default function App() {
         alternatives: (term.alternatives ?? []).map(String).join(", "),
       };
     });
-    setEditor(loaded.editor); setPlanName(loaded.plan.name); setSources(loadedSources);
+    setEditor(loaded.editor); setPlanName(loaded.plan.name); setRunLabel(loaded.plan.run?.label ?? ""); setSources(loadedSources);
     setPreparation(input.processor
       ? { component: input.processor.id, version: input.processor.version }
       : loaded.editor.ui_schema["ui:inputPreparation"]);
@@ -471,7 +480,7 @@ export default function App() {
         if (!definition) throw new Error("Form editorに対応するcomponentが見つかりません．");
         setEditor(definition);
       }
-      setPlanPath(""); setPlanName(definition ? defaultPlanName(definition) : "analysis-plan"); setSources([]); setBaseSource(""); setJoins({});
+      setPlanPath(""); setPlanName(definition ? defaultPlanName(definition) : "analysis-plan"); setRunLabel(""); setSources([]); setBaseSource(""); setJoins({});
       if (definition) initializeEditor(definition); else setRoles({});
       setTerms([]); setNextTermId(1); setYamlPreview(""); setCodeMode(false); setAlternativeValues(undefined);
       setPreservedConfig({}); setPreservedRun({});
@@ -482,7 +491,7 @@ export default function App() {
   function selectEditor(identity: string) {
     const definition = editorOptions.find((item) => `${item.manifest.id}@${item.manifest.version}` === identity);
     if (!definition) return;
-    setEditor(definition); initializeEditor(definition); setPlanName(defaultPlanName(definition)); setPreparation(definition.ui_schema["ui:inputPreparation"]);
+    setEditor(definition); initializeEditor(definition); setPlanName(defaultPlanName(definition)); setRunLabel(""); setPreparation(definition.ui_schema["ui:inputPreparation"]);
     setTerms([]); setYamlPreview(""); setPlanPath(""); setValidation(undefined); setCompleted(undefined); setArtifactPreviews({});
   }
   async function openRunDirectory() {
@@ -531,6 +540,7 @@ export default function App() {
       <div className="heading-with-actions"><SectionHeading number="2" title="Analysis plan editor" description="新規作成と既存Planの再編集を同じ画面で行います．" />
         <div className="top-actions"><button className="secondary" onClick={newPlan}>新規Plan</button><button className="secondary" disabled={!repository} onClick={openPlanForEditing}>既存Planを開く</button></div></div>
       <div className="field-grid compact-grid"><label><span>Plan name</span><input value={planName} onChange={(event) => setPlanName(event.target.value)} /></label>
+        <label><span>Run name (folder prefix)</span><input value={runLabel} disabled={codeMode} placeholder="空欄ならPlan name" onChange={(event) => setRunLabel(event.target.value)} /></label>
         <label><span>ComponentManifest</span><select value={editor ? `${editor.manifest.id}@${editor.manifest.version}` : ""} disabled={!editorOptions.length || codeMode} onChange={(event) => selectEditor(event.target.value)}>
           {!editor && <option value="">Workspaceを選択してください</option>}{editorOptions.map((item) => <option key={`${item.manifest.id}@${item.manifest.version}`} value={`${item.manifest.id}@${item.manifest.version}`}>{item.manifest.name} ({item.manifest.id} {item.manifest.version})</option>)}</select></label></div>
 

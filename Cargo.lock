@@ -940,6 +940,7 @@ dependencies = [
  "davis-model-api",
  "davis-model-runner",
  "encoding_rs",
+ "jiff",
  "jsonschema",
  "serde",
  "serde_json",
