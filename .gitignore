@@ -2,6 +2,8 @@
 .AppleDouble
 .LSOverride
 Icon?
+!apps/davis-app/src-tauri/icons/
+!apps/davis-app/src-tauri/icons/icon.ico
 
 # Windows
 Thumbs.db
