@@ -596,6 +596,7 @@ export default function App() {
         {planPath && <div className="plan-path">{planPath}</div>}
         {yamlPreview && <textarea className="yaml-preview" readOnly value={yamlPreview} aria-label="生成されたmodel.yaml" />}
       </>}
+      </>}
       {!codeMode && editor && isSchemaEditor(editor) && <>
         <SchemaFormEditor definition={editor} inputs={schemaInputs} config={schemaConfig} onChooseInput={chooseSchemaInput} onConfigChange={setSchemaConfig} />
         <div className="actions editor-actions"><button className="secondary" disabled={!schemaEditorReady || busy} onClick={previewPlan}>YAMLを確認</button>
@@ -605,7 +606,6 @@ export default function App() {
         {validation && <div className="success">{validation.component.id} {validation.component.version}として保存・検証しました．</div>}
         {planPath && <div className="plan-path">{planPath}</div>}
         {yamlPreview && <textarea className="yaml-preview" readOnly value={yamlPreview} aria-label="生成されたmodel.yaml" />}
-      </>}
       </>}
     </section>
 
