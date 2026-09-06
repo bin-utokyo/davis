@@ -2,10 +2,10 @@
   "schema_version": 1,
   "latest": "0.5.0",
   "minimum_supported": "0.5.0",
-  "released_at": "2026-09-05",
+  "released_at": "2026-09-06",
   "release_url": "https://github.com/bin-utokyo/davis/releases/tag/v0.5.0",
   "message": {
-    "ja": "CLIを起点とするDesktopの導入・起動，cwdに依存しないsoftware管理領域，整合性検証付きsoftware registryを追加しました．",
-    "en": "Davis adds CLI-managed Desktop installation and launch, a working-directory-independent software store, and an integrity-checked software registry."
+    "ja": "clone非依存のDesktop，local・Catalogデータを用いたManifest駆動のモデル実行，MNL・NL・RL・CSV変換component，検証済み成果物と作成支援を追加しました．",
+    "en": "Davis adds a clone-independent desktop, manifest-driven model runs with local or catalog data, MNL, NL, RL, and CSV transform components, verified artifacts, and component authoring support."
   }
 }

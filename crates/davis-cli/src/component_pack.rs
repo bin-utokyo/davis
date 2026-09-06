@@ -247,7 +247,10 @@ fn write_deterministic_bundle(
     destination: &Path,
 ) -> Result<(), PackError> {
     let mut files = Vec::new();
-    for entry in WalkDir::new(package_root) {
+    for entry in WalkDir::new(package_root)
+        .into_iter()
+        .filter_entry(|entry| !is_ignored_package_entry(entry, package_root))
+    {
         let entry = entry.map_err(|source| PackError::Walk {
             path: package_root.to_owned(),
             source,
@@ -330,6 +333,17 @@ fn write_deterministic_bundle(
             source: error.error,
         })?;
     Ok(())
+}
+
+fn is_ignored_package_entry(entry: &walkdir::DirEntry, package_root: &Path) -> bool {
+    if entry.path() == package_root {
+        return false;
+    }
+    let name = entry.file_name().to_string_lossy();
+    matches!(
+        name.as_ref(),
+        ".git" | ".venv" | "__pycache__" | ".DS_Store"
+    ) || (entry.file_type().is_file() && name.ends_with(".pyc"))
 }
 
 fn write_json_atomic(path: &Path, value: &impl Serialize) -> Result<(), PackError> {
@@ -462,7 +476,7 @@ fn portable_mode(path: &Path) -> u32 {
 
 #[cfg(test)]
 mod tests {
-    use std::fs;
+    use std::fs::{self, File};
     use std::io::Write;
 
     use super::{pack, registry, PackError};
@@ -492,6 +506,11 @@ outputs: {}
         )
         .unwrap();
         fs::write(source.join("schemas/config.json"), "{}").unwrap();
+        fs::create_dir_all(source.join(".venv")).unwrap();
+        fs::create_dir_all(source.join("src/__pycache__")).unwrap();
+        fs::write(source.join(".venv/secret"), "not portable").unwrap();
+        fs::write(source.join("src/__pycache__/module.pyc"), "bytecode").unwrap();
+        fs::write(source.join(".DS_Store"), "metadata").unwrap();
         let first = temporary.path().join("first");
         let second = temporary.path().join("second");
         let packed_first = pack(&source, &first, None, None).unwrap();
@@ -507,6 +526,21 @@ outputs: {}
         assert_eq!(generated.schema_version, 1);
         assert_eq!(generated.components[0].name, "native");
         assert!(registry_path.is_file());
+        let decoder = flate2::read::GzDecoder::new(File::open(&packed_first.bundle_path).unwrap());
+        let mut archive = tar::Archive::new(decoder);
+        let paths = archive
+            .entries()
+            .unwrap()
+            .map(|entry| entry.unwrap().path().unwrap().into_owned())
+            .collect::<Vec<_>>();
+        assert!(!paths.iter().any(|path| {
+            path.components().any(|part| {
+                matches!(
+                    part.as_os_str().to_str(),
+                    Some(".venv" | "__pycache__" | ".DS_Store")
+                )
+            })
+        }));
 
         fs::OpenOptions::new()
             .append(true)

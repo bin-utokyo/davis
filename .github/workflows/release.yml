@@ -88,9 +88,13 @@ jobs:
             components/davis-csv-transform \
             --name csv-transform \
             --out dist
+          target/release/davis component pack components/davis-nl --name nl --out dist
+          target/release/davis component pack components/davis-rl --name rl --out dist
           target/release/davis component registry \
             dist/davis-mnl-0.3.0.entry.json \
             dist/davis-csv-transform-0.4.0.entry.json \
+            dist/davis-nl-0.1.0.entry.json \
+            dist/davis-rl-0.1.0.entry.json \
             --out dist/component-registry.json
       - name: Verify integrated multi-source model execution through the registry
         shell: bash
@@ -110,6 +114,10 @@ jobs:
             --registry http://127.0.0.1:8765/component-registry.json
           target/release/davis install component csv-transform \
             --registry http://127.0.0.1:8765/component-registry.json
+          target/release/davis install component nl \
+            --registry http://127.0.0.1:8765/component-registry.json
+          target/release/davis install component rl \
+            --registry http://127.0.0.1:8765/component-registry.json
           mkdir -p "$test_root/project"
           cp components/davis-mnl/examples/multi-source/choices.csv \
             "$test_root/project/choices.csv"
@@ -125,12 +133,26 @@ jobs:
             "$test_root/model-run.json" >/dev/null
           test -f "$test_root/project/davis-runs"/*/artifacts/parameters.csv
           test -f "$test_root/project/davis-runs"/*/artifacts/prepared/input-0/transformed.parquet
+          mkdir -p "$test_root/nl-project" "$test_root/rl-project"
+          cp components/davis-nl/examples/minimal/{choice.csv,model.yaml} "$test_root/nl-project/"
+          cp components/davis-rl/examples/minimal/{network.csv,observations.csv,model.yaml} \
+            "$test_root/rl-project/"
+          target/release/davis --repository "$test_root/nl-project" model run \
+            "$test_root/nl-project/model.yaml" \
+            --run-root "$test_root/nl-project/davis-runs"
+          target/release/davis --repository "$test_root/rl-project" model run \
+            "$test_root/rl-project/model.yaml" \
+            --run-root "$test_root/rl-project/davis-runs"
+          test -f "$test_root/nl-project/davis-runs"/*/artifacts/parameters.csv
+          test -f "$test_root/rl-project/davis-runs"/*/artifacts/parameters.csv
       - uses: actions/upload-artifact@v4
         with:
           name: official-components
           path: |
             dist/davis-mnl-0.3.0.tar.gz
             dist/davis-csv-transform-0.4.0.tar.gz
+            dist/davis-nl-0.1.0.tar.gz
+            dist/davis-rl-0.1.0.tar.gz
             dist/component-registry.json
           if-no-files-found: error
 
