@@ -4,7 +4,7 @@ id: davis/mnl
 name: Davis Multinomial Logit
 version: 0.2.0
 kind: model
-requires_davis: ">=0.3.5"
+requires_davis: ">=0.5.0"
 runtime:
   executor: process
   command:
@@ -134,29 +134,35 @@ configuration:
             exclusiveMinimum: 0
 presentation:
   ui:
-    ui:editor: linear-utility
-    ui:inputPreparation:
-      component: davis/csv-transform
-      version: 0.4.0
-    ui:order:
-    - roles
-    - terms
-    - parameters
-    - estimation
-    roles:
-      ui:widget: role-columns
-      ui:description: Map semantic roles to columns in the long-format choice table.
-      ui:labels:
+    version: davis.ui/v1
+    inputs:
+      choice_data:
+        title: 選択データ
+        description: 1行が1ケース内の1選択肢を表すlong形式の表です．複数CSVを結合できます．
+        widget: table-binding
+        preparation: {component: davis/csv-transform, version: 0.4.0}
+    sections:
+    - bind: /roles
+      widget: column-map
+      input: choice_data
+      title: 役割列
+      labels:
         case_id: ケースID
         alternative_id: 選択肢ID
         chosen: 選択結果
         available: 利用可能性 (任意)
         weight: 重み (任意)
-    terms:
-      ui:widget: linear-utility-terms
-      ui:description: Define the variables contributing to each alternative utility.
-      ui:alternativesFromRole: alternative_id
-    ui:results:
+    - bind: /terms
+      widget: utility-terms
+      input: choice_data
+      title: 効用term
+      allow_constant: true
+      alternatives_from: /roles/alternative_id
+    - {bind: /parameters, widget: parameter-settings, parameters_from: /terms, title: Parameter設定}
+    - {bind: /estimation, widget: auto, title: 推定設定}
+    defaults:
+      estimation: {optimizer: bfgs, max_iterations: 500, tolerance: 1.0e-8}
+    results:
     - artifact: metrics
       title: 推定指標
       widget: key-value

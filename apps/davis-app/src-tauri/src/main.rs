@@ -89,12 +89,7 @@ fn component_editor_definitions(
     let editors = list_components(&repository)
         .into_iter()
         .filter_map(|(path, manifest)| editor_response(&path, manifest).ok())
-        .filter(|editor| {
-            matches!(
-                editor.ui_schema["ui:editor"].as_str(),
-                Some("linear-utility" | "schema-form")
-            )
-        })
+        .filter(|editor| editor.ui_schema["version"] == "davis.ui/v1")
         .collect();
     Ok(editors)
 }
@@ -146,7 +141,12 @@ fn collect_local_sources(
         }
         InputSource::TableBinding { binding } => {
             for (nested_name, nested) in &binding.sources {
-                collect_local_sources(nested, nested_name, plan_directory, resolved);
+                collect_local_sources(
+                    nested,
+                    &format!("{name}/{nested_name}"),
+                    plan_directory,
+                    resolved,
+                );
             }
         }
         InputSource::Catalog { .. } | InputSource::RunArtifact { .. } => {}
@@ -178,7 +178,10 @@ fn editor_response(
             || Value::Object(serde_json::Map::new()),
             |document| document.value,
         );
-    validate_editor_presentation(&manifest, &config_schema, &ui_schema)?;
+    let ui_schema = normalize_editor_presentation(&manifest, &config_schema, ui_schema)?;
+    if ui_schema["version"] == "davis.ui/v1" {
+        validate_editor_presentation(&manifest, &config_schema, &ui_schema)?;
+    }
     Ok(ComponentEditorResponse {
         manifest,
         config_schema,
@@ -186,113 +189,190 @@ fn editor_response(
     })
 }
 
+fn normalize_editor_presentation(
+    manifest: &ComponentManifest,
+    config_schema: &Value,
+    ui_schema: Value,
+) -> Result<Value, String> {
+    if ui_schema["version"] == "davis.ui/v1" {
+        return Ok(ui_schema);
+    }
+    let editor = ui_schema["ui:editor"].as_str().unwrap_or("");
+    if editor == "schema-form" {
+        let mut normalized = ui_schema["ui:form"]
+            .as_object()
+            .cloned()
+            .ok_or("legacy schema-form requires ui:form")?;
+        normalized.insert(
+            "version".to_owned(),
+            Value::String("davis.ui/v1".to_owned()),
+        );
+        if let Some(results) = ui_schema.get("ui:results") {
+            normalized.insert("results".to_owned(), results.clone());
+        }
+        if let Some(sections) = normalized.get_mut("sections").and_then(Value::as_array_mut) {
+            for section in sections {
+                if let Some(object) = section.as_object_mut() {
+                    if let Some(path) = object
+                        .remove("path")
+                        .and_then(|value| value.as_str().map(str::to_owned))
+                    {
+                        object.insert("bind".to_owned(), Value::String(dot_path_to_pointer(&path)));
+                    }
+                    for key in ["alternatives_from", "parameters_from"] {
+                        if let Some(path) =
+                            object.get(key).and_then(Value::as_str).map(str::to_owned)
+                        {
+                            object
+                                .insert(key.to_owned(), Value::String(dot_path_to_pointer(&path)));
+                        }
+                    }
+                }
+            }
+        }
+        return Ok(Value::Object(normalized));
+    }
+    if editor != "linear-utility" {
+        return Ok(ui_schema);
+    }
+
+    let input = manifest
+        .inputs
+        .first()
+        .ok_or("legacy linear-utility editor requires an input")?;
+    let labels = ui_schema["roles"]["ui:labels"].clone();
+    let mut sections = Vec::new();
+    if schema_contains_pointer(config_schema, "/roles") {
+        sections.push(serde_json::json!({"bind": "/roles", "widget": "column-map", "input": input.name, "title": "役割列", "labels": labels}));
+    }
+    if schema_contains_pointer(config_schema, "/terms") {
+        sections.push(serde_json::json!({"bind": "/terms", "widget": "utility-terms", "input": input.name, "title": "効用term", "allow_constant": true, "alternatives_from": "/roles/alternative_id"}));
+    }
+    for path in ["parameters", "estimation"] {
+        let pointer = format!("/{path}");
+        if schema_contains_pointer(config_schema, &pointer) {
+            sections.push(serde_json::json!({"bind": pointer, "widget": "auto", "title": path}));
+        }
+    }
+    Ok(serde_json::json!({
+        "version": "davis.ui/v1",
+        "inputs": {
+            input.name.clone(): {
+                "title": "入力データ",
+                "widget": "table-binding",
+                "preparation": ui_schema.get("ui:inputPreparation").cloned().unwrap_or(Value::Null)
+            }
+        },
+        "sections": sections,
+        "results": ui_schema.get("ui:results").cloned().unwrap_or_else(|| Value::Array(Vec::new()))
+    }))
+}
+
+fn dot_path_to_pointer(path: &str) -> String {
+    format!("/{}", path.replace('.', "/"))
+}
+
 fn validate_editor_presentation(
     manifest: &ComponentManifest,
     config_schema: &Value,
     ui_schema: &Value,
 ) -> Result<(), String> {
-    if ui_schema["ui:editor"] != "schema-form" {
-        return Ok(());
+    if ui_schema["version"] != "davis.ui/v1" {
+        return Err("presentation.ui.version must be davis.ui/v1".to_owned());
     }
-    let form = ui_schema["ui:form"]
+    let form = ui_schema
         .as_object()
-        .ok_or("schema-form requires ui:form")?;
+        .ok_or("presentation.ui must be an object")?;
     let inputs = form
         .get("inputs")
         .and_then(Value::as_object)
-        .ok_or("schema-form requires ui:form.inputs")?;
+        .ok_or("davis.ui/v1 requires inputs")?;
     let declared_inputs: std::collections::BTreeSet<_> = manifest
         .inputs
         .iter()
         .map(|input| input.name.as_str())
         .collect();
     if inputs.values().any(|metadata| !metadata.is_object()) {
-        return Err("every ui:form input must be an object".to_owned());
+        return Err("every UI input must be an object".to_owned());
     }
     if inputs
         .keys()
         .any(|name| !declared_inputs.contains(name.as_str()))
     {
-        return Err("ui:form.inputs contains a slot not declared by the component".to_owned());
+        return Err("UI inputs contains a slot not declared by the component".to_owned());
     }
     if manifest
         .inputs
         .iter()
         .any(|input| input.required && !inputs.contains_key(&input.name))
     {
-        return Err("ui:form.inputs must contain every required component input".to_owned());
+        return Err("UI inputs must contain every required component input".to_owned());
     }
     let sections = form
         .get("sections")
         .and_then(Value::as_array)
         .filter(|sections| !sections.is_empty())
-        .ok_or("schema-form requires at least one ui:form.sections item")?;
+        .ok_or("davis.ui/v1 requires at least one section")?;
     let mut section_paths = std::collections::BTreeSet::new();
     for section in sections {
         let section = section
             .as_object()
-            .ok_or("every ui:form section must be an object")?;
-        let path = section.get("path").and_then(Value::as_str).unwrap_or("");
+            .ok_or("every UI section must be an object")?;
+        let path = section.get("bind").and_then(Value::as_str).unwrap_or("");
         if path.is_empty() {
-            return Err("every ui:form section requires path".to_owned());
+            return Err("every UI section requires bind".to_owned());
         }
         if !section_paths.insert(path) {
-            return Err(format!("duplicate schema-form section path `{path}`"));
+            return Err(format!("duplicate UI section bind `{path}`"));
         }
-        if !schema_contains_path(config_schema, path) {
+        if !schema_contains_pointer(config_schema, path) {
             return Err(format!(
-                "schema-form section `{path}` does not exist in configuration.schema"
+                "UI section `{path}` does not exist in configuration.schema"
             ));
         }
-        let widget = section.get("widget").and_then(Value::as_str).unwrap_or("");
-        if !matches!(
-            widget,
-            "column-map" | "utility-terms" | "nests" | "parameter-settings" | "object"
-        ) {
-            return Err(format!(
-                "unsupported schema-form widget `{widget}` at `{path}`"
-            ));
-        }
+        let widget = section
+            .get("widget")
+            .and_then(Value::as_str)
+            .unwrap_or("auto");
         if let Some(input) = section.get("input").and_then(Value::as_str) {
             if !inputs.contains_key(input) {
                 return Err(format!(
-                    "schema-form section `{path}` refers to input `{input}` missing from ui:form.inputs"
+                    "UI section `{path}` refers to input `{input}` missing from inputs"
                 ));
             }
         } else if matches!(widget, "column-map" | "utility-terms") {
-            return Err(format!(
-                "schema-form widget `{widget}` at `{path}` requires input"
-            ));
+            return Err(format!("UI widget `{widget}` at `{path}` requires input"));
         }
         if let Some(reference) = section.get("alternatives_from").and_then(Value::as_str) {
-            if !schema_contains_path(config_schema, reference) {
+            if !schema_contains_pointer(config_schema, reference) {
                 return Err(format!(
-                    "schema-form section `{path}` has invalid alternatives_from `{reference}`"
+                    "UI section `{path}` has invalid alternatives_from `{reference}`"
                 ));
             }
         }
         if let Some(reference) = section.get("parameters_from").and_then(Value::as_str) {
-            if !schema_contains_path(config_schema, reference) {
+            if !schema_contains_pointer(config_schema, reference) {
                 return Err(format!(
-                    "schema-form section `{path}` has invalid parameters_from `{reference}`"
+                    "UI section `{path}` has invalid parameters_from `{reference}`"
                 ));
             }
         } else if widget == "parameter-settings" {
             return Err(format!(
-                "schema-form widget `parameter-settings` at `{path}` requires parameters_from"
+                "UI widget `parameter-settings` at `{path}` requires parameters_from"
             ));
         }
         if widget == "nests" && section.get("alternatives_from").is_none() {
             return Err(format!(
-                "schema-form widget `nests` at `{path}` requires alternatives_from"
+                "UI widget `nests` at `{path}` requires alternatives_from"
             ));
         }
     }
     Ok(())
 }
 
-fn schema_contains_path(schema: &Value, path: &str) -> bool {
-    path.split('.')
+fn schema_contains_pointer(schema: &Value, path: &str) -> bool {
+    path.trim_start_matches('/')
+        .split('/')
         .try_fold(schema, |current, segment| {
             current.get("properties")?.get(segment)
         })
@@ -303,6 +383,18 @@ fn schema_contains_path(schema: &Value, path: &str) -> bool {
 #[allow(clippy::needless_pass_by_value)]
 fn render_analysis_plan(plan: Value) -> Result<String, String> {
     render_plan(plan)
+}
+
+#[tauri::command]
+#[allow(clippy::needless_pass_by_value)]
+fn render_yaml_value(value: Value) -> Result<String, String> {
+    serde_yaml::to_string(&value).map_err(|error| error.to_string())
+}
+
+#[tauri::command]
+#[allow(clippy::needless_pass_by_value)]
+fn parse_yaml_value(yaml: String) -> Result<Value, String> {
+    serde_yaml::from_str(&yaml).map_err(|error| error.to_string())
 }
 
 #[tauri::command]
@@ -541,6 +633,8 @@ fn main() {
             component_editor_definitions,
             load_analysis_plan_for_editing,
             render_analysis_plan,
+            render_yaml_value,
+            parse_yaml_value,
             save_analysis_plan,
             save_analysis_plan_yaml,
             validate_analysis_plan,
@@ -560,7 +654,8 @@ mod tests {
 
     use super::{
         component_editor_definitions, editor_definition, editor_response,
-        load_analysis_plan_for_editing, preview_csv, render_plan, save_analysis_plan_yaml,
+        load_analysis_plan_for_editing, normalize_editor_presentation, parse_yaml_value,
+        preview_csv, render_plan, render_yaml_value, save_analysis_plan_yaml,
         validate_editor_presentation, ComponentManifest, Value,
     };
 
@@ -625,7 +720,11 @@ mod tests {
     fn loads_manifest_driven_editor_metadata() {
         let editor = editor_definition(&repository(), "davis/mnl", "0.2.0").unwrap();
         assert_eq!(editor.manifest.id, "davis/mnl");
-        assert_eq!(editor.ui_schema["ui:editor"], "linear-utility");
+        assert_eq!(editor.ui_schema["version"], "davis.ui/v1");
+        assert_eq!(
+            editor.ui_schema["inputs"]["choice_data"]["widget"],
+            "table-binding"
+        );
         assert!(editor.config_schema["properties"]["roles"]["required"].is_array());
         let editors = component_editor_definitions(repository()).unwrap();
         assert!(editors.iter().any(|item| item.manifest.id == "davis/mnl"));
@@ -634,26 +733,56 @@ mod tests {
     }
 
     #[test]
+    fn adapts_the_legacy_linear_editor_without_model_specific_logic() {
+        let manifest_path = repository().join("components/davis-mnl/component.yaml");
+        let manifest = ComponentManifest::read(&manifest_path).unwrap();
+        let config = manifest
+            .resolve_configuration(&manifest_path)
+            .unwrap()
+            .value;
+        let legacy = json!({
+            "ui:editor": "linear-utility",
+            "ui:inputPreparation": {"component": "davis/csv-transform", "version": "0.4.0"},
+            "roles": {"ui:labels": {"case_id": "ケースID"}},
+            "ui:results": []
+        });
+
+        let normalized = normalize_editor_presentation(&manifest, &config, legacy).unwrap();
+
+        assert_eq!(normalized["version"], "davis.ui/v1");
+        assert_eq!(
+            normalized["inputs"]["choice_data"]["widget"],
+            "table-binding"
+        );
+        assert!(normalized["sections"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|section| section["widget"] == "utility-terms"));
+    }
+
+    #[test]
+    fn round_trips_a_section_yaml_value() {
+        let value = json!({"initial": -1.0, "fixed": false});
+        let yaml = render_yaml_value(value.clone()).unwrap();
+        assert_eq!(parse_yaml_value(yaml).unwrap(), value);
+    }
+
+    #[test]
     fn loads_schema_forms_for_nested_and_recursive_logit() {
         let repository = repository();
         let nested = editor_definition(&repository, "davis/nl", "0.1.0").unwrap();
-        assert_eq!(nested.ui_schema["ui:editor"], "schema-form");
-        assert!(nested.ui_schema["ui:form"]["sections"]
+        assert_eq!(nested.ui_schema["version"], "davis.ui/v1");
+        assert!(nested.ui_schema["sections"]
             .as_array()
             .unwrap()
             .iter()
             .any(|section| section["widget"] == "nests"));
 
         let recursive = editor_definition(&repository, "davis/rl", "0.1.0").unwrap();
-        assert_eq!(recursive.ui_schema["ui:editor"], "schema-form");
-        assert_eq!(
-            recursive.ui_schema["ui:form"]["inputs"]
-                .as_object()
-                .unwrap()
-                .len(),
-            2
-        );
-        assert!(recursive.ui_schema["ui:form"]["sections"]
+        assert_eq!(recursive.ui_schema["version"], "davis.ui/v1");
+        assert_eq!(recursive.ui_schema["inputs"].as_object().unwrap().len(), 2);
+        assert!(recursive.ui_schema["sections"]
             .as_array()
             .unwrap()
             .iter()
@@ -671,7 +800,7 @@ mod tests {
     }
 
     #[test]
-    fn rejects_an_unknown_schema_form_widget() {
+    fn preserves_an_unknown_widget_for_section_fallback() {
         let manifest_path = repository().join("components/davis-nl/component.yaml");
         let manifest = ComponentManifest::read(&manifest_path).unwrap();
         let mut ui = manifest
@@ -679,15 +808,13 @@ mod tests {
             .unwrap()
             .unwrap()
             .value;
-        ui["ui:form"]["sections"][0]["widget"] = Value::String("mystery".to_owned());
+        ui["sections"][0]["widget"] = Value::String("mystery".to_owned());
 
         let config = manifest
             .resolve_configuration(&manifest_path)
             .unwrap()
             .value;
-        let error = validate_editor_presentation(&manifest, &config, &ui).unwrap_err();
-
-        assert!(error.contains("unsupported schema-form widget"));
+        validate_editor_presentation(&manifest, &config, &ui).unwrap();
     }
 
     #[test]
@@ -704,7 +831,9 @@ runtime:
   kind: native
   command: [example]
 operations: [estimate]
-inputs: []
+inputs:
+  - name: table
+    media_types: [text/csv]
 configuration:
   schema:
     type: object
@@ -712,7 +841,12 @@ configuration:
       scale: {type: number}
 presentation:
   ui:
-    ui:editor: generic
+    ui:editor: schema-form
+    ui:form:
+      inputs:
+        table: {title: Table}
+      sections:
+        - {path: scale, widget: object}
 outputs: {}
 ",
         )
@@ -725,7 +859,8 @@ outputs: {}
             editor.config_schema["properties"]["scale"]["type"],
             "number"
         );
-        assert_eq!(editor.ui_schema["ui:editor"], "generic");
+        assert_eq!(editor.ui_schema["version"], "davis.ui/v1");
+        assert_eq!(editor.ui_schema["sections"][0]["bind"], "/scale");
     }
 
     #[test]
@@ -734,7 +869,7 @@ outputs: {}
         let plan = repository.join("components/davis-mnl/examples/multi-source/model.yaml");
         let loaded = load_analysis_plan_for_editing(repository, plan).unwrap();
         assert!(loaded.yaml.contains("multi-source-mode-choice"));
-        let path = &loaded.resolved_sources["choices"];
+        let path = &loaded.resolved_sources["choice_data/choices"];
         assert!(path.is_absolute());
         assert!(path.is_file());
         let input = &loaded.plan.inputs["choice_data"];
@@ -745,6 +880,46 @@ outputs: {}
             panic!("expected local source");
         };
         assert!(path.is_relative());
+    }
+
+    #[test]
+    fn namespaces_sources_of_multiple_table_binding_inputs() {
+        let temporary = tempfile::tempdir().unwrap();
+        let network = repository().join("components/davis-rl/examples/minimal/network.csv");
+        let observations =
+            repository().join("components/davis-rl/examples/minimal/observations.csv");
+        let plan = temporary.path().join("model.yaml");
+        std::fs::write(
+            &plan,
+            format!(
+                r"api_version: davis.analysis/v1alpha1
+name: namespaced-bindings
+component: {{id: davis/rl, version: 0.1.0, operation: estimate}}
+inputs:
+  network:
+    kind: table_binding
+    processor: {{id: davis/csv-transform, version: 0.4.0}}
+    sources: {{data: {{kind: local, path: {}}}}}
+    base: data
+    columns: {{link_id: {{source: data, column: link_id}}}}
+  observations:
+    kind: table_binding
+    processor: {{id: davis/csv-transform, version: 0.4.0}}
+    sources: {{data: {{kind: local, path: {}}}}}
+    base: data
+    columns: {{trip_id: {{source: data, column: trip_id}}}}
+config: {{}}
+",
+                network.display(),
+                observations.display()
+            ),
+        )
+        .unwrap();
+
+        let loaded = load_analysis_plan_for_editing(repository(), plan).unwrap();
+
+        assert_eq!(loaded.resolved_sources["network/data"], network);
+        assert_eq!(loaded.resolved_sources["observations/data"], observations);
     }
 
     #[test]

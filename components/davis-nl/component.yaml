@@ -91,15 +91,16 @@ configuration:
           tolerance: {type: number, exclusiveMinimum: 0}
 presentation:
   ui:
-    ui:editor: schema-form
+    version: davis.ui/v1
     ui:description: Define linear utility terms and a partition of alternatives into nests.
-    ui:form:
-      inputs:
-        choice_data:
-          title: 選択データ
-          description: 1行が1ケース内の1選択肢を表すlong形式の表です．
-      sections:
-      - path: roles
+    inputs:
+      choice_data:
+        title: 選択データ
+        description: 1行が1ケース内の1選択肢を表すlong形式の表です．複数CSVを結合できます．
+        widget: table-binding
+        preparation: {component: davis/csv-transform, version: 0.4.0}
+    sections:
+      - bind: /roles
         widget: column-map
         input: choice_data
         title: 役割列
@@ -108,22 +109,22 @@ presentation:
           alternative_id: 選択肢ID
           chosen: 選択結果
           available: 利用可能性 (任意)
-      - path: terms
+      - bind: /terms
         widget: utility-terms
         input: choice_data
         title: 効用term
         allow_constant: true
-        alternatives_from: roles.alternative_id
-      - path: nests
+        alternatives_from: /roles/alternative_id
+      - bind: /nests
         widget: nests
         title: Nest構造
-        alternatives_from: roles.alternative_id
-      - path: estimation
-        widget: object
+        alternatives_from: /roles/alternative_id
+      - bind: /estimation
+        widget: auto
         title: 推定設定
-      defaults:
-        estimation: {max_iterations: 500, tolerance: 1.0e-8}
-    ui:results:
+    defaults:
+      estimation: {max_iterations: 500, tolerance: 1.0e-8}
+    results:
     - {artifact: metrics, title: 推定指標, widget: key-value}
     - {artifact: parameters, title: 推定係数・非類似度, widget: table}
     - {artifact: predictions, title: 予測確率, widget: table}

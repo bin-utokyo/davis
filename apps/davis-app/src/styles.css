@@ -69,10 +69,18 @@ label > span { color: #5f7067; font-size: 12px; font-weight: 700; }
 .manifest-input .profile-summary { padding: 8px 0; }
 .manifest-input button { align-self: flex-start; }
 .compact-empty { margin: 0; padding: 10px; }
+.binding-editor { border: 1px solid #dce2db; border-radius: 12px; margin-top: 14px; padding: 15px; }
+.binding-heading { align-items: flex-start; display: flex; gap: 16px; justify-content: space-between; }
+.binding-heading > div { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.binding-heading code { color: #637269; font-size: 11px; }
+.binding-heading p { color: #718078; font-size: 12px; margin: 4px 0 0; }
+.binding-source { align-items: center; border-top: 1px solid #e6e9e4; display: grid; gap: 10px; grid-template-columns: minmax(180px, 1fr) auto auto; margin-top: 12px; padding-top: 12px; }
+.binding-source > div:first-child { display: flex; flex-direction: column; min-width: 0; }
+.binding-source small { color: #718078; overflow-wrap: anywhere; }
 .manifest-section { border-top: 1px solid #e5e9e3; margin-top: 24px; }
 .manifest-section .subsection-heading { border-top: 0; margin-top: 0; }
 .nest-row { align-items: center; display: grid; gap: 8px; grid-template-columns: minmax(120px, .7fr) minmax(260px, 1.5fr) 90px 90px auto; margin-top: 10px; }
-.parameter-row { align-items: end; background: #f4f6f1; border-radius: 12px; display: grid; gap: 10px; grid-template-columns: minmax(130px, 1fr) repeat(3, minmax(100px, .7fr)); margin-top: 10px; padding: 12px; }
+.parameter-row { align-items: end; background: #f4f6f1; border-radius: 12px; display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); margin-top: 10px; padding: 12px; }
 .parameter-row label { display: flex; flex-direction: column; gap: 6px; }
 .parameter-row label span { color: #68776f; font-size: 11px; }
 .alternative-picker { height: 46px; min-width: 0; position: relative; }
@@ -84,6 +92,11 @@ label > span { color: #5f7067; font-size: 12px; font-weight: 700; }
 .alternative-menu { background: white; border: 1px solid #ccd3cc; border-radius: 10px; box-shadow: 0 12px 28px rgba(34, 56, 44, .16); display: flex; flex-wrap: wrap; gap: 5px; left: 0; margin-top: 5px; max-height: 180px; overflow: auto; padding: 8px; position: absolute; right: 0; top: 46px; z-index: 20; }
 .alternative-menu button.selected { background: #285c46; color: white; }
 .hint { color: #718078; font-size: 12px; margin: 10px 0 0; }
+.section-fallback { background: #f4f6f1; border-radius: 12px; padding: 14px; }
+.section-fallback p { color: #65736c; font-size: 12px; margin: 0 0 10px; }
+.section-fallback textarea { display: block; font-family: ui-monospace, monospace; min-height: 150px; width: 100%; }
+.section-fallback button { margin-top: 10px; }
+.nested-fields { border: 1px solid #dce2db; border-radius: 10px; display: grid; gap: 10px; margin: 0; padding: 12px; }
 .plan-path { background: #eff2ed; border-radius: 8px; color: #607067; font-family: ui-monospace, monospace; font-size: 11px; margin-top: 10px; overflow-wrap: anywhere; padding: 9px 11px; }
 .editor-actions { border-top: 1px solid #e5e9e3; padding-top: 18px; }
 .yaml-preview { background: #17231e; color: #e5eee8; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; line-height: 1.55; margin-top: 16px; min-height: 360px; resize: vertical; width: 100%; }

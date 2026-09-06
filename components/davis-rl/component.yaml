@@ -85,18 +85,21 @@ configuration:
           tolerance: {type: number, exclusiveMinimum: 0}
 presentation:
   ui:
-    ui:editor: schema-form
+    version: davis.ui/v1
     ui:description: Map a directed link network and observed link sequences to recursive-logit utility terms.
-    ui:form:
-      inputs:
-        network:
-          title: Network link表
-          description: link ID，始点node，終点node，link属性を含む表です．
-        observations:
-          title: 観測経路表
-          description: tripごとの通過linkを順番に並べたlong形式の表です．
-      sections:
-      - path: network_roles
+    inputs:
+      network:
+        title: Network link表
+        description: link ID，始点node，終点node，link属性を含む表です．
+        widget: table-binding
+        preparation: {component: davis/csv-transform, version: 0.4.0}
+      observations:
+        title: 観測経路表
+        description: tripごとの通過linkを順番に並べたlong形式の表です．
+        widget: table-binding
+        preparation: {component: davis/csv-transform, version: 0.4.0}
+    sections:
+      - bind: /network_roles
         widget: column-map
         input: network
         title: Network列の役割
@@ -104,7 +107,7 @@ presentation:
           link_id: Link ID
           from_node: 始点node
           to_node: 終点node
-      - path: observation_roles
+      - bind: /observation_roles
         widget: column-map
         input: observations
         title: 観測経路列の役割
@@ -113,22 +116,22 @@ presentation:
           step: 通過順序
           link_id: Link ID
           destination: 目的地node
-      - path: terms
+      - bind: /terms
         widget: utility-terms
         input: network
         title: Link効用term
         allow_constant: false
         show_coefficient: true
-      - path: parameters
+      - bind: /parameters
         widget: parameter-settings
-        parameters_from: terms
+        parameters_from: /terms
         title: Parameter初期値・範囲
-      - path: estimation
-        widget: object
+      - bind: /estimation
+        widget: auto
         title: 推定設定
-      defaults:
-        estimation: {max_iterations: 500, tolerance: 1.0e-8}
-    ui:results:
+    defaults:
+      estimation: {max_iterations: 500, tolerance: 1.0e-8}
+    results:
     - {artifact: metrics, title: 推定指標, widget: key-value}
     - {artifact: parameters, title: 推定係数, widget: table}
     - {artifact: predictions, title: 観測link選択確率, widget: table}

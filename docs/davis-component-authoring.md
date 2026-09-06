@@ -136,8 +136,12 @@ configuration:
 
 presentation:
   ui:
-    ui:editor: generic
-    ui:results:
+    version: davis.ui/v1
+    inputs:
+      persons: {title: Persons, widget: table-binding}
+    sections:
+      - {bind: /person_id, widget: auto, title: Person ID column}
+    results:
       - artifact: explanatory_variables
         title: Explanatory variables
         widget: table
@@ -155,42 +159,47 @@ outputs:
 
 旧Manifestの`runtime.kind: python`と`runtime.kind: native`は，どちらもprocess実行として後方互換で読み込まれます．
 
-desktop Form editorを提供するcomponentは，`presentation.ui`で`ui:editor`を宣言します．標準MNLの`linear-utility` editorは，roleの表示名を`roles.ui:labels`，選択肢候補を得るroleを`terms.ui:alternativesFromRole`，table bindingに使うtransformを`ui:inputPreparation`から読みます．設定項目と必須性の正本は引き続き`configuration.schema`です．presentationは契約の妥当性を緩めず，表示方法だけを補います．
+desktop Formを提供するcomponentは，`presentation.ui.version: davis.ui/v1`を宣言します．画面全体を選ぶ`ui:editor`は新規componentでは使用しません．`inputs`で入力slotを，`sections`でconfigの一部分と再利用可能widgetの対応を宣言します．設定項目と必須性の正本は引き続き`configuration.schema`です．presentationは契約の妥当性を緩めず，表示方法だけを補います．
 
-新しいcomponentでは，複数の再利用可能widgetを並べる`schema-form` editorも利用できます．Desktop側へcomponent ID固有の画面を追加する必要はありません．`ui:form.inputs`で入力slotの説明を，`ui:form.sections`でconfig内のpathとwidgetを宣言します．実際に保存できるfieldと必須性は`configuration.schema`が正本です．Desktopは存在しないpath，未宣言input，未知のwidgetを拒否します．
+MNL，NL，RLはいずれも同じrendererを使います．新しいモデルを追加するときにDesktopへモデルID固有の分岐を追加する必要はありません．新しいFrontend実装が必要なのは，Davis全体で再利用する新widgetを追加するときだけです．旧`linear-utility`／`schema-form`宣言はbackendの互換adapterが`davis.ui/v1`へ変換します．
 
 | widget | 用途 |
 | --- | --- |
+| `table-binding` | 入力slotへ1つ以上のCSVを追加し，基準表，join key，関係性，join方式を設定します |
 | `column-map` | schemaに並ぶ役割名を，指定した入力表の列へ対応させます |
 | `utility-terms` | parameter，説明変数列，定数，対象選択肢，係数を編集します |
 | `nests` | 選択肢のnest所属と非類似度の固定／推定を編集します |
 | `parameter-settings` | termからparameter名を取り出し，初期値と上下限を編集します |
-| `object` | schemaにある通常の文字列，数値，列挙設定を編集します |
+| `auto` | JSON Schemaから文字列，数値，真偽値，列挙等の入力欄を生成します |
+| 未知のwidget | 画面全体を失敗させず，そのsectionだけYAML editorへfallbackします |
 
 ```yaml
 presentation:
   ui:
-    ui:editor: schema-form
-    ui:form:
-      inputs:
-        choice_data:
-          title: 選択データ
-      sections:
-        - path: roles
-          widget: column-map
-          input: choice_data
-        - path: terms
-          widget: utility-terms
-          input: choice_data
-        - path: nests
-          widget: nests
-          alternatives_from: roles.alternative_id
-      defaults:
-        estimation:
-          max_iterations: 500
+    version: davis.ui/v1
+    inputs:
+      choice_data:
+        title: 選択データ
+        widget: table-binding
+        preparation: {component: davis/csv-transform, version: 0.4.0}
+    sections:
+      - bind: /roles
+        widget: column-map
+        input: choice_data
+      - bind: /terms
+        widget: utility-terms
+        input: choice_data
+      - bind: /nests
+        widget: nests
+        alternatives_from: /roles/alternative_id
+      - bind: /estimation
+        widget: auto
+    defaults:
+      estimation:
+        max_iterations: 500
 ```
 
-NLとRLはどちらも同じ`schema-form` engineを使います．NLは1つの選択表とnest widgetを宣言し，RLはnetwork／observationsの2入力，2つのcolumn map，parameter settingsを宣言します．Manifestの違いだけで画面構成が変わるため，第三者componentも既存widgetの組合せで編集画面を提供できます．表結合を含むMNLの`linear-utility` editorは後方互換として残します．
+`bind`は`configuration.schema`内を指すJSON Pointerです．`widget`を省略すると`auto`になります．GUIで表現しきれない自由形式objectや配列も，該当sectionだけYAMLとして編集できます．複数CSV結合はモデル固有機能ではなく，各入力slotで利用できるDavis共通の`table_binding`としてAnalysis Planへ保存されます．
 
 大きなschemaを分割したい場合は，inline値の代わりに安全なpackage相対pathを指定できます．JSONとYAMLの両方を利用できます．inlineと参照を同時に指定することはできません．
 
@@ -203,7 +212,7 @@ presentation:
 
 旧Manifestのtop-level `config_schema`と`ui_schema`も同じ外部参照として解決されます．新規componentでは，Web上のLLM，人間，GUIのいずれからも1ファイルを扱いやすいinline形式を標準とします．
 
-結果をdesktop内に表示する場合は，`ui:results`へartifact名，title，widgetを列挙します．`key-value`はJSON object，`table`はCSVを表示します．これは成果物の中央契約を増やすものではなく，Manifestで宣言済みのartifactをどう提示するかというcomponent固有のhintです．未対応widgetや大きすぎるartifactは無理に表示せず，artifact一覧へ残します．
+結果をdesktop内に表示する場合は，`presentation.ui.results`へartifact名，title，widgetを列挙します．`key-value`はJSON object，`table`はCSVを表示します．これは成果物の中央契約を増やすものではなく，Manifestで宣言済みのartifactをどう提示するかというcomponent固有のhintです．未対応widgetや大きすぎるartifactは無理に表示せず，artifact一覧へ残します．
 
 通常は`inputs`でslot名を固定します．CSV joinのように利用者が任意名の追加inputを与えるcomponentだけは，`additional_inputs.media_types`で許可する形式を限定できます．追加inputもDavisがpath，media type，size，BLAKE3を解決・記録してからcomponentへ渡します．
 
