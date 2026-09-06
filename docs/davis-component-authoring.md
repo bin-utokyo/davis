@@ -201,6 +201,8 @@ presentation:
 
 `bind`は`configuration.schema`内を指すJSON Pointerです．`widget`を省略すると`auto`になります．GUIで表現しきれない自由形式objectや配列も，該当sectionだけYAMLとして編集できます．複数CSV結合はモデル固有機能ではなく，各入力slotで利用できるDavis共通の`table_binding`としてAnalysis Planへ保存されます．
 
+sectionの`title`と`description`はcomponent固有の意味を説明します．`nests` widgetでは`labels.mode`，`labels.estimate`，`labels.fixed`，`labels.estimate_value`，`labels.fixed_value`を指定できるため，scaleの記号や正規化方法をDesktopへハードコードする必要はありません．未指定時は汎用表示へ戻ります．
+
 大きなschemaを分割したい場合は，inline値の代わりに安全なpackage相対pathを指定できます．JSONとYAMLの両方を利用できます．inlineと参照を同時に指定することはできません．
 
 ```yaml
@@ -371,7 +373,7 @@ cargo run -p davis-cli -- \
 
 ## 参考Nested Logit component
 
-[`components/davis-nl`](../components/davis-nl/)は，選択肢をnestへ分ける2段階Nested Logitの読みやすい参考実装です．MNLと共通の`roles`と`terms`に加えて，`nests`で各選択肢が所属するnestを1つずつ指定します．各nestの`dissimilarity`は`fixed`で固定するか，`initial`を初期値として推定できます．singleton nestは省略時に1へ固定します．
+[`components/davis-nl`](../components/davis-nl/)は，選択肢をnestへ分ける2段階Nested Logitの読みやすい参考実装です．MNLと共通の`roles`と`terms`に加えて，`nests`で各選択肢が所属するnestを1つずつ指定します．この実装は最上位scaleを1に正規化し，各nestの`dissimilarity`を非類似度λとして扱います．`fixed`で固定するか，`initial`を初期値として推定できます．singleton nestは省略時にλ=1へ固定します．これは最下層scaleを1に固定して上位scaleをμとする表記とは異なるため，記号ではなく式と正規化を確認してください．
 
 ```yaml
 nests:

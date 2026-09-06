@@ -778,6 +778,17 @@ mod tests {
             .unwrap()
             .iter()
             .any(|section| section["widget"] == "nests"));
+        let nest_section = nested.ui_schema["sections"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|section| section["widget"] == "nests")
+            .unwrap();
+        assert!(nest_section["description"]
+            .as_str()
+            .unwrap()
+            .contains("最上位scaleは1"));
+        assert_eq!(nest_section["labels"]["estimate"], "推定 (右は初期値)");
 
         let recursive = editor_definition(&repository, "davis/rl", "0.1.0").unwrap();
         assert_eq!(recursive.ui_schema["version"], "davis.ui/v1");

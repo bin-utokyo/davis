@@ -79,10 +79,12 @@ configuration:
               items: {type: [string, number]}
             dissimilarity:
               type: object
+              title: 非類似度 λ
+              description: このcomponentでは最上位scaleを1に正規化し，各nestの非類似度λを0より大きく1以下で指定します．
               additionalProperties: false
               properties:
-                initial: {type: number, exclusiveMinimum: 0, maximum: 1}
-                fixed: {type: number, exclusiveMinimum: 0, maximum: 1}
+                initial: {type: number, title: 推定初期値, exclusiveMinimum: 0, maximum: 1}
+                fixed: {type: number, title: 固定値, exclusiveMinimum: 0, maximum: 1}
       estimation:
         type: object
         additionalProperties: false
@@ -117,8 +119,15 @@ presentation:
         alternatives_from: /roles/alternative_id
       - bind: /nests
         widget: nests
-        title: Nest構造
+        title: Nest構造と非類似度 λ
+        description: 最上位scaleは1に正規化済みです．推定時の数値は結果ではなく初期値です．選択肢が1つだけのnestは実行時にλ=1へ固定されます．
         alternatives_from: /roles/alternative_id
+        labels:
+          mode: 非類似度λの扱い
+          estimate: 推定 (右は初期値)
+          fixed: 固定 (右は固定値)
+          estimate_value: 非類似度λの推定初期値
+          fixed_value: 非類似度λの固定値
       - bind: /estimation
         widget: auto
         title: 推定設定

@@ -79,7 +79,7 @@ label > span { color: #5f7067; font-size: 12px; font-weight: 700; }
 .binding-source small { color: #718078; overflow-wrap: anywhere; }
 .manifest-section { border-top: 1px solid #e5e9e3; margin-top: 24px; }
 .manifest-section .subsection-heading { border-top: 0; margin-top: 0; }
-.nest-row { align-items: center; display: grid; gap: 8px; grid-template-columns: minmax(120px, .7fr) minmax(260px, 1.5fr) 90px 90px auto; margin-top: 10px; }
+.nest-row { align-items: center; display: grid; gap: 8px; grid-template-columns: minmax(120px, .7fr) minmax(260px, 1.5fr) minmax(150px, auto) 100px auto; margin-top: 10px; }
 .parameter-row { align-items: end; background: #f4f6f1; border-radius: 12px; display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); margin-top: 10px; padding: 12px; }
 .parameter-row label { display: flex; flex-direction: column; gap: 6px; }
 .parameter-row label span { color: #68776f; font-size: 11px; }
