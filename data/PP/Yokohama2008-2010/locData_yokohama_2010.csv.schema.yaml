@@ -10,7 +10,9 @@ columns:
   name: PositioningDataID
   type_:
     name: Int64
-- description: null
+- description:
+    en: "Transportation mode code: 000=--, 100=Private car, 200=Railway, 240=Bus, 300=Motorcycle/Moped, 410=Bicycle, 420=Walking, 500=Taxi, 600=Car sharing, 700=Shared bicycle, 800=Waiting time, 999=Other."
+    ja: "移動手段コード：000=--、100=自家用車、200=鉄道、240=バス、300=バイク・原付、410=自転車、420=徒歩、500=タクシー、600=カーシェアリング、700=共同利用自転車、800=待ち時間、999=その他。"
   name: Mode
   type_:
     name: String
@@ -50,11 +52,15 @@ columns:
   name: Lon_WGS
   type_:
     name: Float64
-- description: null
+- description:
+    en: "Positioning mode code: 0=GPS, 1=Hybrid, 2=Multiple base stations, 3=Positioning failed, 4=Base station, 5=Multiple base stations (lower accuracy than code 2)."
+    ja: "測位方式コード：0=GPS、1=ハイブリッド、2=複数基地局、3=測位失敗、4=基地局、5=複数基地局（コード2より低精度）。"
   name: PositioningMode
   type_:
     name: Int64
-- description: null
+- description:
+    en: "Validity code: 1=Valid, 0=Invalid."
+    ja: "有効性コード：1=有効、0=無効。"
   name: Validity
   type_:
     name: Int64

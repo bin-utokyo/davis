@@ -10,7 +10,9 @@ columns:
   name: monitorID
   type_:
     name: String
-- description: null
+- description:
+    en: "Purpose code: 0=--, 100=Work/School, 200=Home, 300=After work/school, 310=Working, 400=Shopping, 410=Eating, 420=Entertainment, 499=Other."
+    ja: "目的コード：0=--、100=通勤・通学、200=自宅、300=勤務・通学後、310=業務中、400=買い物、410=食事、420=娯楽、499=その他。"
   name: purposeID
   type_:
     name: Int64
@@ -94,7 +96,9 @@ columns:
   name: User'sGoalName
   type_:
     name: String
-- description: null
+- description:
+    en: "Destination attribute code: 110=Home, 120=Office/School, 130=Office/Company, 140=Private home, 150=Department store/Mall, 160=Supermarket/Grocery store, 170=Convenience store, 180=Entertainment facility, 190=Restaurant/Cafe, 200=Book/Stationery/CD store, 210=Clothing/Goods/Sports store, 220=Electronics/Home center, 230=Barber/Hair salon, 240=Hotel/Spa/Inn, 250=Other commercial facility, 260=Financial institution/Post office, 270=Hospital, 280=Public facility, 290=Park/Roadside station, 300=Station, 310=Bus stop, 320=Airport/Ferry terminal, 999=Other."
+    ja: "目的地属性コード：110=自宅、120=職場・学校、130=事業所・会社、140=個人宅、150=百貨店・ショッピングモール、160=スーパー・食料品店、170=コンビニエンスストア、180=娯楽施設、190=飲食店・カフェ、200=書店・文具店・CD店、210=衣料品・雑貨・スポーツ店、220=家電量販店・ホームセンター、230=理容室・美容室、240=ホテル・温浴施設・旅館、250=その他商業施設、260=金融機関・郵便局、270=病院、280=公共施設、290=公園・道の駅、300=駅、310=バス停、320=空港・フェリーターミナル、999=その他。"
   name: GoalAttributeCode
   type_:
     name: Int64
@@ -190,7 +194,9 @@ columns:
   name: validity
   type_:
     name: Int64
-- description: null
+- description:
+    en: "Transportation mode code: 0=--, 100=Car, 200=Train, 240=Bus, 300=Motorcycle, 410=Bicycle, 420=Walk, 500=Taxi, 600=Airplane, 700=Ship, 800=Waiting time, 999=Other."
+    ja: "移動手段コード：0=--、100=自動車、200=電車、240=バス、300=バイク、410=自転車、420=徒歩、500=タクシー、600=飛行機、700=船、800=待ち時間、999=その他。"
   name: TransportationCode
   type_:
     name: Int64
@@ -198,7 +204,9 @@ columns:
   name: Transportation
   type_:
     name: String
-- description: null
+- description:
+    en: "Transportation mode code at this transfer. Uses the same code definitions as TransportationCode."
+    ja: "この乗り換え地点の移動手段コード。TransportationCodeと同じコード定義を使用します。"
   name: TransportationChange1_CD
   type_:
     name: Int64
@@ -212,7 +220,9 @@ columns:
   name: TransportationChange1_Time
   type_:
     name: Datetime
-- description: null
+- description:
+    en: "Transportation mode code at this transfer. Uses the same code definitions as TransportationCode."
+    ja: "この乗り換え地点の移動手段コード。TransportationCodeと同じコード定義を使用します。"
   name: TransportationChange2_CD
   type_:
     name: Int64
@@ -226,7 +236,9 @@ columns:
   name: TransportationChange2_Time
   type_:
     name: Datetime
-- description: null
+- description:
+    en: "Transportation mode code at this transfer. Uses the same code definitions as TransportationCode."
+    ja: "この乗り換え地点の移動手段コード。TransportationCodeと同じコード定義を使用します。"
   name: TransportationChange3_CD
   type_:
     name: Int64
@@ -240,7 +252,9 @@ columns:
   name: TransportationChange3_Time
   type_:
     name: Datetime
-- description: null
+- description:
+    en: "Transportation mode code at this transfer. Uses the same code definitions as TransportationCode."
+    ja: "この乗り換え地点の移動手段コード。TransportationCodeと同じコード定義を使用します。"
   name: TransportationChange4_CD
   type_:
     name: String
@@ -254,7 +268,9 @@ columns:
   name: TransportationChange4_Time
   type_:
     name: String
-- description: null
+- description:
+    en: "Transportation mode code at this transfer. Uses the same code definitions as TransportationCode."
+    ja: "この乗り換え地点の移動手段コード。TransportationCodeと同じコード定義を使用します。"
   name: TransportationChange5_CD
   type_:
     name: String
@@ -268,7 +284,9 @@ columns:
   name: TransportationChange5_Time
   type_:
     name: String
-- description: null
+- description:
+    en: "Transportation mode code at this transfer. Uses the same code definitions as TransportationCode."
+    ja: "この乗り換え地点の移動手段コード。TransportationCodeと同じコード定義を使用します。"
   name: TransportationChange6_CD
   type_:
     name: String
@@ -282,7 +300,9 @@ columns:
   name: TransportationChange6_Time
   type_:
     name: String
-- description: null
+- description:
+    en: "Transportation mode code at this transfer. Uses the same code definitions as TransportationCode."
+    ja: "この乗り換え地点の移動手段コード。TransportationCodeと同じコード定義を使用します。"
   name: TransportationChange7_CD
   type_:
     name: String
@@ -296,7 +316,9 @@ columns:
   name: TransportationChange7_Time
   type_:
     name: String
-- description: null
+- description:
+    en: "Transportation mode code at this transfer. Uses the same code definitions as TransportationCode."
+    ja: "この乗り換え地点の移動手段コード。TransportationCodeと同じコード定義を使用します。"
   name: TransportationChange8_CD
   type_:
     name: String
@@ -310,7 +332,9 @@ columns:
   name: TransportationChange8_Time
   type_:
     name: String
-- description: null
+- description:
+    en: "Transportation mode code at this transfer. Uses the same code definitions as TransportationCode."
+    ja: "この乗り換え地点の移動手段コード。TransportationCodeと同じコード定義を使用します。"
   name: TransportationChange9_CD
   type_:
     name: String
@@ -324,7 +348,9 @@ columns:
   name: TransportationChange9_Time
   type_:
     name: String
-- description: null
+- description:
+    en: "Transportation mode code at this transfer. Uses the same code definitions as TransportationCode."
+    ja: "この乗り換え地点の移動手段コード。TransportationCodeと同じコード定義を使用します。"
   name: TransportationChange10_CD
   type_:
     name: String
@@ -338,7 +364,9 @@ columns:
   name: TransportationChange10_Time
   type_:
     name: String
-- description: null
+- description:
+    en: "Transportation mode code at this transfer. Uses the same code definitions as TransportationCode."
+    ja: "この乗り換え地点の移動手段コード。TransportationCodeと同じコード定義を使用します。"
   name: TransportationChange11_CD
   type_:
     name: String
@@ -352,7 +380,9 @@ columns:
   name: TransportationChange11_Time
   type_:
     name: String
-- description: null
+- description:
+    en: "Transportation mode code at this transfer. Uses the same code definitions as TransportationCode."
+    ja: "この乗り換え地点の移動手段コード。TransportationCodeと同じコード定義を使用します。"
   name: TransportationChange12_CD
   type_:
     name: String
@@ -366,7 +396,9 @@ columns:
   name: TransportationChange12_Time
   type_:
     name: String
-- description: null
+- description:
+    en: "Transportation mode code at this transfer. Uses the same code definitions as TransportationCode."
+    ja: "この乗り換え地点の移動手段コード。TransportationCodeと同じコード定義を使用します。"
   name: TransportationChange13_CD
   type_:
     name: String
@@ -380,7 +412,9 @@ columns:
   name: TransportationChange13_Time
   type_:
     name: String
-- description: null
+- description:
+    en: "Transportation mode code at this transfer. Uses the same code definitions as TransportationCode."
+    ja: "この乗り換え地点の移動手段コード。TransportationCodeと同じコード定義を使用します。"
   name: TransportationChange14_CD
   type_:
     name: String
