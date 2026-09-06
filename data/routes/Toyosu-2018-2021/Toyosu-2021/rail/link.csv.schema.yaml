@@ -21,14 +21,14 @@ columns:
   type_:
     name: Int64
 - description:
-    en: Transportation mode code.
-    ja: 交通手段を表すコード
+    en: "Transportation mode code. Values: 100 = rail, 101 = subway, 103 = monorail, 200 = streetcar, 201 = bus, 300 = car, 301 = truck, 302 = taxi, 303 = motorcycle, 400 = bicycle, 401 = shared bicycle, 402 = velotaxi, 500 = walking, 600 = airplane, 601 = ship, 602 = other; 999 = unknown."
+    ja: "交通手段を表すコード．100=鉄道，101=地下鉄，103=モノレール，200=路面電車，201=バス，300=自動車，301=貨物車，302=タクシー，303=バイク，400=自転車，401=シェアバイク，402=ベロタクシー，500=徒歩，600=飛行機，601=船，602=その他．999は不明．"
   name: Mode
   type_:
     name: Int64
 - description:
-    en: Trip purpose code.
-    ja: トリップの目的を表すコード
+    en: "Trip purpose code. Values: 100 = commuting or schooling, 200 = business, 201 = returning to workplace or school, 300 = returning home, 400 = shopping, 401 = dining, 402 = lessons, 403 = hospital visit, 404 = leisure, 405 = sightseeing, 406 = strolling, 407 = escorting, 500 = waiting, 501 = other; 999 = unknown."
+    ja: "トリップの目的を表すコード．100=通勤・通学，200=業務，201=帰社・帰校，300=帰宅，400=買物，401=食事，402=習い事，403=通院，404=娯楽，405=観光，406=散策，407=送迎，500=待ち時間，501=その他．999は不明．"
   name: Purpose
   type_:
     name: Int64

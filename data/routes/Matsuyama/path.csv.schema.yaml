@@ -10,7 +10,9 @@ columns:
   name: DiaryID
   type_:
     name: String
-- description: null
+- description:
+    en: "Transportation mode code: 0=--, 100=Car, 200=Train, 240=Bus, 300=Motorcycle, 410=Bicycle, 420=Walk, 500=Taxi, 600=Airplane, 700=Ship, 800=Waiting time, 999=Other."
+    ja: "移動手段コード：0=--，100=自動車，200=電車，240=バス，300=バイク，410=自転車，420=徒歩，500=タクシー，600=飛行機，700=船，800=待ち時間，999=その他．"
   name: Mode
   type_:
     name: Int64

@@ -43,14 +43,18 @@ columns:
   type_:
     name: Int64
 - description:
-    en: The zone code of the small zone of the origin.
-    ja: 出発地の小ゾーンのゾーンコード。
+    en: The origin zone code. Refer to the code tables under `2008_PT_zone_master`
+      and `out-of-zone-codes`; a digit 9 indicates that the corresponding zone level
+      is unknown.
+    ja: 出発地のゾーンコード．`2008_PT_zone_master`と`out-of-zone-codes`配下のコード表を参照してください．各桁の9は，対応するゾーン階層が不明であることを示します．
   name: Ozone
   type_:
     name: Int64
 - description:
-    en: The zone code of the small zone of the destination.
-    ja: 目的地の小ゾーンのゾーンコード。
+    en: The destination zone code. Refer to the code tables under `2008_PT_zone_master`
+      and `out-of-zone-codes`; a digit 9 indicates that the corresponding zone level
+      is unknown.
+    ja: 目的地のゾーンコード．`2008_PT_zone_master`と`out-of-zone-codes`配下のコード表を参照してください．各桁の9は，対応するゾーン階層が不明であることを示します．
   name: Dzone
   type_:
     name: Int64
