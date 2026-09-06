@@ -2,7 +2,7 @@
 
 [English](official-components-guide_en.md)
 
-このガイドは，Davis v0.5.3で配布する4つの公式componentを使って，データ変換またはモデル推定を行う人向けです．新しいcomponentを作るための文書ではありません．Davisの開発repositoryや内部実装を知らない人，およびその人を支援するAIは，このガイドだけを公式componentの利用仕様として参照できます．
+このガイドは，Davis v0.5.4で配布する4つの公式componentを使って，データ変換またはモデル推定を行う人向けです．新しいcomponentを作るための文書ではありません．Davisの開発repositoryや内部実装を知らない人，およびその人を支援するAIは，このガイドだけを公式componentの利用仕様として参照できます．
 
 ## 1．最初に理解すること
 
@@ -16,7 +16,7 @@ AIに支援を依頼する場合は，このガイド，実施したいモデル
 
 ## 2．必要な環境
 
-Davis CLIをv0.5.3へ更新します．
+Davis CLIをv0.5.4へ更新します．
 
 ```console
 davis update
@@ -253,7 +253,7 @@ CSV Transformは`transformed.csv`または`transformed.parquet`と，変換summa
 
 error時は，まず次を確認してください．
 
-1. `davis --version`が0.5.3以上か．
+1. `davis --version`が0.5.4以上か．
 2. `uv --version`が0.8以上か．
 3. `davis installed`に必要なcomponentがあるか．
 4. CSV headerとPlanの列名が完全に一致しているか．

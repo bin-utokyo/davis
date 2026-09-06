@@ -2,7 +2,7 @@
 
 [日本語](official-components-guide.md)
 
-This guide is for users of the four official components distributed with Davis v0.5.3. It explains how to transform data or estimate models; it is not a guide for creating a new component. A user or an AI assistant can rely on this document as the usage specification without knowing the Davis development repository or its internal implementation.
+This guide is for users of the four official components distributed with Davis v0.5.4. It explains how to transform data or estimate models; it is not a guide for creating a new component. A user or an AI assistant can rely on this document as the usage specification without knowing the Davis development repository or its internal implementation.
 
 ## 1. Concepts
 
@@ -16,7 +16,7 @@ When asking an AI assistant for help, provide this guide, the intended model or 
 
 ## 2. Requirements
 
-Update the Davis CLI to v0.5.3.
+Update the Davis CLI to v0.5.4.
 
 ```console
 davis update
@@ -251,7 +251,7 @@ CSV Transform returns `transformed.csv` or `transformed.parquet` and a transform
 
 When a run fails, check:
 
-1. `davis --version` is 0.5.3 or later.
+1. `davis --version` is 0.5.4 or later.
 2. `uv --version` is 0.8 or later.
 3. `davis installed` lists every required component.
 4. Every Plan column name exactly matches the CSV header.
