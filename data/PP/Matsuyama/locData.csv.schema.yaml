@@ -2,19 +2,27 @@ city:
   en: Matsuyama
   ja: 松山市
 columns:
-- description: null
+- description:
+    en: "Trip identifier."
+    ja: "トリップの識別ID．"
   name: tripID
   type_:
     name: Int64
-- description: null
+- description:
+    en: "Positioning record identifier."
+    ja: "測位レコードの識別ID．"
   name: dataID
   type_:
     name: Int64
-- description: null
+- description:
+    en: "Recorded trip-purpose label."
+    ja: "記録されたトリップ目的の名称．"
   name: purpose
   type_:
     name: String
-- description: null
+- description:
+    en: "Monitor identifier."
+    ja: "モニターの識別ID．"
   name: monitorID
   type_:
     name: String
@@ -50,11 +58,15 @@ columns:
   name: longitude(WGS)
   type_:
     name: Float64
-- description: null
+- description:
+    en: "Positioning-method code recorded by the source system."
+    ja: "収集システムが記録した測位方式コード．"
   name: positioning mode
   type_:
     name: Int64
-- description: null
+- description:
+    en: "Validity flag: 1=Valid, 0=Invalid."
+    ja: "有効性フラグ：1=有効，0=無効．"
   name: validity
   type_:
     name: Int64

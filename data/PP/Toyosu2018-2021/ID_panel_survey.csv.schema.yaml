@@ -2,31 +2,45 @@ city:
   en: Toyosu
   ja: 豊洲
 columns:
-- description: null
+- description:
+    en: "Panel-table record number."
+    ja: "パネル対応表のレコード番号．"
   name: No.
   type_:
     name: Float64
-- description: null
+- description:
+    en: "Monitor ID used in the 2021 survey."
+    ja: "2021年調査のモニターID．"
   name: '2021'
   type_:
     name: String
-- description: null
+- description:
+    en: "User ID used in the 2021 survey."
+    ja: "2021年調査の利用者ID．"
   name: 'Unnamed: 2'
   type_:
     name: String
-- description: null
+- description:
+    en: "Monitor ID used in the 2020 survey."
+    ja: "2020年調査のモニターID．"
   name: '2020'
   type_:
     name: String
-- description: null
+- description:
+    en: "User ID used in the 2020 survey."
+    ja: "2020年調査の利用者ID．"
   name: 'Unnamed: 4'
   type_:
     name: String
-- description: null
+- description:
+    en: "Monitor ID used in the 2019 survey."
+    ja: "2019年調査のモニターID．"
   name: '2019'
   type_:
     name: String
-- description: null
+- description:
+    en: "User ID used in the 2019 survey."
+    ja: "2019年調査の利用者ID．"
   name: 'Unnamed: 6'
   type_:
     name: String

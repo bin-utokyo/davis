@@ -2,7 +2,9 @@ city:
   en: Yokohama
   ja: 横浜
 columns:
-- description: null
+- description:
+    en: "Monitor identifier."
+    ja: "モニターの識別ID．"
   name: monitorID
   type_:
     name: String
@@ -18,11 +20,15 @@ columns:
   name: age
   type_:
     name: Int64
-- description: null
+- description:
+    en: "Household identifier."
+    ja: "世帯の識別番号．"
   name: household number
   type_:
     name: Int64
-- description: null
+- description:
+    en: "Free-text comment."
+    ja: "自由記述コメント．"
   name: comment
   type_:
     name: String

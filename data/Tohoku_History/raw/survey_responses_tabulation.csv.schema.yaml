@@ -2,27 +2,39 @@ city:
   en: Tohoku Region
   ja: 東北地方
 columns:
-- description: null
+- description:
+    en: Identifier assigned to the survey question.
+    ja: 調査質問に付与された識別コード．
   name: question_code
   type_:
     name: String
-- description: null
+- description:
+    en: Japanese survey question text.
+    ja: 日本語の調査質問文．
   name: question_text
   type_:
     name: String
-- description: null
+- description:
+    en: Index of the response option within the question, starting from 1.
+    ja: 質問内の回答選択肢のindex(1始まり)．
   name: option_index
   type_:
     name: Int16
-- description: null
+- description:
+    en: Japanese text of the response option.
+    ja: 日本語の回答選択肢．
   name: option_text
   type_:
     name: String
-- description: null
+- description:
+    en: Number of responses for the option.
+    ja: 当該選択肢の回答数．
   name: count
   type_:
     name: Int16
-- description: null
+- description:
+    en: Percentage of responses for the option.
+    ja: 当該選択肢の回答割合(%)．
   name: percentage
   type_:
     name: Float64

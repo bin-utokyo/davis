@@ -2,15 +2,21 @@ city:
   en: Toyosu2021
   ja: 豊洲
 columns:
-- description: null
+- description:
+    en: "Record identifier."
+    ja: "レコードの識別ID．"
   name: ID
   type_:
     name: Int64
-- description: null
+- description:
+    en: "Trip identifier."
+    ja: "トリップの識別ID．"
   name: TripID
   type_:
     name: Int64
-- description: null
+- description:
+    en: "User identifier."
+    ja: "利用者の識別ID．"
   name: UserID
   type_:
     name: Int64

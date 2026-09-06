@@ -2,11 +2,15 @@ city:
   en: Matsuyama
   ja: 松山市
 columns:
-- description: null
+- description:
+    en: "Trip identifier."
+    ja: "トリップの識別ID．"
   name: tripID
   type_:
     name: Int64
-- description: null
+- description:
+    en: "Monitor identifier."
+    ja: "モニターの識別ID．"
   name: monitorID
   type_:
     name: String
@@ -16,7 +20,9 @@ columns:
   name: purposeID
   type_:
     name: Int64
-- description: null
+- description:
+    en: "Recorded trip-purpose label."
+    ja: "記録されたトリップ目的の名称．"
   name: purpose
   type_:
     name: String
@@ -38,23 +44,33 @@ columns:
   name: time(second)
   type_:
     name: Int64
-- description: null
+- description:
+    en: "Identifier code of the departure location."
+    ja: "出発地の識別コード．"
   name: DepartureCode
   type_:
     name: Int64
-- description: null
+- description:
+    en: "Name of the departure location."
+    ja: "出発地名．"
   name: DepartureName
   type_:
     name: String
-- description: null
+- description:
+    en: "Departure-location name entered by the user."
+    ja: "利用者が入力した出発地名．"
   name: User'sDepartureName
   type_:
     name: String
-- description: null
+- description:
+    en: "Duplicated departure-location code retained from the source data."
+    ja: "元データから保持された重複出発地コード列．"
   name: DepartureCode_duplicated_0
   type_:
     name: Int64
-- description: null
+- description:
+    en: "Attribute of the departure location."
+    ja: "出発地の属性．"
   name: DepartureAttribute
   type_:
     name: String
@@ -84,15 +100,21 @@ columns:
   name: DepartureLon(WGS)
   type_:
     name: Float64
-- description: null
+- description:
+    en: "Identifier code of the goal location."
+    ja: "目的地の識別コード．"
   name: GoalCode
   type_:
     name: Int64
-- description: null
+- description:
+    en: "Name of the goal location."
+    ja: "目的地名．"
   name: Goal
   type_:
     name: String
-- description: null
+- description:
+    en: "Goal-location name entered by the user."
+    ja: "利用者が入力した目的地名．"
   name: User'sGoalName
   type_:
     name: String
@@ -102,7 +124,9 @@ columns:
   name: GoalAttributeCode
   type_:
     name: Int64
-- description: null
+- description:
+    en: "Attribute of the goal location."
+    ja: "目的地の属性．"
   name: GoalAttribute
   type_:
     name: String
@@ -132,23 +156,33 @@ columns:
   name: GoalLon(WGS)
   type_:
     name: Float64
-- description: null
+- description:
+    en: "Identifier code of the arrival location."
+    ja: "到着地の識別コード．"
   name: ArrivalCode
   type_:
     name: Int64
-- description: null
+- description:
+    en: "Name of the arrival location."
+    ja: "到着地名．"
   name: ArrivalName
   type_:
     name: String
-- description: null
+- description:
+    en: "Arrival-location name entered by the user."
+    ja: "利用者が入力した到着地名．"
   name: User'sArrivalName
   type_:
     name: String
-- description: null
+- description:
+    en: "Duplicated arrival-location code retained from the source data."
+    ja: "元データから保持された重複到着地コード列．"
   name: ArrivalCode_duplicated_0
   type_:
     name: Int64
-- description: null
+- description:
+    en: "Attribute of the arrival location."
+    ja: "到着地の属性．"
   name: ArrivalAttribute
   type_:
     name: String
@@ -182,15 +216,21 @@ columns:
   name: compatibility
   type_:
     name: Int64
-- description: null
+- description:
+    en: "Record-creation flag from the source system."
+    ja: "収集システムのレコード作成フラグ．"
   name: CreationFlag
   type_:
     name: Int64
-- description: null
+- description:
+    en: "Arrival-status flag from the source system."
+    ja: "収集システムの到着状態フラグ．"
   name: ArrivalFlag
   type_:
     name: Int64
-- description: null
+- description:
+    en: "Validity flag: 1=Valid, 0=Invalid."
+    ja: "有効性フラグ：1=有効，0=無効．"
   name: validity
   type_:
     name: Int64
@@ -200,7 +240,9 @@ columns:
   name: TransportationCode
   type_:
     name: Int64
-- description: null
+- description:
+    en: "Recorded transportation-mode name."
+    ja: "記録された交通手段名．"
   name: Transportation
   type_:
     name: String
@@ -210,7 +252,9 @@ columns:
   name: TransportationChange1_CD
   type_:
     name: Int64
-- description: null
+- description:
+    en: "Name of transportation mode after change 1."
+    ja: "第1回交通手段変更後の交通手段名．"
   name: TransportationChange1_Name
   type_:
     name: String
@@ -226,7 +270,9 @@ columns:
   name: TransportationChange2_CD
   type_:
     name: Int64
-- description: null
+- description:
+    en: "Name of transportation mode after change 2."
+    ja: "第2回交通手段変更後の交通手段名．"
   name: TransportationChange2_Name
   type_:
     name: String
@@ -242,7 +288,9 @@ columns:
   name: TransportationChange3_CD
   type_:
     name: Int64
-- description: null
+- description:
+    en: "Name of transportation mode after change 3."
+    ja: "第3回交通手段変更後の交通手段名．"
   name: TransportationChange3_Name
   type_:
     name: String
@@ -258,7 +306,9 @@ columns:
   name: TransportationChange4_CD
   type_:
     name: String
-- description: null
+- description:
+    en: "Name of transportation mode after change 4."
+    ja: "第4回交通手段変更後の交通手段名．"
   name: TransportationChange4_Name
   type_:
     name: String
@@ -274,7 +324,9 @@ columns:
   name: TransportationChange5_CD
   type_:
     name: String
-- description: null
+- description:
+    en: "Name of transportation mode after change 5."
+    ja: "第5回交通手段変更後の交通手段名．"
   name: TransportationChange5_Name
   type_:
     name: String
@@ -290,7 +342,9 @@ columns:
   name: TransportationChange6_CD
   type_:
     name: String
-- description: null
+- description:
+    en: "Name of transportation mode after change 6."
+    ja: "第6回交通手段変更後の交通手段名．"
   name: TransportationChange6_Name
   type_:
     name: String
@@ -306,7 +360,9 @@ columns:
   name: TransportationChange7_CD
   type_:
     name: String
-- description: null
+- description:
+    en: "Name of transportation mode after change 7."
+    ja: "第7回交通手段変更後の交通手段名．"
   name: TransportationChange7_Name
   type_:
     name: String
@@ -322,7 +378,9 @@ columns:
   name: TransportationChange8_CD
   type_:
     name: String
-- description: null
+- description:
+    en: "Name of transportation mode after change 8."
+    ja: "第8回交通手段変更後の交通手段名．"
   name: TransportationChange8_Name
   type_:
     name: String
@@ -338,7 +396,9 @@ columns:
   name: TransportationChange9_CD
   type_:
     name: String
-- description: null
+- description:
+    en: "Name of transportation mode after change 9."
+    ja: "第9回交通手段変更後の交通手段名．"
   name: TransportationChange9_Name
   type_:
     name: String
@@ -354,7 +414,9 @@ columns:
   name: TransportationChange10_CD
   type_:
     name: String
-- description: null
+- description:
+    en: "Name of transportation mode after change 10."
+    ja: "第10回交通手段変更後の交通手段名．"
   name: TransportationChange10_Name
   type_:
     name: String
@@ -370,7 +432,9 @@ columns:
   name: TransportationChange11_CD
   type_:
     name: String
-- description: null
+- description:
+    en: "Name of transportation mode after change 11."
+    ja: "第11回交通手段変更後の交通手段名．"
   name: TransportationChange11_Name
   type_:
     name: String
@@ -386,7 +450,9 @@ columns:
   name: TransportationChange12_CD
   type_:
     name: String
-- description: null
+- description:
+    en: "Name of transportation mode after change 12."
+    ja: "第12回交通手段変更後の交通手段名．"
   name: TransportationChange12_Name
   type_:
     name: String
@@ -402,7 +468,9 @@ columns:
   name: TransportationChange13_CD
   type_:
     name: String
-- description: null
+- description:
+    en: "Name of transportation mode after change 13."
+    ja: "第13回交通手段変更後の交通手段名．"
   name: TransportationChange13_Name
   type_:
     name: String
@@ -418,7 +486,9 @@ columns:
   name: TransportationChange14_CD
   type_:
     name: String
-- description: null
+- description:
+    en: "Name of transportation mode after change 14."
+    ja: "第14回交通手段変更後の交通手段名．"
   name: TransportationChange14_Name
   type_:
     name: String
@@ -428,15 +498,21 @@ columns:
   name: TransportationChange14_Time
   type_:
     name: String
-- description: null
+- description:
+    en: "Third-level Japanese standard grid-square code of the departure location."
+    ja: "出発地の3次メッシュコード．"
   name: Mesh3_Departure
   type_:
     name: String
-- description: null
+- description:
+    en: "Third-level Japanese standard grid-square code of the goal location."
+    ja: "目的地の3次メッシュコード．"
   name: Mesh3_Goal
   type_:
     name: String
-- description: null
+- description:
+    en: "Third-level Japanese standard grid-square code of the arrival location."
+    ja: "到着地の3次メッシュコード．"
   name: Mesh3_Arrival
   type_:
     name: String

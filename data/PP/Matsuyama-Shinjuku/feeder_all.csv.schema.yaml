@@ -2,7 +2,9 @@ city:
   en: Matuyama-Shinjyuku
   ja: Matuyama-Shinjyuku
 columns:
-- description: null
+- description:
+    en: "Record identifier."
+    ja: "レコードの識別ID．"
   name: ID
   type_:
     name: Int64

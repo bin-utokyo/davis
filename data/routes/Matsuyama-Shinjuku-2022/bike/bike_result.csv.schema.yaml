@@ -2,7 +2,9 @@ city:
   en: Matsuyama-Shinjuku
   ja: 松山ー新宿
 columns:
-- description: null
+- description:
+    en: "Record identifier."
+    ja: "レコードの識別ID．"
   name: ID
   type_:
     name: Int64

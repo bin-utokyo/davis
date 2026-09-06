@@ -2,11 +2,15 @@ city:
   en: Matsuyama
   ja: 松山
 columns:
-- description: null
+- description:
+    en: Identifier for the individual.
+    ja: 個人を識別するID．
   name: MonitorID
   type_:
     name: String
-- description: null
+- description:
+    en: Identifier for the trip date.
+    ja: トリップの日付を識別するID．
   name: DiaryID
   type_:
     name: Int64
@@ -16,7 +20,9 @@ columns:
   name: Mode
   type_:
     name: Int64
-- description: null
+- description:
+    en: Unique identifier of the traversed link; corresponds to the link ID in the relevant network dataset.
+    ja: 通過したリンクの固有ID．対応するネットワークデータのリンクIDに対応します．
   name: LinkID
   type_:
     name: Int64
@@ -26,19 +32,27 @@ columns:
   name: Link_Dep_Time
   type_:
     name: String
-- description: null
+- description:
+    en: Travel time in seconds.
+    ja: 所要時間(秒)．
   name: Travel_Time(s)
   type_:
     name: Float64
-- description: null
+- description:
+    en: Average speed in kilometers per hour.
+    ja: 平均速度(km/h)．
   name: Speed(km/h)
   type_:
     name: Float64
-- description: null
+- description:
+    en: Cost of traveling along the link.
+    ja: 当該リンクを移動する際のリンクコスト．
   name: Link_Cost
   type_:
     name: Int64
-- description: null
+- description:
+    en: Length of the link in meters.
+    ja: リンク長(m)．
   name: Link_Length(m)
   type_:
     name: Float64
