@@ -220,6 +220,11 @@ presentation:
     sections:
       - bind: /nests
         widget: extension:nest-editor
+        context:
+          alternatives:
+            provider: distinct-values
+            input: choice_data
+            column_from: /roles/alternative_id
 ```
 
 extensionはsandbox化した`iframe`で動きます．network，親画面のDOM，filesystem，shellへ直接アクセスできません．外部scriptやstylesheetも読み込めないため，HTML内へ必要なstyleとscriptを記述します．設定更新や高さ変更はversion付きmessageだけでDavisへ渡します．
@@ -232,7 +237,7 @@ extensionはsandbox化した`iframe`で動きます．network，親画面のDOM�
     if (message?.source !== "davis-host" ||
         message?.api_version !== "davis.widget/v1" ||
         message?.type !== "render") return;
-    // message.payload.value，schema，candidates，sectionを使って描画します．
+    // message.payload.value，schema，context，sectionを使って描画します．
   });
 
   parent.postMessage({
@@ -252,7 +257,31 @@ extensionはsandbox化した`iframe`で動きます．network，親画面のDOM�
 </script>
 ```
 
-Hostからの`render`には現在のsection値，該当JSON Schema，候補値，sectionのpresentation宣言が入ります．extensionからは`ready`，`set-value`，`resize`を送れます．`set-value`で渡した値も保存・実行前にcomponentのJSON Schemaで検証されるため，extensionは契約を迂回できません．実例は[`components/davis-nl/ui/nest-editor.html`](../components/davis-nl/ui/nest-editor.html)です．組み込みwidgetは後方互換用に残しますが，モデル固有の複雑な操作はこの仕組みでcomponent側へ置けます．
+Hostからの`render`には現在のsection値，該当JSON Schema，名前付きcontext，context解決error，sectionのpresentation宣言が入ります．extensionからは`ready`，`set-value`，`resize`を送れます．`set-value`で渡した値も保存・実行前にcomponentのJSON Schemaで検証されるため，extensionは契約を迂回できません．実例は[`components/davis-nl/ui/nest-editor.html`](../components/davis-nl/ui/nest-editor.html)です．組み込みwidgetは後方互換用に残しますが，モデル固有の複雑な操作はこの仕組みでcomponent側へ置けます．
+
+extensionが必要とする情報は，sectionの`context`へ名前付きで宣言します．初版は次のproviderを利用できます．
+
+| provider | 宣言 | 渡される値 |
+| --- | --- | --- |
+| `config` | `path` | Analysis Planの別config section |
+| `columns` | `input` | 入力slotで利用できる列とaliasの一覧 |
+| `distinct-values` | `input`と`column_from` | configが指す列のdistinct値，sample行数，打切り状態 |
+
+```yaml
+context:
+  roles:
+    provider: config
+    path: /roles
+  available_columns:
+    provider: columns
+    input: choice_data
+  alternatives:
+    provider: distinct-values
+    input: choice_data
+    column_from: /roles/alternative_id
+```
+
+入力fileのpathや全行はextensionへ渡しません．大量データの走査とdistinct値の上限管理はDavis側で行い，extensionは必要最小限のcontextだけを受け取ります．contextを解決できない場合もextension全体を停止せず，`context_errors`に名前ごとの理由を渡します．
 
 大きなschemaを分割したい場合は，inline値の代わりに安全なpackage相対pathを指定できます．JSONとYAMLの両方を利用できます．inlineと参照を同時に指定することはできません．
 

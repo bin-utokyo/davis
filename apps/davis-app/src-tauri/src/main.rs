@@ -478,6 +478,64 @@ fn validate_editor_presentation(
                 ));
             }
         }
+        if let Some(context) = section.get("context") {
+            let context = context
+                .as_object()
+                .ok_or_else(|| format!("UI section `{path}` context must be an object"))?;
+            for (name, provider) in context {
+                let provider = provider.as_object().ok_or_else(|| {
+                    format!("UI section `{path}` context `{name}` must be an object")
+                })?;
+                match provider.get("provider").and_then(Value::as_str) {
+                    Some("config") => {
+                        let reference = provider.get("path").and_then(Value::as_str).unwrap_or("");
+                        if !schema_contains_pointer(config_schema, reference) {
+                            return Err(format!(
+                                "UI section `{path}` context `{name}` has invalid config path `{reference}`"
+                            ));
+                        }
+                    }
+                    Some("columns") => validate_context_input(path, name, provider, inputs)?,
+                    Some("distinct-values") => {
+                        validate_context_input(path, name, provider, inputs)?;
+                        let reference = provider
+                            .get("column_from")
+                            .and_then(Value::as_str)
+                            .unwrap_or("");
+                        if !schema_contains_pointer(config_schema, reference) {
+                            return Err(format!(
+                                "UI section `{path}` context `{name}` has invalid column_from `{reference}`"
+                            ));
+                        }
+                    }
+                    Some(provider) => {
+                        return Err(format!(
+                            "UI section `{path}` context `{name}` uses unknown provider `{provider}`"
+                        ));
+                    }
+                    None => {
+                        return Err(format!(
+                            "UI section `{path}` context `{name}` requires provider"
+                        ));
+                    }
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
+fn validate_context_input(
+    section_path: &str,
+    context_name: &str,
+    provider: &serde_json::Map<String, Value>,
+    inputs: &serde_json::Map<String, Value>,
+) -> Result<(), String> {
+    let input = provider.get("input").and_then(Value::as_str).unwrap_or("");
+    if !inputs.contains_key(input) {
+        return Err(format!(
+            "UI section `{section_path}` context `{context_name}` refers to unknown input `{input}`"
+        ));
     }
     Ok(())
 }
@@ -901,6 +959,14 @@ mod tests {
             .unwrap()
             .contains("最上位scaleは1"));
         assert_eq!(nest_section["labels"]["estimate"], "推定 (右は初期値)");
+        assert_eq!(
+            nest_section["context"]["alternatives"]["provider"],
+            "distinct-values"
+        );
+        assert_eq!(
+            nest_section["context"]["alternatives"]["input"],
+            "choice_data"
+        );
         assert_eq!(
             nested.ui_extensions["nest-editor"].api_version,
             "davis.widget/v1"

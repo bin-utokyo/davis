@@ -125,7 +125,11 @@ presentation:
         widget: extension:nest-editor
         title: Nest構造と非類似度 λ
         description: 最上位scaleは1に正規化済みです．推定時の数値は結果ではなく初期値です．選択肢が1つだけのnestは実行時にλ=1へ固定されます．
-        alternatives_from: /roles/alternative_id
+        context:
+          alternatives:
+            provider: distinct-values
+            input: choice_data
+            column_from: /roles/alternative_id
         labels:
           mode: 非類似度λの扱い
           estimate: 推定 (右は初期値)

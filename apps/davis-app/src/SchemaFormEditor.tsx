@@ -13,8 +13,9 @@ export type JsonSchema = {
 };
 type FormSection = {
   bind: string; widget?: string; input?: string; title?: string; description?: string; labels?: Record<string, string>;
-  allow_constant?: boolean; show_coefficient?: boolean; alternatives_from?: string; parameters_from?: string;
+  allow_constant?: boolean; show_coefficient?: boolean; alternatives_from?: string; parameters_from?: string; context?: Record<string, ContextProvider>;
 };
+type ContextProvider = { provider: "config" | "columns" | "distinct-values"; path?: string; input?: string; column_from?: string };
 type InputPresentation = { title?: string; description?: string; widget?: string; preparation?: { component: string; version: string } };
 export type FormDefinition = {
   version?: string; inputs?: Record<string, InputPresentation>; sections?: FormSection[]; defaults?: Record<string, unknown>;
@@ -63,7 +64,7 @@ export function SchemaFormEditor({ definition, inputs, config, onAddSources, onI
         {widget === "nests" && <NestEditor section={section} value={asArray(value)} candidates={alternatives?.values ?? []} onChange={(next) => update(section.bind, next)} />}
         {widget === "parameter-settings" && <ParameterSettings section={section} schema={schema} value={asObject(value)} config={config} onChange={(next) => update(section.bind, next)} />}
         {(widget === "auto" || widget === "object") && <AutoSection section={section} schema={schema} value={value} onChange={(next) => update(section.bind, next)} />}
-        {extension && <ExtensionWidget section={section} extension={extension} schema={schema} value={value} candidates={alternatives?.values ?? []} onChange={(next) => update(section.bind, next)} />}
+        {extension && <ExtensionSection section={section} extension={extension} schema={schema} value={value} config={config} inputs={inputs} onChange={(next) => update(section.bind, next)} />}
         {!knownWidget(widget) && !extension && <YamlFallback section={section} value={value} onChange={(next) => update(section.bind, next)} reason={extensionId ? `UI extension ${extensionId}を読み込めません．` : `widget ${widget}はこのDesktopに未実装です．`} />}
       </div>;
     })}
@@ -71,10 +72,42 @@ export function SchemaFormEditor({ definition, inputs, config, onAddSources, onI
   </>;
 }
 
-function ExtensionWidget({ section, extension, schema, value, candidates, onChange }: { section: FormSection; extension: UiExtension; schema?: JsonSchema; value: unknown; candidates: string[]; onChange: (value: unknown) => void }) {
+function ExtensionSection({ section, extension, schema, value, config, inputs, onChange }: { section: FormSection; extension: UiExtension; schema?: JsonSchema; value: unknown; config: Record<string, unknown>; inputs: Record<string, FormInput | undefined>; onChange: (value: unknown) => void }) {
+  const [context, setContext] = useState<Record<string, unknown>>({}); const [contextErrors, setContextErrors] = useState<Record<string, string>>({});
+  useEffect(() => {
+    let active = true;
+    Promise.all(Object.entries(section.context ?? {}).map(async ([name, declaration]) => {
+      try { return [name, await resolveContext(declaration, config, inputs), undefined] as const; }
+      catch (reason) { return [name, undefined, String(reason)] as const; }
+    })).then((entries) => {
+      if (!active) return;
+      const resolvedContext: Record<string, unknown> = {}; const errors: Record<string, string> = {};
+      for (const [name, resolved, error] of entries) { if (error) errors[name] = error; else resolvedContext[name] = resolved; }
+      setContext(resolvedContext); setContextErrors(errors);
+    });
+    return () => { active = false; };
+  }, [section.context, config, inputs]);
+  return <ExtensionWidget section={section} extension={extension} schema={schema} value={value} context={context} contextErrors={contextErrors} onChange={onChange} />;
+}
+
+async function resolveContext(declaration: ContextProvider, config: Record<string, unknown>, inputs: Record<string, FormInput | undefined>): Promise<unknown> {
+  if (declaration.provider === "config") return getAt(config, declaration.path ?? "");
+  const input = declaration.input ? inputs[declaration.input] : undefined;
+  if (!input) throw new Error(`入力${declaration.input ?? ""}が未選択です．`);
+  const columns = bindingColumns(input);
+  if (declaration.provider === "columns") return columns;
+  const alias = getAt(config, declaration.column_from ?? "");
+  if (typeof alias !== "string" || !alias) throw new Error(`列参照${declaration.column_from ?? ""}が未設定です．`);
+  const binding = columns.find((candidate) => candidate.alias === alias);
+  const source = input.sources.find((candidate) => candidate.id === binding?.source);
+  if (!binding || !source) throw new Error(`列${alias}を入力${declaration.input ?? ""}から解決できません．`);
+  return invoke<DistinctValues>("inspect_distinct_values", { path: source.path, column: binding.column });
+}
+
+function ExtensionWidget({ section, extension, schema, value, context, contextErrors, onChange }: { section: FormSection; extension: UiExtension; schema?: JsonSchema; value: unknown; context: Record<string, unknown>; contextErrors: Record<string, string>; onChange: (value: unknown) => void }) {
   const frame = useRef<HTMLIFrameElement>(null); const [height, setHeight] = useState(180);
   const document = `<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; font-src data:; connect-src 'none';"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body>${extension.html}</body></html>`;
-  function render() { frame.current?.contentWindow?.postMessage({ source: "davis-host", api_version: "davis.widget/v1", type: "render", payload: { value, schema, candidates, section } }, "*"); }
+  function render() { frame.current?.contentWindow?.postMessage({ source: "davis-host", api_version: "davis.widget/v1", type: "render", payload: { value, schema, context, context_errors: contextErrors, section } }, "*"); }
   useEffect(() => {
     function receive(event: MessageEvent) {
       if (event.source !== frame.current?.contentWindow || !event.data || typeof event.data !== "object" || event.data.source !== "davis-widget" || event.data.api_version !== "davis.widget/v1") return;
@@ -84,7 +117,7 @@ function ExtensionWidget({ section, extension, schema, value, candidates, onChan
     }
     window.addEventListener("message", receive); return () => window.removeEventListener("message", receive);
   });
-  useEffect(render, [value, schema, candidates, section]);
+  useEffect(render, [value, schema, context, contextErrors, section]);
   return <><SectionTitle section={section} /><iframe className="ui-extension" ref={frame} title={section.title ?? section.bind} sandbox="allow-scripts" srcDoc={document} style={{ height }} onLoad={render} /></>;
 }
 
