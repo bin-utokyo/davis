@@ -55,6 +55,8 @@ davis desktop
 
 導入済みのDesktopとmodel componentは`davis installed`で確認できます．DesktopはOSごとのDavis user data directoryへ保存されるため，installしたときのdirectoryへ移動して起動する必要はありません．
 
+公式のMNL，Nested Logit，Recursive Logit，CSV変換componentを使う場合は，[Davis公式Component利用ガイド](official-components-guide.md)を参照してください．入力データの形，GUIとCLIの操作，設定可能なroleとparameter，Analysis Plan例をまとめています．人だけでなく，分析を支援するAIにも同じガイドを渡せます．
+
 ## 参加者ログイン
 
 運営から案内されたDavis WebのURLを指定します．
