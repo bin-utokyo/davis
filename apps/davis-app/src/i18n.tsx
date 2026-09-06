@@ -26,6 +26,9 @@ const english: Record<string, string> = {
   "表": "Table", "指標": "Metrics", "推定parameter": "Parameters", "予測値": "Predictions", "図": "Figure", "診断": "Diagnostics",
   "先頭200行を表示しています．": "Showing the first 200 rows.",
   "davis.ui/v1に対応するcomponentが見つかりません．": "No component with a davis.ui/v1 presentation was found.",
+  "利用できるcomponentがありません．先にDavis CLIで公式componentをインストールしてください．": "No components are available. Install the official components with Davis CLI first.",
+  "componentがまだインストールされていません．": "No components are installed yet.",
+  "Project workspaceは正しく選択されています．ターミナルで公式componentをインストールしてから，Workspaceを選択し直してください．": "Your project workspace is valid. Install the official components in a terminal, then select the workspace again.",
   "このcomponentはdavis.ui/v1に対応していません．": "This component does not support davis.ui/v1.",
   "{id}の入力データを選択してください．": "Select input data for {id}.", "{slot}の{source}について結合キーを選択してください．": "Select join keys for {source} in {slot}.",
   "先にWorkspaceを選択してください．": "Select a workspace first.", "読み込めませんでした": "Could not load",
@@ -38,6 +41,11 @@ const english: Record<string, string> = {
   "入力 {id} が未選択です．": "Input {id} is not selected.", "列参照 {id} が未設定です．": "Column reference {id} is not set.",
   "列 {column} を入力 {input} から解決できません．": "Could not resolve column {column} from input {input}.",
   "としてAnalysis Planへ保存します．": " is saved in the Analysis Plan.", "このsectionだけYAMLで編集できます．": "Only this section can be edited as YAML.",
+  "過去の実行を開き，標準artifact profileを使って比較します．": "Open previous runs and compare them using standard artifact profiles.",
+  "更新": "Refresh", "選択したRunを比較": "Compare selected runs", "このWorkspaceにはまだRunがありません．": "This workspace has no runs yet.",
+  "読み込めなかったRunがあります": "Some runs could not be loaded", "比較": "Compare", "結果を見る": "View results",
+  "artifact名ではなくManifestに記録されたmetrics・parameters profileを照合しています．": "Comparison uses the metrics and parameters profiles declared by the Manifest rather than artifact filenames.",
+  "選択したRunに比較可能なJSON／CSVの標準artifactがありません．": "The selected runs have no comparable standard JSON or CSV artifacts.",
 };
 
 type I18nContextValue = { locale: Locale; setLocale: (locale: Locale) => void; t: (japanese: string) => string };

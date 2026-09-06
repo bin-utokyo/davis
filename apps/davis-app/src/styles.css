@@ -141,6 +141,27 @@ td { font-size: 13px; }
 .metric-grid dd { font-size: 15px; font-weight: 700; margin: 5px 0 0; overflow-wrap: anywhere; }
 .result-table { max-height: 390px; overflow: auto; }
 .result-table th { background: white; position: sticky; top: 0; }
+.run-history-list { display: flex; flex-direction: column; gap: 9px; }
+.run-history-card { align-items: center; border: 1px solid #dce2db; border-radius: 12px; display: grid; gap: 12px; grid-template-columns: auto minmax(0, 1fr) auto auto; padding: 13px 14px; }
+.run-history-card.selected { background: #f0f5ef; border-color: #7e9b89; }
+.run-select { align-items: center; color: #65736c; display: flex; flex-direction: column; font-size: 10px; gap: 3px; }
+.run-select input { min-width: auto; }
+.run-history-main { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.run-history-main > span { color: #5d7066; font-family: ui-monospace, monospace; font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.run-history-main small { color: #758078; }
+.run-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 3px; }
+.run-tags span, .run-status { background: #e7ede7; border-radius: 999px; color: #496056; font-size: 10px; padding: 4px 7px; }
+.run-status.succeeded { background: #dff0e5; color: #286044; }
+.run-status.failed { background: #f8dfd8; color: #843c2b; }
+.run-status.cancelled { background: #eee8db; color: #6d5c33; }
+.history-warnings { background: #fff4d7; border-radius: 10px; color: #6e5a20; font-size: 12px; margin-bottom: 12px; padding: 10px 13px; }
+.history-warnings ul { margin-bottom: 0; overflow-wrap: anywhere; }
+.run-comparison { border-top: 1px solid #e5e9e3; margin-top: 22px; }
+.comparison-table { margin-top: 16px; }
+.comparison-table h4 { margin: 0 0 8px; }
+.comparison-table .result-table { border: 1px solid #dce1da; border-radius: 10px; }
+.comparison-table thead th:not(:first-child) { min-width: 170px; }
+.comparison-table thead small { color: #7a867f; display: block; font-weight: 400; margin-top: 3px; }
 .busy { position: fixed; right: 24px; bottom: 24px; border-radius: 999px; background: #17231e; color: white; padding: 11px 18px; box-shadow: 0 8px 24px rgba(0, 0, 0, .18); }
 .modal-backdrop { align-items: center; background: rgba(20, 31, 26, .48); display: flex; inset: 0; justify-content: center; padding: 32px; position: fixed; z-index: 40; }
 .catalog-dialog { background: #fbfcf8; border-radius: 18px; box-shadow: 0 24px 70px rgba(16, 29, 23, .28); max-height: min(760px, calc(100vh - 64px)); overflow: hidden; padding: 24px; width: min(820px, 100%); }
@@ -160,4 +181,6 @@ td { font-size: 13px; }
   .term-row { grid-template-columns: 1fr 100px; }
   .term-row.with-coefficient, .nest-row, .parameter-row { grid-template-columns: 1fr 1fr; }
   .term-row .inline-column-picker, .term-row > input:nth-last-child(2) { grid-column: 1 / -1; }
+  .run-history-card { grid-template-columns: auto minmax(0, 1fr) auto; }
+  .run-history-card > button { grid-column: 2 / -1; }
 }
