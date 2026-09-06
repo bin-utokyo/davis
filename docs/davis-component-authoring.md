@@ -224,6 +224,30 @@ presentation:
 
 sectionの`title`と`description`はcomponent固有の意味を説明します．`nests` widgetでは`labels.mode`，`labels.estimate`，`labels.fixed`，`labels.estimate_value`，`labels.fixed_value`を指定できるため，scaleの記号や正規化方法をDesktopへハードコードする必要はありません．未指定時は汎用表示へ戻ります．
 
+Desktopで日英を切り替えられるようにする場合，`presentation.ui`内の`component_name`，`title`，`description`，`labels`の各表示文字列を`{ja: ..., en: ...}`として記述できます．従来どおり単一文字列も利用でき，その場合は全言語で同じ文字列を表示します．選択中の言語がない場合は，もう一方の言語へfallbackします．JSON Schema標準の`title`と`description`は文字列のまま保ち，多言語表示は`x-davis-title`と`x-davis-description`へ同じ日英objectを指定します．
+
+```yaml
+configuration:
+  schema:
+    type: object
+    properties:
+      tolerance:
+        type: number
+        title: Tolerance
+        x-davis-title: {ja: 収束判定値, en: Convergence tolerance}
+presentation:
+  ui:
+    version: davis.ui/v1
+    component_name: {ja: 到達可能性計算, en: Accessibility calculator}
+    inputs:
+      persons:
+        title: {ja: 個人表, en: Person table}
+    sections:
+      - bind: /tolerance
+        title: {ja: 推定設定, en: Estimation settings}
+        widget: auto
+```
+
 ### Component同梱UI extension
 
 組み込みwidgetで表現できない操作のために，Davis本体を変更せずcomponent自身がUIを追加できます．`presentation.ui.extensions`へpackage相対pathを宣言し，sectionから`extension:<id>`として参照します．初版は依存fileを持たない自己完結HTML fragmentを最大512 KiBまで読み込みます．

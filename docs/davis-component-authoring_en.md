@@ -211,6 +211,30 @@ presentation:
 
 `bind` is a JSON Pointer into `configuration.schema`; omitted `widget` means `auto`. A free-form object or array that cannot be rendered still has a section-level YAML editor. Multiple-CSV preparation is a shared Davis `table_binding`, not a model-specific feature.
 
+For a bilingual Desktop presentation, write display strings under `component_name`, `title`, `description`, and `labels` as `{ja: ..., en: ...}` objects. A plain string remains valid and is shown in every language. If the selected language is absent, Desktop falls back to the other language. Keep the standard JSON Schema `title` and `description` fields as strings; use `x-davis-title` and `x-davis-description` for their bilingual Davis presentation values.
+
+```yaml
+configuration:
+  schema:
+    type: object
+    properties:
+      tolerance:
+        type: number
+        title: Tolerance
+        x-davis-title: {ja: 収束判定値, en: Convergence tolerance}
+presentation:
+  ui:
+    version: davis.ui/v1
+    component_name: {ja: 到達可能性計算, en: Accessibility calculator}
+    inputs:
+      persons:
+        title: {ja: 個人表, en: Person table}
+    sections:
+      - bind: /tolerance
+        title: {ja: 推定設定, en: Estimation settings}
+        widget: auto
+```
+
 ### Component-packaged UI extensions
 
 For an interaction that built-in widgets cannot express, a component can package a self-contained HTML fragment of at most 512 KiB and reference it as `extension:<id>`.

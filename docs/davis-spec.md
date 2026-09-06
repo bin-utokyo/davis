@@ -2004,6 +2004,8 @@ outputs:
 
 `presentation.ui.extensions`はcomponent package同梱のUI extensionを宣言します．sectionは`widget: extension:<id>`で参照し，Davis本体へmodel ID固有のeditorやwidgetを追加しません．初版の`davis.widget/v1`は最大512 KiBの自己完結HTML fragmentをsandbox化した`iframe`で実行し，Hostから`value`，JSON Schema，名前付きcontext，section宣言を渡します．context providerは`config`，`columns`，`distinct-values`を持ち，Manifest内の安全なconfig pathと入力slotだけを参照します．入力file pathや全行はUIへ公開せず，解決不能なcontextは`context_errors`として通知します．extensionは`ready`，`set-value`，`resize` messageだけを返し，network，filesystem，shell，親DOMへ直接アクセスできません．sourceは安全なpackage相対pathに限定し，component install時にも存在を検証します．保存・実行時の正本は引き続き`configuration.schema`であり，UI extensionは検証を迂回しません．完全なcustom editorは通常契約にせず，将来必要になった場合も同じsandbox・権限境界の明示的なescape hatchとして扱います．
 
+Desktopは日本語と英語を切り替え，初回はOSの優先言語を使い，以後はuserの選択をlocalに保存します．`presentation.ui`の`component_name`，`title`，`description`，`labels`は単一文字列または`{ja, en}`のLocalizedTextを受け付けます．選択言語がなければ他方へfallbackします．JSON Schema標準のannotation型を壊さないため，schema form用の多言語表記は`x-davis-title`と`x-davis-description`にLocalizedTextを記載し，`title`と`description`自体は標準どおり文字列を維持します．component同梱UI extensionには選択済みのsection表示文言を渡すため，Davis本体にcomponent固有の翻訳を追加しません．
+
 入力slotは原則として`inputs`で固定します．join等で任意名の補助入力を扱うcomponentは`additional_inputs.media_types`を宣言できます．Runtimeは固定・追加のどちらでも同じFile解決，media type検査，digest記録を適用します．
 
 正規の実行契約は`runtime.executor: process`であり，言語名を中央contractへ列挙しません．Python，R，Julia，Node.js，Java，Rust，C++等はすべて同じ外部process境界を利用します．`requirements`は必要command，任意のSemVer条件，`version_arguments`，OS別導入案内を宣言します．Davisは実行前検査と案内だけを行い，一般言語環境を自動installしません．旧`runtime.kind: python`と`runtime.kind: native`はprocess実行として読み込みます．sandboxが必要な用途では`wasm`と`container`を後から追加できます．
