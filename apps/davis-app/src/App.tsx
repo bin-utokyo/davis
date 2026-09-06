@@ -9,9 +9,12 @@ type Validation = { valid: boolean; plan: string; component: { id: string; versi
 type ArtifactProfile = "table" | "metrics" | "parameters" | "predictions" | "figure" | "diagnostics" | "report";
 type Artifact = { path: string; media_type: string; profile?: ArtifactProfile; size?: number };
 type CompletedRun = {
-  run_directory: string; request: { run_id: string; component: { id: string; version: string } };
+  run_directory: string; request: { run_id: string; operation: string; component: { id: string; version: string; kind?: string } };
   result: { status: string; artifacts: Record<string, Artifact>; extensions: Record<string, Artifact> };
 };
+type RunHistoryEntry = { run: CompletedRun; plan_name: string; label?: string; tags: string[]; modified_at_unix_ms: number };
+type RunHistoryResponse = { runs: RunHistoryEntry[]; warnings: string[] };
+type RunComparison = { entry: RunHistoryEntry; metrics: Record<string, unknown>; parameters: Record<string, Record<string, string>> };
 type ComponentEditor = {
   manifest: { id: string; name: string; version: string; kind: string; operations: string[]; inputs: Array<{ name: string; required: boolean }>; outputs: { artifacts: Record<string, { profile?: ArtifactProfile; media_types: string[]; required: boolean }> } };
   config_schema: JsonSchema; ui_schema: FormDefinition; ui_extensions: Record<string, { api_version: string; html: string }>;
@@ -38,12 +41,19 @@ export default function App() {
   const [inputs, setInputs] = useState<Record<string, FormInput | undefined>>({}); const [config, setConfig] = useState<Record<string, unknown>>({});
   const [preservedRun, setPreservedRun] = useState<Record<string, unknown>>({}); const [yamlPreview, setYamlPreview] = useState("");
   const [codeMode, setCodeMode] = useState(false); const [validation, setValidation] = useState<Validation>();
-  const [completed, setCompleted] = useState<CompletedRun>(); const [artifactPreviews, setArtifactPreviews] = useState<Record<string, ArtifactPreview>>({});
+  const [completed, setCompleted] = useState<CompletedRun>(); const [completedEditor, setCompletedEditor] = useState<ComponentEditor>(); const [artifactPreviews, setArtifactPreviews] = useState<Record<string, ArtifactPreview>>({});
+  const [runHistory, setRunHistory] = useState<RunHistoryEntry[]>([]); const [historyWarnings, setHistoryWarnings] = useState<string[]>([]);
+  const [selectedRunIds, setSelectedRunIds] = useState<string[]>([]); const [comparison, setComparison] = useState<RunComparison[]>([]);
   const [catalogTarget, setCatalogTarget] = useState<string>(); const [catalogFiles, setCatalogFiles] = useState<CatalogFile[]>([]); const [catalogSearch, setCatalogSearch] = useState("");
   const [busy, setBusy] = useState(false); const [error, setError] = useState(""); const resultRef = useRef<HTMLElement>(null);
 
   useEffect(() => { if (completed) requestAnimationFrame(() => resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })); }, [completed]);
   async function perform(action: () => Promise<void>) { setBusy(true); setError(""); try { await action(); } catch (reason) { setError(String(reason)); } finally { setBusy(false); } }
+  async function refreshHistory(workspace = repository) {
+    const history = await invoke<RunHistoryResponse>("list_project_runs", { repository: workspace });
+    setRunHistory(history.runs); setHistoryWarnings(history.warnings);
+    setSelectedRunIds((current) => current.filter((id) => history.runs.some((entry) => entry.run.request.run_id === id)));
+  }
 
   async function chooseRepository() {
     const selected = await open({ directory: true, multiple: false }); if (typeof selected !== "string") return;
@@ -51,13 +61,13 @@ export default function App() {
     await perform(async () => {
       const definitions = await invoke<ComponentEditor[]>("component_editor_definitions", { repository: selected }); const definition = definitions[0];
       if (!definition) throw new Error("davis.ui/v1に対応するcomponentが見つかりません．");
-      setEditorOptions(definitions); selectDefinition(definition);
+      setEditorOptions(definitions); selectDefinition(definition); await refreshHistory(selected);
     });
   }
   function selectDefinition(definition: ComponentEditor) {
     setEditor(definition); setPlanName(defaultPlanName(definition)); setRunLabel(""); setInputs({});
     setConfig(structuredClone(definition.ui_schema.defaults ?? {})); setPreservedRun({}); setPlanPath(""); setYamlPreview("");
-    setCodeMode(false); setValidation(undefined); setCompleted(undefined); setArtifactPreviews({});
+    setCodeMode(false); setValidation(undefined); setCompleted(undefined); setCompletedEditor(undefined); setArtifactPreviews({});
   }
   function selectEditor(identity: string) { const definition = editorOptions.find((item) => `${item.manifest.id}@${item.manifest.version}` === identity); if (definition) selectDefinition(definition); }
   async function newPlan() {
@@ -128,7 +138,7 @@ export default function App() {
     await perform(async () => {
       const target = overwrite ? planPath : await save({ defaultPath: repository ? `${repository}/model.yaml` : "model.yaml", filters: [{ name: "Davis analysis plan", extensions: ["yaml", "yml"] }] });
       if (!target) return; const plan = buildPlan(target); const saved = await invoke<string>("save_analysis_plan", { repository, path: target, plan });
-      setPlanPath(saved); setYamlPreview(await invoke<string>("render_analysis_plan", { plan })); setValidation(await invoke<Validation>("validate_analysis_plan", { repository, plan: saved })); setCompleted(undefined);
+      setPlanPath(saved); setYamlPreview(await invoke<string>("render_analysis_plan", { plan })); setValidation(await invoke<Validation>("validate_analysis_plan", { repository, plan: saved })); setCompleted(undefined); setCompletedEditor(undefined);
       if (execute) await showCompleted(await invoke<CompletedRun>("run_analysis_plan", { repository, plan: saved }));
     });
   }
@@ -138,13 +148,13 @@ export default function App() {
     await perform(async () => {
       const loaded = await invoke<EditablePlan>("load_analysis_plan_for_editing", { repository, path: selected });
       setEditorOptions((current) => current.some((item) => item.manifest.id === loaded.editor.manifest.id && item.manifest.version === loaded.editor.manifest.version) ? current : [...current, loaded.editor]);
-      if (isComposedEditor(loaded.editor)) await hydratePlan(loaded, selected); else { setEditor(loaded.editor); setPlanPath(selected); setRunLabel(loaded.plan.run?.label ?? ""); setYamlPreview(loaded.yaml); setCodeMode(true); setCompleted(undefined); setArtifactPreviews({}); setValidation(undefined); }
+      if (isComposedEditor(loaded.editor)) await hydratePlan(loaded, selected); else { setEditor(loaded.editor); setPlanPath(selected); setRunLabel(loaded.plan.run?.label ?? ""); setYamlPreview(loaded.yaml); setCodeMode(true); setCompleted(undefined); setCompletedEditor(undefined); setArtifactPreviews({}); setValidation(undefined); }
     });
   }
   async function hydratePlan(loaded: EditablePlan, path: string) {
     const loadedInputs: Record<string, FormInput | undefined> = {}; const issues: string[] = [];
     setEditor(loaded.editor); setPlanName(loaded.plan.name); setRunLabel(loaded.plan.run?.label ?? ""); setConfig(structuredClone(loaded.plan.config)); setPreservedRun(loaded.plan.run ?? {});
-    setPlanPath(path); setYamlPreview(loaded.yaml); setCodeMode(false); setValidation(undefined); setCompleted(undefined); setArtifactPreviews({});
+    setPlanPath(path); setYamlPreview(loaded.yaml); setCodeMode(false); setValidation(undefined); setCompleted(undefined); setCompletedEditor(undefined); setArtifactPreviews({});
     for (const declaration of loaded.editor.manifest.inputs) { const input = loaded.plan.inputs[declaration.name]; if (!input) continue; try { loadedInputs[declaration.name] = await hydrateInputBinding(declaration.name, input, loaded.resolved_sources); } catch (reason) { issues.push(`${declaration.name}を読み込めませんでした: ${String(reason)}`); } }
     setInputs(loadedInputs); if (issues.length) setError(issues.join("\n"));
   }
@@ -157,11 +167,34 @@ export default function App() {
   }
 
   async function saveCodePlan(execute: boolean) { await perform(async () => { if (!planPath) throw new Error("保存先がありません．既存Planを開き直してください．"); await invoke<string>("save_analysis_plan_yaml", { repository, path: planPath, yaml: yamlPreview }); setValidation(await invoke<Validation>("validate_analysis_plan", { repository, plan: planPath })); if (execute) await showCompleted(await invoke<CompletedRun>("run_analysis_plan", { repository, plan: planPath })); }); }
-  async function showCompleted(run: CompletedRun) {
-    setCompleted(run); const definitions = resultDefinitions(editor, run);
+  async function showCompleted(run: CompletedRun, resultEditor = editor) {
+    setCompleted(run); setCompletedEditor(resultEditor); const definitions = resultDefinitions(resultEditor, run);
     const previews = await Promise.all(definitions.map(async (definition) => { try { return await invoke<ArtifactPreview>("preview_run_artifact", { repository, runId: run.request.run_id, artifact: definition.artifact }); } catch { return undefined; } }));
     setArtifactPreviews(Object.fromEntries(previews.filter(Boolean).map((preview) => [preview!.name, preview!])));
+    await refreshHistory();
   }
+  async function openHistoricalRun(entry: RunHistoryEntry) { await perform(async () => {
+    const identity = entry.run.request.component; let resultEditor = editorOptions.find((item) => item.manifest.id === identity.id && item.manifest.version === identity.version);
+    if (!resultEditor) { try { resultEditor = await invoke<ComponentEditor>("component_editor_definition", { repository, componentId: identity.id, version: identity.version }); } catch { resultEditor = undefined; } }
+    await showCompleted(await invoke<CompletedRun>("load_project_run", { repository, runId: entry.run.request.run_id }), resultEditor);
+  }); }
+  function toggleRun(runId: string) { setSelectedRunIds((current) => current.includes(runId) ? current.filter((id) => id !== runId) : [...current, runId]); setComparison([]); }
+  async function compareSelectedRuns() { await perform(async () => {
+    const selected = selectedRunIds.map((id) => runHistory.find((entry) => entry.run.request.run_id === id)).filter((entry): entry is RunHistoryEntry => Boolean(entry));
+    const compared = await Promise.all(selected.map(async (entry): Promise<RunComparison> => {
+      const metrics: Record<string, unknown> = {}; const parameters: Record<string, Record<string, string>> = {};
+      for (const [artifact, descriptor] of [...Object.entries(entry.run.result.artifacts), ...Object.entries(entry.run.result.extensions)]) {
+        if (!descriptor.profile || !["metrics", "parameters"].includes(descriptor.profile)) continue;
+        try {
+          const preview = await invoke<ArtifactPreview>("preview_run_artifact", { repository, runId: entry.run.request.run_id, artifact });
+          if (descriptor.profile === "metrics") Object.assign(metrics, comparisonMetrics(preview.content, artifact));
+          if (descriptor.profile === "parameters") Object.assign(parameters, comparisonParameters(preview.content));
+        } catch { /* Unsupported artifact formats stay visible in the run detail. */ }
+      }
+      return { entry, metrics, parameters };
+    }));
+    setComparison(compared);
+  }); }
   async function openRunDirectory() { if (completed) await perform(async () => invoke("open_run_directory", { repository, runId: completed.request.run_id })); }
 
   const editorReady = repository.length > 0 && (editor?.manifest.inputs.filter((item) => item.required).every((item) => Boolean(inputs[item.name]?.sources.length)) ?? false);
@@ -175,13 +208,34 @@ export default function App() {
         <div className="actions editor-actions"><button className="secondary" disabled={!editorReady || busy} onClick={previewPlan}>YAMLを確認</button><button className="secondary" disabled={!editorReady || busy} onClick={() => saveDraft(false)}>別名で保存</button><button className="secondary" disabled={!editorReady || !planPath || busy} onClick={() => saveDraft(false, true)}>上書き保存</button><button disabled={!editorReady || busy} onClick={() => saveDraft(true, Boolean(planPath))}>{planPath ? "上書きして推定" : "保存して推定"}</button></div>
         {validation && <div className="success">{validation.component.id} {validation.component.version}として保存・検証しました．</div>}{planPath && <div className="plan-path">{planPath}</div>}{yamlPreview && <textarea className="yaml-preview" readOnly value={yamlPreview} aria-label="生成されたmodel.yaml" />}</>}
     </section>
-    {completed && <section ref={resultRef}><SectionHeading number="3" title="Run result" description={completed.request.run_id} /><div className="result-views">{resultDefinitions(editor, completed).map((definition) => { const preview = artifactPreviews[definition.artifact]; return preview ? <ResultPreview key={definition.artifact} definition={definition} preview={preview} /> : null; })}</div><div className="run-directory-row"><div className="run-directory">{completed.run_directory}</div><button className="secondary" disabled={busy} onClick={openRunDirectory}>結果フォルダを開く</button></div><div className="artifacts">{[...Object.entries(completed.result.artifacts), ...Object.entries(completed.result.extensions)].map(([name, artifact]) => <article key={name}><strong>{name}</strong><span>{artifact.path}</span><small>{artifact.profile ? `${artifact.profile} · ` : ""}{artifact.media_type}{artifact.size ? ` · ${artifact.size} bytes` : ""}</small></article>)}</div></section>}
+    {repository && <RunHistoryPanel entries={runHistory} warnings={historyWarnings} selected={selectedRunIds} comparison={comparison} busy={busy} onRefresh={() => perform(() => refreshHistory())} onToggle={toggleRun} onOpen={openHistoricalRun} onCompare={compareSelectedRuns} />}
+    {completed && <section ref={resultRef}><SectionHeading number="4" title="Run result" description={completed.request.run_id} /><div className="result-views">{resultDefinitions(completedEditor, completed).map((definition) => { const preview = artifactPreviews[definition.artifact]; return preview ? <ResultPreview key={definition.artifact} definition={definition} preview={preview} /> : null; })}</div><div className="run-directory-row"><div className="run-directory">{completed.run_directory}</div><button className="secondary" disabled={busy} onClick={openRunDirectory}>結果フォルダを開く</button></div><div className="artifacts">{[...Object.entries(completed.result.artifacts), ...Object.entries(completed.result.extensions)].map(([name, artifact]) => <article key={name}><strong>{name}</strong><span>{artifact.path}</span><small>{artifact.profile ? `${artifact.profile} · ` : ""}{artifact.media_type}{artifact.size ? ` · ${artifact.size} bytes` : ""}</small></article>)}</div></section>}
     {catalogTarget && <div className="modal-backdrop" onMouseDown={() => setCatalogTarget(undefined)}><div className="catalog-dialog" onMouseDown={(event) => event.stopPropagation()}><div className="catalog-heading"><div><h2>Davis Catalogから追加</h2><p><code>{catalogTarget}</code>へ追加するファイルを選択すると，自動で共有データ領域へダウンロードします．</p></div><button className="text-button" onClick={() => setCatalogTarget(undefined)}>閉じる</button></div><input className="catalog-search" autoFocus value={catalogSearch} onChange={(event) => setCatalogSearch(event.target.value)} placeholder="データセット名，ファイル名，列名を検索" /><div className="catalog-list">{catalogFiles.filter((file) => catalogMatch(file, catalogSearch)).slice(0, 100).map((file) => <button className="catalog-item" key={`${file.dataset_id}/${file.file_id}`} onClick={() => selectCatalogFile(file)}><strong>{file.title}</strong><span>{file.dataset_id} / {file.file_id}</span><small>{file.path} · {formatBytes(file.size)}{file.columns.length ? ` · ${file.columns.slice(0, 6).join(", ")}` : ""}</small></button>)}</div></div></div>}
     {busy && <div className="busy">処理中です…</div>}
   </main>;
 }
 
 function SectionHeading({ number, title, description }: { number: string; title: string; description: string }) { return <div className="section-heading"><span>{number}</span><div><h2>{title}</h2><p>{description}</p></div></div>; }
+function RunHistoryPanel({ entries, warnings, selected, comparison, busy, onRefresh, onToggle, onOpen, onCompare }: { entries: RunHistoryEntry[]; warnings: string[]; selected: string[]; comparison: RunComparison[]; busy: boolean; onRefresh: () => void; onToggle: (runId: string) => void; onOpen: (entry: RunHistoryEntry) => void; onCompare: () => void }) {
+  return <section><div className="heading-with-actions"><SectionHeading number="3" title="Run history" description="過去の実行を開き，標準artifact profileを使って比較します．" /><div className="top-actions"><button className="secondary" disabled={busy} onClick={onRefresh}>更新</button><button disabled={busy || selected.length < 2} onClick={onCompare}>選択したRunを比較 ({selected.length})</button></div></div>
+    {!entries.length && <div className="empty-state">このWorkspaceにはまだRunがありません．</div>}
+    {warnings.length > 0 && <details className="history-warnings"><summary>読み込めなかったRunが{warnings.length}件あります</summary><ul>{warnings.map((warning) => <li key={warning}>{warning}</li>)}</ul></details>}
+    <div className="run-history-list">{entries.map((entry) => { const runId = entry.run.request.run_id; return <article className={selected.includes(runId) ? "run-history-card selected" : "run-history-card"} key={runId}><label className="run-select"><input type="checkbox" checked={selected.includes(runId)} onChange={() => onToggle(runId)} /><span>比較</span></label><div className="run-history-main"><strong>{entry.label || entry.plan_name}</strong><span>{runId}</span><small>{formatRunDate(entry.modified_at_unix_ms)} · {entry.run.request.component.id} {entry.run.request.component.version} · {entry.run.request.operation}</small>{entry.tags.length > 0 && <div className="run-tags">{entry.tags.map((tag) => <span key={tag}>{tag}</span>)}</div>}</div><span className={`run-status ${entry.run.result.status}`}>{entry.run.result.status}</span><button className="secondary" onClick={() => onOpen(entry)}>結果を見る</button></article>; })}</div>
+    {comparison.length > 0 && <RunComparisonView runs={comparison} />}
+  </section>;
+}
+function RunComparisonView({ runs }: { runs: RunComparison[] }) {
+  const metricNames = [...new Set(runs.flatMap((run) => Object.keys(run.metrics)))].sort();
+  const parameterNames = [...new Set(runs.flatMap((run) => Object.keys(run.parameters)))].sort();
+  return <div className="run-comparison"><div className="subsection-heading"><div><h3>Run comparison</h3><p>artifact名ではなくManifestに記録されたmetrics・parameters profileを照合しています．</p></div></div>
+    {!metricNames.length && !parameterNames.length && <div className="empty-state">選択したRunに比較可能なJSON／CSVの標準artifactがありません．</div>}
+    {metricNames.length > 0 && <ComparisonTable title="Metrics" names={metricNames} runs={runs} value={(run, name) => run.metrics[name]} />}
+    {parameterNames.length > 0 && <ComparisonTable title="Parameters (estimate)" names={parameterNames} runs={runs} value={(run, name) => run.parameters[name]?.estimate} />}
+  </div>;
+}
+function ComparisonTable({ title, names, runs, value }: { title: string; names: string[]; runs: RunComparison[]; value: (run: RunComparison, name: string) => unknown }) {
+  return <div className="comparison-table"><h4>{title}</h4><div className="result-table"><table><thead><tr><th>Name</th>{runs.map((run) => <th key={run.entry.run.request.run_id}>{run.entry.label || run.entry.plan_name}<small>{run.entry.run.request.component.id}</small></th>)}</tr></thead><tbody>{names.map((name) => <tr key={name}><th>{name}</th>{runs.map((run) => <td key={run.entry.run.request.run_id}>{formatResultValue(value(run, name))}</td>)}</tr>)}</tbody></table></div></div>;
+}
 function isComposedEditor(editor?: ComponentEditor) { return editor?.ui_schema.version === "davis.ui/v1"; }
 function defaultPlanName(editor: ComponentEditor) { return `${editor.manifest.id.split("/").pop() ?? "component"}-analysis`; }
 function sourceId(path: string) { const raw = path.split(/[\\/]/).pop()?.replace(/\.[^.]+$/, "") ?? "data"; return raw.replace(/[^A-Za-z0-9_]+/g, "_").replace(/^\d/, "data_$&") || "data"; }
@@ -190,11 +244,12 @@ function serializeSource(source: FormSource, absolutePath: boolean): Record<stri
 async function hydrateSource(key: string, source: PlanInput, resolved: Record<string, string>): Promise<FormSource> { const path = resolved[key]; if (!path) throw new Error(`${key}の入力ファイルを解決できません．`); if (source.kind === "local" && source.path) return { id: sourceId(source.path), path, serializedPath: source.path, read: source.read, origin: { kind: "local" }, profile: await invoke<CsvProfile>("inspect_csv_file", { path }) }; if (source.kind === "catalog" && source.dataset_id && source.file_id) return { id: sourceId(source.file_id), path, serializedPath: source.file_id, origin: { kind: "catalog", dataset_id: source.dataset_id, file_id: source.file_id, revision: source.revision }, profile: await invoke<CsvProfile>("inspect_csv_file", { path }) }; throw new Error(`${key}はGUIで扱えない入力形式です．`); }
 function catalogMatch(file: CatalogFile, search: string) { const needle = search.trim().toLocaleLowerCase(); return !needle || [file.title, file.dataset_id, file.file_id, file.path, ...file.columns].some((value) => value.toLocaleLowerCase().includes(needle)); }
 function formatBytes(size: number) { if (size < 1024) return `${size} B`; if (size < 1024 ** 2) return `${(size / 1024).toFixed(1)} KiB`; return `${(size / 1024 ** 2).toFixed(1)} MiB`; }
+function formatRunDate(unixMs: number) { if (!unixMs) return "日時不明"; return new Intl.DateTimeFormat("ja-JP", { dateStyle: "medium", timeStyle: "short" }).format(new Date(unixMs)); }
 function PathField({ value, placeholder, onChange, onChoose }: { value: string; placeholder: string; onChange: (value: string) => void; onChoose: () => void }) { return <div className="path-field"><input value={value} placeholder={placeholder} onChange={(event) => onChange(event.target.value)} /><button className="secondary" onClick={onChoose}>選択</button></div>; }
 function resultDefinitions(editor: ComponentEditor | undefined, run: CompletedRun): ResultDefinition[] {
   const explicit = (editor?.ui_schema.results ?? []) as ResultDefinition[];
   const names = new Set(explicit.map((definition) => definition.artifact));
-  const inferred = Object.entries(run.result.artifacts).flatMap(([artifact, descriptor]): ResultDefinition[] => {
+  const inferred = [...Object.entries(run.result.artifacts), ...Object.entries(run.result.extensions)].flatMap(([artifact, descriptor]): ResultDefinition[] => {
     if (names.has(artifact) || !descriptor.profile || !["application/json", "text/csv"].includes(descriptor.media_type)) return [];
     const table = ["table", "parameters", "predictions"].includes(descriptor.profile);
     return [{ artifact, title: profileTitle(descriptor.profile), widget: table ? "table" : "key-value" }];
@@ -208,3 +263,16 @@ function ResultPreview({ definition, preview }: { definition: ResultDefinition; 
 function KeyValuePreview({ content }: { content: unknown }) { if (!content || typeof content !== "object" || Array.isArray(content)) return <pre>{formatResultValue(content)}</pre>; return <dl className="metric-grid">{Object.entries(content).map(([key, value]) => <div key={key}><dt>{key}</dt><dd>{formatResultValue(value)}</dd></div>)}</dl>; }
 function isTablePreview(content: unknown): content is { columns: string[]; rows: string[][]; truncated: boolean } { if (!content || typeof content !== "object") return false; const candidate = content as { columns?: unknown; rows?: unknown }; return Array.isArray(candidate.columns) && Array.isArray(candidate.rows); }
 function formatResultValue(value: unknown) { if (typeof value === "number") return Number.isInteger(value) ? String(value) : value.toPrecision(6); if (typeof value === "string" || typeof value === "boolean") return String(value); if (value === null || value === undefined) return "—"; return JSON.stringify(value); }
+function comparisonMetrics(content: unknown, artifact: string): Record<string, unknown> {
+  if (content && typeof content === "object" && !Array.isArray(content) && !isTablePreview(content)) return Object.fromEntries(Object.entries(content).map(([name, value]) => [artifact === "metrics" ? name : `${artifact}.${name}`, value]));
+  if (!isTablePreview(content)) return {};
+  const nameIndex = firstColumn(content.columns, ["name", "metric", "key"]); const valueIndex = firstColumn(content.columns, ["value", "estimate"]);
+  if (nameIndex < 0 || valueIndex < 0) return {};
+  return Object.fromEntries(content.rows.filter((row) => row[nameIndex]).map((row) => [row[nameIndex], row[valueIndex]]));
+}
+function comparisonParameters(content: unknown): Record<string, Record<string, string>> {
+  if (!isTablePreview(content)) return {};
+  const nameIndex = content.columns.indexOf("name"); if (nameIndex < 0) return {};
+  return Object.fromEntries(content.rows.filter((row) => row[nameIndex]).map((row) => [row[nameIndex], Object.fromEntries(content.columns.map((column, index) => [column, row[index] ?? ""]))]));
+}
+function firstColumn(columns: string[], candidates: string[]) { return candidates.map((candidate) => columns.indexOf(candidate)).find((index) => index >= 0) ?? -1; }

@@ -2,6 +2,7 @@ use std::collections::BTreeMap;
 use std::fs;
 use std::io::Write;
 use std::path::{Path, PathBuf};
+use std::time::UNIX_EPOCH;
 
 use davis_client::{remote::DavisService, session};
 use davis_core::CatalogCache;
@@ -54,6 +55,22 @@ struct ArtifactPreviewResponse {
     name: String,
     media_type: String,
     content: Value,
+}
+
+#[derive(Serialize)]
+struct RunHistoryResponse {
+    runs: Vec<RunHistoryEntry>,
+    warnings: Vec<String>,
+}
+
+#[derive(Serialize)]
+struct RunHistoryEntry {
+    run: CompletedRun,
+    plan_name: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    label: Option<String>,
+    tags: Vec<String>,
+    modified_at_unix_ms: u64,
 }
 
 #[derive(Serialize)]
@@ -759,6 +776,112 @@ fn run_analysis_plan(repository: PathBuf, plan: PathBuf) -> Result<CompletedRun,
 
 #[tauri::command]
 #[allow(clippy::needless_pass_by_value)]
+fn list_project_runs(repository: PathBuf) -> Result<RunHistoryResponse, String> {
+    if !repository.is_dir() {
+        return Err(format!(
+            "repository does not exist: {}",
+            repository.display()
+        ));
+    }
+    let run_root = repository.join("davis-runs");
+    if !run_root.exists() {
+        return Ok(RunHistoryResponse {
+            runs: Vec::new(),
+            warnings: Vec::new(),
+        });
+    }
+    let entries = fs::read_dir(&run_root)
+        .map_err(|error| format!("failed to read {}: {error}", run_root.display()))?;
+    let mut runs = Vec::new();
+    let mut warnings = Vec::new();
+    for entry in entries {
+        let entry = match entry {
+            Ok(entry) => entry,
+            Err(error) => {
+                warnings.push(format!(
+                    "Run directory entryを読み込めませんでした: {error}"
+                ));
+                continue;
+            }
+        };
+        if !entry.file_type().is_ok_and(|kind| kind.is_dir()) {
+            continue;
+        }
+        let run_id = entry.file_name().to_string_lossy().into_owned();
+        let run = match read_completed_run(&run_root, &run_id) {
+            Ok(run) => run,
+            Err(error) => {
+                warnings.push(error);
+                continue;
+            }
+        };
+        let plan = AnalysisPlan::read(&entry.path().join("model.yaml")).ok();
+        let modified_at_unix_ms = entry
+            .metadata()
+            .and_then(|metadata| metadata.modified())
+            .ok()
+            .and_then(|modified| modified.duration_since(UNIX_EPOCH).ok())
+            .map_or(0, |duration| {
+                u64::try_from(duration.as_millis()).unwrap_or(u64::MAX)
+            });
+        runs.push(RunHistoryEntry {
+            plan_name: plan
+                .as_ref()
+                .map_or_else(|| run_id.clone(), |plan| plan.name.clone()),
+            label: plan.as_ref().and_then(|plan| plan.run.label.clone()),
+            tags: plan.map_or_else(Vec::new, |plan| plan.run.tags),
+            run,
+            modified_at_unix_ms,
+        });
+    }
+    runs.sort_by(|left, right| {
+        right
+            .modified_at_unix_ms
+            .cmp(&left.modified_at_unix_ms)
+            .then_with(|| right.run.request.run_id.cmp(&left.run.request.run_id))
+    });
+    Ok(RunHistoryResponse { runs, warnings })
+}
+
+#[tauri::command]
+#[allow(clippy::needless_pass_by_value)]
+fn load_project_run(repository: PathBuf, run_id: String) -> Result<CompletedRun, String> {
+    if !repository.is_dir() {
+        return Err(format!(
+            "repository does not exist: {}",
+            repository.display()
+        ));
+    }
+    read_completed_run(&repository.join("davis-runs"), &run_id)
+}
+
+fn read_completed_run(run_root: &Path, run_id: &str) -> Result<CompletedRun, String> {
+    if run_id.is_empty()
+        || Path::new(run_id).components().count() != 1
+        || run_id == "."
+        || run_id == ".."
+    {
+        return Err(format!("invalid run id: {run_id}"));
+    }
+    let run_directory = run_root.join(run_id);
+    let run_path = run_directory.join("run.json");
+    let mut run: CompletedRun = serde_json::from_slice(
+        &fs::read(&run_path)
+            .map_err(|error| format!("failed to read {}: {error}", run_path.display()))?,
+    )
+    .map_err(|error| format!("invalid run record {}: {error}", run_path.display()))?;
+    if run.request.run_id != run_id || run.result.run_id != run_id {
+        return Err(format!(
+            "run record {} does not match directory name `{run_id}`",
+            run_path.display()
+        ));
+    }
+    run.run_directory = run_directory;
+    Ok(run)
+}
+
+#[tauri::command]
+#[allow(clippy::needless_pass_by_value)]
 fn open_run_directory(repository: PathBuf, run_id: String) -> Result<(), String> {
     if !repository.is_dir() {
         return Err(format!(
@@ -920,6 +1043,8 @@ fn main() {
             save_analysis_plan_yaml,
             validate_analysis_plan,
             run_analysis_plan,
+            list_project_runs,
+            load_project_run,
             open_run_directory,
             preview_run_artifact
         ])
@@ -934,14 +1059,84 @@ mod tests {
     use serde_json::json;
 
     use super::{
-        component_editor_definitions, editor_definition, editor_response,
-        load_analysis_plan_for_editing, normalize_editor_presentation, parse_yaml_value,
-        preview_csv, render_plan, render_yaml_value, save_analysis_plan_yaml,
+        component_editor_definitions, editor_definition, editor_response, list_project_runs,
+        load_analysis_plan_for_editing, load_project_run, normalize_editor_presentation,
+        parse_yaml_value, preview_csv, render_plan, render_yaml_value, save_analysis_plan_yaml,
         validate_editor_presentation, ComponentManifest, Value,
     };
 
     fn repository() -> PathBuf {
         PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../..")
+    }
+
+    #[test]
+    fn lists_and_loads_persisted_runs_without_trusting_recorded_paths() {
+        let temporary = tempfile::tempdir().unwrap();
+        let run_directory = temporary.path().join("davis-runs/example-run");
+        std::fs::create_dir_all(&run_directory).unwrap();
+        std::fs::write(
+            run_directory.join("model.yaml"),
+            r"api_version: davis.analysis/v1alpha1
+name: comparison-plan
+component: {id: example/model, version: 1.0.0, operation: estimate}
+inputs:
+  data: {kind: local, path: data.csv}
+config: {}
+run:
+  label: Baseline
+  tags: [comparison]
+",
+        )
+        .unwrap();
+        std::fs::write(
+            run_directory.join("run.json"),
+            serde_json::to_vec(&json!({
+                "run_directory": "/untrusted/old/location",
+                "request": {
+                    "api_version": "davis.run/v1alpha1",
+                    "run_id": "example-run",
+                    "operation": "estimate",
+                    "component": {
+                        "id": "example/model",
+                        "version": "1.0.0",
+                        "kind": "model",
+                        "manifest_path": "/component.yaml",
+                        "source_digest": "blake3:0000000000000000000000000000000000000000000000000000000000000000"
+                    },
+                    "inputs": {},
+                    "config": {},
+                    "output_directory": "/untrusted/old/location/artifacts"
+                },
+                "result": {
+                    "api_version": "davis.result/v1alpha1",
+                    "run_id": "example-run",
+                    "status": "succeeded",
+                    "artifacts": {},
+                    "extensions": {},
+                    "error": null
+                }
+            }))
+            .unwrap(),
+        )
+        .unwrap();
+        let broken_directory = temporary.path().join("davis-runs/broken-run");
+        std::fs::create_dir_all(&broken_directory).unwrap();
+        std::fs::write(broken_directory.join("run.json"), b"not JSON").unwrap();
+
+        let history = list_project_runs(temporary.path().to_owned()).unwrap();
+        assert_eq!(history.warnings.len(), 1);
+        assert!(history.warnings[0].contains("broken-run"));
+        assert!(history.warnings[0].contains("run.json"));
+        assert_eq!(history.runs.len(), 1);
+        assert_eq!(history.runs[0].plan_name, "comparison-plan");
+        assert_eq!(history.runs[0].label.as_deref(), Some("Baseline"));
+        assert_eq!(history.runs[0].tags, ["comparison"]);
+        assert_eq!(history.runs[0].run.run_directory, run_directory);
+
+        let loaded =
+            load_project_run(temporary.path().to_owned(), "example-run".to_owned()).unwrap();
+        assert_eq!(loaded.run_directory, run_directory);
+        assert!(load_project_run(temporary.path().to_owned(), "../escape".to_owned()).is_err());
     }
 
     #[test]
