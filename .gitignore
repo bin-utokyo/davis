@@ -104,6 +104,9 @@ target/
 # Davis local cache (generated content-addressed objects)
 .davis/cache/
 
+# Davis local execution results
+/davis-runs/
+
 # Local remote configuration (use config.example.toml as the tracked template)
 .davis/config.toml
 
