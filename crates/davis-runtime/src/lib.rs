@@ -511,6 +511,7 @@ fn resolve_table_binding(
         descriptor: ArtifactDescriptor {
             path: relative_path,
             media_type: artifact.media_type.clone(),
+            profile: artifact.profile,
             size: artifact.size,
             object_id: artifact.object_id.clone(),
         },

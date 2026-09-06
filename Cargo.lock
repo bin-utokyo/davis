@@ -926,6 +926,7 @@ name = "davis-model-runner"
 version = "0.5.0"
 dependencies = [
  "blake3",
+ "csv",
  "davis-model-api",
  "semver",
  "serde_json",

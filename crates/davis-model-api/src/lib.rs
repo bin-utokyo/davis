@@ -59,6 +59,14 @@ pub enum ContractError {
     },
     #[error("artifact declaration `{0}` must contain at least one valid media type")]
     InvalidArtifactDeclaration(String),
+    #[error(
+        "artifact declaration `{name}` uses media type `{media_type}` which is incompatible with profile `{profile:?}`"
+    )]
+    InvalidArtifactProfileMediaType {
+        name: String,
+        profile: ArtifactProfile,
+        media_type: String,
+    },
     #[error("additional input declaration must contain at least one valid media type")]
     InvalidAdditionalInputDeclaration,
     #[error("component package contains multiple manifest files; keep only one of component.yaml, component-manifest.yaml, or model-manifest.yaml")]
@@ -549,6 +557,19 @@ impl ComponentManifest {
             {
                 return Err(ContractError::InvalidArtifactDeclaration(name.clone()));
             }
+            if let Some(profile) = declaration.profile {
+                if let Some(media_type) = declaration
+                    .media_types
+                    .iter()
+                    .find(|media_type| !profile.supports_media_type(media_type))
+                {
+                    return Err(ContractError::InvalidArtifactProfileMediaType {
+                        name: name.clone(),
+                        profile,
+                        media_type: media_type.clone(),
+                    });
+                }
+            }
         }
         if self.additional_inputs.as_ref().is_some_and(|declaration| {
             declaration.media_types.is_empty()
@@ -767,6 +788,52 @@ pub struct ArtifactDeclaration {
     pub media_types: Vec<String>,
     #[serde(default = "default_true")]
     pub required: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub profile: Option<ArtifactProfile>,
+}
+
+/// Optional common semantics for artifacts that Davis can preview and compare.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ArtifactProfile {
+    Table,
+    Metrics,
+    Parameters,
+    Predictions,
+    Figure,
+    Diagnostics,
+    Report,
+}
+
+impl ArtifactProfile {
+    #[must_use]
+    pub fn supports_media_type(self, media_type: &str) -> bool {
+        const TABLE: &[&str] = &["text/csv", "application/vnd.apache.parquet"];
+        const JSON_OR_TABLE: &[&str] = &[
+            "application/json",
+            "text/csv",
+            "application/vnd.apache.parquet",
+        ];
+        const FIGURE: &[&str] = &[
+            "application/json",
+            "application/vnd.vegalite.v5+json",
+            "text/html",
+            "image/png",
+            "image/svg+xml",
+        ];
+        const REPORT: &[&str] = &[
+            "text/html",
+            "text/markdown",
+            "application/pdf",
+            "application/json",
+        ];
+        match self {
+            Self::Table | Self::Parameters | Self::Predictions => TABLE.contains(&media_type),
+            Self::Metrics | Self::Diagnostics => JSON_OR_TABLE.contains(&media_type),
+            Self::Figure => FIGURE.contains(&media_type),
+            Self::Report => REPORT.contains(&media_type),
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -829,6 +896,8 @@ pub enum RunStatus {
 pub struct ArtifactDescriptor {
     pub path: PathBuf,
     pub media_type: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub profile: Option<ArtifactProfile>,
     #[serde(default)]
     pub size: Option<u64>,
     #[serde(default)]
@@ -855,8 +924,9 @@ fn require_version(actual: &str, expected: &'static str) -> Result<(), ContractE
 #[cfg(test)]
 mod tests {
     use super::{
-        AdditionalInputDeclaration, AnalysisPlan, ComponentKind, ComponentManifest, ContractError,
-        InputSource, ModelManifest, RuntimeExecutor, ANALYSIS_API_VERSION,
+        AdditionalInputDeclaration, AnalysisPlan, ArtifactProfile, ComponentKind,
+        ComponentManifest, ContractError, InputSource, ModelManifest, RuntimeExecutor,
+        ANALYSIS_API_VERSION,
     };
 
     #[test]
@@ -952,6 +1022,52 @@ outputs: {}
         assert!(matches!(
             invalid.validate(),
             Err(ContractError::InvalidRuntimeRequirement { .. })
+        ));
+    }
+
+    #[test]
+    fn artifact_profiles_are_optional_and_validate_media_types() {
+        let valid: ComponentManifest = serde_yaml::from_str(
+            r"api_version: davis.component/v1
+id: example/profiled
+name: Profiled component
+version: 1.0.0
+runtime: {executor: process, command: [example]}
+operations: [estimate]
+inputs: []
+configuration: {schema: {type: object}}
+outputs:
+  artifacts:
+    parameters:
+      profile: parameters
+      media_types: [text/csv]
+      required: false
+    custom:
+      media_types: [application/x-example]
+      required: false
+",
+        )
+        .unwrap();
+        valid.validate().unwrap();
+        assert_eq!(
+            valid.outputs.artifacts["parameters"].profile,
+            Some(ArtifactProfile::Parameters)
+        );
+        assert_eq!(valid.outputs.artifacts["custom"].profile, None);
+
+        let mut invalid = valid;
+        invalid
+            .outputs
+            .artifacts
+            .get_mut("parameters")
+            .unwrap()
+            .media_types = vec!["application/json".to_owned()];
+        assert!(matches!(
+            invalid.validate(),
+            Err(ContractError::InvalidArtifactProfileMediaType {
+                profile: ArtifactProfile::Parameters,
+                ..
+            })
         ));
     }
 

@@ -6,13 +6,14 @@ import { bindingColumns, ColumnBinding, FormDefinition, FormInput, FormJoin, For
 type ColumnProfile = { name: string; inferred_type: string; null_count: number; unique_sample: number; warnings: string[] };
 type CsvProfile = { path: string; encoding: string; delimiter: string; rows_sampled: number; truncated: boolean; columns: ColumnProfile[] };
 type Validation = { valid: boolean; plan: string; component: { id: string; version: string; manifest: string } };
-type Artifact = { path: string; media_type: string; size?: number };
+type ArtifactProfile = "table" | "metrics" | "parameters" | "predictions" | "figure" | "diagnostics" | "report";
+type Artifact = { path: string; media_type: string; profile?: ArtifactProfile; size?: number };
 type CompletedRun = {
   run_directory: string; request: { run_id: string; component: { id: string; version: string } };
   result: { status: string; artifacts: Record<string, Artifact>; extensions: Record<string, Artifact> };
 };
 type ComponentEditor = {
-  manifest: { id: string; name: string; version: string; kind: string; operations: string[]; inputs: Array<{ name: string; required: boolean }> };
+  manifest: { id: string; name: string; version: string; kind: string; operations: string[]; inputs: Array<{ name: string; required: boolean }>; outputs: { artifacts: Record<string, { profile?: ArtifactProfile; media_types: string[]; required: boolean }> } };
   config_schema: JsonSchema; ui_schema: FormDefinition; ui_extensions: Record<string, { api_version: string; html: string }>;
 };
 type PlanInput = {
@@ -26,6 +27,7 @@ type EditablePlan = {
   editor: ComponentEditor;
 };
 type ArtifactPreview = { name: string; media_type: string; content: unknown };
+type ResultDefinition = { artifact: string; title: string; widget: "key-value" | "table" };
 type CatalogFile = { dataset_id: string; file_id: string; path: string; title: string; size: number; columns: string[] };
 type DownloadedCatalogFile = { dataset_id: string; file_id: string; path: string };
 
@@ -156,7 +158,7 @@ export default function App() {
 
   async function saveCodePlan(execute: boolean) { await perform(async () => { if (!planPath) throw new Error("保存先がありません．既存Planを開き直してください．"); await invoke<string>("save_analysis_plan_yaml", { repository, path: planPath, yaml: yamlPreview }); setValidation(await invoke<Validation>("validate_analysis_plan", { repository, plan: planPath })); if (execute) await showCompleted(await invoke<CompletedRun>("run_analysis_plan", { repository, plan: planPath })); }); }
   async function showCompleted(run: CompletedRun) {
-    setCompleted(run); const definitions = editor?.ui_schema.results ?? [];
+    setCompleted(run); const definitions = resultDefinitions(editor, run);
     const previews = await Promise.all(definitions.map(async (definition) => { try { return await invoke<ArtifactPreview>("preview_run_artifact", { repository, runId: run.request.run_id, artifact: definition.artifact }); } catch { return undefined; } }));
     setArtifactPreviews(Object.fromEntries(previews.filter(Boolean).map((preview) => [preview!.name, preview!])));
   }
@@ -173,7 +175,7 @@ export default function App() {
         <div className="actions editor-actions"><button className="secondary" disabled={!editorReady || busy} onClick={previewPlan}>YAMLを確認</button><button className="secondary" disabled={!editorReady || busy} onClick={() => saveDraft(false)}>別名で保存</button><button className="secondary" disabled={!editorReady || !planPath || busy} onClick={() => saveDraft(false, true)}>上書き保存</button><button disabled={!editorReady || busy} onClick={() => saveDraft(true, Boolean(planPath))}>{planPath ? "上書きして推定" : "保存して推定"}</button></div>
         {validation && <div className="success">{validation.component.id} {validation.component.version}として保存・検証しました．</div>}{planPath && <div className="plan-path">{planPath}</div>}{yamlPreview && <textarea className="yaml-preview" readOnly value={yamlPreview} aria-label="生成されたmodel.yaml" />}</>}
     </section>
-    {completed && <section ref={resultRef}><SectionHeading number="3" title="Run result" description={completed.request.run_id} /><div className="result-views">{(editor?.ui_schema.results ?? []).map((definition) => { const preview = artifactPreviews[definition.artifact]; return preview ? <ResultPreview key={definition.artifact} definition={definition} preview={preview} /> : null; })}</div><div className="run-directory-row"><div className="run-directory">{completed.run_directory}</div><button className="secondary" disabled={busy} onClick={openRunDirectory}>結果フォルダを開く</button></div><div className="artifacts">{[...Object.entries(completed.result.artifacts), ...Object.entries(completed.result.extensions)].map(([name, artifact]) => <article key={name}><strong>{name}</strong><span>{artifact.path}</span><small>{artifact.media_type}{artifact.size ? ` · ${artifact.size} bytes` : ""}</small></article>)}</div></section>}
+    {completed && <section ref={resultRef}><SectionHeading number="3" title="Run result" description={completed.request.run_id} /><div className="result-views">{resultDefinitions(editor, completed).map((definition) => { const preview = artifactPreviews[definition.artifact]; return preview ? <ResultPreview key={definition.artifact} definition={definition} preview={preview} /> : null; })}</div><div className="run-directory-row"><div className="run-directory">{completed.run_directory}</div><button className="secondary" disabled={busy} onClick={openRunDirectory}>結果フォルダを開く</button></div><div className="artifacts">{[...Object.entries(completed.result.artifacts), ...Object.entries(completed.result.extensions)].map(([name, artifact]) => <article key={name}><strong>{name}</strong><span>{artifact.path}</span><small>{artifact.profile ? `${artifact.profile} · ` : ""}{artifact.media_type}{artifact.size ? ` · ${artifact.size} bytes` : ""}</small></article>)}</div></section>}
     {catalogTarget && <div className="modal-backdrop" onMouseDown={() => setCatalogTarget(undefined)}><div className="catalog-dialog" onMouseDown={(event) => event.stopPropagation()}><div className="catalog-heading"><div><h2>Davis Catalogから追加</h2><p><code>{catalogTarget}</code>へ追加するファイルを選択すると，自動で共有データ領域へダウンロードします．</p></div><button className="text-button" onClick={() => setCatalogTarget(undefined)}>閉じる</button></div><input className="catalog-search" autoFocus value={catalogSearch} onChange={(event) => setCatalogSearch(event.target.value)} placeholder="データセット名，ファイル名，列名を検索" /><div className="catalog-list">{catalogFiles.filter((file) => catalogMatch(file, catalogSearch)).slice(0, 100).map((file) => <button className="catalog-item" key={`${file.dataset_id}/${file.file_id}`} onClick={() => selectCatalogFile(file)}><strong>{file.title}</strong><span>{file.dataset_id} / {file.file_id}</span><small>{file.path} · {formatBytes(file.size)}{file.columns.length ? ` · ${file.columns.slice(0, 6).join(", ")}` : ""}</small></button>)}</div></div></div>}
     {busy && <div className="busy">処理中です…</div>}
   </main>;
@@ -189,7 +191,20 @@ async function hydrateSource(key: string, source: PlanInput, resolved: Record<st
 function catalogMatch(file: CatalogFile, search: string) { const needle = search.trim().toLocaleLowerCase(); return !needle || [file.title, file.dataset_id, file.file_id, file.path, ...file.columns].some((value) => value.toLocaleLowerCase().includes(needle)); }
 function formatBytes(size: number) { if (size < 1024) return `${size} B`; if (size < 1024 ** 2) return `${(size / 1024).toFixed(1)} KiB`; return `${(size / 1024 ** 2).toFixed(1)} MiB`; }
 function PathField({ value, placeholder, onChange, onChoose }: { value: string; placeholder: string; onChange: (value: string) => void; onChoose: () => void }) { return <div className="path-field"><input value={value} placeholder={placeholder} onChange={(event) => onChange(event.target.value)} /><button className="secondary" onClick={onChoose}>選択</button></div>; }
-function ResultPreview({ definition, preview }: { definition: { artifact: string; title: string; widget: "key-value" | "table" }; preview: ArtifactPreview }) { return <article className="result-view"><div className="result-view-title"><h3>{definition.title}</h3><span>{definition.artifact}</span></div>{definition.widget === "table" && isTablePreview(preview.content) ? <div className="result-table"><table><thead><tr>{preview.content.columns.map((column) => <th key={column}>{column}</th>)}</tr></thead><tbody>{preview.content.rows.map((row, index) => <tr key={index}>{row.map((cell, cellIndex) => <td key={cellIndex}>{cell}</td>)}</tr>)}</tbody></table>{preview.content.truncated && <p className="hint">先頭200行を表示しています．</p>}</div> : <KeyValuePreview content={preview.content} />}</article>; }
+function resultDefinitions(editor: ComponentEditor | undefined, run: CompletedRun): ResultDefinition[] {
+  const explicit = (editor?.ui_schema.results ?? []) as ResultDefinition[];
+  const names = new Set(explicit.map((definition) => definition.artifact));
+  const inferred = Object.entries(run.result.artifacts).flatMap(([artifact, descriptor]): ResultDefinition[] => {
+    if (names.has(artifact) || !descriptor.profile || !["application/json", "text/csv"].includes(descriptor.media_type)) return [];
+    const table = ["table", "parameters", "predictions"].includes(descriptor.profile);
+    return [{ artifact, title: profileTitle(descriptor.profile), widget: table ? "table" : "key-value" }];
+  });
+  return [...explicit, ...inferred];
+}
+function profileTitle(profile: ArtifactProfile) {
+  return ({ table: "表", metrics: "指標", parameters: "推定parameter", predictions: "予測値", figure: "図", diagnostics: "診断", report: "Report" } satisfies Record<ArtifactProfile, string>)[profile];
+}
+function ResultPreview({ definition, preview }: { definition: ResultDefinition; preview: ArtifactPreview }) { return <article className="result-view"><div className="result-view-title"><h3>{definition.title}</h3><span>{definition.artifact}</span></div>{definition.widget === "table" && isTablePreview(preview.content) ? <div className="result-table"><table><thead><tr>{preview.content.columns.map((column) => <th key={column}>{column}</th>)}</tr></thead><tbody>{preview.content.rows.map((row, index) => <tr key={index}>{row.map((cell, cellIndex) => <td key={cellIndex}>{cell}</td>)}</tr>)}</tbody></table>{preview.content.truncated && <p className="hint">先頭200行を表示しています．</p>}</div> : <KeyValuePreview content={preview.content} />}</article>; }
 function KeyValuePreview({ content }: { content: unknown }) { if (!content || typeof content !== "object" || Array.isArray(content)) return <pre>{formatResultValue(content)}</pre>; return <dl className="metric-grid">{Object.entries(content).map(([key, value]) => <div key={key}><dt>{key}</dt><dd>{formatResultValue(value)}</dd></div>)}</dl>; }
 function isTablePreview(content: unknown): content is { columns: string[]; rows: string[][]; truncated: boolean } { if (!content || typeof content !== "object") return false; const candidate = content as { columns?: unknown; rows?: unknown }; return Array.isArray(candidate.columns) && Array.isArray(candidate.rows); }
 function formatResultValue(value: unknown) { if (typeof value === "number") return Number.isInteger(value) ? String(value) : value.toPrecision(6); if (typeof value === "string" || typeof value === "boolean") return String(value); if (value === null || value === undefined) return "—"; return JSON.stringify(value); }

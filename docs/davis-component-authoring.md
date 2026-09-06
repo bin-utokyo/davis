@@ -316,6 +316,37 @@ presentation:
 
 `outputs.artifacts`を宣言したcomponentは，未宣言artifact，必須artifactの欠落，異なるmedia typeを返せません．Davisは各成果物のpath，size，BLAKE3も検証して`result.json`へ記録します．既存componentの`outputs.standard`と`outputs.extensions`は引き続き読めます．
 
+### 標準artifact profile
+
+成果物へ任意の`profile`を付けると，Davisはそのfileの役割を名前に依存せず理解できます．profileは独自artifactを禁止する分類ではなく，共通preview，Run比較，後続componentとの接続を利用するための追加契約です．省略したartifactも従来どおり保存・表示できます．
+
+```yaml
+outputs:
+  artifacts:
+    coefficients:
+      profile: parameters
+      media_types: [text/csv]
+      required: true
+    fit:
+      profile: metrics
+      media_types: [application/json]
+      required: true
+```
+
+| profile | 意味 | 対応形式 |
+| --- | --- | --- |
+| `table` | 汎用表 | CSV，Parquet |
+| `metrics` | 指標名と値 | JSON object，CSV，Parquet |
+| `parameters` | 推定parameter | CSV，Parquet |
+| `predictions` | 予測値・選択確率等 | CSV，Parquet |
+| `figure` | 図または宣言的な図仕様 | JSON，Vega-Lite JSON，HTML，PNG，SVG |
+| `diagnostics` | sample情報，警告，収束情報 | JSON object，CSV，Parquet |
+| `report` | 人が読むreport | HTML，Markdown，PDF，JSON |
+
+`parameters`のCSVには最低限`name`と`estimate`列が必要です．`std_error`，`statistic`，`p_value`，`lower`，`upper`等は任意列です．`metrics`，`diagnostics`，JSON形式の`figure`はrootをobjectにします．DavisはManifestのprofileとmedia typeを検証し，実programが返した値を信用して決めるのではなく，確定したprofileを`result.json`へ記録します．そのため，将来component packageが更新されても，過去Runの成果物が持っていた意味を復元できます．
+
+Desktopでは`presentation.ui.results`による明示的な表示を優先します．そこに指定されていないprofile付きCSV・JSONも，profileからtableまたはkey-value表示を補完します．モデル固有の見せ方が必要な場合は，従来どおりpresentationまたはUI extensionで上書きできます．
+
 ## Analysis plan
 
 Analysis planは「今回の実験条件」です．同じcomponentでも，入力fileや説明変数を変えるたびに別のplanとして保存できます．このため，`component.yaml`を毎回編集して実験履歴の代わりにする必要はありません．

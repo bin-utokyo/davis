@@ -35,22 +35,27 @@ inputs:
 outputs:
   artifacts:
     parameters:
+      profile: parameters
       media_types:
       - text/csv
       required: false
     covariance:
+      profile: table
       media_types:
       - text/csv
       required: false
     metrics:
+      profile: metrics
       media_types:
       - application/json
       required: false
     predictions:
+      profile: predictions
       media_types:
       - text/csv
       required: false
     sample_summary:
+      profile: diagnostics
       media_types:
       - application/json
       required: true

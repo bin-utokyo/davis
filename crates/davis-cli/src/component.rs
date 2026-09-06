@@ -3,7 +3,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use davis_model_api::{
-    ArtifactDeclaration, ComponentInput, ComponentKind, ComponentManifest,
+    ArtifactDeclaration, ArtifactProfile, ComponentInput, ComponentKind, ComponentManifest,
     ConfigurationDeclaration, OutputDeclaration, PresentationDeclaration, RuntimeDeclaration,
     RuntimeExecutor, RuntimeRequirement, COMPONENT_API_VERSION, COMPONENT_MANIFEST_FILENAME,
 };
@@ -334,6 +334,7 @@ fn apply_python_template(manifest: &mut ComponentManifest) {
         ArtifactDeclaration {
             media_types: vec!["text/csv".to_owned()],
             required: true,
+            profile: Some(ArtifactProfile::Table),
         },
     );
     manifest.outputs.artifacts.insert(
@@ -341,6 +342,7 @@ fn apply_python_template(manifest: &mut ComponentManifest) {
         ArtifactDeclaration {
             media_types: vec!["application/json".to_owned()],
             required: true,
+            profile: Some(ArtifactProfile::Metrics),
         },
     );
 }
@@ -566,6 +568,10 @@ mod tests {
         );
         assert!(completed.result.artifacts.contains_key("output_table"));
         assert!(completed.result.artifacts.contains_key("summary"));
+        assert_eq!(
+            completed.result.artifacts["summary"].profile,
+            Some(ArtifactProfile::Metrics)
+        );
         let summary = fs::read_to_string(
             completed
                 .run_directory

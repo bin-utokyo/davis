@@ -5,7 +5,9 @@ use std::io::Read;
 use std::path::{Component, Path, PathBuf};
 use std::process::{Command, Stdio};
 
-use davis_model_api::{ComponentManifest, RunRequest, RunResult, RunStatus, RESULT_API_VERSION};
+use davis_model_api::{
+    ArtifactProfile, ComponentManifest, RunRequest, RunResult, RunStatus, RESULT_API_VERSION,
+};
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -62,6 +64,12 @@ pub enum RunnerError {
         name: String,
         media_type: String,
         expected: Vec<String>,
+    },
+    #[error("artifact `{name}` does not satisfy profile `{profile:?}`: {message}")]
+    InvalidArtifactProfile {
+        name: String,
+        profile: ArtifactProfile,
+        message: String,
     },
 }
 
@@ -315,6 +323,14 @@ fn validate_artifacts(
             }
         }
     }
+    for (name, artifact) in &mut result.artifacts {
+        if let Some(declaration) = manifest.outputs.artifacts.get(name) {
+            artifact.profile = declaration.profile;
+        }
+    }
+    for artifact in result.extensions.values_mut() {
+        artifact.profile = None;
+    }
     for (name, artifact) in result
         .artifacts
         .iter_mut()
@@ -336,9 +352,63 @@ fn validate_artifacts(
             name: name.clone(),
             path: path.clone(),
         })?;
+        if let Some(profile) = artifact.profile {
+            validate_artifact_profile(name, &path, &artifact.media_type, profile)?;
+        }
         let digest = hash_file(&path)?;
         artifact.size = Some(metadata.len());
         artifact.object_id = Some(format!("blake3:{digest}"));
+    }
+    Ok(())
+}
+
+fn validate_artifact_profile(
+    name: &str,
+    path: &Path,
+    media_type: &str,
+    profile: ArtifactProfile,
+) -> Result<(), RunnerError> {
+    let invalid = |message: String| RunnerError::InvalidArtifactProfile {
+        name: name.to_owned(),
+        profile,
+        message,
+    };
+    if media_type == "text/csv" {
+        let mut reader = csv::ReaderBuilder::new()
+            .flexible(true)
+            .from_path(path)
+            .map_err(|error| invalid(format!("invalid CSV: {error}")))?;
+        let headers = reader
+            .headers()
+            .map_err(|error| invalid(format!("invalid CSV header: {error}")))?;
+        if headers.is_empty() {
+            return Err(invalid("CSV must have a header".to_owned()));
+        }
+        if profile == ArtifactProfile::Parameters {
+            for required in ["name", "estimate"] {
+                if !headers.iter().any(|header| header == required) {
+                    return Err(invalid(format!(
+                        "parameters CSV is missing required column `{required}`"
+                    )));
+                }
+            }
+        }
+    } else if matches!(
+        (profile, media_type),
+        (
+            ArtifactProfile::Metrics | ArtifactProfile::Diagnostics | ArtifactProfile::Figure,
+            "application/json" | "application/vnd.vegalite.v5+json"
+        )
+    ) {
+        let value: serde_json::Value =
+            serde_json::from_reader(File::open(path).map_err(|source| RunnerError::Io {
+                path: path.to_owned(),
+                source,
+            })?)
+            .map_err(|error| invalid(format!("invalid JSON: {error}")))?;
+        if !value.is_object() {
+            return Err(invalid("JSON root must be an object".to_owned()));
+        }
     }
     Ok(())
 }
@@ -370,7 +440,8 @@ mod tests {
     use std::path::PathBuf;
 
     use davis_model_api::{
-        ArtifactDescriptor, ComponentManifest, RunResult, RunStatus, RESULT_API_VERSION,
+        ArtifactDescriptor, ArtifactProfile, ComponentManifest, RunResult, RunStatus,
+        RESULT_API_VERSION,
     };
 
     use super::{
@@ -390,7 +461,7 @@ mod tests {
             "config_schema": "schemas/config.json",
             "outputs": {
                 "artifacts": {
-                    "table": {"media_types": ["text/csv"], "required": true}
+                    "table": {"profile": "table", "media_types": ["text/csv"], "required": true}
                 }
             }
         }))
@@ -407,6 +478,7 @@ mod tests {
                 ArtifactDescriptor {
                     path: PathBuf::from("table.csv"),
                     media_type: media_type.to_owned(),
+                    profile: None,
                     size: None,
                     object_id: None,
                 },
@@ -424,6 +496,10 @@ mod tests {
         let mut valid = result("text/csv");
         validate_artifacts(temporary.path(), &manifest, &mut valid).unwrap();
         assert_eq!(valid.artifacts["table"].size, Some(8));
+        assert_eq!(
+            valid.artifacts["table"].profile,
+            Some(ArtifactProfile::Table)
+        );
         assert!(valid.artifacts["table"]
             .object_id
             .as_deref()
@@ -449,6 +525,35 @@ mod tests {
             validate_artifacts(temporary.path(), &manifest, &mut undeclared),
             Err(RunnerError::UndeclaredArtifact(name)) if name == "other"
         ));
+    }
+
+    #[test]
+    fn validates_profile_specific_artifact_content() {
+        let temporary = tempfile::tempdir().unwrap();
+        fs::write(
+            temporary.path().join("table.csv"),
+            "parameter,value\nbeta,1\n",
+        )
+        .unwrap();
+        let mut manifest = manifest();
+        manifest.outputs.artifacts.get_mut("table").unwrap().profile =
+            Some(ArtifactProfile::Parameters);
+        let mut invalid = result("text/csv");
+
+        assert!(matches!(
+            validate_artifacts(temporary.path(), &manifest, &mut invalid),
+            Err(RunnerError::InvalidArtifactProfile {
+                profile: ArtifactProfile::Parameters,
+                ..
+            })
+        ));
+
+        fs::write(
+            temporary.path().join("table.csv"),
+            "name,estimate\nbeta,1\n",
+        )
+        .unwrap();
+        validate_artifacts(temporary.path(), &manifest, &mut invalid).unwrap();
     }
 
     #[test]

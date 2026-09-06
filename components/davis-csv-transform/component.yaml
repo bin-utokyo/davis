@@ -36,11 +36,13 @@ additional_inputs:
 outputs:
   artifacts:
     transformed_table:
+      profile: table
       media_types:
       - text/csv
       - application/vnd.apache.parquet
       required: true
     transformation_summary:
+      profile: metrics
       media_types:
       - application/json
       required: true
