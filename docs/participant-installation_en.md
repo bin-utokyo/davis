@@ -55,6 +55,8 @@ davis desktop
 
 Run `davis installed` to inspect the managed Desktop and model components. Desktop is stored in the Davis user data directory for the operating system, so launching it does not depend on the directory where it was installed.
 
+To use the official MNL, Nested Logit, Recursive Logit, and CSV transformation components, see the [Davis Official Components User Guide](official-components-guide_en.md). It covers input data formats, GUI and CLI workflows, configurable roles and parameters, and example Analysis Plans. The same guide can be given to an AI assistant helping with an analysis.
+
 ## Participant login
 
 Specify the Davis Web URL provided by the organizers:
