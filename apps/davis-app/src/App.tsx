@@ -349,7 +349,7 @@ export default function App() {
         return;
       }
       if (!isLinearEditor(loaded.editor)) {
-      setEditor(loaded.editor); setPlanPath(selected); setYamlPreview(loaded.yaml); setCodeMode(true);
+        setEditor(loaded.editor); setPlanPath(selected); setYamlPreview(loaded.yaml); setCodeMode(true);
         setSources([]); setCompleted(undefined); setArtifactPreviews({}); setValidation(undefined);
         return;
       }
@@ -359,26 +359,37 @@ export default function App() {
 
   async function hydrateSchemaPlan(loaded: EditablePlan, path: string) {
     const loadedInputs: Record<string, FormInput | undefined> = {};
-    for (const input of loaded.editor.manifest.inputs) {
-      const planInput = loaded.plan.inputs[input.name];
-      if (!planInput) continue;
-      if (planInput.kind !== "local" || !planInput.path) {
-        throw new Error(`${input.name}はlocal CSVではないためFormへ読み戻せません．`);
-      }
-      const resolved = loaded.resolved_sources[input.name];
-      if (!resolved) throw new Error(`${input.name}のlocal pathを解決できません．`);
-      loadedInputs[input.name] = {
-        path: resolved,
-        serializedPath: planInput.path,
-        read: planInput.read,
-        profile: await invoke<CsvProfile>("inspect_csv_file", { path: resolved }),
-      };
-    }
-    setEditor(loaded.editor); setPlanName(loaded.plan.name); setSchemaInputs(loadedInputs);
+    const issues: string[] = [];
+    setEditor(loaded.editor); setPlanName(loaded.plan.name);
     setSchemaConfig(structuredClone(loaded.plan.config)); setPreservedRun(loaded.plan.run ?? {});
     setPreparation(loaded.editor.ui_schema["ui:inputPreparation"]);
     setPlanPath(path); setYamlPreview(loaded.yaml); setCodeMode(false);
     setValidation(undefined); setCompleted(undefined); setArtifactPreviews({});
+    for (const input of loaded.editor.manifest.inputs) {
+      const planInput = loaded.plan.inputs[input.name];
+      if (!planInput) continue;
+      if (planInput.kind !== "local" || !planInput.path) {
+        issues.push(`${input.name}はlocal CSVではないため，GUIで入力を選び直してください．`);
+        continue;
+      }
+      const resolved = loaded.resolved_sources[input.name];
+      if (!resolved) {
+        issues.push(`${input.name}のlocal pathを解決できないため，GUIで入力を選び直してください．`);
+        continue;
+      }
+      try {
+        loadedInputs[input.name] = {
+          path: resolved,
+          serializedPath: planInput.path,
+          read: planInput.read,
+          profile: await invoke<CsvProfile>("inspect_csv_file", { path: resolved }),
+        };
+      } catch (reason) {
+        issues.push(`${input.name}を読み込めませんでした: ${String(reason)}`);
+      }
+    }
+    setSchemaInputs(loadedInputs);
+    if (issues.length) setError(issues.join("\n"));
   }
 
   async function hydratePlan(loaded: EditablePlan, path: string) {
