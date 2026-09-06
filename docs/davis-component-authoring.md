@@ -551,7 +551,7 @@ config:
       travel_time: float64
 ```
 
-`column_types`を省略した列は，`string`，`int64`，`float64`，`boolean`から安全側に型推定します．`001`のように先頭0がある整数風の値はIDとみなして`string`を維持します．曖昧さを避けたい場合は型を明示してください．実際の形式とParquet schemaは`transformation-summary.json`へ記録されます．`examples/mnl-chain`はParquetを出力し，そのartifactをMNL 0.2.0へ直接渡します．
+`column_types`を省略した列は，`string`，`int64`，`float64`，`boolean`から安全側に型推定します．`001`のように先頭0がある整数風の値はIDとみなして`string`を維持します．曖昧さを避けたい場合は型を明示してください．実際の形式とParquet schemaは`transformation-summary.json`へ記録されます．`examples/mnl-chain`はParquetを出力し，そのartifactをMNL 0.3.0へ直接渡します．
 
 ## 検証と公開
 

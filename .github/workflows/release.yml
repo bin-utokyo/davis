@@ -89,7 +89,7 @@ jobs:
             --name csv-transform \
             --out dist
           target/release/davis component registry \
-            dist/davis-mnl-0.2.0.entry.json \
+            dist/davis-mnl-0.3.0.entry.json \
             dist/davis-csv-transform-0.4.0.entry.json \
             --out dist/component-registry.json
       - name: Verify integrated multi-source model execution through the registry
@@ -129,7 +129,7 @@ jobs:
         with:
           name: official-components
           path: |
-            dist/davis-mnl-0.2.0.tar.gz
+            dist/davis-mnl-0.3.0.tar.gz
             dist/davis-csv-transform-0.4.0.tar.gz
             dist/component-registry.json
           if-no-files-found: error

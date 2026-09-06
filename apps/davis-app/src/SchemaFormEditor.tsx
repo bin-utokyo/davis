@@ -12,7 +12,7 @@ export type ColumnBinding = { source: string; column: string };
 export type FormInput = { sources: FormSource[]; base: string; joins: Record<string, FormJoin>; columns?: Record<string, ColumnBinding>; processor?: { id: string; version: string }; forceBinding?: boolean };
 export type JsonSchema = {
   type?: string | string[]; enum?: unknown[]; default?: unknown; required?: string[]; title?: string; description?: string;
-  properties?: Record<string, JsonSchema>; items?: JsonSchema; additionalProperties?: boolean | JsonSchema;
+  properties?: Record<string, JsonSchema>; items?: JsonSchema; additionalProperties?: boolean | JsonSchema; oneOf?: JsonSchema[];
 };
 type FormSection = {
   bind: string; widget?: string; input?: string; title?: string; description?: string; labels?: Record<string, string>;
@@ -143,7 +143,7 @@ function InputBindingEditor({ slot, metadata, input, onAdd, onAddCatalog, onChan
 function SectionTitle({ section }: { section: FormSection }) { return <div className="subsection-heading"><div><h3>{section.title ?? section.bind}</h3><p>{section.description ?? <><code>{section.bind}</code>としてAnalysis Planへ保存します．</>}</p></div></div>; }
 function ColumnMap({ section, schema, value, input, onChange }: { section: FormSection; schema?: JsonSchema; value: Record<string, unknown>; input?: FormInput; onChange: (value: Record<string, unknown>) => void }) {
   const names = Object.keys(schema?.properties ?? {}); const required = schema?.required ?? []; const columns = input ? bindingColumns(input) : [];
-  return <><SectionTitle section={section} /><div className="role-grid">{names.map((name) => <label key={name}><span>{section.labels?.[name] ?? name}{required.includes(name) ? " *" : " (任意)"}</span><select value={typeof value[name] === "string" ? value[name] as string : ""} disabled={!input} onChange={(event) => onChange(event.target.value ? { ...value, [name]: event.target.value } : without(value, name))}><option value="">列を選択</option>{columns.map((column) => <option key={column.alias} value={column.alias}>{column.label}</option>)}</select></label>)}</div></>;
+  return <><SectionTitle section={section} /><div className="role-grid">{names.map((name) => { const property = schema?.properties?.[name]; const acceptsMany = schemaAcceptsArray(property); return <label key={name}><span>{section.labels?.[name] ?? name}{required.includes(name) ? " *" : " (任意)"}</span>{acceptsMany ? <AlternativePicker candidates={columns.map((column) => column.alias)} selected={Array.isArray(value[name]) ? (value[name] as unknown[]).map(String) : typeof value[name] === "string" ? [String(value[name])] : []} onChange={(selected) => onChange(selected.length ? { ...value, [name]: selected } : without(value, name))} /> : <select value={typeof value[name] === "string" ? value[name] as string : ""} disabled={!input} onChange={(event) => onChange(event.target.value ? { ...value, [name]: event.target.value } : without(value, name))}><option value="">列を選択</option>{columns.map((column) => <option key={column.alias} value={column.alias}>{column.label}</option>)}</select>}</label>; })}</div></>;
 }
 function UtilityTerms({ section, value, input, candidates, onChange }: { section: FormSection; value: unknown[]; input?: FormInput; candidates: string[]; onChange: (value: unknown[]) => void }) {
   const terms = value.map(asObject); const columns = input ? bindingColumns(input) : []; function patch(index: number, change: Record<string, unknown>) { onChange(terms.map((term, current) => current === index ? clean({ ...term, ...change }) : term)); }
@@ -181,6 +181,7 @@ export function bindingColumns(input: FormInput): Array<ColumnBinding & { alias:
 function defaultJoin(): FormJoin { return { leftOn: "", rightOn: "", relationship: "many_to_one", how: "left", allowUnmatched: false }; }
 function knownWidget(widget: string) { return ["column-map", "utility-terms", "nests", "parameter-settings", "auto", "object"].includes(widget); }
 function canAutoRender(schema: JsonSchema): boolean { if (schema.type === "array" || Array.isArray(schema.type)) return false; if (schema.type === "object") return Boolean(schema.properties) && Object.values(schema.properties ?? {}).every(canAutoRender); return true; }
+function schemaAcceptsArray(schema?: JsonSchema): boolean { return schema?.type === "array" || schema?.oneOf?.some((option) => option.type === "array") === true; }
 function pathParts(path: string) { return path.trim().replace(/^\//, "").split("/").filter(Boolean).map((part) => part.replace(/~1/g, "/").replace(/~0/g, "~")); }
 function getAt(value: unknown, path: string): unknown { return pathParts(path).reduce<unknown>((current, key) => asObject(current)[key], value); }
 function setAt(root: Record<string, unknown>, path: string, value: unknown): Record<string, unknown> { const [head, ...tail] = pathParts(path); return { ...root, [head]: tail.length ? setAt(asObject(root[head]), `/${tail.join("/")}`, value) : value }; }

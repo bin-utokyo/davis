@@ -949,7 +949,7 @@ mod tests {
         let yaml = render_plan(json!({
             "api_version": "davis.analysis/v1alpha1",
             "name": "gui-plan",
-            "component": {"id": "davis/mnl", "version": "0.2.0", "operation": "estimate"},
+            "component": {"id": "davis/mnl", "version": "0.3.0", "operation": "estimate"},
             "inputs": {"choice_data": {
                 "kind": "table_binding",
                 "processor": {"id": "davis/csv-transform", "version": "0.4.0"},
@@ -983,7 +983,7 @@ mod tests {
         let error = render_plan(json!({
             "api_version": "davis.analysis/v1alpha1",
             "name": "invalid",
-            "component": {"id": "davis/mnl", "version": "0.2.0", "operation": "estimate"},
+            "component": {"id": "davis/mnl", "version": "0.3.0", "operation": "estimate"},
             "inputs": {"choice_data": {
                 "kind": "table_binding",
                 "processor": {"id": "davis/csv-transform", "version": "0.4.0"},
@@ -999,7 +999,7 @@ mod tests {
 
     #[test]
     fn loads_manifest_driven_editor_metadata() {
-        let editor = editor_definition(&repository(), "davis/mnl", "0.2.0").unwrap();
+        let editor = editor_definition(&repository(), "davis/mnl", "0.3.0").unwrap();
         assert_eq!(editor.manifest.id, "davis/mnl");
         assert_eq!(editor.ui_schema["version"], "davis.ui/v1");
         assert_eq!(
@@ -1007,6 +1007,10 @@ mod tests {
             "table-binding"
         );
         assert!(editor.config_schema["properties"]["roles"]["required"].is_array());
+        assert!(
+            editor.config_schema["properties"]["roles"]["properties"]["case_id"]["oneOf"]
+                .is_array()
+        );
         let editors = component_editor_definitions(repository()).unwrap();
         assert!(editors.iter().any(|item| item.manifest.id == "davis/mnl"));
         assert!(editors.iter().any(|item| item.manifest.id == "davis/nl"));
@@ -1236,7 +1240,7 @@ config: {{}}
         std::fs::write(&target, "original").unwrap();
         let choices = repository().join("components/davis-mnl/examples/multi-source/choices.csv");
         let yaml = format!(
-            "api_version: davis.analysis/v1alpha1\nname: invalid\ncomponent:\n  id: davis/mnl\n  version: 0.2.0\n  operation: estimate\ninputs:\n  choice_data:\n    kind: local\n    path: {}\nconfig:\n  roles:\n    case_id: case_id\n    alternative_id: alternative\n    chosen: chosen\n",
+            "api_version: davis.analysis/v1alpha1\nname: invalid\ncomponent:\n  id: davis/mnl\n  version: 0.3.0\n  operation: estimate\ninputs:\n  choice_data:\n    kind: local\n    path: {}\nconfig:\n  roles:\n    case_id: case_id\n    alternative_id: alternative\n    chosen: chosen\n",
             choices.display()
         );
         let error = save_analysis_plan_yaml(repository(), target.clone(), yaml).unwrap_err();

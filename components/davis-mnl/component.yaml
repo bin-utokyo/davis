@@ -2,7 +2,7 @@
 api_version: davis.component/v1
 id: davis/mnl
 name: Davis Multinomial Logit
-version: 0.2.0
+version: 0.3.0
 kind: model
 requires_davis: ">=0.5.0"
 runtime:
@@ -72,13 +72,25 @@ configuration:
         required:
         - case_id
         - alternative_id
-        - chosen
+        oneOf:
+        - required:
+          - chosen
+        - required:
+          - chosen_alternative
         properties:
           case_id:
-            type: string
+            oneOf:
+            - type: string
+            - type: array
+              minItems: 1
+              uniqueItems: true
+              items:
+                type: string
           alternative_id:
             type: string
           chosen:
+            type: string
+          chosen_alternative:
             type: string
           available:
             type: string
@@ -132,6 +144,10 @@ configuration:
           tolerance:
             type: number
             exclusiveMinimum: 0
+          development_case_limit:
+            type: integer
+            minimum: 1
+            description: 入力順の先頭Nケースだけを使う動作確認用設定です．本推定では省略してください．
 presentation:
   ui:
     version: davis.ui/v1
@@ -147,9 +163,10 @@ presentation:
       input: choice_data
       title: 役割列
       labels:
-        case_id: ケースID
+        case_id: ケースキー
         alternative_id: 選択肢ID
-        chosen: 選択結果
+        chosen: 選択済みフラグ
+        chosen_alternative: 選択された選択肢ID
         available: 利用可能性 (任意)
         weight: 重み (任意)
     - bind: /terms

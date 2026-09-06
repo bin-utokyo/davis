@@ -17,9 +17,8 @@ from scipy.stats import norm
 @dataclass
 class PreparedData:
     frame: pd.DataFrame
-    case_column: str
+    case_columns: list[str]
     alternative_column: str
-    chosen_column: str
     available: np.ndarray
     chosen: np.ndarray
     weights: np.ndarray
@@ -75,11 +74,16 @@ def prepare(request: dict[str, Any]) -> PreparedData:
 
     config = request["config"]
     roles = config["roles"]
-    required_roles = ["case_id", "alternative_id", "chosen"]
+    required_roles = ["case_id", "alternative_id"]
     for role in required_roles:
         if role not in roles:
             raise ValueError(f"missing role: {role}")
-    required_columns = {roles[role] for role in required_roles}
+    case_columns = role_columns(roles["case_id"], "case_id")
+    required_columns = {*case_columns, roles["alternative_id"]}
+    if "chosen" in roles:
+        required_columns.add(roles["chosen"])
+    else:
+        required_columns.add(roles["chosen_alternative"])
     required_columns.update(
         term["column"] for term in config["terms"] if "column" in term
     )
@@ -91,13 +95,24 @@ def prepare(request: dict[str, Any]) -> PreparedData:
     if missing:
         raise ValueError(f"columns were not found: {', '.join(missing)}")
 
-    case_column = roles["case_id"]
     alternative_column = roles["alternative_id"]
-    chosen_column = roles["chosen"]
-    if frame.duplicated([case_column, alternative_column]).any():
-        raise ValueError("(case_id, alternative_id) must be unique")
+    group_key: str | list[str] = case_columns[0] if len(case_columns) == 1 else case_columns
+    case_limit = config.get("estimation", {}).get("development_case_limit")
+    if case_limit is not None:
+        group_numbers = frame.groupby(group_key, sort=False, dropna=False).ngroup()
+        frame = frame.loc[group_numbers < int(case_limit)].copy()
+    if frame.duplicated([*case_columns, alternative_column]).any():
+        raise ValueError("(case key, alternative_id) must be unique")
 
-    chosen = boolean_array(frame[chosen_column], chosen_column)
+    if "chosen" in roles:
+        chosen_column = roles["chosen"]
+        chosen = boolean_array(frame[chosen_column], chosen_column)
+    else:
+        chosen_column = roles["chosen_alternative"]
+        chosen = (
+            frame[chosen_column].astype(str).to_numpy()
+            == frame[alternative_column].astype(str).to_numpy()
+        )
     available = (
         boolean_array(frame[roles["available"]], roles["available"])
         if "available" in roles
@@ -136,23 +151,25 @@ def prepare(request: dict[str, Any]) -> PreparedData:
             values = np.where(np.isin(alternatives, list(allowed)), values, 0.0)
         design[:, parameter_index[term["parameter"]]] += values
 
-    groups = [indices for indices in frame.groupby(case_column, sort=False).indices.values()]
+    groups = [
+        indices
+        for indices in frame.groupby(group_key, sort=False, dropna=False).indices.values()
+    ]
     for indices in groups:
         if int(np.sum(chosen[indices])) != 1:
-            case = frame.iloc[int(indices[0])][case_column]
+            case = tuple(frame.iloc[int(indices[0])][column] for column in case_columns)
             raise ValueError(f"case {case!r} must have exactly one chosen alternative")
         if not np.any(available[indices]):
-            case = frame.iloc[int(indices[0])][case_column]
+            case = tuple(frame.iloc[int(indices[0])][column] for column in case_columns)
             raise ValueError(f"case {case!r} has no available alternative")
         if not np.allclose(weights[indices], weights[indices][0]):
-            case = frame.iloc[int(indices[0])][case_column]
+            case = tuple(frame.iloc[int(indices[0])][column] for column in case_columns)
             raise ValueError(f"case {case!r} has inconsistent weights")
 
     return PreparedData(
         frame=frame,
-        case_column=case_column,
+        case_columns=case_columns,
         alternative_column=alternative_column,
-        chosen_column=chosen_column,
         available=available,
         chosen=chosen,
         weights=weights,
@@ -160,6 +177,15 @@ def prepare(request: dict[str, Any]) -> PreparedData:
         parameter_names=parameter_names,
         groups=groups,
     )
+
+
+def role_columns(value: Any, role: str) -> list[str]:
+    columns = [value] if isinstance(value, str) else value
+    if not isinstance(columns, list) or not columns or not all(
+        isinstance(column, str) and column for column in columns
+    ):
+        raise ValueError(f"role {role} must be a column name or non-empty column list")
+    return columns
 
 
 def read_csv(path: Path, options: dict[str, Any] | None) -> pd.DataFrame:
@@ -253,8 +279,9 @@ def estimate(
 
     probabilities = predict_probabilities(estimates, prepared)
     predictions = prepared.frame[
-        [prepared.case_column, prepared.alternative_column, prepared.chosen_column]
+        [*prepared.case_columns, prepared.alternative_column]
     ].copy()
+    predictions["chosen"] = prepared.chosen
     predictions["probability"] = probabilities
     predictions.to_csv(output_directory / "predictions.csv", index=False)
 

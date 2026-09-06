@@ -41,11 +41,23 @@ davis model run components/davis-mnl/examples/minimal/model.yaml
 install後はDavis repository外の分析projectでも，同じ`component` IDとversionを指定した`model.yaml`を実行できます．componentは分析projectの`components/`，per-user install領域の順に探索します．application bundle内の組み込みcomponent探索は後続実装です．
 
 ```console
-davis component inspect davis/mnl --version 0.2.0
-davis component remove davis/mnl --version 0.2.0
+davis component inspect davis/mnl --version 0.3.0
+davis component remove davis/mnl --version 0.3.0
 ```
 
-公式registryがreleaseへ公開された後は，`davis install component mnl`または`davis install component davis/mnl --version 0.2.0`で取得できます．registryとbundleの公開契約は[`davis-component-registry.md`](davis-component-registry.md)に記載します．生成・実動作検証・release添付workflowは実装済みで，公式artifactは次のrelease tag公開時に利用可能になります．
+公式registryがreleaseへ公開された後は，`davis install component mnl`または`davis install component davis/mnl --version 0.3.0`で取得できます．registryとbundleの公開契約は[`davis-component-registry.md`](davis-component-registry.md)に記載します．生成・実動作検証・release添付workflowは実装済みで，公式artifactは次のrelease tag公開時に利用可能になります．
+
+## `Tohoku_History`実データexample
+
+`components/davis-mnl/examples/tohoku-history/model.yaml`は，Davis Catalogの`df_ex_var.csv`と`df_individual.csv`を直接参照します．GUIで開く場合は，2つの入力をCatalogから選び，`individual_id`と`time`を複合keyとして結合します．ケースキーも同じ2列，選択肢IDは`city`，実際に選ばれた選択肢IDは`target`です．
+
+```console
+davis login <Davis Web URL>
+davis get Tohoku_History --file df_ex_var.csv --file df_individual.csv
+davis model run components/davis-mnl/examples/tohoku-history/model.yaml
+```
+
+このexampleは動作確認時間を抑えるため，`development_case_limit: 200`で入力順の先頭200ケースだけを推定します．これは標本抽出法ではなく開発用上限です．研究上の本推定ではこの設定を削除し，分析目的に沿った標本作成を明示的なtransformとして記録してください．実データそのものはGitへ追加しません．
 
 per-user install先はmacOSでは`~/Library/Application Support/Davis/components/`，Windowsではlocal application data，Linuxでは`$XDG_DATA_HOME/davis/components/`または`~/.local/share/davis/components/`です．開発・test時は`DAVIS_DATA_HOME`で変更できます．installは`.venv`，`__pycache__`，Git metadata等を除外し，component ID，version，schema，lockfile，symlink，重複を検証してから同一filesystem内でatomicに配置します．
 
@@ -120,4 +132,4 @@ RunnerはManifestの`runtime.command`へ`request_argument`と`request.json`の�
 
 localまたはregistry componentは任意codeを実行するため，現在のprototypeでは信頼できるcomponentだけをinstallしてください．sandboxとregistry署名は後続実装です．Runtimeの正規形は言語非依存の`executor: process`です．現在のPython componentは実行時に`uv`を必要とし，Davisは一般言語環境を自動installせず，Manifestの`requirements`に基づいて不足commandと導入方法を案内します．
 
-ComponentManifestの`requires_davis`はcomponentが必要とするDavis contractのSemVer条件です．本体のrelease versionとは独立しており，互換性が維持されている限り，本体のminor updateに合わせて機械的に上げません．MNL 0.2.0は`>=0.3.5`を宣言します．正規の`component.yaml`はconfig schemaとpresentationをinlineに保持でき，旧packageの`component-manifest.yaml`，`model-manifest.yaml`，`davis.component/v1alpha1`，`davis.model/v1alpha1`も後方互換として読み込めます．
+ComponentManifestの`requires_davis`はcomponentが必要とするDavis contractのSemVer条件です．本体のrelease versionとは独立しており，互換性が維持されている限り，本体のminor updateに合わせて機械的に上げません．MNL 0.3.0は`>=0.5.0`を宣言します．正規の`component.yaml`はconfig schemaとpresentationをinlineに保持でき，旧packageの`component-manifest.yaml`，`model-manifest.yaml`，`davis.component/v1alpha1`，`davis.model/v1alpha1`も後方互換として読み込めます．
