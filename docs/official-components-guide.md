@@ -50,6 +50,8 @@ davis installed
 
 複数CSVをモデル入力として結合する場合，Desktopは内部で`davis/csv-transform`を使用するため，対象モデルとCSV Transformの両方をinstallしてください．
 
+各componentには，小さな入力データを含む実行可能な`examples/minimal`が同梱されます．install完了時にCLIがexample planの場所と実行commandを表示します．
+
 ## 4．Desktopで使う共通手順
 
 ```console
@@ -59,7 +61,7 @@ davis desktop
 
 1. `Project workspace`で空または既存の作業folderを選びます．Git repositoryである必要はありません．
 2. `ComponentManifest`で使用するcomponentを選びます．
-3. 入力欄から`ローカルCSV`または`Davis Catalog`を選びます．
+3. まず動作を試す場合は`Exampleを試す`を押します．選択中componentの同梱PlanとデータがGUIへ読み込まれ，元のexampleを変更せずworkspaceへ別名保存できます．自分のデータを使う場合は，入力欄から`ローカルCSV`または`Davis Catalog`を選びます．
 4. 複数CSVを追加した場合は，基準データ，左右の結合key，関係，left／inner，未照合を許可するかを指定します．
 5. 役割列，説明変数，モデル固有設定を入力します．
 6. `YAMLを確認`でAnalysis Planを確認し，保存して実行します．

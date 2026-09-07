@@ -8,6 +8,7 @@ const english: Record<string, string> = {
   "model.yamlとdavis-runsを置く作業folderです．Davis repositoryのcloneは不要です．": "This workspace stores model.yaml and davis-runs. You do not need to clone the Davis repository.",
   "すべてのcomponentを同じdavis.ui/v1 rendererで編集します．": "Edit every component with the same davis.ui/v1 renderer.",
   "新規Plan": "New Plan", "既存Planを開く": "Open Plan", "空欄ならPlan name": "Uses Plan name when empty",
+  "Exampleを試す": "Try example", "このcomponentにはminimal exampleがありません．": "This component has no minimal example.",
   "Workspaceを選択してください": "Select a workspace", "このcomponentにはdavis.ui/v1の画面定義がありません．内容を失わないYAML modeで開いています．": "This component has no davis.ui/v1 presentation. It is open in lossless YAML mode.",
   "上書き保存・検証": "Save and validate", "上書きして実行": "Save and run", "YAMLを確認": "Preview YAML",
   "別名で保存": "Save as", "上書き保存": "Save", "上書きして推定": "Save and estimate", "保存して推定": "Save and estimate",

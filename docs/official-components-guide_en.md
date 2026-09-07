@@ -50,6 +50,8 @@ davis installed
 
 When multiple CSV files are joined into a model input, Desktop uses `davis/csv-transform` internally. Install both the selected model and CSV Transform.
 
+Each component includes a runnable `examples/minimal` with small input data. After installation, the CLI prints the example Plan path and the command that runs it.
+
 ## 4. Common Desktop workflow
 
 ```console
@@ -59,7 +61,7 @@ davis desktop
 
 1. Select an empty or existing work folder under `Project workspace`. It does not need to be a Git repository.
 2. Select the component under `ComponentManifest`.
-3. Add a `Local CSV` or `Davis Catalog` file to each input.
+3. To try it first, click `Try example`. Desktop loads the selected component's bundled Plan and data, and lets you save a separate copy in the workspace without modifying the original example. To use your own data, add a `Local CSV` or `Davis Catalog` file to each input.
 4. For multiple CSVs, select the base table, left and right join keys, relationship, left or inner join, and whether unmatched rows are allowed.
 5. Map role columns and configure variables and component-specific settings.
 6. Inspect the Analysis Plan with `Preview YAML`, then save and run it.

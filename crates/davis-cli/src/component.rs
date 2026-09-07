@@ -47,7 +47,26 @@ pub(crate) async fn handle_install(
         store.install_with_origin(downloaded.path(), Some(origin))?
     };
     print_installed(&installed, json, "Installed")?;
+    if !json {
+        if let Some(example) = minimal_example_plan(&installed.path) {
+            println!("Example plan: {}", example.display());
+            println!("Try it: davis model run {}", example.display());
+        }
+    }
     Ok(())
+}
+
+fn minimal_example_plan(component: &Path) -> Option<PathBuf> {
+    let entries = fs::read_dir(component.join("examples/minimal")).ok()?;
+    entries
+        .filter_map(Result::ok)
+        .map(|entry| entry.path())
+        .filter(|path| {
+            path.extension().is_some_and(|extension| {
+                extension.eq_ignore_ascii_case("yaml") || extension.eq_ignore_ascii_case("yml")
+            })
+        })
+        .min()
 }
 
 pub(crate) fn handle_component(
@@ -487,6 +506,16 @@ fn looks_like_explicit_path(source: &str, path: &std::path::Path) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn finds_a_bundled_minimal_example_plan() {
+        let component =
+            PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../components/davis-mnl");
+        assert_eq!(
+            minimal_example_plan(&component),
+            Some(component.join("examples/minimal/model.yaml"))
+        );
+    }
 
     #[test]
     fn scaffolds_a_valid_self_contained_component_without_overwriting() {

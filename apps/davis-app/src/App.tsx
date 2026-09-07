@@ -34,12 +34,14 @@ type ArtifactPreview = { name: string; media_type: string; content: unknown };
 type ResultDefinition = { artifact: string; title: string; widget: "key-value" | "table"; profile?: ArtifactProfile };
 type CatalogFile = { dataset_id: string; file_id: string; path: string; title: string; size: number; columns: string[] };
 type DownloadedCatalogFile = { dataset_id: string; file_id: string; path: string };
+type ComponentExample = { component_id: string; component_version: string; name: string; path: string };
 
 export default function App() {
   const { locale, setLocale, t } = useI18n();
   const [repository, setRepository] = useState(""); const [planPath, setPlanPath] = useState("");
   const [planName, setPlanName] = useState("analysis-plan"); const [runLabel, setRunLabel] = useState("");
   const [editor, setEditor] = useState<ComponentEditor>(); const [editorOptions, setEditorOptions] = useState<ComponentEditor[]>([]);
+  const [componentExamples, setComponentExamples] = useState<ComponentExample[]>([]);
   const [inputs, setInputs] = useState<Record<string, FormInput | undefined>>({}); const [config, setConfig] = useState<Record<string, unknown>>({});
   const [preservedRun, setPreservedRun] = useState<Record<string, unknown>>({}); const [yamlPreview, setYamlPreview] = useState("");
   const [codeMode, setCodeMode] = useState(false); const [validation, setValidation] = useState<Validation>();
@@ -61,8 +63,9 @@ export default function App() {
     const selected = await open({ directory: true, multiple: false }); if (typeof selected !== "string") return;
     setRepository(selected);
     await perform(async () => {
-      const definitions = await invoke<ComponentEditor[]>("component_editor_definitions", { repository: selected }); const definition = definitions[0];
+      const [definitions, examples] = await Promise.all([invoke<ComponentEditor[]>("component_editor_definitions", { repository: selected }), invoke<ComponentExample[]>("component_example_plans", { repository: selected })]); const definition = definitions[0];
       setEditorOptions(definitions);
+      setComponentExamples(examples);
       if (definition) selectDefinition(definition); else { setEditor(undefined); setCompleted(undefined); setArtifactPreviews({}); }
       await refreshHistory(selected);
     });
@@ -70,8 +73,9 @@ export default function App() {
   async function reloadComponents() {
     if (!repository) return;
     await perform(async () => {
-      const definitions = await invoke<ComponentEditor[]>("component_editor_definitions", { repository });
+      const [definitions, examples] = await Promise.all([invoke<ComponentEditor[]>("component_editor_definitions", { repository }), invoke<ComponentExample[]>("component_example_plans", { repository })]);
       setEditorOptions(definitions);
+      setComponentExamples(examples);
       if (definitions.length) selectDefinition(definitions[0]);
     });
   }
@@ -156,17 +160,26 @@ export default function App() {
   async function openPlanForEditing() {
     if (!repository) return setError(t("先にWorkspaceを選択してください．"));
     const selected = await open({ multiple: false, filters: [{ name: "Davis analysis plan", extensions: ["yaml", "yml"] }] }); if (typeof selected !== "string") return;
+    await loadPlanForEditing(selected);
+  }
+  async function loadPlanForEditing(path: string, asTemplate = false) {
     await perform(async () => {
-      const loaded = await invoke<EditablePlan>("load_analysis_plan_for_editing", { repository, path: selected });
+      const loaded = await invoke<EditablePlan>("load_analysis_plan_for_editing", { repository, path });
       setEditorOptions((current) => current.some((item) => item.manifest.id === loaded.editor.manifest.id && item.manifest.version === loaded.editor.manifest.version) ? current : [...current, loaded.editor]);
-      if (isComposedEditor(loaded.editor)) await hydratePlan(loaded, selected); else { setEditor(loaded.editor); setPlanPath(selected); setRunLabel(loaded.plan.run?.label ?? ""); setYamlPreview(loaded.yaml); setCodeMode(true); setCompleted(undefined); setCompletedEditor(undefined); setArtifactPreviews({}); setValidation(undefined); }
+      if (isComposedEditor(loaded.editor)) await hydratePlan(loaded, asTemplate ? "" : path, asTemplate); else { setEditor(loaded.editor); setPlanPath(asTemplate ? "" : path); setRunLabel(loaded.plan.run?.label ?? ""); setYamlPreview(loaded.yaml); setCodeMode(true); setCompleted(undefined); setCompletedEditor(undefined); setArtifactPreviews({}); setValidation(undefined); }
     });
   }
-  async function hydratePlan(loaded: EditablePlan, path: string) {
+  async function openComponentExample() {
+    if (!editor) return;
+    const example = componentExamples.find((item) => item.component_id === editor.manifest.id && item.component_version === editor.manifest.version);
+    if (!example) return setError(t("このcomponentにはminimal exampleがありません．"));
+    await loadPlanForEditing(example.path, true);
+  }
+  async function hydratePlan(loaded: EditablePlan, path: string, useAbsoluteSources = false) {
     const loadedInputs: Record<string, FormInput | undefined> = {}; const issues: string[] = [];
     setEditor(loaded.editor); setPlanName(loaded.plan.name); setRunLabel(loaded.plan.run?.label ?? ""); setConfig(structuredClone(loaded.plan.config)); setPreservedRun(loaded.plan.run ?? {});
     setPlanPath(path); setYamlPreview(loaded.yaml); setCodeMode(false); setValidation(undefined); setCompleted(undefined); setCompletedEditor(undefined); setArtifactPreviews({});
-    for (const declaration of loaded.editor.manifest.inputs) { const input = loaded.plan.inputs[declaration.name]; if (!input) continue; try { loadedInputs[declaration.name] = await hydrateInputBinding(declaration.name, input, loaded.resolved_sources); } catch (reason) { issues.push(`${t("読み込めませんでした")}: ${declaration.name}: ${String(reason)}`); } }
+    for (const declaration of loaded.editor.manifest.inputs) { const input = loaded.plan.inputs[declaration.name]; if (!input) continue; try { const hydrated = await hydrateInputBinding(declaration.name, input, loaded.resolved_sources); loadedInputs[declaration.name] = useAbsoluteSources ? { ...hydrated, sources: hydrated.sources.map((source) => ({ ...source, serializedPath: source.path })) } : hydrated; } catch (reason) { issues.push(`${t("読み込めませんでした")}: ${declaration.name}: ${String(reason)}`); } }
     setInputs(loadedInputs); if (issues.length) setError(issues.join("\n"));
   }
   async function hydrateInputBinding(slot: string, input: PlanInput, resolved: Record<string, string>): Promise<FormInput> {
@@ -210,10 +223,11 @@ export default function App() {
 
   const editorReady = repository.length > 0 && (editor?.manifest.inputs.filter((item) => item.required).every((item) => Boolean(inputs[item.name]?.sources.length)) ?? false);
   const localizedEditor = editor ? { ...editor, config_schema: localizeTree(editor.config_schema, locale), ui_schema: localizeTree(editor.ui_schema, locale) } : undefined;
+  const selectedExample = editor && componentExamples.some((item) => item.component_id === editor.manifest.id && item.component_version === editor.manifest.version);
   return <main><header><div className="header-top"><p className="eyebrow">DAVIS MODEL</p><label className="language-select"><span>{locale === "ja" ? "言語" : "Language"}</span><select value={locale} onChange={(event) => setLocale(event.target.value as "ja" | "en")}><option value="ja">日本語</option><option value="en">English</option></select></label></div><h1>{t("ローカルデータから推定まで")}</h1><p className="lead">{t("ComponentManifestに従い，入力結合とモデル設定を同じAnalysisPlanとして編集します．")}</p></header>
     {error && <div className="error sticky-error">{error}</div>}
     <section><SectionHeading number="1" title="Project workspace" description={t("model.yamlとdavis-runsを置く作業folderです．Davis repositoryのcloneは不要です．")} /><PathField value={repository} placeholder="Project folder" onChange={(value) => { setRepository(value); setEditor(undefined); }} onChoose={chooseRepository} /></section>
-    <section><div className="heading-with-actions"><SectionHeading number="2" title="Analysis plan editor" description={t("すべてのcomponentを同じdavis.ui/v1 rendererで編集します．")} /><div className="top-actions"><button className="secondary" onClick={newPlan}>{t("新規Plan")}</button><button className="secondary" disabled={!repository} onClick={openPlanForEditing}>{t("既存Planを開く")}</button></div></div>
+    <section><div className="heading-with-actions"><SectionHeading number="2" title="Analysis plan editor" description={t("すべてのcomponentを同じdavis.ui/v1 rendererで編集します．")} /><div className="top-actions"><button className="secondary" onClick={newPlan}>{t("新規Plan")}</button><button className="secondary" disabled={!repository} onClick={openPlanForEditing}>{t("既存Planを開く")}</button><button disabled={!selectedExample || busy} onClick={openComponentExample}>{t("Exampleを試す")}</button></div></div>
       {repository && !editorOptions.length && <div className="notice component-install-notice"><strong>{t("componentがまだインストールされていません．")}</strong><p>{t("Project workspaceは正しく選択されています．次のcommandをターミナルへ貼り付けて公式componentをインストールしてください．")}</p><pre><code>{`davis install component mnl
 davis install component nl
 davis install component rl

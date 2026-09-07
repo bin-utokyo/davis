@@ -37,6 +37,14 @@ struct ComponentEditorResponse {
 }
 
 #[derive(Serialize)]
+struct ComponentExampleResponse {
+    component_id: String,
+    component_version: String,
+    name: String,
+    path: PathBuf,
+}
+
+#[derive(Serialize)]
 struct UiExtensionResponse {
     api_version: String,
     html: String,
@@ -225,6 +233,57 @@ fn component_editor_definitions(
         .filter(|editor| editor.ui_schema["version"] == "davis.ui/v1")
         .collect();
     Ok(editors)
+}
+
+#[tauri::command]
+#[allow(clippy::needless_pass_by_value)]
+fn component_example_plans(repository: PathBuf) -> Result<Vec<ComponentExampleResponse>, String> {
+    if !repository.is_dir() {
+        return Err(format!(
+            "repository does not exist: {}",
+            repository.display()
+        ));
+    }
+    let mut examples = Vec::new();
+    for (manifest_path, manifest) in list_components(&repository) {
+        let Some(component_directory) = manifest_path.parent() else {
+            continue;
+        };
+        let minimal = component_directory.join("examples/minimal");
+        if !minimal.is_dir() {
+            continue;
+        }
+        let Ok(entries) = fs::read_dir(minimal) else {
+            continue;
+        };
+        for entry in entries.filter_map(Result::ok) {
+            let path = entry.path();
+            if !path.extension().is_some_and(|extension| {
+                extension.eq_ignore_ascii_case("yaml") || extension.eq_ignore_ascii_case("yml")
+            }) {
+                continue;
+            }
+            let Ok(plan) = AnalysisPlan::read(&path) else {
+                continue;
+            };
+            if plan.component.component == manifest.id && plan.component.version == manifest.version
+            {
+                examples.push(ComponentExampleResponse {
+                    component_id: manifest.id.clone(),
+                    component_version: manifest.version.clone(),
+                    name: plan.name,
+                    path,
+                });
+            }
+        }
+    }
+    examples.sort_by(|left, right| {
+        left.component_id
+            .cmp(&right.component_id)
+            .then_with(|| left.component_version.cmp(&right.component_version))
+            .then_with(|| left.name.cmp(&right.name))
+    });
+    Ok(examples)
 }
 
 #[tauri::command]
@@ -1047,6 +1106,7 @@ fn main() {
             inspect_distinct_values,
             component_editor_definition,
             component_editor_definitions,
+            component_example_plans,
             load_analysis_plan_for_editing,
             render_analysis_plan,
             render_yaml_value,
@@ -1071,11 +1131,26 @@ mod tests {
     use serde_json::json;
 
     use super::{
-        component_editor_definitions, editor_definition, editor_response, list_project_runs,
-        load_analysis_plan_for_editing, load_project_run, normalize_editor_presentation,
-        parse_yaml_value, preview_csv, render_plan, render_yaml_value, save_analysis_plan_yaml,
-        validate_editor_presentation, ComponentManifest, Value,
+        component_editor_definitions, component_example_plans, editor_definition, editor_response,
+        list_project_runs, load_analysis_plan_for_editing, load_project_run,
+        normalize_editor_presentation, parse_yaml_value, preview_csv, render_plan,
+        render_yaml_value, save_analysis_plan_yaml, validate_editor_presentation,
+        ComponentManifest, Value,
     };
+
+    #[test]
+    fn lists_runnable_minimal_examples_from_component_packages() {
+        let examples = component_example_plans(repository()).unwrap();
+        for component in ["davis/mnl", "davis/nl", "davis/rl", "davis/csv-transform"] {
+            assert!(
+                examples
+                    .iter()
+                    .any(|example| example.component_id == component),
+                "missing minimal example for {component}"
+            );
+        }
+        assert!(examples.iter().all(|example| example.path.is_file()));
+    }
 
     fn repository() -> PathBuf {
         PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../..")
