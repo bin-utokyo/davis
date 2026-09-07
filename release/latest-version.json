@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
-  "latest": "0.5.7",
+  "latest": "0.5.8",
   "minimum_supported": "0.5.0",
   "released_at": "2026-09-07",
-  "release_url": "https://github.com/bin-utokyo/davis/releases/tag/v0.5.7",
+  "release_url": "https://github.com/bin-utokyo/davis/releases/tag/v0.5.8",
   "message": {
-    "ja": "Desktopのinstall・起動先をCatalog／component用の一時data overrideから分離し，常に正規のDesktopを起動できるようにしました．",
-    "en": "Desktop installation and launch are now isolated from temporary catalog and component data overrides, ensuring the regular Desktop version is launched."
+    "ja": "Desktopを一時data overrideから分離し，install済みcomponentのminimal exampleをGUIまたはCLIからすぐ試せるようにしました．",
+    "en": "Desktop is isolated from temporary data overrides, and bundled minimal component examples are now readily accessible from the GUI and CLI."
   }
 }
