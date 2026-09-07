@@ -23,8 +23,8 @@ columns:
   type_:
     name: Datetime
 - description:
-    en: "Purpose code: 100=Commuting/School, 200=Business, 201=Returning to office/school, 300=Returning home, 400=Shopping, 401=Dining, 402=Lessons, 403=Medical, 404=Leisure, 405=Tourism, 406=Strolling, 407=Pickup/Drop-off, 500=Waiting, 501=Other, 999=Unknown."
-    ja: "目的コード：100=通勤・通学、200=業務、201=職場・学校へ戻る、300=帰宅、400=買い物、401=食事、402=習い事、403=通院、404=レジャー、405=観光、406=散歩、407=送迎、500=待機、501=その他、999=不明。"
+    en: "Purpose code: 110=Returning home, 200=Shopping, 210=Dining/Entertainment, 220=Lodging, 300=Work (at regular workplace), 310=Work (outside regular workplace), 400=Study/Commuting to school, 998=Other, 999=--."
+    ja: "目的コード：110=帰宅、200=買物、210=食事・娯楽、220=宿泊、300=仕事（勤務先）、310=仕事（勤務先以外）、400=学業・通学、998=その他、999=―。"
   name: PurposeCode
   type_:
     name: Int64
