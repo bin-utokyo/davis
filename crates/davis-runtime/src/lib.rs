@@ -10,8 +10,8 @@ use std::path::{Component, Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 pub use components::{
-    user_data_directory, validate_component_package, ComponentStore, ComponentStoreError,
-    InstalledComponent, ValidatedComponentPackage,
+    platform_user_data_directory, user_data_directory, validate_component_package, ComponentStore,
+    ComponentStoreError, InstalledComponent, ValidatedComponentPackage,
 };
 use davis_core::{CatalogCache, CatalogCacheError};
 use davis_model_api::{

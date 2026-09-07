@@ -342,6 +342,16 @@ pub fn user_data_directory() -> Result<PathBuf, ComponentStoreError> {
     davis_core::user_data_directory().map_err(|_| ComponentStoreError::DirectoryUnavailable)
 }
 
+/// Returns the OS-standard Davis data directory without `DAVIS_DATA_HOME`.
+///
+/// # Errors
+///
+/// Returns an error when no suitable platform directory is available.
+pub fn platform_user_data_directory() -> Result<PathBuf, ComponentStoreError> {
+    davis_core::platform_user_data_directory()
+        .map_err(|_| ComponentStoreError::DirectoryUnavailable)
+}
+
 fn validate_package(
     root: &Path,
     manifest_path: &Path,

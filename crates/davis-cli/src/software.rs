@@ -145,9 +145,11 @@ struct SoftwareStore {
 
 impl SoftwareStore {
     fn for_user() -> Result<Self, SoftwareError> {
-        Ok(Self {
-            root: davis_runtime::user_data_directory()?.join("software"),
-        })
+        let root = std::env::var_os("DAVIS_SOFTWARE_HOME").map_or_else(
+            || davis_runtime::platform_user_data_directory().map(|path| path.join("software")),
+            |path| Ok(PathBuf::from(path)),
+        )?;
+        Ok(Self { root })
     }
 
     #[cfg(test)]

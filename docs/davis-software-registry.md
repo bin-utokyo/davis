@@ -16,7 +16,7 @@ davis installed
 davis installed --json
 ```
 
-DesktopはOS標準のDavis user data directory以下の`software/desktop/<version>`へ保存されます．`DAVIS_DATA_HOME`を指定した場合は，そのdirectoryを起点にします．このため，install時または起動時のcurrent working directoryには依存しません．
+DesktopはOS標準のDavis user data directory以下の`software/desktop/<version>`へ保存されます．Catalog・componentのtest／portable data領域を切り替える`DAVIS_DATA_HOME`はDesktopのinstall先と起動versionへ影響しません．software領域も明示的に切り替える必要がある開発・test用途では，`DAVIS_SOFTWARE_HOME`に`software` directoryそのものを指定します．このため，通常のinstallと起動はcurrent working directoryや一時的なdata overrideに依存しません．
 
 ## 2. Registry契約
 

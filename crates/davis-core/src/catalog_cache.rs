@@ -170,6 +170,16 @@ pub fn user_data_directory() -> Result<PathBuf, CatalogCacheError> {
     if let Some(directory) = std::env::var_os("DAVIS_DATA_HOME") {
         return Ok(PathBuf::from(directory));
     }
+    platform_user_data_directory()
+}
+
+/// Returns the operating system's standard Davis user data directory without
+/// applying test or portable-data overrides.
+///
+/// # Errors
+///
+/// Returns an error when no platform home/data directory is available.
+pub fn platform_user_data_directory() -> Result<PathBuf, CatalogCacheError> {
     #[cfg(target_os = "windows")]
     if let Some(directory) =
         std::env::var_os("LOCALAPPDATA").or_else(|| std::env::var_os("APPDATA"))
