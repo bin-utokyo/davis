@@ -51,8 +51,8 @@ columns:
   type_:
     name: Int64
 - description:
-    en: Move indicator (0 = No, 1 = Yes)
-    ja: 移動の有無（0=なし, 1=あり）
+    en: "Relocation sequence code for the observation year: 0=No relocation, 1=Most recent relocation (to the current residence), 2=Previous relocation (to the previous residence), 3=Second previous relocation (to the second previous residence)."
+    ja: "観測年における転居の順序コード：0=転居なし，1=直近の転居(現在の居住地への転居)，2=1回前の転居(1つ前の居住地への転居)，3=2回前の転居(2つ前の居住地への転居)．"
   name: move_mark
   type_:
     name: Int64
@@ -123,14 +123,14 @@ columns:
   type_:
     name: Int64
 - description:
-    en: Job change event indicator (0 = No, 1 = Yes)
-    ja: 転職イベントの有無（0=なし, 1=あり）
+    en: "Employment-status group following employment, job change, or school advancement: 0=No applicable record, 1=Regular employee, 2=Contract/commissioned/temporary-agency employee, 3=Part-time employee, 4=Self-employed, agriculture/fishery worker, company officer/manager, or other, 5=Student."
+    ja: "本人の就職・転職・進学後の職業・身分区分：0=該当記録なし，1=正規職員・従業員，2=契約・嘱託・派遣職員，3=パート・アルバイト，4=自営業・農林漁業・会社役員・経営者・その他，5=学生．"
   name: ev_change_job
   type_:
     name: Int64
 - description:
-    en: Workplace location change event indicator (0 = No, 1 = Yes)
-    ja: 職場の所在地変更イベントの有無（0=なし, 1=あり）
+    en: "Workplace or school-location code following employment or school advancement: 0=No applicable record, 1=Tokyo special wards, 2=Tokyo outside the special wards, 3=Saitama City, 4=Chiba City, 5=Yokohama City, 6=Kawasaki City, 7=Sagamihara City, 8=Sendai City, 9=Saitama Prefecture excluding Saitama City, 10=Chiba Prefecture excluding Chiba City, 11=Kanagawa Prefecture excluding Yokohama, Kawasaki, and Sagamihara cities, 12=Ibaraki Prefecture, 13=Fukushima Prefecture, 14=Miyagi Prefecture excluding Sendai City, 15=Iwate Prefecture, 16=None of the above."
+    ja: "本人の就職・進学後の勤務地・進学先コード：0=該当記録なし，1=東京都特別区(23区)，2=東京都23区以外，3=さいたま市，4=千葉市，5=横浜市，6=川崎市，7=相模原市，8=仙台市，9=埼玉県(さいたま市以外)，10=千葉県(千葉市以外)，11=神奈川県(横浜市・川崎市・相模原市以外)，12=茨城県，13=福島県，14=宮城県(仙台市以外)，15=岩手県，16=上記のいずれにも該当しない．"
   name: ev_change_loc
   type_:
     name: Int64
@@ -165,14 +165,14 @@ columns:
   type_:
     name: Int64
 - description:
-    en: Spouse's job change event indicator (0 = No, 1 = Yes)
-    ja: 配偶者の転職イベントの有無（0=なし, 1=あり）
+    en: "Spouse's employment-status group following employment, job change, or school advancement: 0=No applicable record or unknown, 1=Regular employee, 2=Contract/commissioned/temporary-agency employee, 3=Part-time employee, 4=Self-employed, agriculture/fishery worker, company officer/manager, or other, 5=Student."
+    ja: "配偶者の就職・転職・進学後の職業・身分区分：0=該当記録なしまたは不明，1=正規職員・従業員，2=契約・嘱託・派遣職員，3=パート・アルバイト，4=自営業・農林漁業・会社役員・経営者・その他，5=学生．"
   name: sp_ev_change_job
   type_:
     name: Int64
 - description:
-    en: Spouse's workplace location change event indicator (0 = No, 1 = Yes)
-    ja: 配偶者の職場所在地変更イベントの有無（0=なし, 1=あり）
+    en: "Spouse's workplace or school-location code following employment or school advancement: 0=No applicable record, 1=Tokyo special wards, 2=Tokyo outside the special wards, 3=Saitama City, 4=Chiba City, 5=Yokohama City, 6=Kawasaki City, 7=Sagamihara City, 8=Sendai City, 9=Saitama Prefecture excluding Saitama City, 10=Chiba Prefecture excluding Chiba City, 11=Kanagawa Prefecture excluding Yokohama, Kawasaki, and Sagamihara cities, 12=Ibaraki Prefecture, 13=Fukushima Prefecture, 14=Miyagi Prefecture excluding Sendai City, 15=Iwate Prefecture, 16=None of the above, 17=Unknown."
+    ja: "配偶者の就職・進学後の勤務地・進学先コード：0=該当記録なし，1=東京都特別区(23区)，2=東京都23区以外，3=さいたま市，4=千葉市，5=横浜市，6=川崎市，7=相模原市，8=仙台市，9=埼玉県(さいたま市以外)，10=千葉県(千葉市以外)，11=神奈川県(横浜市・川崎市・相模原市以外)，12=茨城県，13=福島県，14=宮城県(仙台市以外)，15=岩手県，16=上記のいずれにも該当しない，17=不明．"
   name: sp_ev_change_loc
   type_:
     name: Int64
