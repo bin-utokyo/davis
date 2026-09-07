@@ -17,8 +17,8 @@ columns:
   type_:
     name: Datetime
 - description:
-    en: "Transportation mode code: 100=Walking, 200=Bicycle (personal), 210=Shared bicycle, 300=Car (self-driven), 310=Pickup/Drop-off, 320=Rental car, 400=Train (Shinkansen/JR/private railway), 410=Subway, 420=Monorail, 430=Tram, 500=Bus, 600=Motorcycle, 700=Taxi, 800=Airplane, 810=Boat, 998=Other, 999=--."
-    ja: "移動手段コード：100=徒歩、200=自転車（個人所有）、210=シェアサイクル、300=自動車（自分で運転）、310=送迎、320=レンタカー、400=鉄道（新幹線・JR・私鉄）、410=地下鉄、420=モノレール、430=路面電車、500=バス、600=バイク、700=タクシー、800=飛行機、810=船、998=その他、999=--。"
+    en: "Transportation mode code: 100=Walking, 200=Bicycle (personal), 210=Shared bicycle, 300=Car (self-driven), 310=Pickup/Drop-off, 320=Rental car, 400=Railway (Shinkansen/JR), 410=Subway/Private railway/Monorail, 500=Bus, 600=Motorcycle, 700=Taxi, 800=Airplane, 810=Boat, 998=Other, 999=--."
+    ja: "移動手段コード：100=徒歩、200=自転車（個人所有）、210=シェアサイクル、300=自動車（自分で運転）、310=送迎、320=レンタカー、400=鉄道（新幹線・JR）、410=地下鉄・私鉄・モノレール、500=バス、600=バイク、700=タクシー、800=飛行機、810=船、998=その他、999=--。"
   name: ModeCode
   type_:
     name: Int64
