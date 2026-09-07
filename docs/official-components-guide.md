@@ -43,9 +43,9 @@ davis installed
 
 | 名前 | ID | Version | 目的 |
 | --- | --- | --- | --- |
-| Multinomial Logit | `davis/mnl` | `0.3.2` | 選択肢long形式データからMNLを推定 |
-| Nested Logit | `davis/nl` | `0.1.2` | 2段階・非重複nestのNLを推定 |
-| Recursive Logit | `davis/rl` | `0.1.2` | link networkと観測経路からRLを推定 |
+| Multinomial Logit | `davis/mnl` | `0.4.0` | 選択肢long形式データからMNLを推定 |
+| Nested Logit | `davis/nl` | `0.2.0` | 2段階・非重複nestのNLを推定 |
+| Recursive Logit | `davis/rl` | `0.2.0` | link networkと観測経路からRLを推定 |
 | CSV Transform | `davis/csv-transform` | `0.4.1` | CSV結合，線形結合列，列選択，CSV／Parquet出力 |
 
 複数CSVをモデル入力として結合する場合，Desktopは内部で`davis/csv-transform`を使用するため，対象モデルとCSV Transformの両方をinstallしてください．
@@ -121,7 +121,7 @@ terms:
 ```yaml
 api_version: davis.analysis/v1alpha1
 name: mode-choice-mnl
-component: {id: davis/mnl, version: 0.3.2, operation: estimate}
+component: {id: davis/mnl, version: 0.4.0, operation: estimate}
 inputs:
   choice_data: {kind: local, path: choice.csv}
 config:
@@ -140,12 +140,12 @@ run: {label: mnl-baseline, tags: [mnl, baseline]}
 
 入力long形式，`roles`，`terms`はMNLとほぼ同じですが，`chosen`列が必須で，`nests`も指定します．全選択肢は重複なく1つのnestへ所属させます．
 
-このcomponentは最上位scaleを1へ正規化し，各nestの非類似度`dissimilarity`をλとして扱います．λは`0 < λ <= 1`です．`initial`は推定初期値，`fixed`は固定値です．両方を同時に書きません．選択肢が1つだけのnestは実行時にλ=1へ固定されます．
+このcomponentはPDFの表記に合わせ，最下層scale μを1へ固定し，各上位nestの`scale_mu_d`をμ_dとして扱います．μ_dは`0 < μ_d <= 1`です．`initial`は推定初期値，`fixed`は固定値です．両方を同時に書きません．
 
 ```yaml
 api_version: davis.analysis/v1alpha1
 name: mode-choice-nl
-component: {id: davis/nl, version: 0.1.2, operation: estimate}
+component: {id: davis/nl, version: 0.2.0, operation: estimate}
 inputs:
   choice_data: {kind: local, path: choice.csv}
 config:
@@ -156,10 +156,10 @@ config:
   nests:
     - name: motorized
       alternatives: [train, car]
-      dissimilarity: {initial: 0.8}
+      scale_mu_d: {initial: 0.8}
     - name: active
       alternatives: [walk]
-      dissimilarity: {fixed: 1.0}
+      scale_mu_d: {fixed: 1.0}
   estimation: {max_iterations: 500, tolerance: 1.0e-8}
 run: {label: nl-baseline, tags: [nl, baseline]}
 ```
@@ -178,7 +178,7 @@ Networkの必須roleは`link_id`，`from_node`，`to_node`です．観測経路�
 ```yaml
 api_version: davis.analysis/v1alpha1
 name: route-choice-rl
-component: {id: davis/rl, version: 0.1.2, operation: estimate}
+component: {id: davis/rl, version: 0.2.0, operation: estimate}
 inputs:
   network: {kind: local, path: network.csv}
   observations: {kind: local, path: observations.csv}
@@ -244,12 +244,15 @@ CSV Transformを別Runとして先に実行する以外に，Desktopで複数CSV
 
 モデルcomponentは，利用可能な場合に次の成果物を返します．
 
-- `parameters.csv`：parameter名，推定値，標準誤差等
-- `metrics.json`：対数尤度，AIC，BIC，収束情報等
+- `parameters.csv`：parameter名，推定値，標準誤差，t値，p値，有意記号
+- `covariance.csv`：最尤点の観測情報行列から計算した共分散行列
+- `metrics.json`：初期・最終尤度，尤度比，修正済み尤度比，AIC，BIC，収束情報等
 - `predictions.csv`：予測確率または観測link選択確率
 - `sample-summary.json`：利用ケース数，除外数，警告等
 
 CSV Transformは`transformed.csv`または`transformed.parquet`と，変換summaryを返します．実際の成果物一覧は各Runの`result.json`を正とします．
+
+公式MNL・NL・RL componentは，`t_value = estimate / std_error`とし，p値を漸近正規分布から計算します．固定parameter，制約境界上のparameter，または情報行列が特異な場合は，誤解を招く推測統計を出さず空欄にします．Desktopでは推定値・標準誤差・t値を小数第2位で表示し，`†`，`*`，`**`をそれぞれ10%，5%，1%有意としてt値の右上へ表示します．
 
 error時は，まず次を確認してください．
 

@@ -10,6 +10,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 from scipy.optimize import minimize
+from scipy.stats import norm
 
 
 @dataclass
@@ -333,9 +334,40 @@ def estimate(
     )
     if not np.isfinite(fitted.fun) or fitted.fun >= 1.0e99:
         raise ValueError("estimation did not find valid recursive-logit parameters")
-    pd.DataFrame({"name": data.parameter_names, "estimate": fitted.x}).to_csv(
-        output / "parameters.csv", index=False
+    covariance = covariance_matrix(
+        lambda parameters: negative_log_likelihood(parameters, data), fitted.x
     )
+    boundary = parameters_at_bounds(fitted.x, bounds)
+    covariance[boundary, :] = np.nan
+    covariance[:, boundary] = np.nan
+    if not fitted.success:
+        covariance[:] = np.nan
+    standard_errors = standard_errors_from_covariance(covariance)
+    inference_status = (
+        summarize_inference(standard_errors, boundary)
+        if fitted.success
+        else "unavailable_not_converged"
+    )
+    t_values = np.divide(
+        fitted.x,
+        standard_errors,
+        out=np.full_like(fitted.x, np.nan),
+        where=standard_errors > 0,
+    )
+    p_values = 2 * norm.sf(np.abs(t_values))
+    pd.DataFrame(
+        {
+            "name": data.parameter_names,
+            "estimate": fitted.x,
+            "std_error": standard_errors,
+            "t_value": t_values,
+            "p_value": p_values,
+            "significance": [significance_mark(value) for value in p_values],
+        }
+    ).to_csv(output / "parameters.csv", index=False)
+    pd.DataFrame(
+        covariance, index=data.parameter_names, columns=data.parameter_names
+    ).rename_axis("parameter").to_csv(output / "covariance.csv")
 
     predictions = data.observations.copy()
     predictions["from_node"] = [
@@ -356,15 +388,26 @@ def estimate(
     )
 
     final_ll = -float(fitted.fun)
+    null_ll = null_log_likelihood(data)
     parameter_count = len(fitted.x)
     observation_count = len(data.observations)
+    trip_count = len(data.trips)
+    rho_squared, adjusted_rho_squared = likelihood_ratios(
+        final_ll, null_ll, parameter_count
+    )
     metrics = {
-        "n_trips": len(data.trips),
+        "n_trips": trip_count,
         "n_observed_links": observation_count,
         "n_parameters": parameter_count,
+        "null_model": "uniform_feasible_outgoing_links",
+        "inference_distribution": "asymptotic_normal",
+        "inference_status": inference_status,
+        "log_likelihood_null": null_ll,
         "log_likelihood_final": final_ll,
+        "rho_squared": rho_squared,
+        "adjusted_rho_squared": adjusted_rho_squared,
         "aic": -2 * final_ll + 2 * parameter_count,
-        "bic": -2 * final_ll + math.log(observation_count) * parameter_count,
+        "bic": -2 * final_ll + math.log(trip_count) * parameter_count,
         "converged": bool(fitted.success),
         "iterations": int(fitted.nit),
         "message": str(fitted.message),
@@ -373,10 +416,145 @@ def estimate(
     write_json(output / "sample-summary.json", sample_summary(data))
     return {
         "parameters": artifact("parameters.csv", "text/csv"),
+        "covariance": artifact("covariance.csv", "text/csv"),
         "metrics": artifact("metrics.json", "application/json"),
         "predictions": artifact("predictions.csv", "text/csv"),
         "sample_summary": artifact("sample-summary.json", "application/json"),
     }
+
+
+def null_log_likelihood(data: PreparedData) -> float:
+    """Log likelihood for locally uniform, destination-feasible link choices."""
+    reachable_by_destination = {
+        destination: nodes_reaching_destination(destination, data)
+        for destination in sorted(set(data.observed_destinations))
+    }
+    total = 0.0
+    for link, destination in zip(
+        data.observed_link_indices, data.observed_destinations, strict=True
+    ):
+        from_node = data.from_index[link]
+        reachable = reachable_by_destination[str(destination)]
+        feasible = (data.from_index == from_node) & np.isin(
+            data.to_index, list(reachable)
+        )
+        count = int(np.sum(feasible))
+        if count == 0 or not feasible[link]:
+            raise ValueError(
+                f"observed link is not feasible under null model for destination {destination!r}"
+            )
+        total -= math.log(count)
+    return total
+
+
+def likelihood_ratios(
+    final_ll: float, null_ll: float, parameter_count: int
+) -> tuple[float | None, float | None]:
+    if null_ll == 0:
+        return None, None
+    return 1 - final_ll / null_ll, 1 - (final_ll - parameter_count) / null_ll
+
+
+def nodes_reaching_destination(destination: str, data: PreparedData) -> set[int]:
+    destination_index = data.nodes.index(destination)
+    reachable = {destination_index}
+    changed = True
+    while changed:
+        changed = False
+        for from_node, to_node in zip(data.from_index, data.to_index, strict=True):
+            if int(to_node) in reachable and int(from_node) not in reachable:
+                reachable.add(int(from_node))
+                changed = True
+    return reachable
+
+
+def covariance_matrix(objective: Any, estimates: np.ndarray) -> np.ndarray:
+    hessian = finite_difference_hessian(objective, estimates)
+    if not np.all(np.isfinite(hessian)):
+        return np.full(hessian.shape, np.nan)
+    eigenvalues = np.linalg.eigvalsh(hessian)
+    if np.any(eigenvalues <= 0) or np.linalg.cond(hessian) > 1.0e12:
+        return np.full(hessian.shape, np.nan)
+    try:
+        covariance = np.linalg.inv(hessian)
+    except np.linalg.LinAlgError:
+        return np.full(hessian.shape, np.nan)
+    return (covariance + covariance.T) / 2
+
+
+def finite_difference_hessian(objective: Any, point: np.ndarray) -> np.ndarray:
+    point = np.asarray(point, dtype=float)
+    size = len(point)
+    steps = 1.0e-4 * np.maximum(1.0, np.abs(point))
+    hessian = np.empty((size, size), dtype=float)
+    base = float(objective(point))
+    if not np.isfinite(base) or base >= 1.0e99:
+        return np.full((size, size), np.nan)
+    for first in range(size):
+        delta_first = np.zeros(size)
+        delta_first[first] = steps[first]
+        forward = float(objective(point + delta_first))
+        backward = float(objective(point - delta_first))
+        hessian[first, first] = (
+            forward - 2.0 * base + backward
+        ) / steps[first] ** 2
+        for second in range(first):
+            delta_second = np.zeros(size)
+            delta_second[second] = steps[second]
+            mixed = (
+                float(objective(point + delta_first + delta_second))
+                - float(objective(point + delta_first - delta_second))
+                - float(objective(point - delta_first + delta_second))
+                + float(objective(point - delta_first - delta_second))
+            ) / (4.0 * steps[first] * steps[second])
+            hessian[first, second] = mixed
+            hessian[second, first] = mixed
+    return hessian
+
+
+def standard_errors_from_covariance(covariance: np.ndarray) -> np.ndarray:
+    diagonal = np.diag(covariance)
+    standard_errors = np.full(len(diagonal), np.nan)
+    valid = np.isfinite(diagonal) & (diagonal > 0)
+    standard_errors[valid] = np.sqrt(diagonal[valid])
+    return standard_errors
+
+
+def parameters_at_bounds(
+    estimates: np.ndarray, bounds: list[tuple[float | None, float | None]]
+) -> np.ndarray:
+    result = np.zeros(len(estimates), dtype=bool)
+    for index, (estimate, (lower, upper)) in enumerate(
+        zip(estimates, bounds, strict=True)
+    ):
+        tolerance = 1.0e-6 * max(1.0, abs(float(estimate)))
+        result[index] = (lower is not None and estimate <= float(lower) + tolerance) or (
+            upper is not None and estimate >= float(upper) - tolerance
+        )
+    return result
+
+
+def significance_mark(p_value: float) -> str:
+    if not np.isfinite(p_value):
+        return ""
+    if p_value < 0.01:
+        return "**"
+    if p_value < 0.05:
+        return "*"
+    if p_value < 0.10:
+        return "†"
+    return ""
+
+
+def summarize_inference(
+    standard_errors: np.ndarray, boundary: np.ndarray
+) -> str:
+    valid = np.isfinite(standard_errors)
+    if np.all(valid) and not np.any(boundary):
+        return "available"
+    if np.any(valid):
+        return "partial_boundary_or_singular_information"
+    return "unavailable_boundary_or_singular_information"
 
 
 def numeric_array(series: pd.Series, name: str) -> np.ndarray:

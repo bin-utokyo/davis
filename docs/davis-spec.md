@@ -2150,7 +2150,7 @@ GUI固有の未保存状態を正本にせず，GUI編集は常に同じ`Analysi
 2. `table`，`metrics`，`parameters`，`predictions`，`figure`，`diagnostics`，`report`の任意標準artifact profile
 3. extensionsを使うモデル固有表示
 
-`parameters` profileの表は`name`と`estimate`を必須列とし，`std_error`，`statistic`，`p_value`，`lower`，`upper`を任意列とします．対応モデルでは係数表，信頼区間図，diagnosticsを共通表示します．係数を持たないモデルには強制しません．profileはManifestで任意に宣言し，Runtimeがmedia typeと最低限の内容を検証してRunResultへ固定します．profileを持たない独自artifactも禁止しません．
+`parameters` profileの表は`name`と`estimate`を必須列とし，`std_error`，`t_value`，`p_value`，`significance`，`lower`，`upper`を任意列とします．`t_value`は`estimate / std_error`によるWald統計量です．対応モデルでは係数表，信頼区間図，diagnosticsを共通表示します．係数を持たないモデルには強制しません．profileはManifestで任意に宣言し，Runtimeがmedia typeと最低限の内容を検証してRunResultへ固定します．profileを持たない独自artifactも禁止しません．
 
 共通HTML・JSON・CSVと，Vega-Lite specificationを第一経路とします．Matplotlib等はモデル固有の任意成果物として利用できます．
 

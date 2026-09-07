@@ -6,7 +6,7 @@ from pathlib import Path
 
 import numpy as np
 
-from davis_nl.__main__ import prepare, probabilities
+from davis_nl.__main__ import null_log_likelihood, prepare, probabilities
 
 
 class NestedLogitTest(unittest.TestCase):
@@ -29,12 +29,12 @@ class NestedLogitTest(unittest.TestCase):
                     {
                         "name": "motorized",
                         "alternatives": ["train", "car"],
-                        "dissimilarity": {"fixed": 1.0},
+                        "scale_mu_d": {"fixed": 1.0},
                     },
                     {
                         "name": "active",
                         "alternatives": ["walk"],
-                        "dissimilarity": {"fixed": 1.0},
+                        "scale_mu_d": {"fixed": 1.0},
                     },
                 ],
             },
@@ -54,6 +54,7 @@ class NestedLogitTest(unittest.TestCase):
             for indices in data.groups:
                 self.assertAlmostEqual(float(np.sum(predicted[indices])), 1.0)
             np.testing.assert_allclose(predicted, np.full(6, 1.0 / 3.0))
+            self.assertAlmostEqual(null_log_likelihood(data), -2.0 * np.log(3.0))
 
     def test_nests_must_partition_alternatives(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -67,6 +68,25 @@ class NestedLogitTest(unittest.TestCase):
 
             with self.assertRaisesRegex(ValueError, "multiple nests"):
                 prepare(request)
+
+    def test_pdf_upper_scale_mu_d_formula(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "choice.csv"
+            path.write_text(
+                "case,alternative,chosen,x\n1,train,1,1\n1,car,0,0\n1,walk,0,0\n",
+                encoding="utf-8",
+            )
+            request = self.request(path)
+            request["config"]["terms"] = [{"parameter": "beta", "column": "x"}]
+            request["config"]["nests"][0]["scale_mu_d"] = {"fixed": 0.5}
+            current = probabilities(np.array([1.0]), prepare(request))
+
+            inclusive_value = np.log(np.exp(1.0) + 1.0)
+            nest_probability = np.exp(0.5 * inclusive_value) / (
+                np.exp(0.5 * inclusive_value) + 1.0
+            )
+            expected_train = nest_probability * np.exp(1.0) / (np.exp(1.0) + 1.0)
+            self.assertAlmostEqual(float(current[0]), float(expected_train))
 
 
 if __name__ == "__main__":

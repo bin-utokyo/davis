@@ -185,7 +185,7 @@ A component with a Desktop form declares `presentation.ui.version: davis.ui/v1`.
 | `table-binding` | Select one or more CSVs and configure a base table, join keys, relationship, and join type |
 | `column-map` | Map semantic roles from the schema to input columns |
 | `utility-terms` | Edit parameters, variable columns, constants, alternatives, and coefficients |
-| `nests` | Edit alternative membership and fixed or estimated dissimilarity values |
+| `nests` | Edit alternative membership and fixed or estimated nest-scale values |
 | `parameter-settings` | Edit initial values and bounds for parameters referenced by terms |
 | `auto` | Generate controls for strings, numbers, booleans, and enums from JSON Schema |
 | `extension:<id>` | Use a UI extension packaged with the component |
@@ -298,7 +298,7 @@ An optional `profile` gives an artifact a stable semantic role for common previe
 | `diagnostics` | Sample information, warnings, convergence | JSON object, CSV, Parquet |
 | `report` | Human-readable report | HTML, Markdown, PDF, JSON |
 
-A `parameters` CSV must contain `name` and `estimate`; `std_error`, `statistic`, `p_value`, `lower`, and `upper` are optional. Root values for JSON `metrics`, `diagnostics`, and `figure` artifacts must be objects. A profile is optional and does not prohibit custom artifacts.
+A `parameters` CSV must contain `name` and `estimate`; `std_error`, `t_value`, `p_value`, `significance`, `lower`, and `upper` are optional. `t_value` denotes the Wald statistic `estimate / std_error`; official choice-model components calculate its p-value from the asymptotic normal distribution. Root values for JSON `metrics`, `diagnostics`, and `figure` artifacts must be objects. A profile is optional and does not prohibit custom artifacts.
 
 ## Analysis Plan
 

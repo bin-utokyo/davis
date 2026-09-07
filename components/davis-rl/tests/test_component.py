@@ -6,7 +6,7 @@ from pathlib import Path
 
 import numpy as np
 
-from davis_rl.__main__ import link_probabilities, prepare
+from davis_rl.__main__ import link_probabilities, null_log_likelihood, prepare
 
 
 class RecursiveLogitTest(unittest.TestCase):
@@ -56,6 +56,7 @@ class RecursiveLogitTest(unittest.TestCase):
             probabilities = link_probabilities(np.array([-1.0]), "D", data)
 
             np.testing.assert_allclose(probabilities, [0.5, 0.5])
+            self.assertAlmostEqual(null_log_likelihood(data), -np.log(2.0))
 
     def test_observed_path_must_be_connected(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

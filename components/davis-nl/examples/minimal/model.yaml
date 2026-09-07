@@ -2,7 +2,7 @@ api_version: davis.analysis/v1alpha1
 name: minimal-nested-mode-choice
 component:
   id: davis/nl
-  version: 0.1.2
+  version: 0.2.0
   operation: estimate
 inputs:
   choice_data:
@@ -22,10 +22,10 @@ config:
   nests:
   - name: motorized
     alternatives: [train, car]
-    dissimilarity: {initial: 0.8}
+    scale_mu_d: {initial: 0.8}
   - name: active
     alternatives: [walk]
-    dissimilarity: {fixed: 1.0}
+    scale_mu_d: {fixed: 1.0}
   estimation:
     max_iterations: 500
     tolerance: 1.0e-8

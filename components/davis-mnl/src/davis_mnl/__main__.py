@@ -252,22 +252,32 @@ def estimate(
         options=options,
     )
     estimates = np.asarray(result.x, dtype=float)
-    covariance = covariance_matrix(result, len(estimates))
-    standard_errors = np.sqrt(np.clip(np.diag(covariance), 0.0, None))
-    statistics = np.divide(
+    covariance = covariance_matrix(
+        lambda parameters: negative_log_likelihood(parameters, prepared), estimates
+    )
+    if not result.success:
+        covariance[:] = np.nan
+    standard_errors = standard_errors_from_covariance(covariance)
+    inference_status = (
+        summarize_inference(standard_errors)
+        if result.success
+        else "unavailable_not_converged"
+    )
+    t_values = np.divide(
         estimates,
         standard_errors,
         out=np.full_like(estimates, np.nan),
         where=standard_errors > 0,
     )
-    p_values = 2 * norm.sf(np.abs(statistics))
+    p_values = 2 * norm.sf(np.abs(t_values))
     parameters = pd.DataFrame(
         {
             "name": prepared.parameter_names,
             "estimate": estimates,
             "std_error": standard_errors,
-            "statistic": statistics,
+            "t_value": t_values,
             "p_value": p_values,
+            "significance": [significance_mark(value) for value in p_values],
         }
     )
     parameters.to_csv(output_directory / "parameters.csv", index=False)
@@ -289,14 +299,20 @@ def estimate(
     null_ll = null_log_likelihood(prepared)
     parameter_count = len(estimates)
     case_count = len(prepared.groups)
+    rho_squared, adjusted_rho_squared = likelihood_ratios(
+        final_ll, null_ll, parameter_count
+    )
     metrics = {
         "n_cases": case_count,
         "n_rows": len(prepared.frame),
         "n_parameters": parameter_count,
+        "null_model": "uniform_available_alternatives",
+        "inference_distribution": "asymptotic_normal",
+        "inference_status": inference_status,
         "log_likelihood_null": null_ll,
         "log_likelihood_final": final_ll,
-        "rho_squared": 1 - final_ll / null_ll,
-        "adjusted_rho_squared": 1 - (final_ll - parameter_count) / null_ll,
+        "rho_squared": rho_squared,
+        "adjusted_rho_squared": adjusted_rho_squared,
         "aic": -2 * final_ll + 2 * parameter_count,
         "bic": -2 * final_ll + math.log(case_count) * parameter_count,
         "converged": bool(result.success),
@@ -338,6 +354,14 @@ def null_log_likelihood(data: PreparedData) -> float:
     return total
 
 
+def likelihood_ratios(
+    final_ll: float, null_ll: float, parameter_count: int
+) -> tuple[float | None, float | None]:
+    if null_ll == 0:
+        return None, None
+    return 1 - final_ll / null_ll, 1 - (final_ll - parameter_count) / null_ll
+
+
 def predict_probabilities(parameters: np.ndarray, data: PreparedData) -> np.ndarray:
     utilities = data.design @ parameters
     probabilities = np.zeros(len(data.frame), dtype=float)
@@ -349,14 +373,81 @@ def predict_probabilities(parameters: np.ndarray, data: PreparedData) -> np.ndar
     return probabilities
 
 
-def covariance_matrix(result: Any, size: int) -> np.ndarray:
-    inverse = getattr(result, "hess_inv", None)
-    if inverse is None:
+def covariance_matrix(objective: Any, estimates: np.ndarray) -> np.ndarray:
+    """Invert the observed-information matrix at the maximum-likelihood estimate."""
+    hessian = finite_difference_hessian(objective, estimates)
+    if not np.all(np.isfinite(hessian)):
+        return np.full(hessian.shape, np.nan)
+    eigenvalues = np.linalg.eigvalsh(hessian)
+    if np.any(eigenvalues <= 0) or np.linalg.cond(hessian) > 1.0e12:
+        return np.full(hessian.shape, np.nan)
+    try:
+        covariance = np.linalg.inv(hessian)
+    except np.linalg.LinAlgError:
+        return np.full(hessian.shape, np.nan)
+    return (covariance + covariance.T) / 2
+
+
+def finite_difference_hessian(objective: Any, point: np.ndarray) -> np.ndarray:
+    point = np.asarray(point, dtype=float)
+    size = len(point)
+    steps = 1.0e-4 * np.maximum(1.0, np.abs(point))
+    hessian = np.empty((size, size), dtype=float)
+    base = float(objective(point))
+    if not np.isfinite(base) or base >= 1.0e99:
         return np.full((size, size), np.nan)
-    if hasattr(inverse, "todense"):
-        inverse = inverse.todense()
-    array = np.asarray(inverse, dtype=float)
-    return array if array.shape == (size, size) else np.full((size, size), np.nan)
+    for first in range(size):
+        delta_first = np.zeros(size)
+        delta_first[first] = steps[first]
+        forward = float(objective(point + delta_first))
+        backward = float(objective(point - delta_first))
+        hessian[first, first] = (
+            forward - 2.0 * base + backward
+        ) / steps[first] ** 2
+        for second in range(first):
+            delta_second = np.zeros(size)
+            delta_second[second] = steps[second]
+            values = [
+                float(objective(point + delta_first + delta_second)),
+                float(objective(point + delta_first - delta_second)),
+                float(objective(point - delta_first + delta_second)),
+                float(objective(point - delta_first - delta_second)),
+            ]
+            value = (values[0] - values[1] - values[2] + values[3]) / (
+                4.0 * steps[first] * steps[second]
+            )
+            hessian[first, second] = value
+            hessian[second, first] = value
+    return hessian
+
+
+def standard_errors_from_covariance(covariance: np.ndarray) -> np.ndarray:
+    diagonal = np.diag(covariance)
+    standard_errors = np.full(len(diagonal), np.nan)
+    valid = np.isfinite(diagonal) & (diagonal > 0)
+    standard_errors[valid] = np.sqrt(diagonal[valid])
+    return standard_errors
+
+
+def significance_mark(p_value: float) -> str:
+    if not np.isfinite(p_value):
+        return ""
+    if p_value < 0.01:
+        return "**"
+    if p_value < 0.05:
+        return "*"
+    if p_value < 0.10:
+        return "†"
+    return ""
+
+
+def summarize_inference(standard_errors: np.ndarray) -> str:
+    valid = np.isfinite(standard_errors)
+    if np.all(valid):
+        return "available"
+    if np.any(valid):
+        return "partial"
+    return "unavailable_singular_information"
 
 
 def boolean_array(series: pd.Series, name: str) -> np.ndarray:

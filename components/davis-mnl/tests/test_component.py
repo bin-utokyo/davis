@@ -5,11 +5,20 @@ import unittest
 from pathlib import Path
 
 import pandas as pd
+import numpy as np
 
-from davis_mnl.__main__ import prepare, read_csv
+from davis_mnl.__main__ import finite_difference_hessian, prepare, read_csv
 
 
 class CsvInputTest(unittest.TestCase):
+    def test_finite_difference_hessian_matches_quadratic_information(self) -> None:
+        hessian = finite_difference_hessian(
+            lambda values: 2.0 * values[0] ** 2 + 3.0 * values[1] ** 2,
+            np.array([0.5, -0.25]),
+        )
+
+        np.testing.assert_allclose(hessian, [[4.0, 0.0], [0.0, 6.0]], atol=1.0e-6)
+
     def test_auto_reads_cp932_and_preserves_leading_zero_ids(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "choice.csv"

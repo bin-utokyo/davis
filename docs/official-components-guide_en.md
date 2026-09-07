@@ -43,9 +43,9 @@ davis installed
 
 | Name | ID | Version | Purpose |
 | --- | --- | --- | --- |
-| Multinomial Logit | `davis/mnl` | `0.3.2` | Estimate an MNL from long-format choice data |
-| Nested Logit | `davis/nl` | `0.1.2` | Estimate a two-level, non-overlapping NL |
-| Recursive Logit | `davis/rl` | `0.1.2` | Estimate an RL from a link network and observed paths |
+| Multinomial Logit | `davis/mnl` | `0.4.0` | Estimate an MNL from long-format choice data |
+| Nested Logit | `davis/nl` | `0.2.0` | Estimate a two-level, non-overlapping NL |
+| Recursive Logit | `davis/rl` | `0.2.0` | Estimate an RL from a link network and observed paths |
 | CSV Transform | `davis/csv-transform` | `0.4.1` | Join CSVs, create linear-combination columns, select columns, and write CSV or Parquet |
 
 When multiple CSV files are joined into a model input, Desktop uses `davis/csv-transform` internally. Install both the selected model and CSV Transform.
@@ -119,7 +119,7 @@ Estimation settings include `optimizer` (`bfgs` or `l-bfgs-b`), `max_iterations`
 ```yaml
 api_version: davis.analysis/v1alpha1
 name: mode-choice-mnl
-component: {id: davis/mnl, version: 0.3.2, operation: estimate}
+component: {id: davis/mnl, version: 0.4.0, operation: estimate}
 inputs:
   choice_data: {kind: local, path: choice.csv}
 config:
@@ -138,12 +138,12 @@ run: {label: mnl-baseline, tags: [mnl, baseline]}
 
 The long-format input, `roles`, and `terms` are similar to MNL, but NL requires a `chosen` column and a `nests` configuration. Every alternative must belong to exactly one nest.
 
-This component normalizes the top-level scale to 1 and uses `dissimilarity` as λ for each nest, with `0 < λ <= 1`. Use `initial` for an estimated λ or `fixed` for a fixed value; do not specify both. A singleton nest is fixed to λ=1 at runtime.
+Following the course PDF notation, this component fixes the lowest-level scale μ to 1 and uses `scale_mu_d` as the scale μ_d of each upper nest, with `0 < μ_d <= 1`. Use `initial` for an estimated μ_d or `fixed` for a fixed value; do not specify both.
 
 ```yaml
 api_version: davis.analysis/v1alpha1
 name: mode-choice-nl
-component: {id: davis/nl, version: 0.1.2, operation: estimate}
+component: {id: davis/nl, version: 0.2.0, operation: estimate}
 inputs:
   choice_data: {kind: local, path: choice.csv}
 config:
@@ -154,10 +154,10 @@ config:
   nests:
     - name: motorized
       alternatives: [train, car]
-      dissimilarity: {initial: 0.8}
+      scale_mu_d: {initial: 0.8}
     - name: active
       alternatives: [walk]
-      dissimilarity: {fixed: 1.0}
+      scale_mu_d: {fixed: 1.0}
   estimation: {max_iterations: 500, tolerance: 1.0e-8}
 run: {label: nl-baseline, tags: [nl, baseline]}
 ```
@@ -176,7 +176,7 @@ A utility term refers to a numeric column of the network table. `coefficient` is
 ```yaml
 api_version: davis.analysis/v1alpha1
 name: route-choice-rl
-component: {id: davis/rl, version: 0.1.2, operation: estimate}
+component: {id: davis/rl, version: 0.2.0, operation: estimate}
 inputs:
   network: {kind: local, path: network.csv}
   observations: {kind: local, path: observations.csv}
@@ -242,12 +242,15 @@ You may run CSV Transform first as a separate Run. Alternatively, add multiple C
 
 When available, model components return:
 
-- `parameters.csv`: parameter names, estimates, standard errors, and related statistics
-- `metrics.json`: log-likelihood, AIC, BIC, convergence information, and related metrics
+- `parameters.csv`: parameter names, estimates, standard errors, t values, p values, and significance marks
+- `covariance.csv`: covariance matrix calculated from the observed-information matrix at the maximum-likelihood estimate
+- `metrics.json`: initial and final log-likelihoods, likelihood ratios, AIC, BIC, convergence information, and related metrics
 - `predictions.csv`: predicted probabilities or observed-link choice probabilities
 - `sample-summary.json`: used and excluded cases and warnings
 
 CSV Transform returns `transformed.csv` or `transformed.parquet` and a transformation summary. The artifact list in each Run's `result.json` is authoritative.
+
+The official MNL, NL, and RL components define `t_value = estimate / std_error` and calculate p-values from the asymptotic normal distribution. Inferential statistics are left blank for fixed parameters, parameters on a constraint boundary, or a singular information matrix. Desktop displays estimates, standard errors, and t values to two decimal places and places `†`, `*`, and `**` next to the t value for the 10%, 5%, and 1% levels respectively.
 
 When a run fails, check:
 

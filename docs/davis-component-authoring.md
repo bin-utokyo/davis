@@ -188,7 +188,7 @@ MNL，NL，RLはいずれも同じrendererを使います．新しいモデル�
 | `table-binding` | 入力slotへ1つ以上のCSVを追加し，基準表，join key，関係性，join方式を設定します |
 | `column-map` | schemaに並ぶ役割名を，指定した入力表の列へ対応させます |
 | `utility-terms` | parameter，説明変数列，定数，対象選択肢，係数を編集します |
-| `nests` | 選択肢のnest所属と非類似度の固定／推定を編集します |
+| `nests` | 選択肢のnest所属とnest scaleの固定／推定を編集します |
 | `parameter-settings` | termからparameter名を取り出し，初期値と上下限を編集します |
 | `auto` | JSON Schemaから文字列，数値，真偽値，列挙等の入力欄を生成します |
 | `extension:<id>` | componentに同梱した外部UI extensionでsectionを編集します |
@@ -371,7 +371,7 @@ outputs:
 | `diagnostics` | sample情報，警告，収束情報 | JSON object，CSV，Parquet |
 | `report` | 人が読むreport | HTML，Markdown，PDF，JSON |
 
-`parameters`のCSVには最低限`name`と`estimate`列が必要です．`std_error`，`statistic`，`p_value`，`lower`，`upper`等は任意列です．`metrics`，`diagnostics`，JSON形式の`figure`はrootをobjectにします．DavisはManifestのprofileとmedia typeを検証し，実programが返した値を信用して決めるのではなく，確定したprofileを`result.json`へ記録します．そのため，将来component packageが更新されても，過去Runの成果物が持っていた意味を復元できます．
+`parameters`のCSVには最低限`name`と`estimate`列が必要です．`std_error`，`t_value`，`p_value`，`significance`，`lower`，`upper`等は任意列です．`t_value`は`estimate / std_error`によるWald統計量を表し，公式選択モデルcomponentのp値は漸近正規分布から計算します．`metrics`，`diagnostics`，JSON形式の`figure`はrootをobjectにします．DavisはManifestのprofileとmedia typeを検証し，実programが返した値を信用して決めるのではなく，確定したprofileを`result.json`へ記録します．そのため，将来component packageが更新されても，過去Runの成果物が持っていた意味を復元できます．
 
 Desktopでは`presentation.ui.results`による明示的な表示を優先します．そこに指定されていないprofile付きCSV・JSONも，profileからtableまたはkey-value表示を補完します．モデル固有の見せ方が必要な場合は，従来どおりpresentationまたはUI extensionで上書きできます．
 
@@ -528,21 +528,21 @@ cargo run -p davis-cli -- \
 
 ## 参考Nested Logit component
 
-[`components/davis-nl`](../components/davis-nl/)は，選択肢をnestへ分ける2段階Nested Logitの読みやすい参考実装です．MNLと共通の`roles`と`terms`に加えて，`nests`で各選択肢が所属するnestを1つずつ指定します．この実装は最上位scaleを1に正規化し，各nestの`dissimilarity`を非類似度λとして扱います．`fixed`で固定するか，`initial`を初期値として推定できます．singleton nestは省略時にλ=1へ固定します．これは最下層scaleを1に固定して上位scaleをμとする表記とは異なるため，記号ではなく式と正規化を確認してください．
+[`components/davis-nl`](../components/davis-nl/)は，選択肢をnestへ分ける2段階Nested Logitの読みやすい参考実装です．MNLと共通の`roles`と`terms`に加えて，`nests`で各選択肢が所属するnestを1つずつ指定します．PDFの表記に合わせ，最下層scale μを1に固定し，各上位nestの`scale_mu_d`をμ_dとして扱います．`fixed`で固定するか，`initial`を初期値として推定できます．
 
 ```yaml
 nests:
   - name: motorized
     alternatives: [train, car]
-    dissimilarity:
+    scale_mu_d:
       initial: 0.8
   - name: active
     alternatives: [walk]
-    dissimilarity:
+    scale_mu_d:
       fixed: 1.0
 ```
 
-全選択肢が重複なくいずれか1つのnestへ入る必要があります．推定する非類似度parameterは`0.05`から`1.0`へ制約されます．これはcross-nested logitではなく，2段階の非重複NLです．最小例は次で実行できます．
+全選択肢が重複なくいずれか1つのnestへ入る必要があります．推定する上位nest scale μ_dは`0.05`から`1.0`へ制約されます．これはcross-nested logitではなく，2段階の非重複NLです．最小例は次で実行できます．
 
 ```console
 cargo run -p davis-cli -- \

@@ -6,7 +6,7 @@
 
 ```console
 davis install component mnl
-davis install component davis/mnl --version 0.3.2
+davis install component davis/mnl --version 0.4.0
 davis install component nl
 davis install component rl
 ```
@@ -28,10 +28,10 @@ CLIは既存directoryを指定された場合はlocal packageとしてinstallし
     {
       "name": "mnl",
       "id": "davis/mnl",
-      "version": "0.3.2",
+      "version": "0.4.0",
       "requires_davis": ">=0.5.0",
       "bundle": {
-        "url": "davis-mnl-0.3.2.tar.gz",
+        "url": "davis-mnl-0.4.0.tar.gz",
         "size": 12345,
         "blake3": "blake3:..."
       }
@@ -80,9 +80,9 @@ davis component pack components/davis-mnl --name mnl --out dist
 davis component pack components/davis-nl --name nl --out dist
 davis component pack components/davis-rl --name rl --out dist
 davis component registry \
-  dist/davis-mnl-0.3.2.entry.json \
-  dist/davis-nl-0.1.2.entry.json \
-  dist/davis-rl-0.1.2.entry.json \
+  dist/davis-mnl-0.4.0.entry.json \
+  dist/davis-nl-0.2.0.entry.json \
+  dist/davis-rl-0.2.0.entry.json \
   --out dist/component-registry.json
 ```
 

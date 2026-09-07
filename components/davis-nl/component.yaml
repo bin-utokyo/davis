@@ -1,7 +1,7 @@
 api_version: davis.component/v1
 id: davis/nl
 name: Davis Nested Logit
-version: 0.1.2
+version: 0.2.0
 kind: model
 requires_davis: '>=0.5.0'
 runtime:
@@ -77,12 +77,12 @@ configuration:
               minItems: 1
               uniqueItems: true
               items: {type: [string, number]}
-            dissimilarity:
+            scale_mu_d:
               type: object
-              title: 非類似度 λ
-              description: このcomponentでは最上位scaleを1に正規化し，各nestの非類似度λを0より大きく1以下で指定します．
-              x-davis-title: {ja: 非類似度 λ, en: Dissimilarity λ}
-              x-davis-description: {ja: このcomponentでは最上位scaleを1に正規化し，各nestの非類似度λを0より大きく1以下で指定します．, en: This component normalizes the top-level scale to 1 and requires each nest dissimilarity λ to be greater than 0 and no greater than 1.}
+              title: 上位nest scale μ_d
+              description: PDFの表記に合わせ，最下層scale μを1に固定し，各上位nestのscale μ_dを0より大きく1以下で指定します．
+              x-davis-title: {ja: 上位nest scale μ_d, en: Upper-nest scale μ_d}
+              x-davis-description: {ja: PDFの表記に合わせ，最下層scale μを1に固定し，各上位nestのscale μ_dを0より大きく1以下で指定します．, en: Following the course PDF notation, the lowest-level scale μ is fixed to 1 and each upper-nest scale μ_d must be greater than 0 and no greater than 1.}
               additionalProperties: false
               properties:
                 initial: {type: number, title: 推定初期値, x-davis-title: {ja: 推定初期値, en: Initial estimate}, exclusiveMinimum: 0, maximum: 1}
@@ -126,19 +126,19 @@ presentation:
         alternatives_from: /roles/alternative_id
       - bind: /nests
         widget: extension:nest-editor
-        title: {ja: Nest構造と非類似度 λ, en: Nest structure and dissimilarity λ}
-        description: {ja: 最上位scaleは1に正規化済みです．推定時の数値は結果ではなく初期値です．選択肢が1つだけのnestは実行時にλ=1へ固定されます．, en: The top-level scale is normalized to 1. An estimated value is an initial value rather than a result. A singleton nest is fixed to λ=1 at runtime.}
+        title: {ja: Nest構造と上位scale μ_d, en: Nest structure and upper scale μ_d}
+        description: {ja: PDF表記に合わせ，最下層scale μは1に固定し，各上位nestのscale μ_dを0より大きく1以下で指定します．推定時の数値は初期値です．, en: Following the PDF notation, the lowest-level scale μ is fixed to 1 and each upper-nest scale μ_d is greater than 0 and no greater than 1. Estimated values are initial values.}
         context:
           alternatives:
             provider: distinct-values
             input: choice_data
             column_from: /roles/alternative_id
         labels:
-          mode: {ja: 非類似度λの扱い, en: Dissimilarity λ mode}
+          mode: {ja: 上位scale μ_dの扱い, en: Upper scale μ_d mode}
           estimate: {ja: 推定 (右は初期値), en: Estimate (initial value at right)}
           fixed: {ja: 固定 (右は固定値), en: Fixed (fixed value at right)}
-          estimate_value: {ja: 非類似度λの推定初期値, en: Initial value for dissimilarity λ}
-          fixed_value: {ja: 非類似度λの固定値, en: Fixed dissimilarity λ}
+          estimate_value: {ja: 上位scale μ_dの推定初期値, en: Initial value for upper scale μ_d}
+          fixed_value: {ja: 上位scale μ_dの固定値, en: Fixed upper scale μ_d}
           add: {ja: Nestを追加, en: Add nest}
           empty: {ja: 2つ以上のNestを追加してください．, en: Add at least two nests.}
           search: {ja: 選択肢を検索, en: Search alternatives}
@@ -151,11 +151,12 @@ presentation:
       estimation: {max_iterations: 500, tolerance: 1.0e-8}
     results:
     - {artifact: metrics, title: {ja: 推定指標, en: Estimation metrics}, widget: key-value}
-    - {artifact: parameters, title: {ja: 推定係数・非類似度, en: Parameters and dissimilarities}, widget: table}
+    - {artifact: parameters, title: {ja: 推定係数・上位scale μ_d, en: Parameters and upper scales μ_d}, widget: table}
     - {artifact: predictions, title: {ja: 予測確率, en: Predicted probabilities}, widget: table}
 outputs:
   artifacts:
     parameters: {profile: parameters, media_types: [text/csv], required: false}
+    covariance: {profile: table, media_types: [text/csv], required: false}
     metrics: {profile: metrics, media_types: [application/json], required: false}
     predictions: {profile: predictions, media_types: [text/csv], required: false}
     sample_summary: {profile: diagnostics, media_types: [application/json], required: true}

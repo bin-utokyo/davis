@@ -1156,7 +1156,7 @@ run:
         let yaml = render_plan(json!({
             "api_version": "davis.analysis/v1alpha1",
             "name": "gui-plan",
-            "component": {"id": "davis/mnl", "version": "0.3.2", "operation": "estimate"},
+            "component": {"id": "davis/mnl", "version": "0.4.0", "operation": "estimate"},
             "inputs": {"choice_data": {
                 "kind": "table_binding",
                 "processor": {"id": "davis/csv-transform", "version": "0.4.1"},
@@ -1190,7 +1190,7 @@ run:
         let error = render_plan(json!({
             "api_version": "davis.analysis/v1alpha1",
             "name": "invalid",
-            "component": {"id": "davis/mnl", "version": "0.3.2", "operation": "estimate"},
+            "component": {"id": "davis/mnl", "version": "0.4.0", "operation": "estimate"},
             "inputs": {"choice_data": {
                 "kind": "table_binding",
                 "processor": {"id": "davis/csv-transform", "version": "0.4.1"},
@@ -1206,7 +1206,7 @@ run:
 
     #[test]
     fn loads_manifest_driven_editor_metadata() {
-        let editor = editor_definition(&repository(), "davis/mnl", "0.3.2").unwrap();
+        let editor = editor_definition(&repository(), "davis/mnl", "0.4.0").unwrap();
         assert_eq!(editor.manifest.id, "davis/mnl");
         assert_eq!(editor.ui_schema["version"], "davis.ui/v1");
         assert_eq!(
@@ -1273,7 +1273,7 @@ run:
     #[test]
     fn loads_schema_forms_for_nested_and_recursive_logit() {
         let repository = repository();
-        let nested = editor_definition(&repository, "davis/nl", "0.1.2").unwrap();
+        let nested = editor_definition(&repository, "davis/nl", "0.2.0").unwrap();
         assert_eq!(nested.ui_schema["version"], "davis.ui/v1");
         assert!(nested.ui_schema["sections"]
             .as_array()
@@ -1289,7 +1289,7 @@ run:
         assert!(nest_section["description"]["ja"]
             .as_str()
             .unwrap()
-            .contains("最上位scaleは1"));
+            .contains("最下層scale μは1"));
         assert_eq!(
             nest_section["labels"]["estimate"]["en"],
             "Estimate (initial value at right)"
@@ -1310,7 +1310,7 @@ run:
             .html
             .contains("set-value"));
 
-        let recursive = editor_definition(&repository, "davis/rl", "0.1.2").unwrap();
+        let recursive = editor_definition(&repository, "davis/rl", "0.2.0").unwrap();
         assert_eq!(recursive.ui_schema["version"], "davis.ui/v1");
         assert_eq!(recursive.ui_schema["inputs"].as_object().unwrap().len(), 2);
         assert!(recursive.ui_schema["sections"]
@@ -1429,7 +1429,7 @@ outputs: {}
             format!(
                 r"api_version: davis.analysis/v1alpha1
 name: namespaced-bindings
-component: {{id: davis/rl, version: 0.1.2, operation: estimate}}
+component: {{id: davis/rl, version: 0.2.0, operation: estimate}}
 inputs:
   network:
     kind: table_binding
@@ -1464,7 +1464,7 @@ config: {{}}
         std::fs::write(&target, "original").unwrap();
         let choices = repository().join("components/davis-mnl/examples/multi-source/choices.csv");
         let yaml = format!(
-            "api_version: davis.analysis/v1alpha1\nname: invalid\ncomponent:\n  id: davis/mnl\n  version: 0.3.2\n  operation: estimate\ninputs:\n  choice_data:\n    kind: local\n    path: {}\nconfig:\n  roles:\n    case_id: case_id\n    alternative_id: alternative\n    chosen: chosen\n",
+            "api_version: davis.analysis/v1alpha1\nname: invalid\ncomponent:\n  id: davis/mnl\n  version: 0.4.0\n  operation: estimate\ninputs:\n  choice_data:\n    kind: local\n    path: {}\nconfig:\n  roles:\n    case_id: case_id\n    alternative_id: alternative\n    chosen: chosen\n",
             choices.display()
         );
         let error = save_analysis_plan_yaml(repository(), target.clone(), yaml).unwrap_err();

@@ -49,25 +49,25 @@
         const showOptions = () => { const query = search.value.toLocaleLowerCase(); menu.replaceChildren(); candidates.filter(item => !selected.includes(item) && item.toLocaleLowerCase().includes(query)).slice(0, 50).forEach(alternative => menu.append(button(alternative, "", () => { value[index] = { ...value[index], alternatives: [...selected, alternative] }; commit(); draw(); }))); resize(); };
         search.addEventListener("input", showOptions); search.addEventListener("focus", showOptions); picker.append(control, menu);
 
-        const dissimilarity = nest.dissimilarity && typeof nest.dissimilarity === "object" ? nest.dissimilarity : {};
-        const fixed = Object.prototype.hasOwnProperty.call(dissimilarity, "fixed");
+        const scaleMuD = nest.scale_mu_d && typeof nest.scale_mu_d === "object" ? nest.scale_mu_d : {};
+        const fixed = Object.prototype.hasOwnProperty.call(scaleMuD, "fixed");
         const mode = document.createElement("select");
         [["initial", labels.estimate ?? "Estimate"], ["fixed", labels.fixed ?? "Fixed"]].forEach(([key, text]) => { const option = document.createElement("option"); option.value = key; option.textContent = text; mode.append(option); });
         mode.value = fixed ? "fixed" : "initial";
-        mode.addEventListener("change", () => { value[index] = { ...value[index], dissimilarity: mode.value === "fixed" ? { fixed: 1 } : { initial: .8 } }; commit(); draw(); });
+        mode.addEventListener("change", () => { value[index] = { ...value[index], scale_mu_d: mode.value === "fixed" ? { fixed: 1 } : { initial: .8 } }; commit(); draw(); });
 
         const number = document.createElement("input"); number.type = "number"; number.min = ".05"; number.max = "1"; number.step = ".05";
-        number.value = String(dissimilarity[fixed ? "fixed" : "initial"] ?? (fixed ? 1 : .8));
-        number.title = fixed ? (labels.fixed_value ?? "Fixed dissimilarity λ") : (labels.estimate_value ?? "Initial value for dissimilarity λ");
+        number.value = String(scaleMuD[fixed ? "fixed" : "initial"] ?? (fixed ? 1 : .8));
+        number.title = fixed ? (labels.fixed_value ?? "Fixed upper scale μ_d") : (labels.estimate_value ?? "Initial value for upper scale μ_d");
         number.setAttribute("aria-label", number.title);
-        number.addEventListener("change", () => { value[index] = { ...value[index], dissimilarity: { [fixed ? "fixed" : "initial"]: Number(number.value) } }; commit(); });
+        number.addEventListener("change", () => { value[index] = { ...value[index], scale_mu_d: { [fixed ? "fixed" : "initial"]: Number(number.value) } }; commit(); });
         row.append(name, picker, mode, number, button(labels.remove ?? "Remove", "delete", () => { value = value.filter((_, current) => current !== index); commit(); draw(); }));
         rows.append(row);
       });
       resize();
     }
 
-    document.getElementById("add").addEventListener("click", () => { value = [...value, { name: `nest_${value.length + 1}`, alternatives: [], dissimilarity: { initial: .8 } }]; commit(); draw(); });
+    document.getElementById("add").addEventListener("click", () => { value = [...value, { name: `nest_${value.length + 1}`, alternatives: [], scale_mu_d: { initial: .8 } }]; commit(); draw(); });
     addEventListener("message", event => {
       const data = event.data;
       if (!data || data.source !== "davis-host" || data.api_version !== "davis.widget/v1" || data.type !== "render") return;

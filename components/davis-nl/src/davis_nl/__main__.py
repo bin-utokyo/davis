@@ -11,6 +11,7 @@ import numpy as np
 import pandas as pd
 from scipy.optimize import minimize
 from scipy.special import logsumexp
+from scipy.stats import norm
 
 
 @dataclass
@@ -26,9 +27,9 @@ class PreparedData:
     chosen_column: str
     nest_names: list[str]
     nest_for_row: np.ndarray
-    fixed_scales: dict[int, float]
+    fixed_upper_scale_mus: dict[int, float]
     estimated_scale_nests: list[int]
-    initial_scales: list[float]
+    initial_upper_scale_mus: list[float]
 
 
 def main() -> None:
@@ -90,9 +91,9 @@ def prepare(request: dict[str, Any]) -> PreparedData:
     alternatives = frame[alternative_column].astype(str).to_numpy()
     nest_names: list[str] = []
     alternative_to_nest: dict[str, int] = {}
-    fixed_scales: dict[int, float] = {}
+    fixed_upper_scale_mus: dict[int, float] = {}
     estimated_scale_nests: list[int] = []
-    initial_scales: list[float] = []
+    initial_upper_scale_mus: list[float] = []
     for nest_index, nest in enumerate(config["nests"]):
         name = nest["name"]
         if name in nest_names:
@@ -104,15 +105,12 @@ def prepare(request: dict[str, Any]) -> PreparedData:
                     f"alternative belongs to multiple nests: {alternative}"
                 )
             alternative_to_nest[alternative] = nest_index
-        scale = nest.get("dissimilarity", {})
-        if "fixed" in scale:
-            fixed_scales[nest_index] = float(scale["fixed"])
-        elif len(nest["alternatives"]) == 1:
-            # A singleton nest has no within-nest correlation to estimate.
-            fixed_scales[nest_index] = 1.0
+        upper_scale_mu = nest.get("scale_mu_d", {})
+        if "fixed" in upper_scale_mu:
+            fixed_upper_scale_mus[nest_index] = float(upper_scale_mu["fixed"])
         else:
             estimated_scale_nests.append(nest_index)
-            initial_scales.append(float(scale.get("initial", 0.8)))
+            initial_upper_scale_mus.append(float(upper_scale_mu.get("initial", 0.8)))
     unknown = sorted(set(alternatives) - set(alternative_to_nest))
     unused = sorted(set(alternative_to_nest) - set(alternatives))
     if unknown or unused:
@@ -172,23 +170,24 @@ def prepare(request: dict[str, Any]) -> PreparedData:
         chosen_column,
         nest_names,
         nest_for_row,
-        fixed_scales,
+        fixed_upper_scale_mus,
         estimated_scale_nests,
-        initial_scales,
+        initial_upper_scale_mus,
     )
 
 
 def probabilities(parameters: np.ndarray, data: PreparedData) -> np.ndarray:
     """Calculate two-level nested-logit probabilities.
 
-    Within each nest, utility is divided by its dissimilarity parameter. The
-    inclusive value then enters the upper-level nest choice probability. Keeping
-    this formula here makes the reference component straightforward to modify.
+    Following the course PDF, the lowest-level scale mu is fixed to one. Each
+    upper nest has scale mu_d in (0, 1]. The within-nest probability therefore
+    uses utility directly, and mu_d multiplies the inclusive value at the upper
+    level.
     """
     utility_count = len(data.utility_parameters)
     utilities = data.design @ parameters[:utility_count]
-    scales = dict(data.fixed_scales)
-    scales.update(
+    upper_scale_mus = dict(data.fixed_upper_scale_mus)
+    upper_scale_mus.update(
         {
             nest: float(parameters[utility_count + index])
             for index, nest in enumerate(data.estimated_scale_nests)
@@ -202,15 +201,15 @@ def probabilities(parameters: np.ndarray, data: PreparedData) -> np.ndarray:
         nest_order: list[int] = []
         for nest in np.unique(data.nest_for_row[available_indices]):
             rows = available_indices[data.nest_for_row[available_indices] == nest]
-            scale = scales[int(nest)]
-            denominator = logsumexp(utilities[rows] / scale)
+            upper_scale_mu = upper_scale_mus[int(nest)]
+            denominator = logsumexp(utilities[rows])
             log_conditionals[int(nest)] = (
                 rows,
-                utilities[rows] / scale - denominator,
+                utilities[rows] - denominator,
                 denominator,
             )
             nest_order.append(int(nest))
-            nest_values.append(scale * denominator)
+            nest_values.append(upper_scale_mu * denominator)
         log_nest_denominator = logsumexp(nest_values)
         for nest, nest_value in zip(nest_order, nest_values, strict=True):
             rows, conditional, _ = log_conditionals[nest]
@@ -231,13 +230,17 @@ def negative_log_likelihood(parameters: np.ndarray, data: PreparedData) -> float
 def estimate(
     request: dict[str, Any], data: PreparedData, output: Path
 ) -> dict[str, dict[str, str]]:
-    # Utility coefficients are unconstrained. Dissimilarity parameters are kept
-    # in the theoretically common (0, 1] interval by explicit optimizer bounds.
+    # Utility coefficients are unconstrained. Following the course PDF, the
+    # lowest-level scale is fixed to one and upper nest scales satisfy
+    # 0 < mu_d <= 1.
     initial = np.concatenate(
-        [np.zeros(len(data.utility_parameters)), np.asarray(data.initial_scales)]
+        [
+            np.zeros(len(data.utility_parameters)),
+            np.asarray(data.initial_upper_scale_mus),
+        ]
     )
     bounds = [(None, None)] * len(data.utility_parameters) + [(0.05, 1.0)] * len(
-        data.initial_scales
+        data.initial_upper_scale_mus
     )
     options = request["config"].get("estimation", {})
     fitted = minimize(
@@ -249,26 +252,84 @@ def estimate(
         tol=float(options.get("tolerance", 1.0e-8)),
         options={"maxiter": int(options.get("max_iterations", 500))},
     )
+    covariance = covariance_matrix(
+        lambda parameters: negative_log_likelihood(parameters, data), fitted.x
+    )
+    boundary = parameters_at_bounds(fitted.x, bounds)
+    covariance[boundary, :] = np.nan
+    covariance[:, boundary] = np.nan
+    if not fitted.success:
+        covariance[:] = np.nan
+    standard_errors = standard_errors_from_covariance(covariance)
+    inference_status = (
+        summarize_inference(standard_errors, boundary)
+        if fitted.success
+        else "unavailable_not_converged"
+    )
+    t_values = np.divide(
+        fitted.x,
+        standard_errors,
+        out=np.full_like(fitted.x, np.nan),
+        where=standard_errors > 0,
+    )
+    p_values = 2 * norm.sf(np.abs(t_values))
     estimated_scales = {
         nest: float(fitted.x[len(data.utility_parameters) + index])
         for index, nest in enumerate(data.estimated_scale_nests)
     }
-    scale_values = {**data.fixed_scales, **estimated_scales}
+    scale_values = {**data.fixed_upper_scale_mus, **estimated_scales}
     names = data.utility_parameters + [
-        f"dissimilarity:{name}" for name in data.nest_names
+        f"scale_mu_d:{name}" for name in data.nest_names
     ]
-    kinds = ["utility"] * len(data.utility_parameters) + ["dissimilarity"] * len(
+    kinds = ["utility"] * len(data.utility_parameters) + ["scale_mu_d"] * len(
         data.nest_names
     )
     estimates = list(fitted.x[: len(data.utility_parameters)]) + [
         scale_values[index] for index in range(len(data.nest_names))
     ]
     fixed = [False] * len(data.utility_parameters) + [
-        index in data.fixed_scales for index in range(len(data.nest_names))
+        index in data.fixed_upper_scale_mus for index in range(len(data.nest_names))
+    ]
+    free_index_by_nest = {
+        nest: len(data.utility_parameters) + index
+        for index, nest in enumerate(data.estimated_scale_nests)
+    }
+    output_standard_errors = list(standard_errors[: len(data.utility_parameters)]) + [
+        standard_errors[free_index_by_nest[index]]
+        if index in free_index_by_nest
+        else np.nan
+        for index in range(len(data.nest_names))
+    ]
+    output_t_values = list(t_values[: len(data.utility_parameters)]) + [
+        t_values[free_index_by_nest[index]]
+        if index in free_index_by_nest
+        else np.nan
+        for index in range(len(data.nest_names))
+    ]
+    output_p_values = list(p_values[: len(data.utility_parameters)]) + [
+        p_values[free_index_by_nest[index]]
+        if index in free_index_by_nest
+        else np.nan
+        for index in range(len(data.nest_names))
     ]
     pd.DataFrame(
-        {"name": names, "kind": kinds, "estimate": estimates, "fixed": fixed}
+        {
+            "name": names,
+            "kind": kinds,
+            "estimate": estimates,
+            "std_error": output_standard_errors,
+            "t_value": output_t_values,
+            "p_value": output_p_values,
+            "significance": [significance_mark(value) for value in output_p_values],
+            "fixed": fixed,
+        }
     ).to_csv(output / "parameters.csv", index=False)
+    free_names = data.utility_parameters + [
+        f"scale_mu_d:{data.nest_names[nest]}" for nest in data.estimated_scale_nests
+    ]
+    pd.DataFrame(covariance, index=free_names, columns=free_names).rename_axis(
+        "parameter"
+    ).to_csv(output / "covariance.csv")
     predicted = probabilities(fitted.x, data)
     predictions = data.frame[
         [data.case_column, data.alternative_column, data.chosen_column]
@@ -277,13 +338,24 @@ def estimate(
     predictions["probability"] = predicted
     predictions.to_csv(output / "predictions.csv", index=False)
     final_ll = -negative_log_likelihood(fitted.x, data)
+    null_ll = null_log_likelihood(data)
+    parameter_count = len(fitted.x)
+    rho_squared, adjusted_rho_squared = likelihood_ratios(
+        final_ll, null_ll, parameter_count
+    )
     metrics = {
         "n_cases": len(data.groups),
         "n_rows": len(data.frame),
-        "n_parameters": len(fitted.x),
+        "n_parameters": parameter_count,
+        "null_model": "uniform_available_alternatives",
+        "inference_distribution": "asymptotic_normal",
+        "inference_status": inference_status,
+        "log_likelihood_null": null_ll,
         "log_likelihood_final": final_ll,
-        "aic": -2 * final_ll + 2 * len(fitted.x),
-        "bic": -2 * final_ll + math.log(len(data.groups)) * len(fitted.x),
+        "rho_squared": rho_squared,
+        "adjusted_rho_squared": adjusted_rho_squared,
+        "aic": -2 * final_ll + 2 * parameter_count,
+        "bic": -2 * final_ll + math.log(len(data.groups)) * parameter_count,
         "converged": bool(fitted.success),
         "iterations": int(fitted.nit),
         "message": str(fitted.message),
@@ -292,10 +364,112 @@ def estimate(
     write_json(output / "sample-summary.json", summary(data))
     return {
         "parameters": artifact("parameters.csv", "text/csv"),
+        "covariance": artifact("covariance.csv", "text/csv"),
         "metrics": artifact("metrics.json", "application/json"),
         "predictions": artifact("predictions.csv", "text/csv"),
         "sample_summary": artifact("sample-summary.json", "application/json"),
     }
+
+
+def null_log_likelihood(data: PreparedData) -> float:
+    return -sum(math.log(int(np.sum(data.available[indices]))) for indices in data.groups)
+
+
+def likelihood_ratios(
+    final_ll: float, null_ll: float, parameter_count: int
+) -> tuple[float | None, float | None]:
+    if null_ll == 0:
+        return None, None
+    return 1 - final_ll / null_ll, 1 - (final_ll - parameter_count) / null_ll
+
+
+def covariance_matrix(objective: Any, estimates: np.ndarray) -> np.ndarray:
+    hessian = finite_difference_hessian(objective, estimates)
+    if not np.all(np.isfinite(hessian)):
+        return np.full(hessian.shape, np.nan)
+    eigenvalues = np.linalg.eigvalsh(hessian)
+    if np.any(eigenvalues <= 0) or np.linalg.cond(hessian) > 1.0e12:
+        return np.full(hessian.shape, np.nan)
+    try:
+        covariance = np.linalg.inv(hessian)
+    except np.linalg.LinAlgError:
+        return np.full(hessian.shape, np.nan)
+    return (covariance + covariance.T) / 2
+
+
+def finite_difference_hessian(objective: Any, point: np.ndarray) -> np.ndarray:
+    point = np.asarray(point, dtype=float)
+    size = len(point)
+    steps = 1.0e-4 * np.maximum(1.0, np.abs(point))
+    hessian = np.empty((size, size), dtype=float)
+    base = float(objective(point))
+    if not np.isfinite(base) or base >= 1.0e99:
+        return np.full((size, size), np.nan)
+    for first in range(size):
+        delta_first = np.zeros(size)
+        delta_first[first] = steps[first]
+        forward = float(objective(point + delta_first))
+        backward = float(objective(point - delta_first))
+        hessian[first, first] = (
+            forward - 2.0 * base + backward
+        ) / steps[first] ** 2
+        for second in range(first):
+            delta_second = np.zeros(size)
+            delta_second[second] = steps[second]
+            mixed = (
+                float(objective(point + delta_first + delta_second))
+                - float(objective(point + delta_first - delta_second))
+                - float(objective(point - delta_first + delta_second))
+                + float(objective(point - delta_first - delta_second))
+            ) / (4.0 * steps[first] * steps[second])
+            hessian[first, second] = mixed
+            hessian[second, first] = mixed
+    return hessian
+
+
+def standard_errors_from_covariance(covariance: np.ndarray) -> np.ndarray:
+    diagonal = np.diag(covariance)
+    standard_errors = np.full(len(diagonal), np.nan)
+    valid = np.isfinite(diagonal) & (diagonal > 0)
+    standard_errors[valid] = np.sqrt(diagonal[valid])
+    return standard_errors
+
+
+def parameters_at_bounds(
+    estimates: np.ndarray, bounds: list[tuple[float | None, float | None]]
+) -> np.ndarray:
+    result = np.zeros(len(estimates), dtype=bool)
+    for index, (estimate, (lower, upper)) in enumerate(
+        zip(estimates, bounds, strict=True)
+    ):
+        tolerance = 1.0e-6 * max(1.0, abs(float(estimate)))
+        result[index] = (lower is not None and estimate <= lower + tolerance) or (
+            upper is not None and estimate >= upper - tolerance
+        )
+    return result
+
+
+def significance_mark(p_value: float) -> str:
+    if not np.isfinite(p_value):
+        return ""
+    if p_value < 0.01:
+        return "**"
+    if p_value < 0.05:
+        return "*"
+    if p_value < 0.10:
+        return "†"
+    return ""
+
+
+def summarize_inference(
+    standard_errors: np.ndarray, boundary: np.ndarray
+) -> str:
+    valid = np.isfinite(standard_errors)
+    if np.all(valid) and not np.any(boundary):
+        return "available"
+    if np.any(valid):
+        return "partial_boundary_or_singular_information"
+    return "unavailable_boundary_or_singular_information"
 
 
 def boolean_array(series: pd.Series, name: str) -> np.ndarray:
