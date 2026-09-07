@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
-  "latest": "0.5.5",
+  "latest": "0.5.6",
   "minimum_supported": "0.5.0",
   "released_at": "2026-09-07",
-  "release_url": "https://github.com/bin-utokyo/davis/releases/tag/v0.5.5",
+  "release_url": "https://github.com/bin-utokyo/davis/releases/tag/v0.5.6",
   "message": {
-    "ja": "CSV Transformを正式なdavis.ui/v1 componentとしてDesktopから編集できるようにし，公式componentのversionと参照を更新しました．",
-    "en": "CSV Transform now provides a native davis.ui/v1 Desktop editor, with updated official component versions and references."
+    "ja": "MNL・NL・RLの推定結果へ標準誤差，t値，p値，共分散行列，初期尤度，尤度比を追加し，NLのscale表記を講義資料へ合わせました．",
+    "en": "MNL, NL, and RL now report standard errors, t values, p values, covariance matrices, initial log-likelihoods, and likelihood ratios, with NL scale notation aligned to the course material."
   }
 }
