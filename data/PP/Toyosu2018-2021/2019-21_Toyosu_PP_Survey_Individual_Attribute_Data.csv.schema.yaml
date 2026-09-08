@@ -15,8 +15,8 @@ columns:
   type_:
     name: Int8
 - description:
-    en: Age in years.
-    ja: 年齢（歳）。
+    en: "Age group code: 1=20s, 2=30s, 3=40s, 4=50s, 5=60 or older."
+    ja: "年代コード：1=20代，2=30代，3=40代，4=50代，5=60代以上．"
   name: Age
   type_:
     name: Int8
@@ -27,8 +27,8 @@ columns:
   type_:
     name: Int8
 - description:
-    en: "Recorded occupation."
-    ja: "登録された職業．"
+    en: "Occupation code: 1=Student (including part-time workers), 2=Company employee/civil servant/organization employee, 3=Self-employed/business owner, 4=Agriculture/fisheries, 5=Part-time worker, 6=Homemaker, 7=Unemployed, 8=Other."
+    ja: "職業コード：1=学生(アルバイト従事者含む)，2=会社員・公務員・団体職員，3=自営業・会社経営者，4=農業・漁業，5=パート・アルバイト，6=主婦・主夫，7=無職，8=その他．"
   name: Occupation
   type_:
     name: Int8
@@ -39,8 +39,8 @@ columns:
   type_:
     name: String
 - description:
-    en: "Recorded income category."
-    ja: "登録された収入区分．"
+    en: "2020 household annual gross-income code: 1=Under JPY 2 million, 2=JPY 2 million to JPY 5.99 million, 3=JPY 6 million to JPY 9.99 million, 4=JPY 10 million to JPY 14.99 million, 5=JPY 15 million or more. Approximate income includes employment (including part-time work), self-employment, real estate, dividends, pensions, and benefits."
+    ja: "2020年の世帯全員の年間収入(総支給額)コード：1=200万円未満，2=200万円以上599万円以下，3=600万円以上999万円以下，4=1,000万円以上1,499万円以下，5=1,500万円以上．勤務先(パート先・アルバイト先を含む)から得た給与，自営収入，不動産収入，配当，年金・給付金等の概算額．"
   name: Income
   type_:
     name: Int8
