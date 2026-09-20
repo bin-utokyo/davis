@@ -233,6 +233,7 @@ test("maps existing participant and operator codes into the configured legacy gr
   const { env } = createEnv({ DAVIS_LEGACY_GROUP_ID: "bmss26" });
   const participant = await exchange(env);
   assert.equal((participant.body as { group_id: string }).group_id, "bmss26");
+  assert.deepEqual((participant.body as { allowed_dataset_ids: string[] }).allowed_dataset_ids, []);
   const participantStatus = await handleApiRequest(apiRequest("/api/v1/auth/session", {
     headers: { Authorization: `Bearer ${participant.body.token}` },
   }), env);
@@ -314,8 +315,9 @@ test("site admin creates a paired access group and controls dataset grants", asy
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ invite_code: credentials.participant_code, client: "cli" }),
   }), env);
-  const participant = await participantLogin.json() as { token: string };
+  const participant = await participantLogin.json() as { allowed_dataset_ids: string[]; token: string };
   assert.equal(participantLogin.status, 200);
+  assert.deepEqual(participant.allowed_dataset_ids, []);
 
   const forbidden = await handleApiRequest(apiRequest("/api/v1/download-grants", {
     method: "POST",
@@ -333,6 +335,14 @@ test("site admin creates a paired access group and controls dataset grants", asy
     }),
   }), env);
   assert.equal(granted.status, 200);
+
+  const participantStatus = await handleApiRequest(apiRequest("/api/v1/auth/session", {
+    headers: { Authorization: `Bearer ${participant.token}` },
+  }), env);
+  assert.deepEqual(
+    (await participantStatus.json() as { allowed_dataset_ids: string[] }).allowed_dataset_ids,
+    ["sample/tiny"],
+  );
 
   const allowed = await handleApiRequest(apiRequest("/api/v1/download-grants", {
     method: "POST",

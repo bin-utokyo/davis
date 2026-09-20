@@ -128,6 +128,7 @@ export function CatalogApp() {
   const [sessionState, setSessionState] = useState<SessionState>("checking");
   const [sessionExpiresAt, setSessionExpiresAt] = useState("");
   const [sessionGroupId, setSessionGroupId] = useState("");
+  const [allowedDatasetIds, setAllowedDatasetIds] = useState<string[] | null>([]);
   const [downloadDialogOpen, setDownloadDialogOpen] = useState(false);
   const [inviteCode, setInviteCode] = useState("");
   const [licenseConfirmed, setLicenseConfirmed] = useState(false);
@@ -171,15 +172,19 @@ export function CatalogApp() {
         setSessionState("anonymous");
         return;
       }
-      const body = await response.json() as { expires_at: string; group_id?: string };
+      const body = await response.json() as { expires_at: string; group_id?: string; allowed_dataset_ids?: string[] };
       setSessionExpiresAt(body.expires_at);
       setSessionGroupId(body.group_id ?? "");
+      setAllowedDatasetIds(body.allowed_dataset_ids ?? null);
       setSessionState("authenticated");
     }).catch(() => setSessionState("anonymous"));
   }, []);
 
+  const accessibleFiles = useMemo(() => allowedDatasetIds === null
+    ? files
+    : files.filter((file) => allowedDatasetIds.includes(file.dataset_id)), [files, allowedDatasetIds]);
   const normalizedQuery = query.trim().toLocaleLowerCase();
-  const filteredFiles = useMemo(() => files.filter((file) => {
+  const filteredFiles = useMemo(() => accessibleFiles.filter((file) => {
     if (normalizedQuery && !searchable(file).includes(normalizedQuery)) return false;
     if (city && file.city?.ja !== city) return false;
     if (year && file.year !== Number(year)) return false;
@@ -187,7 +192,7 @@ export function CatalogApp() {
     if (schemaStatus && file.schema_status !== schemaStatus) return false;
     if (license && file.license?.ja !== license) return false;
     return true;
-  }), [files, normalizedQuery, city, year, format, schemaStatus, license]);
+  }), [accessibleFiles, normalizedQuery, city, year, format, schemaStatus, license]);
 
   const grouped = useMemo(() => {
     const groups = new Map<string, CatalogFile[]>();
@@ -200,8 +205,8 @@ export function CatalogApp() {
   }, [filteredFiles]);
 
   const visibleDatasets = datasets.filter((dataset) => grouped.has(dataset.id));
-  const activeDatasetFiles = activeDataset ? files.filter((file) => file.dataset_id === activeDataset) : [];
-  const selectedFiles = files.filter((file) => selected.has(file.id));
+  const activeDatasetFiles = activeDataset ? accessibleFiles.filter((file) => file.dataset_id === activeDataset) : [];
+  const selectedFiles = accessibleFiles.filter((file) => selected.has(file.id));
   const selectedSize = selectedFiles.reduce((sum, file) => sum + file.size, 0);
   const selectedHasSchema = selectedFiles.some((file) => Boolean(file.documents?.schema));
   const selectedHasPdfJa = selectedFiles.some((file) => Boolean(file.documents?.pdf_ja));
@@ -234,7 +239,7 @@ export function CatalogApp() {
   }
 
   function toggleDataset(datasetId: string) {
-    const ids = files.filter((file) => file.dataset_id === datasetId).map((file) => file.id);
+    const ids = accessibleFiles.filter((file) => file.dataset_id === datasetId).map((file) => file.id);
     const allSelected = ids.every((id) => selected.has(id));
     setSelected((current) => {
       const next = new Set(current);
@@ -285,10 +290,11 @@ export function CatalogApp() {
         body: JSON.stringify({ invite_code: inviteCode, client: "web" }),
       });
       if (!response.ok) throw new Error("login");
-      const body = await response.json() as { expires_at: string; group_id?: string };
+      const body = await response.json() as { expires_at: string; group_id?: string; allowed_dataset_ids?: string[] };
       setInviteCode("");
       setSessionExpiresAt(body.expires_at);
       setSessionGroupId(body.group_id ?? "");
+      setAllowedDatasetIds(body.allowed_dataset_ids ?? null);
       setSessionState("authenticated");
     } catch {
       setAccessError("login");
@@ -302,6 +308,7 @@ export function CatalogApp() {
     setSessionState("anonymous");
     setSessionExpiresAt("");
     setSessionGroupId("");
+    setAllowedDatasetIds([]);
   }
 
   async function downloadSelected() {
@@ -395,7 +402,7 @@ export function CatalogApp() {
           <div className="search-row"><span aria-hidden="true">⌕</span><input id="catalog-search" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={tr("地域，年，列名，データの説明から検索", "Search by location, year, column, or description")}/><button type="submit">{tr("検索", "Search")}</button></div>
           <div className="quick-filters" aria-label={tr("検索例", "Search examples")}><span>{tr("検索例", "Examples")}</span>{(language === "ja" ? ["松山", "2021", "travel_time"] : ["Matsuyama", "2021", "travel_time"]).map((value) => <button key={value} type="button" onClick={() => applyQuickSearch(value)}>{value}</button>)}</div>
         </form>
-        <div className="hero-stats" aria-label={tr("カタログ概要", "Catalog overview")}><div><strong>{datasets.length || "–"}</strong><span>datasets</span></div><div><strong>{files.length || "–"}</strong><span>files</span></div><div><strong>{files.filter((file) => file.schema_status === "ready").length || "–"}</strong><span>schemas</span></div></div>
+        <div className="hero-stats" aria-label={tr("カタログ概要", "Catalog overview")}><div><strong>{new Set(accessibleFiles.map((file) => file.dataset_id)).size || "–"}</strong><span>datasets</span></div><div><strong>{accessibleFiles.length || "–"}</strong><span>files</span></div><div><strong>{accessibleFiles.filter((file) => file.schema_status === "ready").length || "–"}</strong><span>schemas</span></div></div>
       </section>
 
       <section className="catalog-section" id="catalog">
@@ -410,11 +417,12 @@ export function CatalogApp() {
         </div>}
         <p className="result-summary"><strong>{filteredFiles.length}</strong> files / <strong>{visibleDatasets.length}</strong> datasets</p>
         {loadingError && <p className="error-message">{tr("カタログを読み込めませんでした．もう一度ページを開き直してください．", "The catalog could not be loaded. Please reload the page.")}</p>}
-        {!loadingError && files.length > 0 && visibleDatasets.length === 0 && <p className="empty-message">{tr("条件に一致するデータがありません．検索語や絞り込みを変更してください．", "No data matches these conditions. Try changing the search term or filters.")}</p>}
+        {!loadingError && sessionState !== "authenticated" && <p className="empty-message">{tr("参加者コードでログインすると，このgroupで取得できるdatasetを表示します．", "Log in with a participant code to see the datasets available to that group.")}</p>}
+        {!loadingError && sessionState === "authenticated" && visibleDatasets.length === 0 && <p className="empty-message">{accessibleFiles.length === 0 ? tr("このgroupで取得できるdatasetはまだありません．", "No datasets are currently available to this group.") : tr("条件に一致するデータがありません．検索語や絞り込みを変更してください．", "No data matches these conditions. Try changing the search term or filters.")}</p>}
         <div className="dataset-grid">
           {visibleDatasets.map((dataset, index) => {
             const matches = grouped.get(dataset.id) ?? [];
-            const datasetFileIds = files.filter((file) => file.dataset_id === dataset.id).map((file) => file.id);
+            const datasetFileIds = accessibleFiles.filter((file) => file.dataset_id === dataset.id).map((file) => file.id);
             const allSelected = datasetFileIds.length > 0 && datasetFileIds.every((id) => selected.has(id));
             const sample = localized(matches.find((file) => file.name)?.name ?? null, language);
             return <article className="dataset-card" key={dataset.id}>

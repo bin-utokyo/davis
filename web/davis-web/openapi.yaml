@@ -474,6 +474,11 @@ components:
         expires_at: { type: string, format: date-time }
         role: { type: string, enum: [operator, admin] }
         group_id: { type: string }
+        allowed_dataset_ids:
+          type: array
+          uniqueItems: true
+          items: { type: string }
+          description: Published dataset IDs currently downloadable by the participant access group.
         token:
           type: string
           description: CLI client requests only

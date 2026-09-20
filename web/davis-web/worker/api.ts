@@ -302,6 +302,7 @@ async function exchangeInviteCode(request: Request, env: DavisWorkerEnv): Promis
     access_revision: payload.revision,
     expires_at: new Date(payload.expires_at * 1000).toISOString(),
     ...(groupId ? { group_id: groupId } : {}),
+    ...(groupId ? { allowed_dataset_ids: await allowedDatasetIds(groupId, env) } : {}),
   };
   if (client === "cli") responseBody.token = token;
   const headers = new Headers();
@@ -912,6 +913,9 @@ async function sessionStatus(request: Request, env: DavisWorkerEnv): Promise<Res
     access_revision: session.revision,
     expires_at: new Date(session.expires_at * 1000).toISOString(),
     ...(session.group_id ? { group_id: session.group_id } : {}),
+    ...(session.group_id
+      ? { allowed_dataset_ids: await allowedDatasetIds(session.group_id, env) }
+      : {}),
   });
 }
 
@@ -1390,6 +1394,15 @@ async function findGroupByCode(
 
 function datasetAllowsGroup(control: AccessControl, datasetId: string, groupId: string): boolean {
   return control.dataset_grants[datasetId]?.includes(groupId) ?? false;
+}
+
+async function allowedDatasetIds(groupId: string, env: DavisWorkerEnv): Promise<string[]> {
+  const control = await readAccessControl(env);
+  if (!control) return [];
+  return Object.entries(control.dataset_grants)
+    .filter(([, groupIds]) => groupIds.includes(groupId))
+    .map(([datasetId]) => datasetId)
+    .sort();
 }
 
 async function readPublishedDatasetIds(env: DavisWorkerEnv): Promise<Set<string>> {
