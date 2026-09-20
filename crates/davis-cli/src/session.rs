@@ -61,6 +61,10 @@ pub fn load_operator() -> Result<Option<Session>, SessionError> {
     load_from(config_path("operator-session.toml")?)
 }
 
+pub fn load_admin() -> Result<Option<Session>, SessionError> {
+    load_from(config_path("admin-session.toml")?)
+}
+
 fn load_from(path: PathBuf) -> Result<Option<Session>, SessionError> {
     let contents = match fs::read_to_string(&path) {
         Ok(contents) => contents,
@@ -83,6 +87,10 @@ pub fn save(session: &Session) -> Result<PathBuf, SessionError> {
 
 pub fn save_operator(session: &Session) -> Result<PathBuf, SessionError> {
     save_to(session, config_path("operator-session.toml")?)
+}
+
+pub fn save_admin(session: &Session) -> Result<PathBuf, SessionError> {
+    save_to(session, config_path("admin-session.toml")?)
 }
 
 fn save_to(session: &Session, path: PathBuf) -> Result<PathBuf, SessionError> {
@@ -126,6 +134,10 @@ pub fn clear() -> Result<bool, SessionError> {
 
 pub fn clear_operator() -> Result<bool, SessionError> {
     clear_path(config_path("operator-session.toml")?)
+}
+
+pub fn clear_admin() -> Result<bool, SessionError> {
+    clear_path(config_path("admin-session.toml")?)
 }
 
 fn clear_path(path: PathBuf) -> Result<bool, SessionError> {
@@ -177,7 +189,10 @@ fn restrict_permissions(_path: &Path) -> Result<(), SessionError> {
 
 #[cfg(test)]
 mod tests {
-    use super::{clear, clear_operator, load, load_operator, save, save_operator, Session};
+    use super::{
+        clear, clear_admin, clear_operator, load, load_admin, load_operator, save, save_admin,
+        save_operator, Session,
+    };
     use std::sync::Mutex;
 
     static ENVIRONMENT: Mutex<()> = Mutex::new(());
@@ -205,6 +220,15 @@ mod tests {
         assert_eq!(load_operator().unwrap(), Some(operator));
         assert!(clear_operator().unwrap());
         assert!(!operator_path.exists());
+        let admin = Session::new(
+            "https://admin.example.test".into(),
+            "admin-token".into(),
+            "2026-09-01T09:00:00.000Z".into(),
+        );
+        let admin_path = save_admin(&admin).unwrap();
+        assert_eq!(load_admin().unwrap(), Some(admin));
+        assert!(clear_admin().unwrap());
+        assert!(!admin_path.exists());
         std::env::remove_var("DAVIS_CONFIG_HOME");
     }
 }

@@ -98,6 +98,11 @@ struct OperatorExchangeRequest<'a> {
     client: &'static str,
 }
 
+#[derive(Debug, Serialize)]
+struct AdminExchangeRequest<'a> {
+    admin_code: &'a str,
+}
+
 #[derive(Debug, Deserialize)]
 struct ExchangeResponse {
     token: String,
@@ -107,6 +112,24 @@ struct ExchangeResponse {
 #[derive(Debug, Deserialize)]
 struct OperatorStatusResponse {
     expires_at: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct AccessGroupCredentials {
+    pub group_id: String,
+    pub participant_code: String,
+    pub operator_code: String,
+}
+
+#[derive(Debug, Serialize)]
+struct CreateAccessGroupRequest<'a> {
+    group_id: &'a str,
+}
+
+#[derive(Debug, Serialize)]
+struct UpdateDatasetAccessRequest<'a> {
+    dataset_id: &'a str,
+    allowed_group_ids: &'a [String],
 }
 
 #[derive(Debug, Serialize)]
@@ -144,6 +167,11 @@ struct ApiErrorEnvelope {
 #[derive(Debug, Serialize)]
 struct OperatorObjectsRequest<'a> {
     objects: &'a [ObjectRef],
+}
+
+#[derive(Debug, Serialize)]
+struct ClaimDatasetsRequest<'a> {
+    dataset_ids: &'a [String],
 }
 
 #[derive(Debug, Deserialize)]
@@ -278,6 +306,20 @@ impl DavisService {
         })
     }
 
+    pub async fn exchange_admin_code(&self, admin_code: &str) -> Result<LoginSession, RemoteError> {
+        let response = self
+            .client
+            .post(self.endpoint("api/v1/admin/auth/exchange"))
+            .json(&AdminExchangeRequest { admin_code })
+            .send()
+            .await?;
+        let response: ExchangeResponse = decode(response).await?;
+        Ok(LoginSession {
+            token: response.token,
+            expires_at: response.expires_at,
+        })
+    }
+
     pub async fn operator_session_status(&self) -> Result<LoginSession, RemoteError> {
         let token = self.operator_token()?;
         let response = self
@@ -291,6 +333,53 @@ impl DavisService {
             token: token.to_owned(),
             expires_at: response.expires_at,
         })
+    }
+
+    pub async fn admin_session_status(&self) -> Result<LoginSession, RemoteError> {
+        let token = self.admin_token()?;
+        let response = self
+            .client
+            .get(self.endpoint("api/v1/admin/auth/session"))
+            .bearer_auth(token)
+            .send()
+            .await?;
+        let response: OperatorStatusResponse = decode(response).await?;
+        Ok(LoginSession {
+            token: token.to_owned(),
+            expires_at: response.expires_at,
+        })
+    }
+
+    pub async fn create_access_group(
+        &self,
+        group_id: &str,
+    ) -> Result<AccessGroupCredentials, RemoteError> {
+        let response = self
+            .client
+            .post(self.endpoint("api/v1/admin/access-groups"))
+            .bearer_auth(self.admin_token()?)
+            .json(&CreateAccessGroupRequest { group_id })
+            .send()
+            .await?;
+        decode(response).await
+    }
+
+    pub async fn update_dataset_access(
+        &self,
+        dataset_id: &str,
+        allowed_group_ids: &[String],
+    ) -> Result<(), RemoteError> {
+        let response = self
+            .client
+            .put(self.endpoint("api/v1/admin/dataset-access"))
+            .bearer_auth(self.admin_token()?)
+            .json(&UpdateDatasetAccessRequest {
+                dataset_id,
+                allowed_group_ids,
+            })
+            .send()
+            .await?;
+        ensure_success(response).await.map(|_| ())
     }
 
     pub async fn upload_operator_objects<F>(
@@ -398,6 +487,17 @@ impl DavisService {
             .await?;
         ensure_success(response).await?;
         Ok(())
+    }
+
+    pub async fn claim_operator_datasets(&self, dataset_ids: &[String]) -> Result<(), RemoteError> {
+        let response = self
+            .client
+            .post(self.endpoint("api/v1/operator/datasets/claim"))
+            .bearer_auth(self.operator_token()?)
+            .json(&ClaimDatasetsRequest { dataset_ids })
+            .send()
+            .await?;
+        ensure_success(response).await.map(|_| ())
     }
 
     #[allow(clippy::too_many_arguments)]
@@ -555,6 +655,13 @@ impl DavisService {
         self.token.as_deref().ok_or_else(|| RemoteError::Api {
             status: StatusCode::UNAUTHORIZED,
             message: "operator login is required; run `davis operator login <URL>`".into(),
+        })
+    }
+
+    fn admin_token(&self) -> Result<&str, RemoteError> {
+        self.token.as_deref().ok_or_else(|| RemoteError::Api {
+            status: StatusCode::UNAUTHORIZED,
+            message: "Site Admin login is required; run `davis admin login <URL>`".into(),
         })
     }
 

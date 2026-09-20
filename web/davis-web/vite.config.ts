@@ -5,7 +5,8 @@ import hostingConfig from "./.openai/hosting.json";
 
 const SITE_CREATOR_PLACEHOLDER_DATABASE_ID =
   "00000000-0000-4000-8000-000000000000";
-const DAVIS_CLOUDFLARE_ACCOUNT_ID = "d9322bf088d5d72917ed9b831642f9e0";
+const DAVIS_CLOUDFLARE_ACCOUNT_ID =
+  process.env.DAVIS_CLOUDFLARE_ACCOUNT_ID ?? "d9322bf088d5d72917ed9b831642f9e0";
 
 const { d1, r2 } = hostingConfig;
 
@@ -50,6 +51,7 @@ const localBindingConfig = {
   vars: {
     DAVIS_ACCESS_REVISION: process.env.DAVIS_ACCESS_REVISION ?? "2026",
     DAVIS_OPERATOR_ACCESS_REVISION: process.env.DAVIS_OPERATOR_ACCESS_REVISION ?? "2026",
+    DAVIS_ADMIN_ACCESS_REVISION: process.env.DAVIS_ADMIN_ACCESS_REVISION ?? "2026",
   },
   secrets: {
     required: ["DAVIS_INVITE_CODE", "DAVIS_OPERATOR_CODE", "DAVIS_TOKEN_SECRET"],

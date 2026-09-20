@@ -1,4 +1,5 @@
 import {
+  type AdminSessionToken,
   codesMatch,
   type DownloadToken,
   type OperatorSessionToken,
@@ -17,6 +18,8 @@ const MAX_GRANT_TTL_SECONDS = 15 * 60;
 const MAX_FILES_PER_GRANT = 256;
 const DEFAULT_OPERATOR_SESSION_TTL_SECONDS = 30 * 24 * 60 * 60;
 const MAX_OPERATOR_SESSION_TTL_SECONDS = 90 * 24 * 60 * 60;
+const DEFAULT_ADMIN_SESSION_TTL_SECONDS = 60 * 60;
+const MAX_ADMIN_SESSION_TTL_SECONDS = 24 * 60 * 60;
 const MAX_OPERATOR_OBJECTS_PER_REQUEST = 512;
 const MAX_MULTIPART_PART_BYTES = 32 * 1024 * 1024;
 const MIN_MULTIPART_PART_BYTES = 5 * 1024 * 1024;
@@ -27,6 +30,8 @@ const CATALOG_DOCUMENTS = new Set([
   "columns.json",
   "facets.json",
 ]);
+const ACCESS_CONTROL_KEY = "access/control.json";
+const GROUP_ID_PATTERN = /^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$/u;
 
 type AssetFetcher = {
   fetch(request: Request): Promise<Response>;
@@ -81,6 +86,21 @@ export type DavisWorkerEnv = {
   DAVIS_OPERATOR_CODE?: string;
   DAVIS_OPERATOR_ACCESS_REVISION?: string;
   DAVIS_OPERATOR_SESSION_TTL_SECONDS?: string;
+  DAVIS_ADMIN_CODE?: string;
+  DAVIS_ADMIN_ACCESS_REVISION?: string;
+  DAVIS_ADMIN_SESSION_TTL_SECONDS?: string;
+};
+
+type AccessGroup = {
+  participant_code_hash: string;
+  operator_code_hash: string;
+  revision: string;
+};
+
+type AccessControl = {
+  version: 1;
+  groups: Record<string, AccessGroup>;
+  dataset_grants: Record<string, string[]>;
 };
 
 type CatalogFile = {
@@ -124,6 +144,28 @@ export async function handleApiRequest(request: Request, env: DavisWorkerEnv): P
     if (request.method !== "GET") return methodNotAllowed("GET");
     return operatorSessionStatus(request, env);
   }
+  if (url.pathname === "/api/v1/admin/auth/exchange") {
+    if (request.method !== "POST") return methodNotAllowed("POST");
+    if (!sameOrigin(request, url)) return errorResponse(403, "origin_forbidden", "Origin is not allowed");
+    return exchangeAdminCode(request, env);
+  }
+  if (url.pathname === "/api/v1/admin/auth/session") {
+    if (request.method !== "GET") return methodNotAllowed("GET");
+    return adminSessionStatus(request, env);
+  }
+  if (url.pathname === "/api/v1/admin/access-groups") {
+    if (request.method === "GET") return listAccessGroups(request, env);
+    if (request.method === "POST") {
+      if (!sameOrigin(request, url)) return errorResponse(403, "origin_forbidden", "Origin is not allowed");
+      return createAccessGroup(request, env);
+    }
+    return methodNotAllowed("GET, POST");
+  }
+  if (url.pathname === "/api/v1/admin/dataset-access") {
+    if (request.method !== "PUT") return methodNotAllowed("PUT");
+    if (!sameOrigin(request, url)) return errorResponse(403, "origin_forbidden", "Origin is not allowed");
+    return updateDatasetAccess(request, env);
+  }
   if (url.pathname === "/api/v1/operator/uploads/plan") {
     if (request.method !== "POST") return methodNotAllowed("POST");
     return planOperatorUploads(request, env);
@@ -147,6 +189,10 @@ export async function handleApiRequest(request: Request, env: DavisWorkerEnv): P
   if (url.pathname === "/api/v1/operator/catalog/publish") {
     if (request.method !== "POST") return methodNotAllowed("POST");
     return publishOperatorCatalog(request, env);
+  }
+  if (url.pathname === "/api/v1/operator/datasets/claim") {
+    if (request.method !== "POST") return methodNotAllowed("POST");
+    return claimOperatorDatasets(request, env);
   }
   if (url.pathname === "/api/v1/download-grants") {
     if (request.method !== "POST") return methodNotAllowed("POST");
@@ -205,7 +251,12 @@ async function exchangeInviteCode(request: Request, env: DavisWorkerEnv): Promis
   if (!inviteCode || inviteCode.length > 256) {
     return errorResponse(400, "invalid_request", "invite_code is required");
   }
-  if (!(await codesMatch(inviteCode, env.DAVIS_INVITE_CODE!))) {
+  let groupId: string | undefined;
+  const legacyMatch = env.DAVIS_INVITE_CODE
+    ? await codesMatch(inviteCode, env.DAVIS_INVITE_CODE)
+    : false;
+  if (!legacyMatch) groupId = await findGroupByCode(inviteCode, "participant", env) ?? undefined;
+  if (!legacyMatch && !groupId) {
     return errorResponse(401, "invalid_invite_code", "Invite code is invalid");
   }
 
@@ -222,6 +273,7 @@ async function exchangeInviteCode(request: Request, env: DavisWorkerEnv): Promis
     issued_at: issuedAt,
     expires_at: issuedAt + ttl,
     nonce: randomNonce(),
+    ...(groupId ? { group_id: groupId } : {}),
   };
   const token = await signToken(payload, env.DAVIS_TOKEN_SECRET!, "session");
   const responseBody: Record<string, unknown> = {
@@ -243,7 +295,12 @@ async function exchangeOperatorCode(request: Request, env: DavisWorkerEnv): Prom
   if (!operatorCode || operatorCode.length > 256) {
     return errorResponse(400, "invalid_request", "operator_code is required");
   }
-  if (!(await codesMatch(operatorCode, env.DAVIS_OPERATOR_CODE!))) {
+  let groupId: string | undefined;
+  const legacyMatch = env.DAVIS_OPERATOR_CODE
+    ? await codesMatch(operatorCode, env.DAVIS_OPERATOR_CODE)
+    : false;
+  if (!legacyMatch) groupId = await findGroupByCode(operatorCode, "operator", env) ?? undefined;
+  if (!legacyMatch && !groupId) {
     return errorResponse(401, "invalid_operator_code", "Operator code is invalid");
   }
 
@@ -260,6 +317,7 @@ async function exchangeOperatorCode(request: Request, env: DavisWorkerEnv): Prom
     issued_at: issuedAt,
     expires_at: issuedAt + ttl,
     nonce: randomNonce(),
+    ...(groupId ? { group_id: groupId } : {}),
   };
   const token = await signToken(payload, env.DAVIS_TOKEN_SECRET!, "operator-session");
   return json({
@@ -268,6 +326,7 @@ async function exchangeOperatorCode(request: Request, env: DavisWorkerEnv): Prom
     access_revision: payload.revision,
     expires_at: new Date(payload.expires_at * 1000).toISOString(),
     token,
+    ...(groupId ? { group_id: groupId } : {}),
   });
 }
 
@@ -281,7 +340,117 @@ async function operatorSessionStatus(request: Request, env: DavisWorkerEnv): Pro
     role: "operator",
     access_revision: session.revision,
     expires_at: new Date(session.expires_at * 1000).toISOString(),
+    ...(session.group_id ? { group_id: session.group_id } : {}),
   });
+}
+
+async function exchangeAdminCode(request: Request, env: DavisWorkerEnv): Promise<Response> {
+  const configurationError = validateAdminConfiguration(env);
+  if (configurationError) return configurationError;
+  const body = await readJson(request);
+  const adminCode = typeof body?.admin_code === "string" ? body.admin_code : "";
+  if (!adminCode || adminCode.length > 256) {
+    return errorResponse(400, "invalid_request", "admin_code is required");
+  }
+  if (!(await codesMatch(adminCode, env.DAVIS_ADMIN_CODE!))) {
+    return errorResponse(401, "invalid_admin_code", "Site Admin code is invalid");
+  }
+  const issuedAt = nowSeconds();
+  const ttl = boundedDuration(
+    env.DAVIS_ADMIN_SESSION_TTL_SECONDS,
+    DEFAULT_ADMIN_SESSION_TTL_SECONDS,
+    MAX_ADMIN_SESSION_TTL_SECONDS,
+  );
+  const payload: AdminSessionToken = {
+    kind: "admin-session",
+    version: 1,
+    revision: env.DAVIS_ADMIN_ACCESS_REVISION!,
+    issued_at: issuedAt,
+    expires_at: issuedAt + ttl,
+    nonce: randomNonce(),
+  };
+  return json({
+    authenticated: true,
+    role: "admin",
+    access_revision: payload.revision,
+    expires_at: new Date(payload.expires_at * 1000).toISOString(),
+    token: await signToken(payload, env.DAVIS_TOKEN_SECRET!, "admin-session"),
+  });
+}
+
+async function adminSessionStatus(request: Request, env: DavisWorkerEnv): Promise<Response> {
+  const session = await requireAdmin(request, env);
+  if (session instanceof Response) return session;
+  return json({
+    authenticated: true,
+    role: "admin",
+    access_revision: session.revision,
+    expires_at: new Date(session.expires_at * 1000).toISOString(),
+  });
+}
+
+async function listAccessGroups(request: Request, env: DavisWorkerEnv): Promise<Response> {
+  const session = await requireAdmin(request, env);
+  if (session instanceof Response) return session;
+  const control = await readAccessControl(env);
+  if (!control) return errorResponse(503, "access_control_unavailable", "Access control is unavailable");
+  return json({
+    groups: Object.keys(control.groups).sort(),
+    dataset_grants: control.dataset_grants,
+  });
+}
+
+async function createAccessGroup(request: Request, env: DavisWorkerEnv): Promise<Response> {
+  const session = await requireAdmin(request, env);
+  if (session instanceof Response) return session;
+  const body = await readJson(request);
+  const groupId = typeof body?.group_id === "string" ? body.group_id : "";
+  if (!GROUP_ID_PATTERN.test(groupId)) {
+    return errorResponse(400, "invalid_group_id", "group_id must be a lowercase identifier using letters, numbers, and hyphens");
+  }
+  const control = await readAccessControl(env);
+  if (!control) return errorResponse(503, "access_control_unavailable", "Access control is unavailable");
+  if (control.groups[groupId]) return errorResponse(409, "group_exists", "Access group already exists");
+  const participantCode = `dpt_${randomNonce()}${randomNonce()}`;
+  const operatorCode = `dop_${randomNonce()}${randomNonce()}`;
+  control.groups[groupId] = {
+    participant_code_hash: await credentialHash(participantCode, "participant", env.DAVIS_TOKEN_SECRET!),
+    operator_code_hash: await credentialHash(operatorCode, "operator", env.DAVIS_TOKEN_SECRET!),
+    revision: randomNonce(),
+  };
+  if (!(await writeAccessControl(control, env))) {
+    return errorResponse(503, "access_control_unavailable", "Access control could not be updated");
+  }
+  return json({
+    group_id: groupId,
+    participant_code: participantCode,
+    operator_code: operatorCode,
+    warning: "These codes are shown only once. Store them securely.",
+  }, { status: 201 });
+}
+
+async function updateDatasetAccess(request: Request, env: DavisWorkerEnv): Promise<Response> {
+  const session = await requireAdmin(request, env);
+  if (session instanceof Response) return session;
+  const body = await readJson(request);
+  const datasetId = typeof body?.dataset_id === "string" ? body.dataset_id : "";
+  const allowedGroupIds = Array.isArray(body?.allowed_group_ids)
+    ? [...new Set(body.allowed_group_ids.filter((value): value is string => typeof value === "string"))]
+    : [];
+  if (!datasetId || datasetId.length > 512 || allowedGroupIds.length === 0) {
+    return errorResponse(400, "invalid_request", "dataset_id and at least one allowed_group_id are required");
+  }
+  const control = await readAccessControl(env);
+  if (!control) return errorResponse(503, "access_control_unavailable", "Access control is unavailable");
+  const unknown = allowedGroupIds.filter((groupId) => !control.groups[groupId]);
+  if (unknown.length > 0) {
+    return errorResponse(400, "unknown_access_group", "One or more access groups do not exist", { group_ids: unknown });
+  }
+  control.dataset_grants[datasetId] = allowedGroupIds.sort();
+  if (!(await writeAccessControl(control, env))) {
+    return errorResponse(503, "access_control_unavailable", "Access control could not be updated");
+  }
+  return json({ dataset_id: datasetId, allowed_group_ids: control.dataset_grants[datasetId] });
 }
 
 type OperatorObject = { oid: string; size: number };
@@ -472,6 +641,24 @@ async function publishOperatorCatalog(request: Request, env: DavisWorkerEnv): Pr
   if (missing.length > 0) {
     return errorResponse(409, "catalog_objects_missing", "Catalog references missing or invalid objects", { objects: missing });
   }
+  if (session.group_id) {
+    const datasets = parsed.get("datasets.json");
+    if (!Array.isArray(datasets) || !datasets.every((dataset) => dataset
+      && typeof dataset === "object" && typeof (dataset as { id?: unknown }).id === "string")) {
+      return errorResponse(400, "invalid_catalog", "datasets.json is invalid");
+    }
+    const previousDatasetIds = await readPublishedDatasetIds(env);
+    const control = await readAccessControl(env);
+    if (!control) return errorResponse(503, "access_control_unavailable", "Access control is unavailable");
+    for (const dataset of datasets as Array<{ id: string }>) {
+      if (!previousDatasetIds.has(dataset.id) && !control.dataset_grants[dataset.id]) {
+        control.dataset_grants[dataset.id] = [session.group_id];
+      }
+    }
+    if (!(await writeAccessControl(control, env))) {
+      return errorResponse(503, "access_control_unavailable", "Dataset access could not be recorded");
+    }
+  }
   await Promise.all([...CATALOG_DOCUMENTS].map((name) => env.DAVIS_DATA!.put(
     `catalog/revisions/${revision}/${name}`,
     documents[name] as string,
@@ -485,6 +672,43 @@ async function publishOperatorCatalog(request: Request, env: DavisWorkerEnv): Pr
   return json({ published: true, revision });
 }
 
+async function claimOperatorDatasets(request: Request, env: DavisWorkerEnv): Promise<Response> {
+  const session = await requireOperator(request, env);
+  if (session instanceof Response) return session;
+  if (!session.group_id) return json({ claimed: [], legacy_operator: true });
+  const body = await readJson(request);
+  const datasetIds = Array.isArray(body?.dataset_ids)
+    ? [...new Set(body.dataset_ids.filter((value): value is string => typeof value === "string"))]
+    : [];
+  if (datasetIds.length === 0 || datasetIds.length > 512
+    || datasetIds.some((datasetId) => !datasetId || datasetId.length > 512)) {
+    return errorResponse(400, "invalid_request", "dataset_ids must contain between 1 and 512 dataset IDs");
+  }
+  const control = await readAccessControl(env);
+  if (!control) return errorResponse(503, "access_control_unavailable", "Access control is unavailable");
+  const publishedDatasetIds = await readPublishedDatasetIds(env);
+  const alreadyPublished = datasetIds.filter((datasetId) => publishedDatasetIds.has(datasetId));
+  if (alreadyPublished.length > 0) {
+    return errorResponse(
+      409,
+      "dataset_already_published",
+      "Published datasets can only be reassigned by a Site Admin",
+      { dataset_ids: alreadyPublished },
+    );
+  }
+  const claimed: string[] = [];
+  for (const datasetId of datasetIds) {
+    if (!control.dataset_grants[datasetId]) {
+      control.dataset_grants[datasetId] = [session.group_id];
+      claimed.push(datasetId);
+    }
+  }
+  if (claimed.length > 0 && !(await writeAccessControl(control, env))) {
+    return errorResponse(503, "access_control_unavailable", "Dataset access could not be recorded");
+  }
+  return json({ claimed, group_id: session.group_id });
+}
+
 async function sessionStatus(request: Request, env: DavisWorkerEnv): Promise<Response> {
   const configurationError = validateAuthConfiguration(env);
   if (configurationError) return configurationError;
@@ -494,6 +718,7 @@ async function sessionStatus(request: Request, env: DavisWorkerEnv): Promise<Res
     authenticated: true,
     access_revision: session.revision,
     expires_at: new Date(session.expires_at * 1000).toISOString(),
+    ...(session.group_id ? { group_id: session.group_id } : {}),
   });
 }
 
@@ -535,6 +760,18 @@ async function createDownloadGrants(request: Request, env: DavisWorkerEnv): Prom
       file_ids: missingIds,
     });
   }
+  if (session.group_id) {
+    const control = await readAccessControl(env);
+    if (!control) return errorResponse(503, "access_control_unavailable", "Access control is unavailable");
+    const forbiddenIds = selected
+      .filter((file) => file && !datasetAllowsGroup(control, file.dataset_id, session.group_id!))
+      .map((file) => file!.id);
+    if (forbiddenIds.length > 0) {
+      return errorResponse(403, "dataset_access_forbidden", "One or more selected files are not available to this access group", {
+        file_ids: forbiddenIds,
+      });
+    }
+  }
 
   const expiresAt = nowSeconds() + boundedDuration(
     env.DAVIS_GRANT_TTL_SECONDS,
@@ -550,9 +787,11 @@ async function createDownloadGrants(request: Request, env: DavisWorkerEnv): Prom
       revision: session.revision,
       expires_at: expiresAt,
       file_id: selectedFile.id,
+      dataset_id: selectedFile.dataset_id,
       path: selectedFile.path,
       oid: selectedFile.object.oid,
       size: selectedFile.object.size,
+      ...(session.group_id ? { group_id: session.group_id } : {}),
     };
     const token = await signToken(payload, env.DAVIS_TOKEN_SECRET!, "download");
     const downloadUrl = new URL("/api/v1/download", origin);
@@ -578,6 +817,12 @@ async function downloadObject(request: Request, env: DavisWorkerEnv): Promise<Re
   const payload = await verifyToken<DownloadToken>(token, env.DAVIS_TOKEN_SECRET!, "download");
   if (!isValidDownloadToken(payload, env)) {
     return errorResponse(401, "invalid_grant", "Download grant is invalid or expired");
+  }
+  if (payload.group_id && payload.dataset_id) {
+    const control = await readAccessControl(env);
+    if (!control || !datasetAllowsGroup(control, payload.dataset_id, payload.group_id)) {
+      return errorResponse(403, "dataset_access_forbidden", "Dataset access is no longer available to this access group");
+    }
   }
   recordDownloadAttempt(env, payload, request.headers.has("Range"));
 
@@ -658,6 +903,22 @@ async function authenticateOperator(
   return isValidOperatorSessionToken(payload, env) ? payload : null;
 }
 
+async function authenticateAdmin(
+  request: Request,
+  env: DavisWorkerEnv,
+): Promise<AdminSessionToken | null> {
+  if (validateAdminConfiguration(env)) return null;
+  const authorization = request.headers.get("Authorization");
+  const token = authorization?.match(/^Bearer\s+(.+)$/iu)?.[1];
+  if (!token) return null;
+  const payload = await verifyToken<AdminSessionToken>(
+    token,
+    env.DAVIS_TOKEN_SECRET!,
+    "admin-session",
+  );
+  return isValidAdminSessionToken(payload, env) ? payload : null;
+}
+
 async function requireOperator(
   request: Request,
   env: DavisWorkerEnv,
@@ -670,6 +931,20 @@ async function requireOperator(
     401,
     "operator_authentication_required",
     "Operator authentication is required",
+  );
+}
+
+async function requireAdmin(
+  request: Request,
+  env: DavisWorkerEnv,
+): Promise<AdminSessionToken | Response> {
+  const configurationError = validateAdminConfiguration(env);
+  if (configurationError) return configurationError;
+  const session = await authenticateAdmin(request, env);
+  return session ?? errorResponse(
+    401,
+    "admin_authentication_required",
+    "Site Admin authentication is required",
   );
 }
 
@@ -690,6 +965,7 @@ function isCatalogFile(value: unknown): value is CatalogFile {
   if (!value || typeof value !== "object") return false;
   const file = value as Partial<CatalogFile>;
   return typeof file.id === "string"
+    && typeof file.dataset_id === "string"
     && typeof file.path === "string"
     && typeof file.size === "number"
     && !!file.object
@@ -707,7 +983,8 @@ function isValidSessionToken(payload: SessionToken | null, env: DavisWorkerEnv):
     && Number.isInteger(payload.issued_at)
     && Number.isInteger(payload.expires_at)
     && payload.expires_at > nowSeconds()
-    && typeof payload.nonce === "string";
+    && typeof payload.nonce === "string"
+    && (payload.group_id === undefined || GROUP_ID_PATTERN.test(payload.group_id));
 }
 
 function isValidOperatorSessionToken(
@@ -718,6 +995,21 @@ function isValidOperatorSessionToken(
     && payload.kind === "operator-session"
     && payload.version === 1
     && payload.revision === env.DAVIS_OPERATOR_ACCESS_REVISION
+    && Number.isInteger(payload.issued_at)
+    && Number.isInteger(payload.expires_at)
+    && payload.expires_at > nowSeconds()
+    && typeof payload.nonce === "string"
+    && (payload.group_id === undefined || GROUP_ID_PATTERN.test(payload.group_id));
+}
+
+function isValidAdminSessionToken(
+  payload: AdminSessionToken | null,
+  env: DavisWorkerEnv,
+): payload is AdminSessionToken {
+  return !!payload
+    && payload.kind === "admin-session"
+    && payload.version === 1
+    && payload.revision === env.DAVIS_ADMIN_ACCESS_REVISION
     && Number.isInteger(payload.issued_at)
     && Number.isInteger(payload.expires_at)
     && payload.expires_at > nowSeconds()
@@ -735,11 +1027,13 @@ function isValidDownloadToken(payload: DownloadToken | null, env: DavisWorkerEnv
     && typeof payload.path === "string"
     && /^blake3:[0-9a-f]{64}$/u.test(payload.oid)
     && Number.isSafeInteger(payload.size)
-    && payload.size >= 0;
+    && payload.size >= 0
+    && (payload.group_id === undefined || GROUP_ID_PATTERN.test(payload.group_id))
+    && (payload.dataset_id === undefined || typeof payload.dataset_id === "string");
 }
 
 function validateAuthConfiguration(env: DavisWorkerEnv): Response | null {
-  if (!env.DAVIS_INVITE_CODE || !env.DAVIS_TOKEN_SECRET || !env.DAVIS_ACCESS_REVISION) {
+  if (!env.DAVIS_TOKEN_SECRET || !env.DAVIS_ACCESS_REVISION) {
     return errorResponse(503, "authentication_unavailable", "Authentication is not configured");
   }
   if (env.DAVIS_TOKEN_SECRET.length < 32) {
@@ -749,13 +1043,110 @@ function validateAuthConfiguration(env: DavisWorkerEnv): Response | null {
 }
 
 function validateOperatorConfiguration(env: DavisWorkerEnv): Response | null {
-  if (!env.DAVIS_OPERATOR_CODE || !env.DAVIS_TOKEN_SECRET || !env.DAVIS_OPERATOR_ACCESS_REVISION) {
+  if (!env.DAVIS_TOKEN_SECRET || !env.DAVIS_OPERATOR_ACCESS_REVISION) {
     return errorResponse(503, "operator_authentication_unavailable", "Operator authentication is not configured");
   }
   if (env.DAVIS_TOKEN_SECRET.length < 32) {
     return errorResponse(503, "operator_authentication_unavailable", "Authentication secret is too short");
   }
   return null;
+}
+
+function validateAdminConfiguration(env: DavisWorkerEnv): Response | null {
+  if (!env.DAVIS_ADMIN_CODE || !env.DAVIS_ADMIN_ACCESS_REVISION || !env.DAVIS_TOKEN_SECRET || !env.DAVIS_DATA) {
+    return errorResponse(503, "admin_authentication_unavailable", "Site Admin authentication is not configured");
+  }
+  if (env.DAVIS_TOKEN_SECRET.length < 32) {
+    return errorResponse(503, "admin_authentication_unavailable", "Authentication secret is too short");
+  }
+  return null;
+}
+
+function emptyAccessControl(): AccessControl {
+  return { version: 1, groups: {}, dataset_grants: {} };
+}
+
+async function readAccessControl(env: DavisWorkerEnv): Promise<AccessControl | null> {
+  if (!env.DAVIS_DATA) return null;
+  try {
+    const object = await env.DAVIS_DATA.get(ACCESS_CONTROL_KEY);
+    if (!object) return emptyAccessControl();
+    if (!("body" in object)) return null;
+    const value: unknown = await new Response(object.body).json();
+    if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+    const candidate = value as Partial<AccessControl>;
+    if (candidate.version !== 1 || !candidate.groups || !candidate.dataset_grants
+      || typeof candidate.groups !== "object" || typeof candidate.dataset_grants !== "object") {
+      return null;
+    }
+    return candidate as AccessControl;
+  } catch {
+    return null;
+  }
+}
+
+async function writeAccessControl(control: AccessControl, env: DavisWorkerEnv): Promise<boolean> {
+  if (!env.DAVIS_DATA) return false;
+  try {
+    await env.DAVIS_DATA.put(
+      ACCESS_CONTROL_KEY,
+      JSON.stringify(control),
+      { httpMetadata: { contentType: "application/json; charset=utf-8" } },
+    );
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function credentialHash(
+  code: string,
+  kind: "participant" | "operator",
+  secret: string,
+): Promise<string> {
+  const bytes = new TextEncoder().encode(`${kind}\0${secret}\0${code}`);
+  const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
+  return [...digest].map((byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+async function findGroupByCode(
+  code: string,
+  kind: "participant" | "operator",
+  env: DavisWorkerEnv,
+): Promise<string | null> {
+  if (!env.DAVIS_TOKEN_SECRET) return null;
+  const control = await readAccessControl(env);
+  if (!control) return null;
+  const candidate = await credentialHash(code, kind, env.DAVIS_TOKEN_SECRET);
+  for (const [groupId, group] of Object.entries(control.groups)) {
+    const expected = kind === "participant" ? group.participant_code_hash : group.operator_code_hash;
+    if (await codesMatch(candidate, expected)) return groupId;
+  }
+  return null;
+}
+
+function datasetAllowsGroup(control: AccessControl, datasetId: string, groupId: string): boolean {
+  return control.dataset_grants[datasetId]?.includes(groupId) ?? false;
+}
+
+async function readPublishedDatasetIds(env: DavisWorkerEnv): Promise<Set<string>> {
+  if (!env.DAVIS_DATA) return new Set();
+  try {
+    const pointerObject = await env.DAVIS_DATA.get("catalog/current.json");
+    if (!pointerObject || !("body" in pointerObject)) return new Set();
+    const pointer = await new Response(pointerObject.body).json() as { revision?: unknown };
+    if (typeof pointer.revision !== "string") return new Set();
+    const datasetsObject = await env.DAVIS_DATA.get(`catalog/revisions/${pointer.revision}/datasets.json`);
+    if (!datasetsObject || !("body" in datasetsObject)) return new Set();
+    const datasets: unknown = await new Response(datasetsObject.body).json();
+    if (!Array.isArray(datasets)) return new Set();
+    return new Set(datasets.flatMap((dataset) => dataset && typeof dataset === "object"
+      && typeof (dataset as { id?: unknown }).id === "string"
+      ? [(dataset as { id: string }).id]
+      : []));
+  } catch {
+    return new Set();
+  }
 }
 
 function parseOperatorObjects(value: unknown): OperatorObject[] | Response {

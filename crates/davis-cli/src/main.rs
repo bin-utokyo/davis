@@ -69,6 +69,11 @@ enum Command {
         #[command(subcommand)]
         command: OperatorCommand,
     },
+    /// Authenticate and manage Davis access groups as the hosting administrator.
+    Admin {
+        #[command(subcommand)]
+        command: AdminCommand,
+    },
     /// Validate and run local analysis components.
     Model {
         #[command(subcommand)]
@@ -274,6 +279,31 @@ enum OperatorCommand {
 }
 
 #[derive(Debug, Subcommand)]
+enum AdminCommand {
+    /// Exchange the Site Admin code for a short-lived administration session.
+    Login {
+        /// Davis Web service URL.
+        service_url: String,
+        /// Read the Site Admin code from standard input instead of prompting.
+        #[arg(long)]
+        admin_code_stdin: bool,
+    },
+    /// Show whether the stored Site Admin session is still valid.
+    Status,
+    /// Remove the locally stored Site Admin session.
+    Logout,
+    /// Create an access group and issue its paired participant and operator codes.
+    GroupCreate { group_id: String },
+    /// Replace the groups that may download one dataset.
+    DatasetAccess {
+        dataset_id: String,
+        /// Access group allowed to download the dataset. Repeat to allow multiple groups.
+        #[arg(long = "group", required = true)]
+        groups: Vec<String>,
+    },
+}
+
+#[derive(Debug, Subcommand)]
 enum ModelCommand {
     /// Inspect the encoding, delimiter, and inferred columns of a local CSV file.
     Inspect {
@@ -472,6 +502,7 @@ async fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
         Command::Logout => handle_logout()?,
         Command::Update { yes } => update::check_explicitly(yes).await?,
         Command::Operator { command } => handle_operator(command).await?,
+        Command::Admin { command } => handle_admin(command).await?,
         Command::Model { command } => model::handle(&cli.repository, command)?,
         Command::Install { command } => handle_install(command).await?,
         Command::Desktop { version } => software::launch_desktop(version.as_deref())?,
@@ -597,6 +628,44 @@ async fn handle_operator(command: OperatorCommand) -> Result<(), Box<dyn std::er
             } else {
                 println!("No stored operator session");
             }
+            Ok(())
+        }
+    }
+}
+
+async fn handle_admin(command: AdminCommand) -> Result<(), Box<dyn std::error::Error>> {
+    match command {
+        AdminCommand::Login {
+            service_url,
+            admin_code_stdin,
+        } => handle_admin_login(&service_url, admin_code_stdin).await,
+        AdminCommand::Status => handle_admin_status().await,
+        AdminCommand::Logout => {
+            if session::clear_admin()? {
+                println!("Site Admin session removed");
+            } else {
+                println!("No stored Site Admin session");
+            }
+            Ok(())
+        }
+        AdminCommand::GroupCreate { group_id } => {
+            let stored = session::load_admin()?.ok_or("no stored Site Admin session")?;
+            let credentials = DavisService::new(&stored.service_url, Some(stored.token))?
+                .create_access_group(&group_id)
+                .await?;
+            println!("Access group: {}", credentials.group_id);
+            println!("Participant code: {}", credentials.participant_code);
+            println!("Operator code: {}", credentials.operator_code);
+            println!("Store these codes securely; they will not be shown again.");
+            Ok(())
+        }
+        AdminCommand::DatasetAccess { dataset_id, groups } => {
+            let stored = session::load_admin()?.ok_or("no stored Site Admin session")?;
+            DavisService::new(&stored.service_url, Some(stored.token))?
+                .update_dataset_access(&dataset_id, &groups)
+                .await?;
+            println!("Dataset access updated: {dataset_id}");
+            println!("Allowed groups: {}", groups.join(", "));
             Ok(())
         }
     }
@@ -736,6 +805,44 @@ async fn handle_operator_status() -> Result<(), Box<dyn std::error::Error>> {
         .operator_session_status()
         .await?;
     println!("Operator session: active");
+    println!("Service: {}", stored.service_url);
+    println!("Session expires: {}", status.expires_at);
+    Ok(())
+}
+
+async fn handle_admin_login(
+    service_url: &str,
+    admin_code_stdin: bool,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let admin_code = if admin_code_stdin {
+        let mut input = String::new();
+        std::io::stdin().read_to_string(&mut input)?;
+        input.trim_end_matches(['\r', '\n']).to_owned()
+    } else if std::io::stdin().is_terminal() {
+        rpassword::prompt_password("Site Admin code: ")?
+    } else {
+        return Err("standard input is not a terminal; use --admin-code-stdin".into());
+    };
+    if admin_code.is_empty() {
+        return Err("Site Admin code must not be empty".into());
+    }
+    let service = DavisService::new(service_url, None)?;
+    let login = service.exchange_admin_code(&admin_code).await?;
+    let stored =
+        session::Session::new(service.base_url().to_owned(), login.token, login.expires_at);
+    let path = session::save_admin(&stored)?;
+    println!("Site Admin login: {}", stored.service_url);
+    println!("Session expires: {}", stored.expires_at);
+    println!("Session: {}", path.display());
+    Ok(())
+}
+
+async fn handle_admin_status() -> Result<(), Box<dyn std::error::Error>> {
+    let stored = session::load_admin()?.ok_or("no stored Site Admin session")?;
+    let status = DavisService::new(&stored.service_url, Some(stored.token.clone()))?
+        .admin_session_status()
+        .await?;
+    println!("Site Admin session: active");
     println!("Service: {}", stored.service_url);
     println!("Session expires: {}", status.expires_at);
     Ok(())
@@ -1602,6 +1709,13 @@ async fn handle_operator_push(
             return Err(error.into());
         }
     };
+    if !request.dry_run {
+        let dataset_ids = manifests
+            .iter()
+            .map(|manifest| manifest.dataset.id.clone())
+            .collect::<Vec<_>>();
+        service.claim_operator_datasets(&dataset_ids).await?;
+    }
     println!("Missing objects: {}", report.missing);
     println!("Existing objects: {}", report.existing);
     println!("Upload size: {}", human_size(report.missing_bytes));

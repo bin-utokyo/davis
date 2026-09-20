@@ -54,6 +54,17 @@ pnpm exec wrangler secret put DAVIS_OPERATOR_CODE
 pnpm exec wrangler secret put DAVIS_TOKEN_SECRET
 ```
 
+複数のaccess groupを利用する場合だけ，Site Admin codeも登録します．未設定のdeploymentでは従来の参加者・運営者認証だけが動作します．
+
+```bash
+pnpm exec wrangler secret put DAVIS_ADMIN_CODE
+davis admin login https://<deployment URL>
+davis admin group-create municipality-a
+davis admin dataset-access network/matsuyama --group municipality-a
+```
+
+`group-create`は同じaccess groupへ対応する参加者codeと運営codeを一度だけ表示します．groupの運営codeで新規datasetをpushすると，そのdatasetは同じgroupへ初期割当されます．公開済みdatasetの割当は運営者から奪えず，Site Adminだけが`dataset-access`で事後変更できます．旧`DAVIS_INVITE_CODE`と`DAVIS_OPERATOR_CODE`は従来どおり利用できるため，この機能を有効化しても既存利用者の操作は変わりません．access group設定はprivate R2 Object `access/control.json`として保存され，Catalog APIには含まれません．
+
 Cloudflareへloginし，Secretを登録した後は，次のcommandでbuild済みassetとWorkerを`davis-bin` accountへdeployします．既存の`davis-bmss`を`DAVIS_DATA`としてbindingし，R2 Objectのuploadや削除は行いません．
 
 ```bash

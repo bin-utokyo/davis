@@ -8,10 +8,21 @@ export type SessionToken = {
   issued_at: number;
   expires_at: number;
   nonce: string;
+  group_id?: string;
 };
 
 export type OperatorSessionToken = {
   kind: "operator-session";
+  version: 1;
+  revision: string;
+  issued_at: number;
+  expires_at: number;
+  nonce: string;
+  group_id?: string;
+};
+
+export type AdminSessionToken = {
+  kind: "admin-session";
   version: 1;
   revision: string;
   issued_at: number;
@@ -25,25 +36,27 @@ export type DownloadToken = {
   revision: string;
   expires_at: number;
   file_id: string;
+  dataset_id?: string;
   path: string;
   oid: string;
   size: number;
+  group_id?: string;
 };
 
 export async function signToken(
-  payload: SessionToken | OperatorSessionToken | DownloadToken,
+  payload: SessionToken | OperatorSessionToken | AdminSessionToken | DownloadToken,
   secret: string,
-  purpose: "session" | "operator-session" | "download",
+  purpose: "session" | "operator-session" | "admin-session" | "download",
 ): Promise<string> {
   const body = encodeBase64Url(encoder.encode(JSON.stringify(payload)));
   const signature = await sign(`${purpose}.${body}`, secret);
   return `${body}.${encodeBase64Url(signature)}`;
 }
 
-export async function verifyToken<T extends SessionToken | OperatorSessionToken | DownloadToken>(
+export async function verifyToken<T extends SessionToken | OperatorSessionToken | AdminSessionToken | DownloadToken>(
   token: string,
   secret: string,
-  purpose: "session" | "operator-session" | "download",
+  purpose: "session" | "operator-session" | "admin-session" | "download",
 ): Promise<T | null> {
   const parts = token.split(".");
   if (parts.length !== 2 || !parts[0] || !parts[1]) return null;

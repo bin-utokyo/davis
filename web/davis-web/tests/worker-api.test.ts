@@ -15,6 +15,8 @@ const expectedRelease = JSON.parse(readFileSync(
 )) as { latest: string; minimum_supported: string };
 const sampleFile = {
   id: "sample/tiny:source.csv",
+  dataset_id: "sample/tiny",
+  file_id: "source.csv",
   path: "data/sample/tiny/source.csv",
   size: contents.length,
   object: {
@@ -66,9 +68,11 @@ function createEnv(overrides: Partial<DavisWorkerEnv> = {}) {
   const env: DavisWorkerEnv = {
     DAVIS_INVITE_CODE: "summer-school-invite-2026",
     DAVIS_OPERATOR_CODE: "davis-admin-2026-test-code",
+    DAVIS_ADMIN_CODE: "davis-site-admin-2026-test-code",
     DAVIS_TOKEN_SECRET: "test-secret-with-more-than-thirty-two-characters",
     DAVIS_ACCESS_REVISION: "2026",
     DAVIS_OPERATOR_ACCESS_REVISION: "2026",
+    DAVIS_ADMIN_ACCESS_REVISION: "2026",
     ASSETS: {
       async fetch() {
         return Response.json([sampleFile]);
@@ -78,12 +82,14 @@ function createEnv(overrides: Partial<DavisWorkerEnv> = {}) {
       async get(key, options) {
         requestedKeys.push(key);
         if (key.startsWith("catalog/")) return null;
+        const value = stored.get(key);
+        if (!value) return null;
         const rangeHeader = options?.range?.get("Range");
         const range = rangeHeader === "bytes=0-2" ? { offset: 0, length: 3 } : undefined;
-        const body = range ? contents.slice(0, 3) : contents;
+        const body = range ? value.slice(0, 3) : value;
         return {
           body: new Blob([body]).stream(),
-          size: contents.length,
+          size: value.length,
           httpEtag: '"test-etag"',
           range,
           writeHttpMetadata(headers: Headers) {
@@ -169,6 +175,16 @@ async function exchangeOperator(env: DavisWorkerEnv) {
   return { response, body };
 }
 
+async function exchangeAdmin(env: DavisWorkerEnv) {
+  const response = await handleApiRequest(apiRequest("/api/v1/admin/auth/exchange", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ admin_code: "davis-site-admin-2026-test-code" }),
+  }), env);
+  const body = await response.json() as { token?: string };
+  return { response, body };
+}
+
 test("exchanges the shared invite code for CLI and browser sessions", async () => {
   const { env } = createEnv();
   const cli = await exchange(env, "cli");
@@ -234,6 +250,96 @@ test("exchanges the separate operator code and rejects participant sessions", as
     headers: { Authorization: `Bearer ${operator.body.token}` },
   }), env);
   assert.equal(accepted.status, 200);
+});
+
+test("site admin creates a paired access group and controls dataset grants", async () => {
+  const { env } = createEnv();
+  const admin = await exchangeAdmin(env);
+  assert.equal(admin.response.status, 200);
+  assert.ok(admin.body.token);
+  const authorization = { Authorization: `Bearer ${admin.body.token}` };
+
+  const created = await handleApiRequest(apiRequest("/api/v1/admin/access-groups", {
+    method: "POST",
+    headers: { ...authorization, "Content-Type": "application/json" },
+    body: JSON.stringify({ group_id: "municipality-a" }),
+  }), env);
+  assert.equal(created.status, 201);
+  const credentials = await created.json() as {
+    participant_code: string;
+    operator_code: string;
+  };
+  assert.match(credentials.participant_code, /^dpt_/u);
+  assert.match(credentials.operator_code, /^dop_/u);
+
+  const participantLogin = await handleApiRequest(apiRequest("/api/v1/auth/exchange", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ invite_code: credentials.participant_code, client: "cli" }),
+  }), env);
+  const participant = await participantLogin.json() as { token: string };
+  assert.equal(participantLogin.status, 200);
+
+  const forbidden = await handleApiRequest(apiRequest("/api/v1/download-grants", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${participant.token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ file_ids: [sampleFile.id] }),
+  }), env);
+  assert.equal(forbidden.status, 403);
+
+  const granted = await handleApiRequest(apiRequest("/api/v1/admin/dataset-access", {
+    method: "PUT",
+    headers: { ...authorization, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      dataset_id: "sample/tiny",
+      allowed_group_ids: ["municipality-a"],
+    }),
+  }), env);
+  assert.equal(granted.status, 200);
+
+  const allowed = await handleApiRequest(apiRequest("/api/v1/download-grants", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${participant.token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ file_ids: [sampleFile.id] }),
+  }), env);
+  assert.equal(allowed.status, 200);
+
+  const operatorLogin = await handleApiRequest(apiRequest("/api/v1/operator/auth/exchange", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ operator_code: credentials.operator_code, client: "cli" }),
+  }), env);
+  assert.equal(operatorLogin.status, 200);
+  const operator = await operatorLogin.json() as { group_id: string; token: string };
+  assert.equal(operator.group_id, "municipality-a");
+  const bucket = env.DAVIS_DATA!;
+  env.DAVIS_DATA = {
+    ...bucket,
+    async get(key, options) {
+      if (key === "catalog/current.json") return r2Json({ version: 1, revision: "a".repeat(64) });
+      if (key === `catalog/revisions/${"a".repeat(64)}/datasets.json`) {
+        return r2Json([{ id: "sample/tiny" }]);
+      }
+      return bucket.get(key, options);
+    },
+  };
+  const publishedClaim = await handleApiRequest(apiRequest("/api/v1/operator/datasets/claim", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${operator.token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ dataset_ids: ["sample/tiny"] }),
+  }), env);
+  assert.equal(publishedClaim.status, 409);
+
+  const claimed = await handleApiRequest(apiRequest("/api/v1/operator/datasets/claim", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${operator.token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ dataset_ids: ["municipality-a/new-dataset"] }),
+  }), env);
+  assert.equal(claimed.status, 200);
+  assert.deepEqual(
+    (await claimed.json() as { claimed: string[] }).claimed,
+    ["municipality-a/new-dataset"],
+  );
 });
 
 test("plans, uploads, and completes an operator multipart object", async () => {
