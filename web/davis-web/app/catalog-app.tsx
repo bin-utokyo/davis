@@ -108,6 +108,24 @@ function localized(value: LocalizedText | null, language: Language) {
   return value[language]?.trim() || value.ja?.trim() || value.en?.trim() || "";
 }
 
+function facetsFromFiles(files: CatalogFile[]): Facets {
+  const localizedValues = (key: "city" | "license") => {
+    const values = new Map<string, LocalizedText>();
+    for (const file of files) {
+      const value = file[key];
+      if (value) values.set(`${value.ja}\u0000${value.en}`, value);
+    }
+    return [...values.values()].sort((a, b) => a.ja.localeCompare(b.ja) || a.en.localeCompare(b.en));
+  };
+  return {
+    cities: localizedValues("city"),
+    years: [...new Set(files.flatMap((file) => file.year === null ? [] : [file.year]))].sort((a, b) => a - b),
+    formats: [...new Set(files.map((file) => file.format))].sort(),
+    licenses: localizedValues("license"),
+    schema_statuses: [...new Set(files.map((file) => file.schema_status))].sort(),
+  };
+}
+
 export function CatalogApp() {
   const [language, setLanguage] = useState<Language>("ja");
   const [datasets, setDatasets] = useState<Dataset[]>([]);
@@ -159,11 +177,10 @@ export function CatalogApp() {
     Promise.all([
       fetch("/catalog/datasets.json", { credentials: "same-origin" }).then((response) => response.json() as Promise<Dataset[]>),
       fetch("/catalog/files.json", { credentials: "same-origin" }).then((response) => response.json() as Promise<CatalogFile[]>),
-      fetch("/catalog/facets.json", { credentials: "same-origin" }).then((response) => response.json() as Promise<Facets>),
-    ]).then(([nextDatasets, nextFiles, nextFacets]) => {
+    ]).then(([nextDatasets, nextFiles]) => {
       setDatasets(nextDatasets);
       setFiles(nextFiles);
-      setFacets(nextFacets);
+      setFacets(facetsFromFiles(nextFiles));
     }).catch(() => setLoadingError(true));
   }, [sessionState]);
 

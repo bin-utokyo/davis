@@ -298,6 +298,10 @@ async function filterCatalogResponse(
     filtered = value.filter((item) => hasAllowedDatasetId(item, "id", allowed));
   } else if (Array.isArray(value) && (name === "files.json" || name === "columns.json")) {
     filtered = value.filter((item) => hasAllowedDatasetId(item, "dataset_id", allowed));
+  } else if (name === "facets.json") {
+    // Facets cannot be safely filtered without their source files. The Web UI
+    // derives them from its already-filtered files response instead.
+    filtered = emptyCatalogFacets();
   } else if (name === "index.json" && value && typeof value === "object" && !Array.isArray(value)) {
     const index = value as Record<string, unknown>;
     const datasets = Array.isArray(index.datasets)
@@ -314,6 +318,7 @@ async function filterCatalogResponse(
       datasets,
       files,
       columns,
+      facets: catalogFacets(files),
       summary: {
         dataset_count: datasets.length,
         file_count: files.length,
@@ -327,6 +332,38 @@ async function filterCatalogResponse(
     };
   }
   return json(filtered, { status: response.status, headers });
+}
+
+function emptyCatalogFacets() {
+  return { cities: [], years: [], formats: [], licenses: [], schema_statuses: [] };
+}
+
+function catalogFacets(files: unknown[]) {
+  const localized = (key: "city" | "license") => {
+    const values = new Map<string, { ja: string; en: string }>();
+    for (const item of files) {
+      if (!item || typeof item !== "object" || Array.isArray(item)) continue;
+      const value = (item as Record<string, unknown>)[key];
+      if (!value || typeof value !== "object" || Array.isArray(value)) continue;
+      const ja = (value as Record<string, unknown>).ja;
+      const en = (value as Record<string, unknown>).en;
+      if (typeof ja === "string" && typeof en === "string") values.set(`${ja}\u0000${en}`, { ja, en });
+    }
+    return [...values.values()].sort((a, b) => a.ja.localeCompare(b.ja) || a.en.localeCompare(b.en));
+  };
+  const scalar = <T extends string | number>(key: string, valid: (value: unknown) => value is T) =>
+    [...new Set(files.flatMap((item) => {
+      if (!item || typeof item !== "object" || Array.isArray(item)) return [];
+      const value = (item as Record<string, unknown>)[key];
+      return valid(value) ? [value] : [];
+    }))].sort((a, b) => String(a).localeCompare(String(b), undefined, { numeric: true }));
+  return {
+    cities: localized("city"),
+    years: scalar("year", (value): value is number => typeof value === "number"),
+    formats: scalar("format", (value): value is string => typeof value === "string"),
+    licenses: localized("license"),
+    schema_statuses: scalar("schema_status", (value): value is string => typeof value === "string"),
+  };
 }
 
 function hasAllowedDatasetId(item: unknown, key: "id" | "dataset_id", allowed: Set<string>): boolean {
