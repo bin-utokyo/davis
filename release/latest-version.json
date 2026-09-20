@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
-  "latest": "0.5.11",
+  "latest": "0.5.12",
   "minimum_supported": "0.5.0",
   "released_at": "2026-09-20",
-  "release_url": "https://github.com/bin-utokyo/davis/releases/tag/v0.5.11",
+  "release_url": "https://github.com/bin-utokyo/davis/releases/tag/v0.5.12",
   "message": {
-    "ja": "WebとCLIのCatalogを共通のaccess group権限でfilterし，許可されたdatasetだけを一覧・検索・取得対象にします．",
-    "en": "Filters the shared Web and CLI catalog by access group so only permitted datasets can be listed, searched, and retrieved."
+    "ja": "1人運用向けに，最新mainへのpush成功後そのままCatalogを公開できるdavis push --publishを追加します．",
+    "en": "Adds davis push --publish for single-operator deployments, publishing the Catalog only after a successful push to current main."
   }
 }
