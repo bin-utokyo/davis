@@ -135,10 +135,10 @@ footer > p { color: rgba(255,255,255,.62); font-size: 12px; line-height: 1.7; ma
 .manual-links a { color: #f0a27d; font-family: var(--font-geist-mono), monospace; font-size: 11px; padding: 4px 0; }
 .manual-links a:hover { color: white; }
 
-.overlay { background: rgba(18, 29, 24, .48); inset: 0; position: fixed; z-index: 20; }
+.overlay { background: rgba(18, 29, 24, .48); display: flex; inset: 0; justify-content: flex-end; overflow: hidden; position: fixed; z-index: 20; }
 .detail-overlay { background: rgba(18, 29, 24, .66); z-index: 30; }
 .overlay-dismiss { background: transparent; border: 0; inset: 0; position: absolute; width: 100%; }
-.drawer { background: var(--surface); box-shadow: -20px 0 70px rgba(12, 25, 18, .2); height: 100%; margin-left: auto; max-width: 580px; overflow-y: auto; padding: 38px; position: relative; width: min(94vw, 580px); z-index: 1; }
+.drawer { -webkit-overflow-scrolling: touch; background: var(--surface); box-shadow: -20px 0 70px rgba(12, 25, 18, .2); flex: 0 0 min(94vw, 580px); height: 100dvh; max-height: 100%; max-width: 580px; overflow-y: scroll; overscroll-behavior-y: contain; padding: 38px; position: relative; touch-action: pan-y; width: min(94vw, 580px); z-index: 1; }
 .drawer-with-selection { padding-bottom: 130px; scroll-padding-bottom: 130px; }
 .drawer-heading { align-items: flex-start; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; padding-bottom: 25px; }
 .drawer-heading .dataset-id { margin: 0 0 8px; }
