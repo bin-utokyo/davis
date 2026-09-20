@@ -693,7 +693,11 @@ async fn handle_admin(command: AdminCommand) -> Result<(), Box<dyn std::error::E
                 }
             }
             let mut objects = objects.into_values().collect::<Vec<_>>();
-            objects.sort_by(|left, right| left.oid.to_string().cmp(&right.oid.to_string()));
+            objects.sort_by(|left, right| {
+                left.size
+                    .cmp(&right.size)
+                    .then_with(|| left.oid.to_string().cmp(&right.oid.to_string()))
+            });
             let logical_bytes = objects.iter().map(|object| object.size).sum::<u64>();
             let mut compressed_bytes = 0_u64;
             for (index, object) in objects.iter().enumerate() {
