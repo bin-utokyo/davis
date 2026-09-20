@@ -90,6 +90,17 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/Session" }
         "401": { $ref: "#/components/responses/Error" }
+  /api/v1/admin/auth/session:
+    get:
+      operationId: getAdminSession
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: Current Site Admin session
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Session" }
+        "401": { $ref: "#/components/responses/Error" }
   /api/v1/admin/access-groups:
     get:
       operationId: listAccessGroups
@@ -138,6 +149,8 @@ paths:
   /api/v1/admin/storage/compress:
     post:
       operationId: compressStoredObject
+      deprecated: true
+      description: Legacy single-object migration endpoint. Current CLI versions compress locally and use the multipart upload endpoints.
       security: [{ bearerAuth: [] }]
       requestBody:
         required: true
@@ -154,6 +167,177 @@ paths:
         "401": { $ref: "#/components/responses/Error" }
         "404": { $ref: "#/components/responses/Error" }
         "409": { $ref: "#/components/responses/Error" }
+  /api/v1/operator/uploads/plan:
+    post:
+      operationId: planOperatorUploads
+      description: Reports whether each content-addressed object already has a valid raw or gzip representation.
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [objects]
+              properties:
+                objects:
+                  type: array
+                  minItems: 1
+                  maxItems: 512
+                  items: { $ref: "#/components/schemas/ObjectRef" }
+      responses:
+        "200":
+          description: Upload plan
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [objects]
+                properties:
+                  objects:
+                    type: array
+                    items:
+                      allOf:
+                        - { $ref: "#/components/schemas/ObjectRef" }
+                        - type: object
+                          required: [status]
+                          properties:
+                            status: { type: string, enum: [existing, missing] }
+        "401": { $ref: "#/components/responses/Error" }
+        "409": { $ref: "#/components/responses/Error" }
+  /api/v1/operator/uploads/create:
+    post:
+      operationId: createOperatorUpload
+      description: Starts a multipart upload. Current clients send a locally compressed gzip representation; omitting storage_format is retained for legacy raw clients.
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - { $ref: "#/components/schemas/ObjectRef" }
+                - type: object
+                  properties:
+                    storage_format: { type: string, const: davis.gzip/v1 }
+                    replace_raw:
+                      type: boolean
+                      default: false
+                      description: Site Admin only. Delete the matching raw representation after gzip is confirmed.
+      responses:
+        "200":
+          description: Existing representation or new multipart upload coordinates
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [oid, size, already_present]
+                properties:
+                  oid: { type: string }
+                  size: { type: integer, minimum: 0 }
+                  already_present: { type: boolean }
+                  upload_id: { type: string }
+                  part_size: { type: integer, minimum: 1 }
+        "401": { $ref: "#/components/responses/Error" }
+        "403": { $ref: "#/components/responses/Error" }
+        "409": { $ref: "#/components/responses/Error" }
+  /api/v1/operator/uploads/part:
+    put:
+      operationId: uploadOperatorPart
+      description: Uploads one encoded multipart chunk. Every non-final R2 part must be at least 5 MiB.
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: oid
+          in: query
+          required: true
+          schema: { type: string, pattern: '^blake3:[0-9a-f]{64}$' }
+        - name: upload_id
+          in: query
+          required: true
+          schema: { type: string }
+        - name: storage_format
+          in: query
+          required: false
+          description: Current clients use davis.gzip/v1; omission identifies a legacy raw upload.
+          schema: { type: string, const: davis.gzip/v1 }
+        - name: part_number
+          in: query
+          required: true
+          schema: { type: integer, minimum: 1, maximum: 10000 }
+      requestBody:
+        required: true
+        content:
+          application/octet-stream:
+            schema: { type: string, format: binary }
+      responses:
+        "200":
+          description: Uploaded part receipt
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UploadedPart" }
+        "401": { $ref: "#/components/responses/Error" }
+        "413": { $ref: "#/components/responses/Error" }
+  /api/v1/operator/uploads/complete:
+    post:
+      operationId: completeOperatorUpload
+      description: Commits an upload after verifying encoded byte count and gzip representation metadata.
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - { $ref: "#/components/schemas/ObjectRef" }
+                - type: object
+                  required: [upload_id, parts]
+                  properties:
+                    stored_size:
+                      type: integer
+                      minimum: 1
+                      description: Encoded byte count. Required for davis.gzip/v1 and omitted by legacy raw clients.
+                    storage_format:
+                      type: string
+                      const: davis.gzip/v1
+                      description: Omitted by legacy raw clients.
+                    replace_raw:
+                      type: boolean
+                      default: false
+                    upload_id: { type: string }
+                    parts:
+                      type: array
+                      minItems: 1
+                      maxItems: 10000
+                      items: { $ref: "#/components/schemas/UploadedPart" }
+      responses:
+        "200": { description: Upload committed }
+        "400": { $ref: "#/components/responses/Error" }
+        "401": { $ref: "#/components/responses/Error" }
+        "403": { $ref: "#/components/responses/Error" }
+        "409": { $ref: "#/components/responses/Error" }
+  /api/v1/operator/uploads/abort:
+    post:
+      operationId: abortOperatorUpload
+      description: Cancels an incomplete multipart upload.
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [oid, upload_id]
+              properties:
+                oid: { type: string, pattern: '^blake3:[0-9a-f]{64}$' }
+                storage_format:
+                  type: string
+                  const: davis.gzip/v1
+                  description: Omitted by legacy raw clients.
+                upload_id: { type: string }
+      responses:
+        "200": { description: Upload aborted }
+        "400": { $ref: "#/components/responses/Error" }
+        "401": { $ref: "#/components/responses/Error" }
   /api/v1/operator/datasets/claim:
     post:
       operationId: claimOperatorDatasets
@@ -221,15 +405,20 @@ paths:
         - name: Range
           in: header
           required: false
+          description: Supported for legacy raw objects only. Gzip representations are returned as complete decoded files.
           schema: { type: string }
       responses:
         "200":
-          description: Complete file
+          description: Complete file. A stored gzip representation is streamed with Content-Encoding gzip and decoded by the client.
+          headers:
+            Content-Encoding:
+              description: gzip when R2 stores a davis.gzip/v1 representation; omitted for legacy raw objects.
+              schema: { type: string, const: gzip }
           content:
             application/octet-stream:
               schema: { type: string, format: binary }
         "206":
-          description: Requested byte range
+          description: Requested byte range from a legacy raw representation
           content:
             application/octet-stream:
               schema: { type: string, format: binary }
@@ -245,6 +434,22 @@ components:
       in: cookie
       name: davis_session
   schemas:
+    ObjectRef:
+      type: object
+      required: [oid, size]
+      properties:
+        oid: { type: string, pattern: '^blake3:[0-9a-f]{64}$' }
+        size:
+          type: integer
+          minimum: 0
+          description: Uncompressed object size recorded in the Davis Manifest.
+    UploadedPart:
+      type: object
+      required: [part_number, etag, size]
+      properties:
+        part_number: { type: integer, minimum: 1, maximum: 10000 }
+        etag: { type: string }
+        size: { type: integer, minimum: 1 }
     ReleaseInfo:
       type: object
       required: [schema_version, latest, minimum_supported, released_at, release_url, message]
@@ -267,6 +472,8 @@ components:
         authenticated: { const: true }
         access_revision: { type: string }
         expires_at: { type: string, format: date-time }
+        role: { type: string, enum: [operator, admin] }
+        group_id: { type: string }
         token:
           type: string
           description: CLI client requests only

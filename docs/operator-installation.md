@@ -2,7 +2,7 @@
 
 [English](operator-installation_en.md)
 
-このガイドは，Davisのmetadataを管理し，実データとcatalogをR2へ公開する運営者向けです．データを取得するだけの場合は，[参加者向け導入ガイド](participant-installation.md)を参照してください．
+このガイドは，Davisのmetadataを管理し，実データとcatalogをR2へ公開する運営者向けです．データを取得するだけの場合は，[参加者向け導入ガイド](participant-installation.md)を参照してください．access groupの作成や公開済みdatasetの権限変更は，[Site Admin向け運用ガイド](site-admin-installation.md)を参照してください．
 
 ## まず読む5節
 
@@ -306,9 +306,11 @@ davis publish
 
 ### credentialと秘密情報
 
+運営コードは1つのaccess groupに対応します．そのgroupのコードで新しい未公開datasetを最初に`push`すると，datasetは同じgroupへ初期割当されます．公開済みdatasetの割当変更，別groupとの共有，group作成はSite Adminへ依頼してください．運営者がSite Adminコードを共有する必要はありません．
+
 - 運営共通コードをrepository，commit，issue，Pull Request，terminalのcommand引数，メールの公開宛先へ記載しないでください．
 - `.davis`内のsession情報をGitへ追加しないでください．
-- 運営共通コード流出時は，共通コードと運営access revisionを差し替え，既存sessionを一括失効します．
+- access groupの運営コード流出時は，公開作業を停止してdeployment管理者へ連絡してください．現行CLIにはgroup削除・コード再発行がなく，datasetのgrant移行だけでは新規datasetの割当とcatalog公開を完全には失効できません．旧`DAVIS_OPERATOR_CODE`を使用するdeploymentでは，deployment管理者がSecretと運営access revisionを差し替えます．
 - R2秘密鍵を通常の運営端末へ配布しません．
 
 データfileの追加，移動，名称変更，削除は，Catalog上のIDや既存利用者の再現性にも影響します．通常の内容更新と同じ扱いで済ませず，Pull Requestに変更理由と影響範囲を記載してreviewしてください．導入確認だけを目的としてObjectをuploadしたり，Catalogを公開したりしないでください．

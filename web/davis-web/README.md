@@ -44,7 +44,7 @@ Workerには，CLIとWebが共用するversion 1 APIがあります．Catalog me
 | `POST /api/v1/download-grants` | File ID集合を5分有効のdownload URLへ交換 |
 | `GET /api/v1/download?grant=...` | private R2 Objectをstreaming download |
 
-Download APIは公開CatalogのFile IDだけを受理し，任意のR2 key指定，Object一覧，PUT，DELETEを提供しません．Range requestにも対応します．
+Download APIは公開CatalogのFile IDだけを受理し，任意のR2 key指定，Object一覧，PUT，DELETEを提供しません．raw ObjectはRange requestに対応します．gzip Objectは`Content-Encoding: gzip`付きのfull responseとして配信し，browserまたはCLIが端末側で透過解凍します．
 
 local開発では`.dev.vars.example`を`.dev.vars`へcopyし，実際の値へ置き換えます．`DAVIS_TOKEN_SECRET`には32文字以上のrandom値を使用してください．productionでは値をsourceや通常の環境変数へ保存せず，Cloudflare Worker Secretとして登録します．
 
@@ -65,7 +65,7 @@ davis admin dataset-access network/matsuyama --group municipality-a
 
 `group-create`は同じaccess groupへ対応する参加者codeと運営codeを一度だけ表示します．groupの運営codeで新規datasetをpushすると，そのdatasetは同じgroupへ初期割当されます．公開済みdatasetの割当は運営者から奪えず，Site Adminだけが`dataset-access`で事後変更できます．旧`DAVIS_INVITE_CODE`と`DAVIS_OPERATOR_CODE`は従来どおり利用できるため，この機能を有効化しても既存利用者の操作は変わりません．access group設定はprivate R2 Object `access/control.json`として保存され，Catalog APIには含まれません．
 
-`DAVIS_LEGACY_GROUP_ID`を設定すると，旧`DAVIS_INVITE_CODE`と`DAVIS_OPERATOR_CODE`を同じaccess groupへ移行できます．既存sessionを残さないよう，移行時には参加者・運営者のaccess revisionも更新します．R2 Objectは次のcommandで可逆gzipへ移行できます．各Objectは展開後のbyte数を検証してからraw copyを削除し，download時にはWorkerが元のfileとして展開します．
+`DAVIS_LEGACY_GROUP_ID`を設定すると，旧`DAVIS_INVITE_CODE`と`DAVIS_OPERATOR_CODE`を同じaccess groupへ移行できます．既存sessionを残さないよう，移行時には参加者・運営者のaccess revisionも更新します．R2 Objectは次のcommandで可逆gzipへ移行できます．CLIはlocal content-addressed storeのObjectをBLAKE3とsizeで検証して端末側で圧縮し，gzip representationの確定後にraw copyを削除します．download時はWorkerがgzipをそのまま配信し，browserまたはCLIが元のfileへ透過解凍します．詳しい権限運用と移行手順は[`docs/site-admin-installation.md`](../../docs/site-admin-installation.md)を参照してください．
 
 ```bash
 davis admin storage-compress --yes

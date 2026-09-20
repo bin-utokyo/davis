@@ -2,7 +2,7 @@
 
 [日本語](operator-installation.md)
 
-This guide is for organizers who manage Davis metadata and publish data and catalogs to R2. If you only retrieve data, use the [Installation Guide for Participants](participant-installation_en.md).
+This guide is for organizers who manage Davis metadata and publish data and catalogs to R2. If you only retrieve data, use the [Installation Guide for Participants](participant-installation_en.md). For access-group creation or changes to published-dataset permissions, use the [Site Admin Operations Guide](site-admin-installation_en.md).
 
 ## Read these five sections first
 
@@ -306,9 +306,11 @@ If incorrect metadata has already been merged into `main`, review and merge a co
 
 ### Credentials and secrets
 
+An organizer code belongs to one access group. When that group first pushes a new unpublished dataset, Davis assigns the dataset to the same group. Ask a Site Admin to change a published dataset's grants, share it with another group, or create a group. Routine organizers do not need the Site Admin code.
+
 - Never place the organizer code in the repository, a commit, an issue, a Pull Request, a command-line argument, or a message with public recipients.
 - Never add session information under `.davis` to Git.
-- If the organizer code leaks, rotate both the shared code and organizer access revision to invalidate all existing organizer sessions.
+- If an access-group organizer code leaks, stop publication and contact the deployment administrator. The current CLI cannot delete a group or reissue its codes, and moving dataset grants alone does not revoke the ability to claim a new dataset and publish a catalog. If the deployment still uses the legacy `DAVIS_OPERATOR_CODE`, the deployment administrator rotates both that Secret and the organizer access revision.
 - Do not distribute R2 credentials to routine organizer machines.
 
 Adding, moving, renaming, or deleting a data file affects Catalog IDs and reproducibility. Do not treat these changes as routine content edits. Explain their purpose and impact in the Pull Request and obtain review. Never upload objects or publish the Catalog only to test installation.

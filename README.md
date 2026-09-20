@@ -10,6 +10,7 @@ Davisは，交通データの取得から行動モデルの実行までを，一
 
 - [参加者向け導入ガイド](docs/participant-installation.md) ([English](docs/participant-installation_en.md))
 - [運営者向け導入ガイド](docs/operator-installation.md) ([English](docs/operator-installation_en.md))
+- [Site Admin向け運用ガイド](docs/site-admin-installation.md) ([English](docs/site-admin-installation_en.md))
 
 運営者は，運営者向け導入ガイド冒頭の「まず読む5節」だけで，インストール，repository・session・個人branchの準備，dataset更新，review，公開まで進められます．terminalとVS Codeの操作を併記しています．
 
@@ -93,7 +94,9 @@ davis publish
 davis operator logout
 ```
 
-大容量Objectは32 MiBごとのmultipart uploadとしてR2へ送信します．運営共通code自体は端末へ保存せず，失効可能な運営sessionだけを権限を限定して保存します．
+大容量Objectは運営者端末でgzip圧縮し，32 MiBごとのmultipart uploadとしてR2へ送信します．download時はbrowserまたはCLIが自動解凍するため，利用者が保存するfile名と内容は変わりません．運営共通code自体は端末へ保存せず，失効可能な運営sessionだけを権限を限定して保存します．
+
+複数の組織・年度等を分離するdeploymentでは，Site Adminがaccess groupを作成します．各groupには参加者codeと運営codeが1対1で対応し，1つのdatasetを複数groupへ許可できます．通常の運営者は自groupの新規datasetだけを初期割当でき，公開済みdatasetの権限変更はSite Adminだけが行います．設定と運用は[Site Admin向け運用ガイド](docs/site-admin-installation.md)を参照してください．
 
 現在のDavis Manifestと実データのBLAKE3整合性確認には次を使用します．
 
@@ -163,6 +166,7 @@ Davisのソフトウェア本体は，[MIT License](LICENSE)のもとで公開�
 
 - [参加者向け導入ガイド](docs/participant-installation.md) ([English](docs/participant-installation_en.md))
 - [運営者向け導入ガイド](docs/operator-installation.md) ([English](docs/operator-installation_en.md))
+- [Site Admin向け運用ガイド](docs/site-admin-installation.md) ([English](docs/site-admin-installation_en.md))
 - [Davis仕様書](docs/davis-spec.md)
 - [Platform構想](docs/davis-platform-concept.md)
 - [Base model](src/base_model/README.md)

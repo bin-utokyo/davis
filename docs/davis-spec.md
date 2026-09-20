@@ -1878,16 +1878,19 @@ CLIはRust use caseを同一process内で直接呼べます．WebはRust Coreを
 
 ## 54.1 夏の学校公式環境
 
-行動モデル夏の学校の公式環境では，データの登録・更新・公開を運営に限定し，参加者は検索・閲覧・ダウンロードだけを行えるようにします．
+行動モデル夏の学校の公式環境では，データの登録・更新・公開を運営に限定し，参加者は検索・閲覧・ダウンロードだけを行えるようにします．参加者コードと運営コードは1つのaccess groupごとに1対1で発行し，参加者にはそのgroupへ許可されたdatasetだけを提示します．
 
-| 役割 | カタログ閲覧 | ダウンロード | 登録・更新・公開 | 署名付きPUT URL |
+| 役割 | カタログ閲覧 | ダウンロード | 登録・更新・公開 | 権限管理 |
 | --- | --- | --- | --- | --- |
-| `participant` | 可 | 可 | 不可 | 発行しません |
-| `operator` | 可 | 可 | 可 | 運営経路だけで発行します |
+| `participant` | 公開metadata全体 | 自groupに許可された範囲 | 不可 | 不可 |
+| `operator` | 公開metadata全体 | operator session単独では不可 | 可 | 新規・未公開datasetの自groupへの初期割当だけ可 |
+| `site-admin` | 公開metadata全体 | admin session単独では不可 | storage移行のみ | group作成と公開済みdatasetの許可group変更が可 |
+
+1つのdatasetには複数groupを許可できます．許可関係はprivate R2 Objectの`access/control.json`に`dataset_grants`として保存し，Catalog APIへ含めません．Site Adminによる更新は許可group集合の追加ではなく置換として扱い，Download Grant発行時と実download時の両方で現在の許可関係を検証します．
 
 参加者には短寿命DownloadGrantだけを発行し，WorkerがGrantを検証してR2 Objectをstreamします．参加者用Webへupload endpointを公開せず，運営credentialを配布しません．運営は，Object upload，digest検証，ManifestとFileSchemaのGit上のreview・merge，CatalogIndex生成，本番公開の順に公開します．
 
-Cloudflare dashboardへ追加するのは，deploymentとsecret管理を担当する少数の記名管理者だけとします．日常の運営者はCloudflare Account MemberやR2秘密鍵を必要とせず，運営共通codeから発行した期限付きoperator sessionで`davis push`と`davis publish`を実行します．運営共通codeは年度変更や流出時に差し替え，認証revisionの変更によって既存sessionを失効できます．Super Administratorは引継ぎ可能な2名程度に限定し，参加者や通常のデータ利用者をCloudflare Accountへ追加しません．
+Cloudflare dashboardへ追加するのは，deploymentとsecret管理を担当する少数の記名管理者だけとします．日常の運営者はCloudflare Account MemberやR2秘密鍵を必要とせず，運営共通codeから発行した期限付きoperator sessionで`davis push`と`davis publish`を実行します．Site AdminもCloudflare管理者とは分離し，期限付きadmin sessionでaccess groupとdataset権限を管理します．Site Admin codeは流出時にSecretを交換し，group codeは新groupへの置換で対応します．役割別の認証revision変更によって既存sessionを失効できます．Super Administratorは引継ぎ可能な2名程度に限定し，参加者や通常のデータ利用者をCloudflare Accountへ追加しません．
 
 親credentialはWorker等の信頼環境だけに置き，operator sessionを検証したWorkerが対象Objectのmultipart uploadとCatalog公開を仲介します．長期credentialは日常の運営端末へ配布しません．
 
@@ -2495,7 +2498,7 @@ davis publish
 davis verify --remote
 ```
 
-`push`の中核は，接続先に依存しないObject・DatasetManifest同期です．Dataset IDを指定した場合はその1件，省略した無印`push`は全Datasetを対象にし，`--all`も互換aliasとして同じ全件操作を行います．通常は前回Manifestとlocal cacheを使って未変更fileを再利用し，新規・変更・cache欠落fileだけのBLAKE3を計算します．`--rehash`を指定した場合だけ全対象fileを読み直します．不足Objectだけを接続先へuploadし，既存Objectを上書きしません．
+`push`の中核は，接続先に依存しないObject・DatasetManifest同期です．Dataset IDを指定した場合はその1件，省略した無印`push`は全Datasetを対象にし，`--all`も互換aliasとして同じ全件操作を行います．通常は前回Manifestとlocal cacheを使って未変更fileを再利用し，新規・変更・cache欠落fileだけのBLAKE3を計算します．`--rehash`を指定した場合だけ全対象fileを読み直します．不足Objectだけを接続先へuploadし，既存Objectを上書きしません．公式運用adapterは，local ObjectをBLAKE3とsizeで検証してgzip圧縮し，圧縮済みbyte列をmultipart uploadします．R2上では元のObject IDと非圧縮sizeをcustom metadataとして保持します．
 
 実行時にObject IDが変わったfileは，Manifestの`updated_at`をその実行日へ更新します．Object IDが同じfileは既存値を維持し，値が存在しない場合も現在日で補完しません．新規fileはObject IDが新たに登録されるため実行日を記録します．`--dry-run`では日付を含むManifestを変更しません．datasetの最終更新日は，CatalogIndex生成時に構成fileの既知の日付の最大値として導出します．
 
@@ -2505,6 +2508,8 @@ davis verify --remote
 
 現行実装では，participantは`davis login`のterminal promptへ共通招待codeを入力し，CLI用session tokenを権限を限定したuser設定fileへ保存します．`davis get`と`davis pull`はP0-0のWorkerから対象Objectごとの短寿命DownloadGrantを取得します．operatorのR2 upload credentialとは別系統にし，participant sessionからPUT，DELETE，Object一覧を許可しません．この認証・DownloadGrant APIをP1のWebでも再利用します．browser起動loginとOS credential storeは将来差し替え可能なadapter候補です．
 
+participant sessionとoperator sessionには`group_id`を含めます．旧参加者・運営コードは`DAVIS_LEGACY_GROUP_ID`で同一groupへ位置付けられ，新しいgroupはSite Adminが作成します．新規・未公開datasetは最初に`push`したoperatorのgroupへ自動割当できますが，公開済みdatasetの許可group集合はSite Adminだけが変更できます．
+
 `status`はlocalのManifest・FileSchema・実データと公開中revisionとの差分を表示します．`push`はcontent-addressed Objectの存在を確認し，不足Objectだけをuploadします．既存Objectの上書き，remote Objectの自動削除，GC，競合merge，Catalog公開は行いません．`publish`はreview済みの最新`main`だけからCatalogを公開します．公開順序は次のとおりです．
 
 ```text
@@ -2512,7 +2517,7 @@ Manifest候補と差分を作成
         ↓
 不足ObjectをR2へupload
         ↓
-sizeとdigestを検証
+元Objectのsizeとdigestをlocalで検証し，gzip representationをmultipart upload
         ↓
 Git上のManifestとFileSchemaをPull Requestでreview・merge
         ↓
@@ -2522,6 +2527,8 @@ R2 Objectの網羅性を検証してCatalogIndexを公開
 ```
 
 途中で失敗した場合は新revisionをCatalogへ公開しません．R2 credentialと公開操作はoperatorだけが利用でき，participant向けCLIやWebへ渡しません．
+
+gzip representationのdownloadでは，Workerは`Content-Encoding: gzip`を付けて圧縮byte列をstreamし，browserまたはCLIが端末側で透過解凍します．元fileのbyte位置を圧縮byte位置へ安全に対応付けられないため，gzip ObjectはRange requestを受け付けずfull responseを返します．旧raw ObjectはRange downloadを継続します．これにより保存済みfileの内容，Object ID，Manifest，利用者のdownload操作を変更せず，Workerで大容量fileを展開するCPU・memory負荷を避けます．
 
 `init`，`add`の一般化，`checkout`，remote削除，GC等の高度な更新系は，この段階の必須条件にせずP3で追加します．
 
@@ -2535,7 +2542,7 @@ P0のDataset・File・Objectの意味をそのまま利用し，検索・認証�
 2. Pages上の検索，filter，Dataset・File詳細，Raw YAML表示
 3. File単位とDataset単位のcheckbox，選択drawer，合計size表示
 4. 選択したFile ID集合を受け取るDownloadSelection API
-5. 年度単位の共通招待code，session cookie，operator・participant権限
+5. access group単位の参加者・運営code，session cookie，site-admin・operator・participant権限
 6. 短寿命DownloadGrantとdownload queue
 7. 署名済みstateless session，Worker／Pages Functions，R2の接続
 
@@ -2551,7 +2558,7 @@ P0のDataset・File・Objectの意味をそのまま利用し，検索・認証�
 4. 100〜200人規模を想定した認証・download負荷testを通します．
 5. CLIとWebでDataset ID，File ID，size，digest，download対象が一致します．
 
-Catalog metadataと検索indexは公開情報としてPagesから配信できます．実データのdownloadだけを共通招待codeとsession cookieで保護します．招待codeはclient側へ埋め込まずServer側で検証し，年度更新または流出時に差し替えられるようにします．code差替え時には旧codeで発行したsessionも失効できるよう，sessionを認証revisionへ紐付けます．
+Catalog metadataと検索indexは公開情報としてPagesから配信できます．実データのdownloadはaccess groupの参加者codeとsession cookieで保護します．codeはclient側へ埋め込まずServer側で検証し，年度更新または流出時に差し替えられるようにします．code差替え時には旧codeで発行したsessionも失効できるよう，sessionを役割別の認証revisionへ紐付けます．
 
 sessionの初期有効期間は180日を上限とし，年度切替またはcode差替え時には残存期間にかかわらず失効できるようにします．
 

@@ -10,6 +10,7 @@ Normal use does not require Rust, Cargo, or Python. The installer selects a preb
 
 - [Installation Guide for Participants](docs/participant-installation_en.md) ([日本語](docs/participant-installation.md))
 - [Installation Guide for Organizers](docs/operator-installation_en.md) ([日本語](docs/operator-installation.md))
+- [Site Admin Operations Guide](docs/site-admin-installation_en.md) ([日本語](docs/site-admin-installation.md))
 
 For organizers, the guide's first five sections cover installation, repository, session and personal-branch setup, dataset updates, review, and publication. Both terminal and VS Code procedures are included.
 
@@ -83,7 +84,9 @@ davis publish
 davis operator logout
 ```
 
-Large objects are sent to R2 through 32 MiB multipart uploads. Davis stores the revocable session, not the shared organizer code.
+Large objects are compressed with gzip on the organizer device and sent to R2 through 32 MiB multipart uploads. The browser or CLI decodes downloads automatically, so saved filenames and contents do not change. Davis stores the revocable session, not the shared organizer code.
+
+For deployments that separate organizations, years, or projects, a Site Admin creates access groups. Each group has one paired participant code and organizer code, and a dataset can permit multiple groups. Routine organizers can initially claim only their group's new datasets; only a Site Admin can change grants for published datasets. See the [Site Admin Operations Guide](docs/site-admin-installation_en.md).
 
 To verify local real data against the BLAKE3 IDs in the current Davis Manifests:
 
@@ -151,6 +154,7 @@ The Davis software is released under the [MIT License](LICENSE). This software l
 
 - [Installation Guide for Participants](docs/participant-installation_en.md) ([日本語](docs/participant-installation.md))
 - [Installation Guide for Organizers](docs/operator-installation_en.md) ([日本語](docs/operator-installation.md))
+- [Site Admin Operations Guide](docs/site-admin-installation_en.md) ([日本語](docs/site-admin-installation.md))
 - [Davis specification](docs/davis-spec.md)
 - [Platform concept](docs/davis-platform-concept.md)
 - [Base model](src/base_model/README.md)

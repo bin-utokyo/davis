@@ -69,6 +69,8 @@ davis login https://davis-web.davis-bin.workers.dev
 
 When `Invite code:` appears, enter the shared participant code. The input is hidden. You do not need to enter the code again while the session remains valid. Browser and CLI sessions are separate, so the CLI requires a one-time login even if you already signed in through the browser.
 
+A participant code belongs to one access group, and you can retrieve only the datasets granted to that group. Catalog metadata is shared, so a search result may describe a dataset that your group cannot download. If retrieval is denied, confirm the URL and participant-code combination, then contact the organizers.
+
 ## Finding and retrieving data
 
 ```text
@@ -101,4 +103,5 @@ This command retrieves update metadata directly from GitHub Releases, compares t
 - If `davis` is not found, open a new terminal.
 - If the legacy CLI still runs, use `which -a davis` on macOS or Linux, or `Get-Command davis -All` on Windows, to inspect the executable paths.
 - If the invite code is rejected, confirm that you are using the participant code and the URL supplied by the organizers.
+- If a required dataset cannot be downloaded, ask the organizers whether your participant code's access group has permission.
 - Do not enter the organizer code at the participant login prompt. The two codes are managed separately.
