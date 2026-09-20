@@ -74,7 +74,10 @@ type R2Bucket = {
     customMetadata?: Record<string, string>;
   }): Promise<R2ObjectMetadata>;
   delete(key: string | string[]): Promise<void>;
-  createMultipartUpload(key: string): Promise<R2MultipartUpload>;
+  createMultipartUpload(key: string, options?: {
+    httpMetadata?: { contentType?: string };
+    customMetadata?: Record<string, string>;
+  }): Promise<R2MultipartUpload>;
   resumeMultipartUpload(key: string, uploadId: string): R2MultipartUpload;
 };
 
@@ -508,7 +511,8 @@ async function compressStoredObject(
 
   let stored: R2ObjectMetadata;
   try {
-    stored = await bucket.put(
+    stored = await storeCompressedStream(
+      bucket,
       compressedKey,
       raw.body.pipeThrough(new CompressionStream("gzip")),
       {
@@ -542,6 +546,56 @@ async function compressStoredObject(
     return errorResponse(502, "raw_object_delete_failed", "Compressed object is valid but the raw object could not be removed");
   }
   return compressedDescriptor(stored, object);
+}
+
+async function storeCompressedStream(
+  bucket: R2Bucket,
+  key: string,
+  stream: ReadableStream<Uint8Array>,
+  options: {
+    httpMetadata: { contentType: string };
+    customMetadata: Record<string, string>;
+  },
+): Promise<R2ObjectMetadata> {
+  const upload = await bucket.createMultipartUpload(key, options);
+  const reader = stream.getReader();
+  const uploadedParts: R2UploadedPart[] = [];
+  let pending: Uint8Array[] = [];
+  let pendingSize = 0;
+  let partNumber = 1;
+  const uploadPending = async () => {
+    if (pendingSize === 0) return;
+    const bytes = new Uint8Array(pendingSize);
+    let offset = 0;
+    for (const chunk of pending) {
+      bytes.set(chunk, offset);
+      offset += chunk.byteLength;
+    }
+    uploadedParts.push(await upload.uploadPart(partNumber, bytes.buffer));
+    partNumber += 1;
+    pending = [];
+    pendingSize = 0;
+  };
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      let offset = 0;
+      while (offset < value.byteLength) {
+        const available = MAX_MULTIPART_PART_BYTES - pendingSize;
+        const length = Math.min(available, value.byteLength - offset);
+        pending.push(value.slice(offset, offset + length));
+        pendingSize += length;
+        offset += length;
+        if (pendingSize === MAX_MULTIPART_PART_BYTES) await uploadPending();
+      }
+    }
+    await uploadPending();
+    return await upload.complete(uploadedParts);
+  } catch (error) {
+    await upload.abort().catch(() => undefined);
+    throw error;
+  }
 }
 
 async function countStreamBytes(stream: ReadableStream): Promise<number> {

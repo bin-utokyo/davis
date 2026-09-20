@@ -32,7 +32,11 @@ function createEnv(overrides: Partial<DavisWorkerEnv> = {}) {
     contents,
   ]]);
   const storedCustomMetadata = new Map<string, Record<string, string>>();
-  const multipart = new Map<string, { key: string; parts: Map<number, Uint8Array> }>();
+  const multipart = new Map<string, {
+    key: string;
+    parts: Map<number, Uint8Array>;
+    customMetadata?: Record<string, string>;
+  }>();
   const metadata = (value: Uint8Array, key?: string) => ({
     size: value.length,
     httpEtag: '"test-etag"',
@@ -60,6 +64,7 @@ function createEnv(overrides: Partial<DavisWorkerEnv> = {}) {
         offset += bytes.length;
       }
       stored.set(key, value);
+      if (upload.customMetadata) storedCustomMetadata.set(key, upload.customMetadata);
       multipart.delete(uploadId);
       return metadata(value, key);
     },
@@ -121,9 +126,13 @@ function createEnv(overrides: Partial<DavisWorkerEnv> = {}) {
           storedCustomMetadata.delete(item);
         }
       },
-      async createMultipartUpload(key) {
+      async createMultipartUpload(key, options) {
         const uploadId = `upload-${multipart.size + 1}-abcdefghijklmnop`;
-        multipart.set(uploadId, { key, parts: new Map() });
+        multipart.set(uploadId, {
+          key,
+          parts: new Map(),
+          customMetadata: options?.customMetadata,
+        });
         return resumeMultipartUpload(key, uploadId);
       },
       resumeMultipartUpload,
