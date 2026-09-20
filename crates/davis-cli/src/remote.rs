@@ -70,6 +70,7 @@ pub struct DavisService {
 pub struct LoginSession {
     pub token: String,
     pub expires_at: String,
+    pub group_id: Option<String>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -109,11 +110,15 @@ struct AdminExchangeRequest<'a> {
 struct ExchangeResponse {
     token: String,
     expires_at: String,
+    #[serde(default)]
+    group_id: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
 struct OperatorStatusResponse {
     expires_at: String,
+    #[serde(default)]
+    group_id: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -316,6 +321,7 @@ impl DavisService {
         Ok(LoginSession {
             token: response.token,
             expires_at: response.expires_at,
+            group_id: response.group_id,
         })
     }
 
@@ -336,6 +342,7 @@ impl DavisService {
         Ok(LoginSession {
             token: response.token,
             expires_at: response.expires_at,
+            group_id: response.group_id,
         })
     }
 
@@ -350,6 +357,23 @@ impl DavisService {
         Ok(LoginSession {
             token: response.token,
             expires_at: response.expires_at,
+            group_id: response.group_id,
+        })
+    }
+
+    pub async fn session_status(&self) -> Result<LoginSession, RemoteError> {
+        let token = self.participant_token()?;
+        let response = self
+            .client
+            .get(self.endpoint("api/v1/auth/session"))
+            .bearer_auth(token)
+            .send()
+            .await?;
+        let response: OperatorStatusResponse = decode(response).await?;
+        Ok(LoginSession {
+            token: token.to_owned(),
+            expires_at: response.expires_at,
+            group_id: response.group_id,
         })
     }
 
@@ -365,6 +389,7 @@ impl DavisService {
         Ok(LoginSession {
             token: token.to_owned(),
             expires_at: response.expires_at,
+            group_id: response.group_id,
         })
     }
 
@@ -380,6 +405,7 @@ impl DavisService {
         Ok(LoginSession {
             token: token.to_owned(),
             expires_at: response.expires_at,
+            group_id: response.group_id,
         })
     }
 
@@ -753,6 +779,13 @@ impl DavisService {
             remaining -= read;
         }
         Ok(parts)
+    }
+
+    fn participant_token(&self) -> Result<&str, RemoteError> {
+        self.token.as_deref().ok_or_else(|| RemoteError::Api {
+            status: StatusCode::UNAUTHORIZED,
+            message: "participant login is required; run `davis login <URL>`".into(),
+        })
     }
 
     fn operator_token(&self) -> Result<&str, RemoteError> {

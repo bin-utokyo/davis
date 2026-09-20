@@ -89,7 +89,7 @@ davis operator login <Davis Web URL>
 davis operator status
 ```
 
-Davis does not store the shared code itself. It stores only a revocable organizer session, so authentication normally does not need to be repeated while that session remains valid. `push` and `publish` use the organizer session, while `get` and `pull` require a separate download-only participant session. An organizer who retrieves real data should also run `davis login <Davis Web URL>` once.
+After a successful login, Davis displays the current access group. `davis operator status` shows the same group again. Davis does not store the shared code itself. It stores only a revocable organizer session, so authentication normally does not need to be repeated while that session remains valid. `push` and `publish` use the organizer session, while `get` and `pull` require a separate download-only participant session. An organizer who retrieves real data should also run `davis login <Davis Web URL>` once.
 
 In VS Code, open a terminal from the Terminal menu and enter the same commands. The session is stored in the PC's user configuration directory rather than in VS Code, so it is shared between a regular terminal and the VS Code terminal.
 

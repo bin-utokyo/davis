@@ -62,6 +62,7 @@ davis --help
 
 ```bash
 davis login https://<配布されたURL>
+davis session status
 davis list
 davis info network/matsuyama
 davis get network/matsuyama

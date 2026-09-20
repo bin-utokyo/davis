@@ -89,7 +89,7 @@ davis operator login <Davis Web URL>
 davis operator status
 ```
 
-運営共通コード自体は保存されず，失効可能な運営sessionだけが端末へ保存されます．通常は有効期間中に再認証する必要はありません．`push`と`publish`には運営sessionを使いますが，`get`と`pull`にはdownload専用の参加者sessionが必要です．運営者が実データを取得する場合は，別途`davis login <Davis Web URL>`を一度実行してください．
+loginに成功すると，現在のaccess groupが表示されます．`davis operator status`でも同じgroupを確認できます．運営共通コード自体は保存されず，失効可能な運営sessionだけが端末へ保存されます．通常は有効期間中に再認証する必要はありません．`push`と`publish`には運営sessionを使いますが，`get`と`pull`にはdownload専用の参加者sessionが必要です．運営者が実データを取得する場合は，別途`davis login <Davis Web URL>`を一度実行してください．
 
 VS Codeを使用する場合は，メニューのTerminalから新しいterminalを開き，同じcommandを入力します．sessionはVS CodeではなくPCのuser設定directoryへ保存されるため，通常のterminalとVS Codeのterminalで共通して利用できます．
 

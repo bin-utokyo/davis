@@ -41,6 +41,7 @@ nav a.active { border-bottom: 2px solid var(--orange); color: var(--ink); }
 .language-switch button { background: transparent; border: 0; color: var(--muted); cursor: pointer; font-size: 11px; padding: 6px 8px; }
 .language-switch button[aria-pressed="true"] { background: var(--green); color: white; }
 .auth-button { background: transparent; border: 1px solid var(--line); color: var(--green); cursor: pointer; font-size: 12px; padding: 9px 13px; }
+.session-group { color: var(--green); font-family: var(--font-geist-mono), monospace; font-size: 10px; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .selection-button { background: transparent; border: 0; cursor: pointer; }
 .selection-button span { align-items: center; background: var(--green); border-radius: 50%; color: white; display: inline-flex; font-size: 12px; height: 25px; justify-content: center; margin-left: 6px; width: 25px; }
 
@@ -138,6 +139,7 @@ footer > p { color: rgba(255,255,255,.62); font-size: 12px; line-height: 1.7; ma
 .detail-overlay { background: rgba(18, 29, 24, .66); z-index: 30; }
 .overlay-dismiss { background: transparent; border: 0; inset: 0; position: absolute; width: 100%; }
 .drawer { background: var(--surface); box-shadow: -20px 0 70px rgba(12, 25, 18, .2); height: 100%; margin-left: auto; max-width: 580px; overflow-y: auto; padding: 38px; position: relative; width: min(94vw, 580px); z-index: 1; }
+.drawer-with-selection { padding-bottom: 130px; scroll-padding-bottom: 130px; }
 .drawer-heading { align-items: flex-start; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; padding-bottom: 25px; }
 .drawer-heading .dataset-id { margin: 0 0 8px; }
 .drawer-heading h2 { font-size: 30px; }

@@ -127,6 +127,7 @@ export function CatalogApp() {
   const [copied, setCopied] = useState(false);
   const [sessionState, setSessionState] = useState<SessionState>("checking");
   const [sessionExpiresAt, setSessionExpiresAt] = useState("");
+  const [sessionGroupId, setSessionGroupId] = useState("");
   const [downloadDialogOpen, setDownloadDialogOpen] = useState(false);
   const [inviteCode, setInviteCode] = useState("");
   const [licenseConfirmed, setLicenseConfirmed] = useState(false);
@@ -170,8 +171,9 @@ export function CatalogApp() {
         setSessionState("anonymous");
         return;
       }
-      const body = await response.json() as { expires_at: string };
+      const body = await response.json() as { expires_at: string; group_id?: string };
       setSessionExpiresAt(body.expires_at);
+      setSessionGroupId(body.group_id ?? "");
       setSessionState("authenticated");
     }).catch(() => setSessionState("anonymous"));
   }, []);
@@ -283,9 +285,10 @@ export function CatalogApp() {
         body: JSON.stringify({ invite_code: inviteCode, client: "web" }),
       });
       if (!response.ok) throw new Error("login");
-      const body = await response.json() as { expires_at: string };
+      const body = await response.json() as { expires_at: string; group_id?: string };
       setInviteCode("");
       setSessionExpiresAt(body.expires_at);
+      setSessionGroupId(body.group_id ?? "");
       setSessionState("authenticated");
     } catch {
       setAccessError("login");
@@ -298,6 +301,7 @@ export function CatalogApp() {
     await fetch("/api/v1/auth/logout", { method: "POST", credentials: "same-origin" }).catch(() => null);
     setSessionState("anonymous");
     setSessionExpiresAt("");
+    setSessionGroupId("");
   }
 
   async function downloadSelected() {
@@ -374,6 +378,7 @@ export function CatalogApp() {
         <nav aria-label={tr("メインナビゲーション", "Main navigation")}><a className="active" href="#catalog">{tr("データを探す", "Find data")}</a><a href="#guide">{tr("使い方", "How to use")}</a><a href="#about">{tr("Davisについて", "About Davis")}</a></nav>
         <div className="header-actions">
           <div className="language-switch" role="group" aria-label={tr("表示言語", "Display language")}><button type="button" aria-pressed={language === "ja"} onClick={() => setLanguage("ja")}>日本語</button><button type="button" aria-pressed={language === "en"} onClick={() => setLanguage("en")}>English</button></div>
+          {sessionState === "authenticated" && sessionGroupId && <span className="session-group" title={sessionGroupId}>{tr("グループ", "Group")}: {sessionGroupId}</span>}
           {sessionState === "authenticated" ? <button className="auth-button" type="button" onClick={logout}>{tr("ログアウト", "Log out")}</button> : <button className="auth-button" type="button" onClick={openDownloadDialog}>{sessionState === "checking" ? tr("確認中", "Checking") : tr("ログイン", "Log in")}</button>}
           <button className="selection-button" type="button" onClick={() => selected.size && document.querySelector("#selection")?.scrollIntoView()}>
             {tr("選択中", "Selected")} <span>{selected.size}</span>
@@ -470,13 +475,13 @@ export function CatalogApp() {
         </nav>
       </footer>
 
-      {activeDataset && <div className="overlay"><button className="overlay-dismiss" type="button" aria-label={tr("ファイル一覧を閉じる", "Close file list")} onClick={() => setActiveDataset(null)}/><aside className="drawer" role="dialog" aria-modal="true" aria-label={tr(`${activeDataset}のファイル`, `${activeDataset} files`)}>
+      {activeDataset && <div className="overlay"><button className="overlay-dismiss" type="button" aria-label={tr("ファイル一覧を閉じる", "Close file list")} onClick={() => setActiveDataset(null)}/><aside className={`drawer${selected.size > 0 ? " drawer-with-selection" : ""}`} role="dialog" aria-modal="true" aria-label={tr(`${activeDataset}のファイル`, `${activeDataset} files`)}>
         <div className="drawer-heading"><div><p className="dataset-id">{activeDataset}</p><h2>{datasetLabel(activeDataset)}</h2></div><button type="button" aria-label={tr("閉じる", "Close")} onClick={() => setActiveDataset(null)}>×</button></div>
         <p className="drawer-summary">{activeDatasetFiles.length} files ・ {humanSize(activeDatasetFiles.reduce((sum, file) => sum + file.size, 0))}</p>
         <div className="file-list">{activeDatasetFiles.map((file) => <div className="file-row" key={file.id}><input aria-label={tr(`${file.file_id}を選択`, `Select ${file.file_id}`)} type="checkbox" checked={selected.has(file.id)} onChange={() => toggleFile(file.id)}/><button type="button" onClick={() => setActiveFile(file)}><strong>{localized(file.name, language) || file.file_id}</strong><span>{file.file_id} ・ {humanSize(file.size)} ・ {file.schema_status === "ready" ? tr("schemaあり", "schema available") : tr("schemaなし", "schema unavailable")} ・ {tr("最終更新", "updated")} {formattedDate(file.updated_at, language)}</span></button></div>)}</div>
       </aside></div>}
 
-      {activeFile && <div className="overlay detail-overlay"><button className="overlay-dismiss" type="button" aria-label={tr("ファイル詳細を閉じる", "Close file details")} onClick={() => setActiveFile(null)}/><aside className="drawer file-detail" role="dialog" aria-modal="true" aria-label={tr(`${activeFile.file_id}の詳細`, `Details for ${activeFile.file_id}`)}>
+      {activeFile && <div className="overlay detail-overlay"><button className="overlay-dismiss" type="button" aria-label={tr("ファイル詳細を閉じる", "Close file details")} onClick={() => setActiveFile(null)}/><aside className={`drawer file-detail${selected.size > 0 ? " drawer-with-selection" : ""}`} role="dialog" aria-modal="true" aria-label={tr(`${activeFile.file_id}の詳細`, `Details for ${activeFile.file_id}`)}>
         <div className="drawer-heading"><div><p className="dataset-id">{activeFile.dataset_id}</p><h2>{localized(activeFile.name, language) || activeFile.file_id}</h2></div><button type="button" aria-label={tr("閉じる", "Close")} onClick={() => setActiveFile(null)}>×</button></div>
         {localized(activeFile.description, language) && <p className="file-description">{localized(activeFile.description, language)}</p>}
         <dl className="file-meta"><div><dt>{tr("ファイル", "File")}</dt><dd>{activeFile.file_id}</dd></div><div><dt>{tr("最終更新", "Last updated")}</dt><dd>{formattedDate(activeFile.updated_at, language)}</dd></div><div><dt>{tr("地域", "Location")}</dt><dd>{localized(activeFile.city, language) || tr("記載なし", "Not provided")}</dd></div><div><dt>{tr("年", "Year")}</dt><dd>{activeFile.year ?? tr("記載なし", "Not provided")}</dd></div><div><dt>{tr("形式・容量", "Format and size")}</dt><dd>{activeFile.format.toUpperCase()} ・ {humanSize(activeFile.size)}</dd></div></dl>
@@ -502,7 +507,7 @@ export function CatalogApp() {
         {selectedLicenses.length > 0 && <div className="license-list"><strong>{tr("利用条件", "Terms of use")}</strong>{selectedLicenses.map((value) => <p key={value}>{value}</p>)}</div>}
         </>}
         {sessionState !== "authenticated" && <form className="login-form" onSubmit={login}><label htmlFor="invite-code">{tr("参加者用招待コード", "Participant invitation code")}</label><div><input id="invite-code" type="password" autoComplete="off" required maxLength={256} value={inviteCode} onChange={(event) => setInviteCode(event.target.value)} placeholder={tr("運営から案内されたコード", "Code provided by the organizers")}/><button type="submit" disabled={authPending}>{authPending ? tr("確認中", "Checking") : tr("ログイン", "Log in")}</button></div><p>{tr("一度ログインすると，このブラウザではセッション期限まで再入力不要です．", "After logging in once, you will not need to enter the code again in this browser until the session expires.")}</p></form>}
-        {sessionState === "authenticated" && <p className="session-status">{tr("ログイン済み", "Logged in")}{sessionExpiresAt && <> ・ {tr("セッション期限", "session expires")} {new Intl.DateTimeFormat(language === "ja" ? "ja-JP" : "en-US").format(new Date(sessionExpiresAt))}</>}</p>}
+        {sessionState === "authenticated" && <p className="session-status">{tr("ログイン済み", "Logged in")}{sessionGroupId && <> ・ {tr("グループ", "group")} <strong>{sessionGroupId}</strong></>}{sessionExpiresAt && <> ・ {tr("セッション期限", "session expires")} {new Intl.DateTimeFormat(language === "ja" ? "ja-JP" : "en-US").format(new Date(sessionExpiresAt))}</>}</p>}
         {selectedFiles.length > 0 && <label className="license-confirm"><input type="checkbox" checked={licenseConfirmed} onChange={(event) => setLicenseConfirmed(event.target.checked)}/><span>{selectedLicenses.length > 0 ? tr("上記の利用条件と保存方法を確認しました．", "I have reviewed the terms of use and download method above.") : tr("保存方法を確認しました．", "I have reviewed the download method.")}</span></label>}
         {accessError && <p className="access-message error-message" role="alert">{accessError === "login" ? tr("ログインに失敗しました．招待コードを確認してください．", "Login failed. Please check the invitation code.") : accessError === "session" ? tr("セッションの有効期限が切れました．もう一度招待コードを入力してください．", "Your session has expired. Please enter the invitation code again.") : tr("ダウンロードを開始できませんでした．もう一度お試しください．", "The download could not be started. Please try again.")}</p>}
         {downloadCount > 0 && <p className="access-message success-message" role="status">{tr(`${downloadCount}ファイルのダウンロードを開始しました．`, `Started downloading ${downloadCount} files.`)}</p>}

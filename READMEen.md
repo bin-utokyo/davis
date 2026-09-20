@@ -62,6 +62,7 @@ Participants sign in once with the participant code and the Davis Web URL suppli
 
 ```text
 davis login https://davis-web.davis-bin.workers.dev
+davis session status
 davis list
 davis info network/matsuyama
 davis get network/matsuyama

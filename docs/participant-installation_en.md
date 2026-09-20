@@ -67,7 +67,7 @@ Specify the Davis Web URL provided by the organizers:
 davis login https://davis-web.davis-bin.workers.dev
 ```
 
-When `Invite code:` appears, enter the shared participant code. The input is hidden. You do not need to enter the code again while the session remains valid. Browser and CLI sessions are separate, so the CLI requires a one-time login even if you already signed in through the browser.
+When `Invite code:` appears, enter the shared participant code. The input is hidden. After a successful login, the CLI and Davis Web display the current access group. Run `davis session status` to check the service, access group, and session expiry later. You do not need to enter the code again while the session remains valid. Browser and CLI sessions are separate, so the CLI requires a one-time login even if you already signed in through the browser.
 
 A participant code belongs to one access group, and you can retrieve only the datasets granted to that group. Catalog metadata is shared, so a search result may describe a dataset that your group cannot download. If retrieval is denied, confirm the URL and participant-code combination, then contact the organizers.
 

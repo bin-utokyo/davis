@@ -67,7 +67,7 @@ davis desktop
 davis login https://davis-web.davis-bin.workers.dev
 ```
 
-`Invite code:`と表示されたら，参加者共通コードを入力します．入力内容は画面に表示されません．sessionが有効な間は，共通コードの再入力は不要です．Web browserのsessionとCLIのsessionは別なので，Webでlogin済みでもCLIでは初回loginが必要です．
+`Invite code:`と表示されたら，参加者共通コードを入力します．入力内容は画面に表示されません．loginに成功すると，現在のaccess groupがCLIとDavis Webに表示されます．CLIでは`davis session status`を実行すると，接続先，access group，session期限を後から確認できます．sessionが有効な間は，共通コードの再入力は不要です．Web browserのsessionとCLIのsessionは別なので，Webでlogin済みでもCLIでは初回loginが必要です．
 
 参加者コードは1つのaccess groupに対応し，そのgroupへ許可されたdatasetだけを取得できます．Catalog metadataは共通に表示されるため，検索結果に表示されても取得権限がないdatasetがあります．取得できない場合は，URLと参加者コードの組合せを確認した上で運営へ連絡してください．
 

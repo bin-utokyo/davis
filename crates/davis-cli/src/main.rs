@@ -58,6 +58,11 @@ enum Command {
     },
     /// Remove the locally stored CLI session.
     Logout,
+    /// Inspect the stored participant session.
+    Session {
+        #[command(subcommand)]
+        command: SessionCommand,
+    },
     /// Check for and install a newer Davis release.
     Update {
         /// Install the update without asking for confirmation.
@@ -276,6 +281,12 @@ enum OperatorCommand {
     Status,
     /// Remove the locally stored operator session.
     Logout,
+}
+
+#[derive(Debug, Subcommand)]
+enum SessionCommand {
+    /// Show the service, access group, and expiry of the participant session.
+    Status,
 }
 
 #[derive(Debug, Subcommand)]
@@ -509,6 +520,7 @@ async fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
             invite_code_stdin,
         } => handle_login(&service_url, invite_code_stdin).await?,
         Command::Logout => handle_logout()?,
+        Command::Session { command } => handle_session(command).await?,
         Command::Update { yes } => update::check_explicitly(yes).await?,
         Command::Operator { command } => handle_operator(command).await?,
         Command::Admin { command } => handle_admin(&cli.repository, command).await?,
@@ -639,6 +651,12 @@ async fn handle_operator(command: OperatorCommand) -> Result<(), Box<dyn std::er
             }
             Ok(())
         }
+    }
+}
+
+async fn handle_session(command: SessionCommand) -> Result<(), Box<dyn std::error::Error>> {
+    match command {
+        SessionCommand::Status => handle_session_status().await,
     }
 }
 
@@ -821,10 +839,12 @@ async fn handle_login(
     }
     let service = DavisService::new(service_url, None)?;
     let login = service.exchange_invite_code(&invite_code).await?;
+    let group_id = login.group_id.clone();
     let stored =
         session::Session::new(service.base_url().to_owned(), login.token, login.expires_at);
     let path = session::save(&stored)?;
     println!("Logged in to {}", stored.service_url);
+    print_access_group(group_id.as_deref());
     println!("Session expires: {}", stored.expires_at);
     println!("Session: {}", path.display());
     Ok(())
@@ -848,12 +868,26 @@ async fn handle_operator_login(
     }
     let service = DavisService::new(service_url, None)?;
     let login = service.exchange_operator_code(&operator_code).await?;
+    let group_id = login.group_id.clone();
     let stored =
         session::Session::new(service.base_url().to_owned(), login.token, login.expires_at);
     let path = session::save_operator(&stored)?;
     println!("Operator login: {}", stored.service_url);
+    print_access_group(group_id.as_deref());
     println!("Session expires: {}", stored.expires_at);
     println!("Session: {}", path.display());
+    Ok(())
+}
+
+async fn handle_session_status() -> Result<(), Box<dyn std::error::Error>> {
+    let stored = session::load()?.ok_or("no stored participant session")?;
+    let status = DavisService::new(&stored.service_url, Some(stored.token.clone()))?
+        .session_status()
+        .await?;
+    println!("Participant session: active");
+    println!("Service: {}", stored.service_url);
+    print_access_group(status.group_id.as_deref());
+    println!("Session expires: {}", status.expires_at);
     Ok(())
 }
 
@@ -864,6 +898,7 @@ async fn handle_operator_status() -> Result<(), Box<dyn std::error::Error>> {
         .await?;
     println!("Operator session: active");
     println!("Service: {}", stored.service_url);
+    print_access_group(status.group_id.as_deref());
     println!("Session expires: {}", status.expires_at);
     Ok(())
 }
@@ -890,6 +925,7 @@ async fn handle_admin_login(
         session::Session::new(service.base_url().to_owned(), login.token, login.expires_at);
     let path = session::save_admin(&stored)?;
     println!("Site Admin login: {}", stored.service_url);
+    println!("Access scope: site-wide (Site Admin)");
     println!("Session expires: {}", stored.expires_at);
     println!("Session: {}", path.display());
     Ok(())
@@ -902,6 +938,7 @@ async fn handle_admin_status() -> Result<(), Box<dyn std::error::Error>> {
         .await?;
     println!("Site Admin session: active");
     println!("Service: {}", stored.service_url);
+    println!("Access scope: site-wide (Site Admin)");
     println!("Session expires: {}", status.expires_at);
     Ok(())
 }
@@ -913,6 +950,10 @@ fn handle_logout() -> Result<(), Box<dyn std::error::Error>> {
         println!("No stored session");
     }
     Ok(())
+}
+
+fn print_access_group(group_id: Option<&str>) {
+    println!("Access group: {}", group_id.unwrap_or("legacy (unscoped)"));
 }
 
 async fn handle_list(
@@ -1467,10 +1508,12 @@ async fn get_session(
         return Err("invite code must not be empty".into());
     }
     let login = service.exchange_invite_code(&invite_code).await?;
+    let group_id = login.group_id.clone();
     let stored =
         session::Session::new(service.base_url().to_owned(), login.token, login.expires_at);
     session::save(&stored)?;
     println!("Logged in to {}", stored.service_url);
+    print_access_group(group_id.as_deref());
     Ok(Some(stored))
 }
 
@@ -2082,10 +2125,22 @@ fn update_transfer_progress(progress_bar: &ProgressBar, label: &str, progress: T
 
 #[cfg(test)]
 mod tests {
-    use super::{Cli, Command, ComponentCommand, InstallCommand, ScaffoldTemplate};
+    use super::{Cli, Command, ComponentCommand, InstallCommand, ScaffoldTemplate, SessionCommand};
     use clap::Parser;
     use std::io::Cursor;
     use std::path::{Path, PathBuf};
+
+    #[test]
+    fn participant_session_status_command_parses() {
+        let cli = Cli::try_parse_from(["davis", "session", "status"])
+            .expect("participant session status should parse");
+        assert!(matches!(
+            cli.command,
+            Command::Session {
+                command: SessionCommand::Status
+            }
+        ));
+    }
 
     #[test]
     fn pull_accepts_first_retrieval_and_companion_options() {

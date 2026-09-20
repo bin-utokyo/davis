@@ -181,7 +181,7 @@ async function exchange(env: DavisWorkerEnv, client: "web" | "cli" = "cli") {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ invite_code: "summer-school-invite-2026", client }),
   }), env);
-  const body = await response.json() as { token?: string };
+  const body = await response.json() as { token?: string; group_id?: string };
   return { response, body };
 }
 
@@ -210,6 +210,7 @@ test("exchanges the shared invite code for CLI and browser sessions", async () =
   const cli = await exchange(env, "cli");
   assert.equal(cli.response.status, 200);
   assert.ok(cli.body.token);
+  assert.equal(cli.body.group_id, undefined);
   assert.equal(cli.response.headers.get("Set-Cookie"), null);
 
   const browser = await exchange(env, "web");
@@ -231,6 +232,7 @@ test("exchanges the shared invite code for CLI and browser sessions", async () =
 test("maps existing participant and operator codes into the configured legacy group", async () => {
   const { env } = createEnv({ DAVIS_LEGACY_GROUP_ID: "bmss26" });
   const participant = await exchange(env);
+  assert.equal((participant.body as { group_id: string }).group_id, "bmss26");
   const participantStatus = await handleApiRequest(apiRequest("/api/v1/auth/session", {
     headers: { Authorization: `Bearer ${participant.body.token}` },
   }), env);

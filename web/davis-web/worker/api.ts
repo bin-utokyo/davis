@@ -301,6 +301,7 @@ async function exchangeInviteCode(request: Request, env: DavisWorkerEnv): Promis
     authenticated: true,
     access_revision: payload.revision,
     expires_at: new Date(payload.expires_at * 1000).toISOString(),
+    ...(groupId ? { group_id: groupId } : {}),
   };
   if (client === "cli") responseBody.token = token;
   const headers = new Headers();
