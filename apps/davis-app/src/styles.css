@@ -142,6 +142,7 @@ td { font-size: 13px; }
 .metric-grid dt { color: #6a786f; font-size: 11px; }
 .metric-grid dd { font-size: 15px; font-weight: 700; margin: 5px 0 0; overflow-wrap: anywhere; }
 .result-table { max-height: 390px; overflow: auto; }
+.result-table.unbounded { max-height: none; overflow-y: visible; }
 .result-table th { background: white; position: sticky; top: 0; }
 .run-history-list { display: flex; flex-direction: column; gap: 9px; }
 .run-history-card { align-items: center; border: 1px solid #dce2db; border-radius: 12px; display: grid; gap: 12px; grid-template-columns: auto minmax(0, 1fr) auto auto; padding: 13px 14px; }
