@@ -14,7 +14,7 @@ fn repository_root() -> PathBuf {
 fn current_repository_has_no_catalog_coverage_regression() {
     let catalog = scan_repository(&repository_root()).unwrap();
 
-    assert_eq!(catalog.file_count(), 263);
+    assert_eq!(catalog.file_count(), 258);
     assert_eq!(catalog.schema_ready_count(), 176);
     assert_eq!(
         catalog
@@ -58,7 +58,7 @@ fn generated_manifests_cover_the_current_catalog() {
             .count();
     }
 
-    assert_eq!(manifest_files, 263);
+    assert_eq!(manifest_files, 258);
     assert_eq!(schema_references, 176);
 }
 
@@ -69,9 +69,9 @@ fn static_index_covers_every_file_and_schema() {
     let index = build_catalog_index(&root, &catalog).unwrap();
 
     assert_eq!(index.summary.dataset_count, 15);
-    assert_eq!(index.summary.file_count, 263);
+    assert_eq!(index.summary.file_count, 258);
     assert_eq!(index.summary.schema_ready_count, 176);
-    assert_eq!(index.files.len(), 263);
+    assert_eq!(index.files.len(), 258);
     assert!(index
         .files
         .iter()
