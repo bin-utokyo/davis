@@ -382,6 +382,9 @@ test("plans, uploads, and completes an operator multipart object", async () => {
   const { body } = await exchangeOperator(env);
   const oid = `blake3:${"a".repeat(64)}`;
   const payload = new TextEncoder().encode("operator upload");
+  const encoded = new Uint8Array(await new Response(
+    new Blob([payload]).stream().pipeThrough(new CompressionStream("gzip")),
+  ).arrayBuffer());
   const authorization = { Authorization: `Bearer ${body.token}` };
 
   const plan = await handleApiRequest(apiRequest("/api/v1/operator/uploads/plan", {
@@ -395,14 +398,14 @@ test("plans, uploads, and completes an operator multipart object", async () => {
   const created = await handleApiRequest(apiRequest("/api/v1/operator/uploads/create", {
     method: "POST",
     headers: { ...authorization, "Content-Type": "application/json" },
-    body: JSON.stringify({ oid, size: payload.length }),
+    body: JSON.stringify({ oid, size: payload.length, storage_format: "davis.gzip/v1" }),
   }), env);
   const upload = await created.json() as { upload_id: string };
   assert.equal(created.status, 200);
 
   const part = await handleApiRequest(apiRequest(
-    `/api/v1/operator/uploads/part?oid=${encodeURIComponent(oid)}&upload_id=${upload.upload_id}&part_number=1`,
-    { method: "PUT", headers: { ...authorization, "Content-Length": String(payload.length) }, body: payload },
+    `/api/v1/operator/uploads/part?oid=${encodeURIComponent(oid)}&upload_id=${upload.upload_id}&storage_format=davis.gzip%2Fv1&part_number=1`,
+    { method: "PUT", headers: { ...authorization, "Content-Length": String(encoded.length) }, body: encoded },
   ), env);
   const uploadedPart = await part.json() as { part_number: number; etag: string; size: number };
   assert.equal(part.status, 200);
@@ -413,6 +416,8 @@ test("plans, uploads, and completes an operator multipart object", async () => {
     body: JSON.stringify({
       oid,
       size: payload.length,
+      stored_size: encoded.length,
+      storage_format: "davis.gzip/v1",
       upload_id: upload.upload_id,
       parts: [uploadedPart],
     }),
@@ -638,7 +643,7 @@ test("streams an authorized R2 object and supports byte ranges", async () => {
   }]);
 });
 
-test("compresses an R2 object, removes the raw copy, and preserves ranged downloads", async () => {
+test("compresses an R2 object, removes the raw copy, and delegates decoding to the client", async () => {
   const { env, stored } = createEnv();
   const admin = await exchangeAdmin(env);
   const compressed = await handleApiRequest(apiRequest("/api/v1/admin/storage/compress", {
@@ -663,9 +668,13 @@ test("compresses an R2 object, removes the raw copy, and preserves ranged downlo
   const download = await handleApiRequest(new Request(grants.grants[0].url, {
     headers: { Range: "bytes=3-7" },
   }), env);
-  assert.equal(download.status, 206);
-  assert.equal(download.headers.get("Content-Range"), `bytes 3-7/${contents.length}`);
-  assert.deepEqual(new Uint8Array(await download.arrayBuffer()), contents.slice(3, 8));
+  assert.equal(download.status, 200);
+  assert.equal(download.headers.get("Content-Encoding"), "gzip");
+  assert.equal(download.headers.get("Accept-Ranges"), null);
+  const decoded = new Uint8Array(await new Response(
+    download.body!.pipeThrough(new DecompressionStream("gzip")),
+  ).arrayBuffer());
+  assert.deepEqual(decoded, contents);
 });
 
 test("does not fail a download when analytics recording fails", async () => {

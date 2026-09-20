@@ -13,7 +13,7 @@ members = [
 resolver = "2"
 
 [workspace.package]
-version = "0.5.8"
+version = "0.5.9"
 edition = "2021"
 license = "MIT"
 repository = "https://github.com/bin-utokyo/davis"
@@ -30,7 +30,7 @@ indicatif = "0.18"
 jsonschema = { version = "0.33", default-features = false }
 jiff = "0.2"
 opendal = { version = "0.58", default-features = false, features = ["http-transport-reqwest", "services-fs", "services-s3"] }
-reqwest = { version = "0.13", default-features = false, features = ["json", "rustls", "stream"] }
+reqwest = { version = "0.13", default-features = false, features = ["gzip", "json", "rustls", "stream"] }
 rpassword = "7"
 semver = "1"
 serde = { version = "1", features = ["derive"] }

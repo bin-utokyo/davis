@@ -640,15 +640,22 @@ async function planOperatorUploads(request: Request, env: DavisWorkerEnv): Promi
 }
 
 async function createOperatorUpload(request: Request, env: DavisWorkerEnv): Promise<Response> {
-  const session = await requireOperator(request, env);
-  if (session instanceof Response) return session;
+  const writer = await requireUploadWriter(request, env);
+  if (writer instanceof Response) return writer;
   const body = await readJson(request);
   const object = parseOperatorObject(body);
   if (!object) return errorResponse(400, "invalid_request", "A valid oid and size are required");
-  const key = objectKey(object.oid);
+  const gzip = body?.storage_format === COMPRESSED_OBJECT_FORMAT;
+  const replaceRaw = body?.replace_raw === true;
+  if (replaceRaw && writer !== "admin") {
+    return errorResponse(403, "admin_required", "Only Site Admin may replace an existing raw object");
+  }
+  const key = gzip ? compressedObjectKey(object.oid) : objectKey(object.oid);
   let stored: StoredRepresentation | "size_mismatch" | null;
   try {
-    stored = await findStoredRepresentation(env.DAVIS_DATA!, object);
+    stored = replaceRaw
+      ? await findCompressedRepresentation(env.DAVIS_DATA!, object)
+      : await findStoredRepresentation(env.DAVIS_DATA!, object);
   } catch {
     return errorResponse(502, "r2_object_check_failed", "R2 failed while checking the upload object");
   }
@@ -656,9 +663,10 @@ async function createOperatorUpload(request: Request, env: DavisWorkerEnv): Prom
     if (stored === "size_mismatch") {
       return errorResponse(409, "object_size_mismatch", "Stored object has an unexpected size");
     }
+    if (replaceRaw) await env.DAVIS_DATA!.delete(objectKey(object.oid));
     return json({ oid: object.oid, size: object.size, already_present: true });
   }
-  if (object.size === 0) {
+  if (object.size === 0 && !gzip) {
     try {
       await env.DAVIS_DATA!.put(key, new ArrayBuffer(0));
     } catch {
@@ -668,7 +676,14 @@ async function createOperatorUpload(request: Request, env: DavisWorkerEnv): Prom
   }
   let upload: R2MultipartUpload;
   try {
-    upload = await env.DAVIS_DATA!.createMultipartUpload(key);
+    upload = await env.DAVIS_DATA!.createMultipartUpload(key, gzip ? {
+      httpMetadata: { contentType: "application/gzip" },
+      customMetadata: {
+        davisFormat: COMPRESSED_OBJECT_FORMAT,
+        davisOid: object.oid,
+        davisOriginalSize: String(object.size),
+      },
+    } : undefined);
   } catch {
     return errorResponse(502, "r2_multipart_create_failed", "R2 failed to create the multipart upload");
   }
@@ -682,12 +697,13 @@ async function createOperatorUpload(request: Request, env: DavisWorkerEnv): Prom
 }
 
 async function uploadOperatorPart(request: Request, env: DavisWorkerEnv): Promise<Response> {
-  const session = await requireOperator(request, env);
-  if (session instanceof Response) return session;
+  const writer = await requireUploadWriter(request, env);
+  if (writer instanceof Response) return writer;
   const url = new URL(request.url);
   const oid = url.searchParams.get("oid") ?? "";
   const uploadId = url.searchParams.get("upload_id") ?? "";
   const partNumber = Number.parseInt(url.searchParams.get("part_number") ?? "", 10);
+  const gzip = url.searchParams.get("storage_format") === COMPRESSED_OBJECT_FORMAT;
   if (!isObjectId(oid) || !isUploadId(uploadId) || !Number.isInteger(partNumber)
     || partNumber < 1 || partNumber > 10_000) {
     return errorResponse(400, "invalid_request", "Valid oid, upload_id, and part_number are required");
@@ -699,7 +715,7 @@ async function uploadOperatorPart(request: Request, env: DavisWorkerEnv): Promis
   if (!request.body) return errorResponse(400, "invalid_request", "Upload part body is required");
   let part: R2UploadedPart;
   try {
-    const upload = env.DAVIS_DATA!.resumeMultipartUpload(objectKey(oid), uploadId);
+    const upload = env.DAVIS_DATA!.resumeMultipartUpload(gzip ? compressedObjectKey(oid) : objectKey(oid), uploadId);
     part = await upload.uploadPart(partNumber, request.body);
   } catch {
     return errorResponse(
@@ -713,15 +729,23 @@ async function uploadOperatorPart(request: Request, env: DavisWorkerEnv): Promis
 }
 
 async function completeOperatorUpload(request: Request, env: DavisWorkerEnv): Promise<Response> {
-  const session = await requireOperator(request, env);
-  if (session instanceof Response) return session;
+  const writer = await requireUploadWriter(request, env);
+  if (writer instanceof Response) return writer;
   const body = await readJson(request);
   const object = parseOperatorObject(body);
+  const gzip = body?.storage_format === COMPRESSED_OBJECT_FORMAT;
+  const replaceRaw = body?.replace_raw === true;
+  const storedSize = gzip && Number.isSafeInteger(body?.stored_size) && body.stored_size > 0
+    ? body.stored_size as number
+    : object?.size;
+  if (replaceRaw && writer !== "admin") {
+    return errorResponse(403, "admin_required", "Only Site Admin may replace an existing raw object");
+  }
   const uploadId = typeof body?.upload_id === "string" ? body.upload_id : "";
   const parts = Array.isArray(body?.parts) ? body.parts : [];
   if (!object || !isUploadId(uploadId) || parts.length === 0 || parts.length > 10_000
     || !parts.every(isUploadedPart)
-    || parts.reduce((sum, part) => sum + part.size, 0) !== object.size) {
+    || parts.reduce((sum, part) => sum + part.size, 0) !== storedSize) {
     return errorResponse(400, "invalid_request", "Valid oid, size, upload_id, and parts are required");
   }
   const orderedParts = [...parts].sort((left, right) => left.part_number - right.part_number);
@@ -735,9 +759,10 @@ async function completeOperatorUpload(request: Request, env: DavisWorkerEnv): Pr
   }
   let stored: R2ObjectMetadata | null;
   try {
-    const upload = env.DAVIS_DATA!.resumeMultipartUpload(objectKey(object.oid), uploadId);
+    const key = gzip ? compressedObjectKey(object.oid) : objectKey(object.oid);
+    const upload = env.DAVIS_DATA!.resumeMultipartUpload(key, uploadId);
     await upload.complete(orderedParts.map((part) => ({ partNumber: part.part_number, etag: part.etag })));
-    stored = await env.DAVIS_DATA!.head(objectKey(object.oid));
+    stored = await env.DAVIS_DATA!.head(key);
   } catch {
     return errorResponse(
       502,
@@ -746,25 +771,30 @@ async function completeOperatorUpload(request: Request, env: DavisWorkerEnv): Pr
       { parts: orderedParts.length, declared_size: object.size },
     );
   }
-  if (!stored || stored.size !== object.size) {
+  if (!stored || stored.size !== storedSize || (gzip && !isCompressedRepresentation(stored, object))) {
     return errorResponse(409, "object_size_mismatch", "Completed object size does not match the declared size");
   }
-  const compressed = await compressStoredObject(env.DAVIS_DATA!, object);
-  if (compressed instanceof Response) return compressed;
-  return json({ oid: object.oid, size: object.size, uploaded: true, storage: compressed });
+  if (gzip) {
+    if (replaceRaw) await env.DAVIS_DATA!.delete(objectKey(object.oid));
+    return json({ oid: object.oid, size: object.size, uploaded: true, storage: compressedDescriptor(stored, object) });
+  }
+  // Older clients upload raw objects. Keep that path functional without doing
+  // CPU-heavy compression inside the Worker; current clients upload gzip.
+  return json({ oid: object.oid, size: object.size, uploaded: true, storage: { format: "raw" } });
 }
 
 async function abortOperatorUpload(request: Request, env: DavisWorkerEnv): Promise<Response> {
-  const session = await requireOperator(request, env);
-  if (session instanceof Response) return session;
+  const writer = await requireUploadWriter(request, env);
+  if (writer instanceof Response) return writer;
   const body = await readJson(request);
   const oid = typeof body?.oid === "string" ? body.oid : "";
   const uploadId = typeof body?.upload_id === "string" ? body.upload_id : "";
+  const gzip = body?.storage_format === COMPRESSED_OBJECT_FORMAT;
   if (!isObjectId(oid) || !isUploadId(uploadId)) {
     return errorResponse(400, "invalid_request", "Valid oid and upload_id are required");
   }
   try {
-    await env.DAVIS_DATA!.resumeMultipartUpload(objectKey(oid), uploadId).abort();
+    await env.DAVIS_DATA!.resumeMultipartUpload(gzip ? compressedObjectKey(oid) : objectKey(oid), uploadId).abort();
   } catch {
     return errorResponse(502, "r2_multipart_abort_failed", "R2 failed to cancel the multipart upload");
   }
@@ -1009,25 +1039,16 @@ async function downloadObject(request: Request, env: DavisWorkerEnv): Promise<Re
   if (request.headers.get("If-None-Match") === etag) {
     return new Response(null, { status: 304, headers: { ETag: etag } });
   }
-  const range = parseByteRange(request.headers.get("Range"), payload.size);
-  if (range === "invalid") {
-    return new Response(null, {
-      status: 416,
-      headers: { "Content-Range": `bytes */${payload.size}` },
-    });
-  }
-  let body = object.body.pipeThrough(new DecompressionStream("gzip"));
-  if (range) body = body.pipeThrough(byteRangeStream(range));
-
   const headers = downloadHeaders(payload, etag);
-  if (range) {
-    const end = range.offset + range.length - 1;
-    headers.set("Content-Range", `bytes ${range.offset}-${end}/${payload.size}`);
-    headers.set("Content-Length", String(range.length));
-  } else {
-    headers.set("Content-Length", String(payload.size));
-  }
-  return new Response(body, { status: range ? 206 : 200, headers });
+  // Send the encoded representation unchanged. Browsers and gzip-enabled HTTP
+  // clients decode it locally, keeping large-object CPU work out of Workers.
+  // Byte ranges over the decoded representation cannot be mapped onto gzip
+  // offsets, so compressed downloads intentionally return a full 200 response.
+  headers.delete("Accept-Ranges");
+  headers.set("Content-Encoding", "gzip");
+  headers.set("Content-Length", String(object.size));
+  headers.set("Vary", "Accept-Encoding");
+  return new Response(object.body, { status: 200, headers });
 }
 
 async function downloadRawObject(
@@ -1066,41 +1087,6 @@ function downloadHeaders(payload: DownloadToken, etag: string): Headers {
     "Referrer-Policy": "no-referrer",
     "Content-Disposition": contentDisposition(payload.path),
     "Content-Type": contentTypeForPath(payload.path),
-  });
-}
-
-function parseByteRange(header: string | null, size: number): R2Range | "invalid" | null {
-  if (!header) return null;
-  const match = header.match(/^bytes=(\d*)-(\d*)$/u);
-  if (!match || (!match[1] && !match[2]) || size === 0) return "invalid";
-  if (!match[1]) {
-    const suffix = Number.parseInt(match[2], 10);
-    if (!Number.isSafeInteger(suffix) || suffix <= 0) return "invalid";
-    const length = Math.min(suffix, size);
-    return { offset: size - length, length };
-  }
-  const offset = Number.parseInt(match[1], 10);
-  const requestedEnd = match[2] ? Number.parseInt(match[2], 10) : size - 1;
-  if (!Number.isSafeInteger(offset) || !Number.isSafeInteger(requestedEnd)
-    || offset < 0 || requestedEnd < offset || offset >= size) return "invalid";
-  const end = Math.min(requestedEnd, size - 1);
-  return { offset, length: end - offset + 1 };
-}
-
-function byteRangeStream(range: R2Range): TransformStream<Uint8Array, Uint8Array> {
-  let position = 0;
-  const rangeEnd = range.offset + range.length;
-  return new TransformStream({
-    transform(chunk, controller) {
-      const chunkStart = position;
-      const chunkEnd = position + chunk.byteLength;
-      position = chunkEnd;
-      if (chunkEnd <= range.offset) return;
-      const start = Math.max(0, range.offset - chunkStart);
-      const end = Math.min(chunk.byteLength, rangeEnd - chunkStart);
-      if (end > start) controller.enqueue(chunk.slice(start, end));
-      if (chunkEnd >= rangeEnd) controller.terminate();
-    },
   });
 }
 
@@ -1206,6 +1192,16 @@ async function requireAdmin(
     "admin_authentication_required",
     "Site Admin authentication is required",
   );
+}
+
+async function requireUploadWriter(
+  request: Request,
+  env: DavisWorkerEnv,
+): Promise<"operator" | "admin" | Response> {
+  if (!env.DAVIS_DATA) return errorResponse(503, "storage_unavailable", "R2 storage is not configured");
+  if (!validateOperatorConfiguration(env) && await authenticateOperator(request, env)) return "operator";
+  if (!validateAdminConfiguration(env) && await authenticateAdmin(request, env)) return "admin";
+  return errorResponse(401, "upload_authentication_required", "Operator or Site Admin authentication is required");
 }
 
 async function readCatalog(request: Request, env: DavisWorkerEnv): Promise<CatalogFile[] | Response> {
@@ -1506,6 +1502,17 @@ async function findStoredRepresentation(
   const raw = await bucket.head(objectKey(object.oid));
   if (!raw) return compressed ? "size_mismatch" : null;
   return raw.size === object.size ? { kind: "raw", metadata: raw } : "size_mismatch";
+}
+
+async function findCompressedRepresentation(
+  bucket: R2Bucket,
+  object: OperatorObject,
+): Promise<StoredRepresentation | "size_mismatch" | null> {
+  const compressed = await bucket.head(compressedObjectKey(object.oid));
+  if (!compressed) return null;
+  return isCompressedRepresentation(compressed, object)
+    ? { kind: "gzip", metadata: compressed }
+    : "size_mismatch";
 }
 
 function contentDisposition(path: string): string {

@@ -1,11 +1,13 @@
 use std::collections::HashMap;
 use std::fmt::Write as _;
+use std::io;
 
 use davis_catalog::{IndexedDataset, IndexedFile};
 use davis_core::{
     Catalog, CatalogFile, Dataset, DatasetManifest, FileSchema, LocalObjectStore, ManifestDataset,
     ManifestFile, ObjectRef,
 };
+use flate2::{write::GzEncoder, Compression};
 use futures::StreamExt;
 use reqwest::{Client, StatusCode};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
@@ -202,6 +204,14 @@ struct OperatorUploadCreateResponse {
     part_size: usize,
 }
 
+#[derive(Debug, Serialize)]
+struct CreateUploadRequest<'a> {
+    oid: &'a str,
+    size: u64,
+    storage_format: &'static str,
+    replace_raw: bool,
+}
+
 #[derive(Debug, Deserialize, Serialize)]
 struct UploadedPart {
     part_number: u32,
@@ -213,6 +223,9 @@ struct UploadedPart {
 struct CompleteUploadRequest<'a> {
     oid: &'a str,
     size: u64,
+    stored_size: u64,
+    storage_format: &'static str,
+    replace_raw: bool,
     upload_id: &'a str,
     parts: &'a [UploadedPart],
 }
@@ -220,8 +233,11 @@ struct CompleteUploadRequest<'a> {
 #[derive(Debug, Serialize)]
 struct AbortUploadRequest<'a> {
     oid: &'a str,
+    storage_format: &'static str,
     upload_id: &'a str,
 }
+
+const GZIP_STORAGE_FORMAT: &str = "davis.gzip/v1";
 
 #[derive(Debug, Serialize)]
 struct PublishCatalogRequest<'a> {
@@ -247,6 +263,16 @@ async fn read_upload_chunk(
     // so fill each declared part completely before uploading it.
     input.read_exact(&mut buffer[..read]).await?;
     Ok(read)
+}
+
+fn gzip_object(store: &LocalObjectStore, object: &ObjectRef) -> Result<NamedTempFile, RemoteError> {
+    let mut input = std::fs::File::open(store.object_path(&object.oid))?;
+    let temporary = NamedTempFile::new()?;
+    let mut encoder = GzEncoder::new(temporary, Compression::default());
+    io::copy(&mut input, &mut encoder)?;
+    let temporary = encoder.finish()?;
+    temporary.as_file().sync_all()?;
+    Ok(temporary)
 }
 
 impl DavisService {
@@ -391,16 +417,79 @@ impl DavisService {
 
     pub async fn compress_admin_object(
         &self,
+        store: &LocalObjectStore,
         object: &ObjectRef,
     ) -> Result<CompressionResult, RemoteError> {
+        verify_operator_upload_source(store, object, false)?;
+        let compressed = gzip_object(store, object)?;
+        let compressed_size = compressed.as_file().metadata()?.len();
+        self.upload_compressed_object(object, &compressed, compressed_size, true)
+            .await?;
+        Ok(CompressionResult {
+            oid: object.oid.to_string(),
+            original_size: object.size,
+            compressed_size,
+        })
+    }
+
+    async fn upload_compressed_object(
+        &self,
+        object: &ObjectRef,
+        compressed: &NamedTempFile,
+        compressed_size: u64,
+        replace_raw: bool,
+    ) -> Result<(), RemoteError> {
+        let token = self.admin_token()?;
+        let oid = object.oid.to_string();
         let response = self
             .client
-            .post(self.endpoint("api/v1/admin/storage/compress"))
-            .bearer_auth(self.admin_token()?)
-            .json(object)
+            .post(self.endpoint("api/v1/operator/uploads/create"))
+            .bearer_auth(token)
+            .json(&CreateUploadRequest {
+                oid: &oid,
+                size: object.size,
+                storage_format: GZIP_STORAGE_FORMAT,
+                replace_raw,
+            })
             .send()
             .await?;
-        decode(response).await
+        let created: OperatorUploadCreateResponse = decode(response).await?;
+        if created.already_present {
+            return Ok(());
+        }
+        let upload_result = self
+            .upload_parts_from_path(compressed.path(), compressed_size, &oid, &created)
+            .await;
+        if upload_result.is_err() {
+            let _ = self
+                .client
+                .post(self.endpoint("api/v1/operator/uploads/abort"))
+                .bearer_auth(token)
+                .json(&AbortUploadRequest {
+                    oid: &oid,
+                    storage_format: GZIP_STORAGE_FORMAT,
+                    upload_id: &created.upload_id,
+                })
+                .send()
+                .await;
+        }
+        let parts = upload_result?;
+        let response = self
+            .client
+            .post(self.endpoint("api/v1/operator/uploads/complete"))
+            .bearer_auth(token)
+            .json(&CompleteUploadRequest {
+                oid: &oid,
+                size: object.size,
+                stored_size: compressed_size,
+                storage_format: GZIP_STORAGE_FORMAT,
+                replace_raw,
+                upload_id: &created.upload_id,
+                parts: &parts,
+            })
+            .send()
+            .await?;
+        ensure_success(response).await.map(|_| ())
     }
 
     pub async fn upload_operator_objects<F>(
@@ -541,7 +630,12 @@ impl DavisService {
             .client
             .post(self.endpoint("api/v1/operator/uploads/create"))
             .bearer_auth(token)
-            .json(object)
+            .json(&CreateUploadRequest {
+                oid: &oid,
+                size: object.size,
+                storage_format: GZIP_STORAGE_FORMAT,
+                replace_raw: false,
+            })
             .send()
             .await?;
         let created: OperatorUploadCreateResponse = decode(response).await?;
@@ -560,17 +654,10 @@ impl DavisService {
                 "missing multipart settings for {oid}"
             )));
         }
+        let compressed = gzip_object(store, object)?;
+        let compressed_size = compressed.as_file().metadata()?.len();
         let upload_result = self
-            .upload_operator_parts(
-                store,
-                object,
-                &created,
-                completed_bytes,
-                total_bytes,
-                completed_objects,
-                total_objects,
-                on_progress,
-            )
+            .upload_parts_from_path(compressed.path(), compressed_size, &oid, &created)
             .await;
         if upload_result.is_err() {
             let _ = self
@@ -579,6 +666,7 @@ impl DavisService {
                 .bearer_auth(token)
                 .json(&AbortUploadRequest {
                     oid: &oid,
+                    storage_format: GZIP_STORAGE_FORMAT,
                     upload_id: &created.upload_id,
                 })
                 .send()
@@ -592,36 +680,37 @@ impl DavisService {
             .json(&CompleteUploadRequest {
                 oid: &oid,
                 size: object.size,
+                stored_size: compressed_size,
+                storage_format: GZIP_STORAGE_FORMAT,
+                replace_raw: false,
                 upload_id: &created.upload_id,
                 parts: &parts,
             })
             .send()
             .await?;
         ensure_success(response).await?;
+        *completed_bytes = completed_bytes.saturating_add(object.size);
+        on_progress(
+            *completed_bytes,
+            total_bytes,
+            completed_objects + 1,
+            total_objects,
+        );
         Ok(())
     }
 
-    #[allow(clippy::too_many_arguments)]
-    async fn upload_operator_parts<F>(
+    async fn upload_parts_from_path(
         &self,
-        store: &LocalObjectStore,
-        object: &ObjectRef,
+        path: &std::path::Path,
+        stored_size: u64,
+        oid: &str,
         created: &OperatorUploadCreateResponse,
-        completed_bytes: &mut u64,
-        total_bytes: u64,
-        completed_objects: usize,
-        total_objects: usize,
-        on_progress: &mut F,
-    ) -> Result<Vec<UploadedPart>, RemoteError>
-    where
-        F: FnMut(u64, u64, usize, usize),
-    {
+    ) -> Result<Vec<UploadedPart>, RemoteError> {
         let token = self.operator_token()?;
-        let oid = object.oid.to_string();
-        let mut input = tokio::fs::File::open(store.object_path(&object.oid)).await?;
+        let mut input = tokio::fs::File::open(path).await?;
         let mut buffer = vec![0_u8; created.part_size];
         let mut parts = Vec::new();
-        let mut remaining = object.size;
+        let mut remaining = stored_size;
         while remaining > 0 {
             let read = read_upload_chunk(&mut input, &mut buffer, remaining).await?;
             let part_number = u32::try_from(parts.len() + 1).map_err(|_| {
@@ -630,8 +719,9 @@ impl DavisService {
             let mut url = reqwest::Url::parse(&self.endpoint("api/v1/operator/uploads/part"))
                 .map_err(|error| RemoteError::InvalidUrl(error.to_string()))?;
             url.query_pairs_mut()
-                .append_pair("oid", &oid)
+                .append_pair("oid", oid)
                 .append_pair("upload_id", &created.upload_id)
+                .append_pair("storage_format", GZIP_STORAGE_FORMAT)
                 .append_pair("part_number", &part_number.to_string());
             let response = self
                 .client
@@ -661,13 +751,6 @@ impl DavisService {
                 RemoteError::InvalidUploadResponse("multipart chunk is too large".into())
             })?;
             remaining -= read;
-            *completed_bytes = completed_bytes.saturating_add(read);
-            on_progress(
-                *completed_bytes,
-                total_bytes,
-                completed_objects,
-                total_objects,
-            );
         }
         Ok(parts)
     }

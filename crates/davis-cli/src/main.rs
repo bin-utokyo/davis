@@ -306,6 +306,9 @@ enum AdminCommand {
         /// Confirm removal of raw R2 objects after round-trip verification.
         #[arg(long)]
         yes: bool,
+        /// Local content-addressed object store used as the verified compression source.
+        #[arg(long, default_value = ".davis/cache")]
+        store: PathBuf,
     },
 }
 
@@ -508,7 +511,7 @@ async fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
         Command::Logout => handle_logout()?,
         Command::Update { yes } => update::check_explicitly(yes).await?,
         Command::Operator { command } => handle_operator(command).await?,
-        Command::Admin { command } => handle_admin(command).await?,
+        Command::Admin { command } => handle_admin(&cli.repository, command).await?,
         Command::Model { command } => model::handle(&cli.repository, command)?,
         Command::Install { command } => handle_install(command).await?,
         Command::Desktop { version } => software::launch_desktop(version.as_deref())?,
@@ -639,7 +642,10 @@ async fn handle_operator(command: OperatorCommand) -> Result<(), Box<dyn std::er
     }
 }
 
-async fn handle_admin(command: AdminCommand) -> Result<(), Box<dyn std::error::Error>> {
+async fn handle_admin(
+    repository: &std::path::Path,
+    command: AdminCommand,
+) -> Result<(), Box<dyn std::error::Error>> {
     match command {
         AdminCommand::Login {
             service_url,
@@ -674,7 +680,7 @@ async fn handle_admin(command: AdminCommand) -> Result<(), Box<dyn std::error::E
             println!("Allowed groups: {}", groups.join(", "));
             Ok(())
         }
-        AdminCommand::StorageCompress { yes } => {
+        AdminCommand::StorageCompress { yes, store } => {
             if !yes {
                 return Err(
                     "storage compression removes verified raw R2 objects; rerun with --yes".into(),
@@ -682,6 +688,7 @@ async fn handle_admin(command: AdminCommand) -> Result<(), Box<dyn std::error::E
             }
             let stored = session::load_admin()?.ok_or("no stored Site Admin session")?;
             let service = DavisService::new(&stored.service_url, Some(stored.token))?;
+            let object_store = LocalObjectStore::new(resolve(repository, &store));
             let catalog = service.catalog().await?;
             let mut objects = HashMap::<String, ObjectRef>::new();
             for dataset in catalog.datasets {
@@ -701,7 +708,7 @@ async fn handle_admin(command: AdminCommand) -> Result<(), Box<dyn std::error::E
             let logical_bytes = objects.iter().map(|object| object.size).sum::<u64>();
             let mut compressed_bytes = 0_u64;
             for (index, object) in objects.iter().enumerate() {
-                let result = service.compress_admin_object(object).await?;
+                let result = service.compress_admin_object(&object_store, object).await?;
                 compressed_bytes += result.compressed_size;
                 println!(
                     "Compressed {}/{}: {} -> {} bytes ({})",
