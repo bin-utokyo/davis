@@ -232,10 +232,23 @@ export async function handleCatalogRequest(request: Request, env: DavisWorkerEnv
   if (!CATALOG_DOCUMENTS.has(name)) {
     return errorResponse(404, "catalog_document_not_found", "Catalog document was not found");
   }
-  if (!env.DAVIS_DATA) return env.ASSETS.fetch(request);
+  const participant = await authenticate(request, env);
+  const operator = participant ? null : await authenticateOperator(request, env);
+  const admin = participant || operator ? null : await authenticateAdmin(request, env);
+  if (!participant && !operator && !admin) {
+    return errorResponse(401, "authentication_required", "Authentication is required");
+  }
+  const allowed = participant?.group_id
+    ? new Set(await allowedDatasetIds(participant.group_id, env))
+    : null;
+  if (!env.DAVIS_DATA) {
+    return filterCatalogResponse(await env.ASSETS.fetch(request), name, allowed, request.method);
+  }
 
   const pointerObject = await env.DAVIS_DATA.get("catalog/current.json");
-  if (!pointerObject) return env.ASSETS.fetch(request);
+  if (!pointerObject) {
+    return filterCatalogResponse(await env.ASSETS.fetch(request), name, allowed, request.method);
+  }
   if (!("body" in pointerObject)) {
     return errorResponse(503, "catalog_unavailable", "Catalog pointer is unavailable");
   }
@@ -259,7 +272,67 @@ export async function handleCatalogRequest(request: Request, env: DavisWorkerEnv
     "ETag": object.httpEtag,
     "X-Davis-Catalog-Revision": pointer.revision,
   });
-  return new Response(request.method === "HEAD" ? null : object.body, { headers });
+  return filterCatalogResponse(
+    new Response(request.method === "HEAD" ? null : object.body, { headers }),
+    name,
+    allowed,
+    request.method,
+  );
+}
+
+async function filterCatalogResponse(
+  response: Response,
+  name: string,
+  allowed: Set<string> | null,
+  method: string,
+): Promise<Response> {
+  if (!response.ok || allowed === null) return response;
+  const headers = new Headers(response.headers);
+  headers.set("Cache-Control", "private, no-store");
+  headers.delete("Content-Length");
+  headers.delete("ETag");
+  if (method === "HEAD") return new Response(null, { status: response.status, headers });
+  const value: unknown = await response.json();
+  let filtered = value;
+  if (Array.isArray(value) && name === "datasets.json") {
+    filtered = value.filter((item) => hasAllowedDatasetId(item, "id", allowed));
+  } else if (Array.isArray(value) && (name === "files.json" || name === "columns.json")) {
+    filtered = value.filter((item) => hasAllowedDatasetId(item, "dataset_id", allowed));
+  } else if (name === "index.json" && value && typeof value === "object" && !Array.isArray(value)) {
+    const index = value as Record<string, unknown>;
+    const datasets = Array.isArray(index.datasets)
+      ? index.datasets.filter((item) => hasAllowedDatasetId(item, "id", allowed))
+      : [];
+    const files = Array.isArray(index.files)
+      ? index.files.filter((item) => hasAllowedDatasetId(item, "dataset_id", allowed))
+      : [];
+    const columns = Array.isArray(index.columns)
+      ? index.columns.filter((item) => hasAllowedDatasetId(item, "dataset_id", allowed))
+      : [];
+    filtered = {
+      ...index,
+      datasets,
+      files,
+      columns,
+      summary: {
+        dataset_count: datasets.length,
+        file_count: files.length,
+        schema_ready_count: files.filter((item) => item && typeof item === "object"
+          && (item as { schema_status?: unknown }).schema_status === "ready").length,
+        total_size: files.reduce((sum, item) => sum + (item && typeof item === "object"
+          && typeof (item as { size?: unknown }).size === "number"
+          ? (item as { size: number }).size
+          : 0), 0),
+      },
+    };
+  }
+  return json(filtered, { status: response.status, headers });
+}
+
+function hasAllowedDatasetId(item: unknown, key: "id" | "dataset_id", allowed: Set<string>): boolean {
+  return !!item && typeof item === "object" && !Array.isArray(item)
+    && typeof (item as Record<string, unknown>)[key] === "string"
+    && allowed.has((item as Record<string, string>)[key]);
 }
 
 async function exchangeInviteCode(request: Request, env: DavisWorkerEnv): Promise<Response> {
@@ -1212,7 +1285,7 @@ async function requireUploadWriter(
 async function readCatalog(request: Request, env: DavisWorkerEnv): Promise<CatalogFile[] | Response> {
   try {
     const catalogUrl = new URL("/catalog/files.json", request.url);
-    const response = await handleCatalogRequest(new Request(catalogUrl), env);
+    const response = await handleCatalogRequest(new Request(catalogUrl, { headers: request.headers }), env);
     if (!response.ok) throw new Error(`catalog returned ${response.status}`);
     const value: unknown = await response.json();
     if (!Array.isArray(value) || !value.every(isCatalogFile)) throw new Error("catalog is invalid");

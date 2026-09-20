@@ -34,7 +34,7 @@ pnpm lint
 
 ## Download API
 
-Workerには，CLIとWebが共用するversion 1 APIがあります．Catalog metadataは公開したまま，実データだけを認証で保護します．
+Workerには，CLIとWebが共用するversion 1 APIがあります．Catalog metadataと実データの両方を参加者sessionで保護し，Catalog responseをlogin中のaccess groupへ許可されたdatasetだけに絞ります．operatorとSite Adminの運用sessionには管理用の全Catalogを返します．
 
 | Endpoint | 用途 |
 | --- | --- |
@@ -44,7 +44,7 @@ Workerには，CLIとWebが共用するversion 1 APIがあります．Catalog me
 | `POST /api/v1/download-grants` | File ID集合を5分有効のdownload URLへ交換 |
 | `GET /api/v1/download?grant=...` | private R2 Objectをstreaming download |
 
-Download APIは公開CatalogのFile IDだけを受理し，任意のR2 key指定，Object一覧，PUT，DELETEを提供しません．raw ObjectはRange requestに対応します．gzip Objectは`Content-Encoding: gzip`付きのfull responseとして配信し，browserまたはCLIが端末側で透過解凍します．
+Download APIは認証・group filter済みCatalogのFile IDだけを受理し，任意のR2 key指定，Object一覧，PUT，DELETEを提供しません．raw ObjectはRange requestに対応します．gzip Objectは`Content-Encoding: gzip`付きのfull responseとして配信し，browserまたはCLIが端末側で透過解凍します．
 
 local開発では`.dev.vars.example`を`.dev.vars`へcopyし，実際の値へ置き換えます．`DAVIS_TOKEN_SECRET`には32文字以上のrandom値を使用してください．productionでは値をsourceや通常の環境変数へ保存せず，Cloudflare Worker Secretとして登録します．
 

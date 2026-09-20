@@ -155,16 +155,17 @@ export function CatalogApp() {
   }, [language]);
 
   useEffect(() => {
+    if (sessionState !== "authenticated") return;
     Promise.all([
-      fetch("/catalog/datasets.json").then((response) => response.json() as Promise<Dataset[]>),
-      fetch("/catalog/files.json").then((response) => response.json() as Promise<CatalogFile[]>),
-      fetch("/catalog/facets.json").then((response) => response.json() as Promise<Facets>),
+      fetch("/catalog/datasets.json", { credentials: "same-origin" }).then((response) => response.json() as Promise<Dataset[]>),
+      fetch("/catalog/files.json", { credentials: "same-origin" }).then((response) => response.json() as Promise<CatalogFile[]>),
+      fetch("/catalog/facets.json", { credentials: "same-origin" }).then((response) => response.json() as Promise<Facets>),
     ]).then(([nextDatasets, nextFiles, nextFacets]) => {
       setDatasets(nextDatasets);
       setFiles(nextFiles);
       setFacets(nextFacets);
     }).catch(() => setLoadingError(true));
-  }, []);
+  }, [sessionState]);
 
   useEffect(() => {
     fetch("/api/v1/auth/session", { credentials: "same-origin" }).then(async (response) => {
@@ -309,6 +310,10 @@ export function CatalogApp() {
     setSessionExpiresAt("");
     setSessionGroupId("");
     setAllowedDatasetIds([]);
+    setDatasets([]);
+    setFiles([]);
+    setFacets(emptyFacets);
+    setLoadingError(false);
   }
 
   async function downloadSelected() {

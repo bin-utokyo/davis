@@ -1882,9 +1882,9 @@ CLIはRust use caseを同一process内で直接呼べます．WebはRust Coreを
 
 | 役割 | カタログ閲覧 | ダウンロード | 登録・更新・公開 | 権限管理 |
 | --- | --- | --- | --- | --- |
-| `participant` | 公開metadata全体 | 自groupに許可された範囲 | 不可 | 不可 |
-| `operator` | 公開metadata全体 | operator session単独では不可 | 可 | 新規・未公開datasetの自groupへの初期割当だけ可 |
-| `site-admin` | 公開metadata全体 | admin session単独では不可 | storage移行のみ | group作成と公開済みdatasetの許可group変更が可 |
+| `participant` | 自groupに許可された範囲 | 自groupに許可された範囲 | 不可 | 不可 |
+| `operator` | 管理用の全体 | operator session単独では不可 | 可 | 新規・未公開datasetの自groupへの初期割当だけ可 |
+| `site-admin` | 管理用の全体 | admin session単独では不可 | storage移行のみ | group作成と公開済みdatasetの許可group変更が可 |
 
 1つのdatasetには複数groupを許可できます．許可関係はprivate R2 Objectの`access/control.json`に`dataset_grants`として保存し，Catalog APIへ含めません．Site Adminによる更新は許可group集合の追加ではなく置換として扱い，Download Grant発行時と実download時の両方で現在の許可関係を検証します．
 
@@ -2558,7 +2558,7 @@ P0のDataset・File・Objectの意味をそのまま利用し，検索・認証�
 4. 100〜200人規模を想定した認証・download負荷testを通します．
 5. CLIとWebでDataset ID，File ID，size，digest，download対象が一致します．
 
-Catalog metadataと検索indexは公開情報としてPagesから配信できますが，Davis Webの一覧と検索はlogin中のaccess groupへ許可されたdatasetだけに絞ります．session APIは現在許可されたDataset ID集合を返し，権限変更後のsession確認でも更新します．実データのdownloadはaccess groupの参加者codeとsession cookieで保護します．codeはclient側へ埋め込まずServer側で検証し，年度更新または流出時に差し替えられるようにします．code差替え時には旧codeで発行したsessionも失効できるよう，sessionを役割別の認証revisionへ紐付けます．
+Catalog metadataと検索indexもsessionで保護し，WorkerのCatalog配信層でlogin中のaccess groupへ許可されたdatasetだけに絞ります．この共通responseをWebとCLIが使用し，client固有のfilterを権限境界にしません．session APIも現在許可されたDataset ID集合を返し，Webの件数表示と選択状態に利用します．実データのdownloadは同じaccess groupの参加者codeとsession cookieで保護します．codeはclient側へ埋め込まずServer側で検証し，年度更新または流出時に差し替えられるようにします．code差替え時には旧codeで発行したsessionも失効できるよう，sessionを役割別の認証revisionへ紐付けます．
 
 sessionの初期有効期間は180日を上限とし，年度切替またはcode差替え時には残存期間にかかわらず失効できるようにします．
 
@@ -2641,7 +2641,7 @@ P0〜P2が安定した後，次を優先度と需要に応じて追加します�
 14. 各componentは単独利用を可能にし，中央contractとuse caseを通じて接続します．
 15. CLI，Web，GUIでdomain logicを複製せず，それぞれを共通use caseのadapterとして実装します．
 16. 現行の`data/<category>/<dataset>/...`を基本的に維持し，DatasetManifestでDataset境界と安定IDを明示します．
-17. metadataは公開可能とし，初期Webでは実データのdownloadだけを共通招待codeで保護します．
+17. Catalog metadataと実データを同じ参加者sessionで保護し，access groupごとに許可されたdatasetだけをWebとCLIへ返します．
 18. 共通招待codeは年度ごとの更新と流出時の差替えを可能にし，必要に応じて既存sessionも失効させます．
 19. CLIの互換性は利用可能な機能で判定し，選択取得の`get`と同期取得の`pull`を提供します．どちらも初回取得に使用でき，`pull`と`push`はDataset ID省略時に全Datasetを対象にします．`push --all`は無印`push`と同じ全件操作の互換aliasです．
 20. P0のCLIはWindows，macOS，Linuxを対象とし，既定の取得先をcurrent directoryとします．

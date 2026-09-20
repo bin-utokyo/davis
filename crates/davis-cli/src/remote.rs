@@ -1010,7 +1010,11 @@ impl DavisService {
     }
 
     async fn get_json<T: DeserializeOwned>(&self, path: &str) -> Result<T, RemoteError> {
-        let response = self.client.get(self.endpoint(path)).send().await?;
+        let mut request = self.client.get(self.endpoint(path));
+        if let Some(token) = &self.token {
+            request = request.bearer_auth(token);
+        }
+        let response = request.send().await?;
         decode(response).await
     }
 

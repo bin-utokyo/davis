@@ -319,12 +319,17 @@ test("site admin creates a paired access group and controls dataset grants", asy
   assert.equal(participantLogin.status, 200);
   assert.deepEqual(participant.allowed_dataset_ids, []);
 
+  const hiddenCatalog = await handleCatalogRequest(apiRequest("/catalog/files.json", {
+    headers: { Authorization: `Bearer ${participant.token}` },
+  }), env);
+  assert.deepEqual(await hiddenCatalog.json(), []);
+
   const forbidden = await handleApiRequest(apiRequest("/api/v1/download-grants", {
     method: "POST",
     headers: { Authorization: `Bearer ${participant.token}`, "Content-Type": "application/json" },
     body: JSON.stringify({ file_ids: [sampleFile.id] }),
   }), env);
-  assert.equal(forbidden.status, 403);
+  assert.equal(forbidden.status, 404);
 
   const granted = await handleApiRequest(apiRequest("/api/v1/admin/dataset-access", {
     method: "PUT",
@@ -343,6 +348,11 @@ test("site admin creates a paired access group and controls dataset grants", asy
     (await participantStatus.json() as { allowed_dataset_ids: string[] }).allowed_dataset_ids,
     ["sample/tiny"],
   );
+
+  const visibleCatalog = await handleCatalogRequest(apiRequest("/catalog/files.json", {
+    headers: { Authorization: `Bearer ${participant.token}` },
+  }), env);
+  assert.deepEqual(await visibleCatalog.json(), [sampleFile]);
 
   const allowed = await handleApiRequest(apiRequest("/api/v1/download-grants", {
     method: "POST",
@@ -587,7 +597,10 @@ test("serves the atomically selected R2 catalog revision", async () => {
     },
   });
 
-  const response = await handleCatalogRequest(apiRequest("/catalog/files.json"), env);
+  const operator = await exchangeOperator(env);
+  const response = await handleCatalogRequest(apiRequest("/catalog/files.json", {
+    headers: { Authorization: `Bearer ${operator.body.token}` },
+  }), env);
   assert.equal(response.status, 200);
   assert.equal(response.headers.get("Content-Type"), "application/json; charset=utf-8");
   assert.equal(response.headers.get("X-Davis-Catalog-Revision"), revision);
@@ -600,7 +613,10 @@ test("serves the atomically selected R2 catalog revision", async () => {
 
 test("falls back to deployed catalog assets before the first R2 publication", async () => {
   const { env } = createEnv();
-  const response = await handleCatalogRequest(apiRequest("/catalog/files.json"), env);
+  const operator = await exchangeOperator(env);
+  const response = await handleCatalogRequest(apiRequest("/catalog/files.json", {
+    headers: { Authorization: `Bearer ${operator.body.token}` },
+  }), env);
   assert.equal(response.status, 200);
   assert.deepEqual(await response.json(), [sampleFile]);
 });
