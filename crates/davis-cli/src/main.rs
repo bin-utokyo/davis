@@ -194,7 +194,7 @@ enum Command {
         /// Verify only one dataset. All datasets are checked when omitted.
         dataset_id: Option<String>,
     },
-    /// Prepare, upload, commit, and push dataset updates from a personal branch.
+    /// Prepare, upload, commit, and push dataset updates.
     Push {
         /// One dataset to upload. Every dataset is selected when omitted.
         dataset_id: Option<String>,
@@ -222,6 +222,9 @@ enum Command {
         /// Git commit message. Defaults to `data: update <dataset>`.
         #[arg(short, long)]
         message: Option<String>,
+        /// Push from current main and immediately publish the resulting Catalog.
+        #[arg(long, conflicts_with = "dry_run")]
+        publish: bool,
     },
     /// Publish the reviewed `CatalogIndex` from the current main branch.
     Publish {
@@ -596,6 +599,7 @@ async fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
             dry_run,
             rehash,
             message,
+            publish,
         } => {
             handle_push(PushRequest {
                 repository: cli.repository,
@@ -608,6 +612,7 @@ async fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
                 dry_run,
                 rehash,
                 message,
+                publish,
             })
             .await?;
         }
@@ -758,6 +763,7 @@ struct PushRequest {
     dry_run: bool,
     rehash: bool,
     message: Option<String>,
+    publish: bool,
 }
 
 struct GetRequest {
@@ -1547,7 +1553,9 @@ async fn handle_push(request: PushRequest) -> Result<(), Box<dyn std::error::Err
     let dataset_ids = select_dataset_ids(&catalog, request.dataset_id.as_deref())?;
     let operator_session = session::load_operator()?;
     if operator_session.is_some() {
-        verify_operator_worktree(&request.repository, &dataset_ids)?;
+        verify_operator_worktree(&request.repository, &dataset_ids, request.publish)?;
+    } else if request.publish {
+        return Err("davis push --publish requires an active operator session".into());
     }
     let manifest_directory = resolve(&request.repository, &request.manifest_directory);
     let local_store = LocalObjectStore::new(resolve(&request.repository, &request.store));
@@ -1570,7 +1578,11 @@ async fn handle_push(request: PushRequest) -> Result<(), Box<dyn std::error::Err
                 &dataset_ids,
                 request.dataset_id.as_deref(),
                 request.message.as_deref(),
+                request.publish,
             )?;
+            if request.publish {
+                handle_publish(&request.repository, &request.config, &request.remote).await?;
+            }
         }
         return Ok(());
     }
@@ -1827,7 +1839,11 @@ async fn handle_operator_push(
     }
     if !request.dry_run {
         println!("Objects synchronized: yes");
-        println!("Catalog published: no (run `davis publish` from the latest main branch)");
+        if request.publish {
+            println!("Catalog publication: pending Git push");
+        } else {
+            println!("Catalog published: no (run `davis publish` from the latest main branch)");
+        }
     }
     Ok(())
 }
@@ -2202,6 +2218,21 @@ mod tests {
             super::select_dataset_ids(&catalog, None).expect("all datasets should be selected"),
             ["first/data", "second/data"]
         );
+    }
+
+    #[test]
+    fn push_accepts_explicit_direct_publication() {
+        let cli = Cli::try_parse_from(["davis", "push", "routes/Matsuyama", "--publish"])
+            .expect("push --publish should parse");
+        assert!(matches!(
+            cli.command,
+            Command::Push {
+                dataset_id: Some(dataset_id),
+                publish: true,
+                ..
+            } if dataset_id == "routes/Matsuyama"
+        ));
+        assert!(Cli::try_parse_from(["davis", "push", "--publish", "--dry-run"]).is_err());
     }
 
     #[test]

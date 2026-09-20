@@ -129,7 +129,7 @@ git merge --ff-only origin/main
 
 VS Codeでは，左下のbranch名から個人branchへ切り替え，Source Control viewの`…`から`Fetch`を実行します．その後Command Paletteの`Git: Merge Branch...`で`origin/main`を選択できます．ただし，VS Codeの通常のMerge操作は`--ff-only`を明示しないため，Source Control Graphで一直線に早送りできる状態と確認できる場合だけ使用してください．conflict，merge commit，未commit変更が表示された場合は確定せず停止してください．確実なのは上記terminal commandです．
 
-`davis push`は，名前の付いた`main`以外のbranchで実行できます．detached HEADと`main`からの実行は拒否されます．branch名の形式は問いません．
+通常の`davis push`は，名前の付いた`main`以外のbranchで実行できます．detached HEADと，`--publish`を付けない`main`からの実行は拒否されます．branch名の形式は問いません．
 
 ## 5. 1件のdatasetを更新する標準手順
 
@@ -186,6 +186,20 @@ VS Codeでは，左下のbranch名から個人branchへ切り替え，Source Con
 
 11. `Catalog published: yes`を確認し，Webを強制再読み込みして名称，schema，license，file数，PDF，downloadを確認します．
 
+### 1人運用でmainへ直接反映する場合
+
+Pull Requestによるreviewを行わない1人運用では，明示的な`--publish`を付けると，最新`main`へのGit pushとCatalog公開を1 commandで実行できます．
+
+```bash
+git switch main
+git pull --ff-only
+davis push routes/Matsuyama --publish -m "data: update routes/Matsuyama"
+```
+
+この操作は開始前にlocal `main`と`origin/main`の一致，および対象dataset以外に未commit変更がないことを検査します．R2 upload，Manifest・PDF生成，Git commit，`origin/main`へのpushがすべて成功した後だけCatalogを公開します．GitHubのbranch protectionがmainへの直接pushを禁止している場合はGit pushで停止し，Catalogは公開しません．Git push後にCatalog公開だけが失敗した場合は，原因を解消して最新`main`から`davis publish`を再実行します．
+
+`--publish`は`main`専用で，`--dry-run`とは同時に指定できません．複数人運用ではreviewを省略せず，前節の個人branch＋Pull Request方式を使用してください．
+
 ここまでが通常作業です．以降は，commandの役割，安全設計，例外時の対応を詳しく知りたい場合に参照してください．
 
 ## Git操作とDavis操作の違い
@@ -236,6 +250,7 @@ VS CodeのSource Control操作とterminalのGit commandは，同じrepository状
 | `davis verify [dataset]` | local実データを現在のDavis ManifestのBLAKE3と照合する | なし |
 | `davis push <dataset> --dry-run` | 更新予定のObjectと容量を確認する | なし |
 | `davis push <dataset> [-m <message>]` | 担当datasetを準備し，R2と個人branchへ送る | なし |
+| `davis push <dataset> --publish [-m <message>]` | 最新mainへ直接pushし，成功後にCatalogを公開する | あり |
 | `davis push`・`davis push --all` | 全datasetを検査し，R2と個人branchへ送る | なし |
 | `davis publish` | review済みの最新`main`を公開する | あり |
 

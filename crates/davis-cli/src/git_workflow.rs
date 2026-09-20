@@ -4,19 +4,31 @@ use std::process::Command;
 pub(crate) fn verify_operator_worktree(
     repository: &Path,
     dataset_ids: &[String],
+    publish: bool,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let branch = git_output(repository, &["branch", "--show-current"])?;
-    validate_personal_branch(&branch)?;
+    validate_operator_branch(&branch, publish)?;
     git_run(repository, &["fetch", "origin", "main"])?;
-    let current = Command::new("git")
-        .args(["merge-base", "--is-ancestor", "origin/main", "HEAD"])
-        .current_dir(repository)
-        .status()?;
-    if !current.success() {
-        return Err(
-            "personal branch does not contain the latest origin/main; update it with `git merge --ff-only origin/main` before editing"
-                .into(),
-        );
+    if publish {
+        let head = git_output(repository, &["rev-parse", "HEAD"])?;
+        let origin_main = git_output(repository, &["rev-parse", "origin/main"])?;
+        if head != origin_main {
+            return Err(
+                "direct publication requires local main to match origin/main before push; run `git pull --ff-only` and retry"
+                    .into(),
+            );
+        }
+    } else {
+        let current = Command::new("git")
+            .args(["merge-base", "--is-ancestor", "origin/main", "HEAD"])
+            .current_dir(repository)
+            .status()?;
+        if !current.success() {
+            return Err(
+                "personal branch does not contain the latest origin/main; update it with `git merge --ff-only origin/main` before editing"
+                    .into(),
+            );
+        }
     }
     let tracked = git_output(
         repository,
@@ -46,6 +58,7 @@ pub(crate) fn commit_and_push_operator_changes(
     dataset_ids: &[String],
     selected_dataset: Option<&str>,
     message: Option<&str>,
+    publish: bool,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let mut add = Command::new("git");
     add.arg("add").arg("-A").arg("--");
@@ -90,7 +103,11 @@ pub(crate) fn commit_and_push_operator_changes(
         );
     }
     println!("Git branch pushed: {branch}");
-    println!("Open a Pull Request to main; catalog publication remains unchanged");
+    if publish {
+        println!("Git main updated; publishing the Catalog");
+    } else {
+        println!("Open a Pull Request to main; catalog publication remains unchanged");
+    }
     Ok(())
 }
 
@@ -143,13 +160,17 @@ fn git_run(repository: &Path, arguments: &[&str]) -> Result<(), Box<dyn std::err
     Ok(())
 }
 
-fn validate_personal_branch(branch: &str) -> Result<(), String> {
+fn validate_operator_branch(branch: &str, publish: bool) -> Result<(), String> {
     if branch.is_empty() {
-        return Err("davis push requires a named personal working branch; HEAD is detached".into());
+        return Err("davis push requires a named branch; HEAD is detached".into());
     }
-    if branch == "main" {
+    if publish && branch != "main" {
+        return Err("davis push --publish is allowed only from main".into());
+    }
+    if !publish && branch == "main" {
         return Err(
-            "davis push must not run from main; switch to a personal working branch first".into(),
+            "davis push must not run from main without --publish; switch to a personal working branch or explicitly request direct publication"
+                .into(),
         );
     }
     Ok(())
@@ -164,15 +185,22 @@ fn path_belongs_to_datasets(path: &str, dataset_ids: &[String]) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use super::{path_belongs_to_datasets, validate_personal_branch};
+    use super::{path_belongs_to_datasets, validate_operator_branch};
 
     #[test]
     fn push_accepts_any_named_branch_except_main() {
         for valid in ["operator/alice-1", "data-update", "team/network/2026"] {
-            assert!(validate_personal_branch(valid).is_ok(), "{valid}");
+            assert!(validate_operator_branch(valid, false).is_ok(), "{valid}");
         }
-        assert!(validate_personal_branch("main").is_err());
-        assert!(validate_personal_branch("").is_err());
+        assert!(validate_operator_branch("main", false).is_err());
+        assert!(validate_operator_branch("", false).is_err());
+    }
+
+    #[test]
+    fn direct_publish_accepts_only_main() {
+        assert!(validate_operator_branch("main", true).is_ok());
+        assert!(validate_operator_branch("operator/alice-1", true).is_err());
+        assert!(validate_operator_branch("", true).is_err());
     }
 
     #[test]

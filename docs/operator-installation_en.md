@@ -129,7 +129,7 @@ git merge --ff-only origin/main
 
 In VS Code, switch to the personal branch from the lower-left branch indicator and choose `Fetch` from the Source Control view's `…` menu. You can then run `Git: Merge Branch...` from the Command Palette and select `origin/main`. However, the normal VS Code Merge action does not explicitly enforce `--ff-only`. Use it only when the Source Control Graph confirms a straight fast-forward path. If VS Code shows conflicts, a merge commit, or uncommitted changes, do not complete the operation. The terminal command above is the reliable option.
 
-`davis push` accepts any named branch other than `main`. It rejects `main` and a detached HEAD but does not prescribe a name format.
+A normal `davis push` accepts any named branch other than `main`. It rejects a detached HEAD and `main` without `--publish`, but does not prescribe a name format.
 
 ## 5. Standard procedure for updating one dataset
 
@@ -186,6 +186,20 @@ Here, `git status` confirms that publication starts from a clean working tree. `
 
 11. Confirm `Catalog published: yes`, force-refresh the Web catalog, and inspect names, schemas, licenses, file counts, PDFs, and downloads.
 
+### Direct publication from main for a single-operator deployment
+
+When one operator intentionally works without Pull Request review, explicit `--publish` can combine the Git push to current `main` and Catalog publication in one command.
+
+```bash
+git switch main
+git pull --ff-only
+davis push routes/Matsuyama --publish -m "data: update routes/Matsuyama"
+```
+
+Before changing anything, this operation verifies that local `main` matches `origin/main` and that no uncommitted change lies outside the selected dataset. It publishes the Catalog only after the R2 upload, Manifest and PDF generation, Git commit, and push to `origin/main` all succeed. If GitHub branch protection rejects a direct push to main, the command stops before publication. If only Catalog publication fails after the Git push, resolve the cause and retry `davis publish` from the latest `main`.
+
+`--publish` is restricted to `main` and conflicts with `--dry-run`. Multi-operator deployments should retain the personal-branch and Pull Request workflow above.
+
 Routine work ends here. Read the remaining sections when you need detailed command roles, safety rationale, or exceptional-case recovery.
 
 ## Git operations and Davis operations
@@ -236,6 +250,7 @@ For current interface names and details, see the official VS Code documentation 
 | `davis verify [dataset]` | Compare local real data with the BLAKE3 IDs in the current Davis Manifest | None |
 | `davis push <dataset> --dry-run` | Inspect planned objects and bytes | None |
 | `davis push <dataset> [-m <message>]` | Prepare and send one assigned dataset to R2 and the personal branch | None |
+| `davis push <dataset> --publish [-m <message>]` | Push directly to current main and publish the Catalog after success | Yes |
 | `davis push` / `davis push --all` | Inspect and send every dataset to R2 and the personal branch | None |
 | `davis publish` | Publish reviewed, current `main` | Yes |
 
