@@ -121,6 +121,13 @@ pub struct AccessGroupCredentials {
     pub operator_code: String,
 }
 
+#[derive(Debug, Deserialize)]
+pub struct CompressionResult {
+    pub oid: String,
+    pub original_size: u64,
+    pub compressed_size: u64,
+}
+
 #[derive(Debug, Serialize)]
 struct CreateAccessGroupRequest<'a> {
     group_id: &'a str,
@@ -380,6 +387,20 @@ impl DavisService {
             .send()
             .await?;
         ensure_success(response).await.map(|_| ())
+    }
+
+    pub async fn compress_admin_object(
+        &self,
+        object: &ObjectRef,
+    ) -> Result<CompressionResult, RemoteError> {
+        let response = self
+            .client
+            .post(self.endpoint("api/v1/admin/storage/compress"))
+            .bearer_auth(self.admin_token()?)
+            .json(object)
+            .send()
+            .await?;
+        decode(response).await
     }
 
     pub async fn upload_operator_objects<F>(

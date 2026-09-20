@@ -301,6 +301,12 @@ enum AdminCommand {
         #[arg(long = "group", required = true)]
         groups: Vec<String>,
     },
+    /// Losslessly compress every catalog object in R2 and remove each verified raw copy.
+    StorageCompress {
+        /// Confirm removal of raw R2 objects after round-trip verification.
+        #[arg(long)]
+        yes: bool,
+    },
 }
 
 #[derive(Debug, Subcommand)]
@@ -666,6 +672,47 @@ async fn handle_admin(command: AdminCommand) -> Result<(), Box<dyn std::error::E
                 .await?;
             println!("Dataset access updated: {dataset_id}");
             println!("Allowed groups: {}", groups.join(", "));
+            Ok(())
+        }
+        AdminCommand::StorageCompress { yes } => {
+            if !yes {
+                return Err(
+                    "storage compression removes verified raw R2 objects; rerun with --yes".into(),
+                );
+            }
+            let stored = session::load_admin()?.ok_or("no stored Site Admin session")?;
+            let service = DavisService::new(&stored.service_url, Some(stored.token))?;
+            let catalog = service.catalog().await?;
+            let mut objects = HashMap::<String, ObjectRef>::new();
+            for dataset in catalog.datasets {
+                for file in dataset.files {
+                    objects.entry(file.object.to_string()).or_insert(ObjectRef {
+                        oid: file.object,
+                        size: file.size,
+                    });
+                }
+            }
+            let mut objects = objects.into_values().collect::<Vec<_>>();
+            objects.sort_by(|left, right| left.oid.to_string().cmp(&right.oid.to_string()));
+            let logical_bytes = objects.iter().map(|object| object.size).sum::<u64>();
+            let mut compressed_bytes = 0_u64;
+            for (index, object) in objects.iter().enumerate() {
+                let result = service.compress_admin_object(object).await?;
+                compressed_bytes += result.compressed_size;
+                println!(
+                    "Compressed {}/{}: {} -> {} bytes ({})",
+                    index + 1,
+                    objects.len(),
+                    result.original_size,
+                    result.compressed_size,
+                    result.oid,
+                );
+            }
+            let saved = logical_bytes.saturating_sub(compressed_bytes);
+            println!("Objects compressed: {}", objects.len());
+            println!("Logical bytes: {logical_bytes}");
+            println!("Compressed bytes: {compressed_bytes}");
+            println!("Bytes saved: {saved}");
             Ok(())
         }
     }

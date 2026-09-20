@@ -135,6 +135,25 @@ paths:
       responses:
         "200": { description: Dataset access replaced }
         "401": { $ref: "#/components/responses/Error" }
+  /api/v1/admin/storage/compress:
+    post:
+      operationId: compressStoredObject
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [oid, size]
+              properties:
+                oid: { type: string, pattern: '^blake3:[0-9a-f]{64}$' }
+                size: { type: integer, minimum: 0 }
+      responses:
+        "200": { description: Losslessly compressed object after verification and raw-object removal }
+        "401": { $ref: "#/components/responses/Error" }
+        "404": { $ref: "#/components/responses/Error" }
+        "409": { $ref: "#/components/responses/Error" }
   /api/v1/operator/datasets/claim:
     post:
       operationId: claimOperatorDatasets

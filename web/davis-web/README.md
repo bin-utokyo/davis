@@ -65,6 +65,12 @@ davis admin dataset-access network/matsuyama --group municipality-a
 
 `group-create`は同じaccess groupへ対応する参加者codeと運営codeを一度だけ表示します．groupの運営codeで新規datasetをpushすると，そのdatasetは同じgroupへ初期割当されます．公開済みdatasetの割当は運営者から奪えず，Site Adminだけが`dataset-access`で事後変更できます．旧`DAVIS_INVITE_CODE`と`DAVIS_OPERATOR_CODE`は従来どおり利用できるため，この機能を有効化しても既存利用者の操作は変わりません．access group設定はprivate R2 Object `access/control.json`として保存され，Catalog APIには含まれません．
 
+`DAVIS_LEGACY_GROUP_ID`を設定すると，旧`DAVIS_INVITE_CODE`と`DAVIS_OPERATOR_CODE`を同じaccess groupへ移行できます．既存sessionを残さないよう，移行時には参加者・運営者のaccess revisionも更新します．R2 Objectは次のcommandで可逆gzipへ移行できます．各Objectは展開後のbyte数を検証してからraw copyを削除し，download時にはWorkerが元のfileとして展開します．
+
+```bash
+davis admin storage-compress --yes
+```
+
 Cloudflareへloginし，Secretを登録した後は，次のcommandでbuild済みassetとWorkerを`davis-bin` accountへdeployします．既存の`davis-bmss`を`DAVIS_DATA`としてbindingし，R2 Objectのuploadや削除は行いません．
 
 ```bash

@@ -31,10 +31,12 @@ function createEnv(overrides: Partial<DavisWorkerEnv> = {}) {
     "objects/blake3/e2/d004c4d48e0a7b166c588fc479eec8610940be7a58f0456b86c90dd0126cc9",
     contents,
   ]]);
+  const storedCustomMetadata = new Map<string, Record<string, string>>();
   const multipart = new Map<string, { key: string; parts: Map<number, Uint8Array> }>();
-  const metadata = (value: Uint8Array) => ({
+  const metadata = (value: Uint8Array, key?: string) => ({
     size: value.length,
     httpEtag: '"test-etag"',
+    customMetadata: key ? storedCustomMetadata.get(key) : undefined,
     writeHttpMetadata() {},
   });
   const resumeMultipartUpload = (key: string, uploadId: string) => ({
@@ -59,7 +61,7 @@ function createEnv(overrides: Partial<DavisWorkerEnv> = {}) {
       }
       stored.set(key, value);
       multipart.delete(uploadId);
-      return metadata(value);
+      return metadata(value, key);
     },
     async abort() {
       multipart.delete(uploadId);
@@ -91,6 +93,7 @@ function createEnv(overrides: Partial<DavisWorkerEnv> = {}) {
           body: new Blob([body]).stream(),
           size: value.length,
           httpEtag: '"test-etag"',
+          customMetadata: storedCustomMetadata.get(key),
           range,
           writeHttpMetadata(headers: Headers) {
             headers.set("Content-Type", "text/csv");
@@ -99,16 +102,24 @@ function createEnv(overrides: Partial<DavisWorkerEnv> = {}) {
       },
       async head(key) {
         const value = stored.get(key);
-        return value ? metadata(value) : null;
+        return value ? metadata(value, key) : null;
       },
-      async put(key, value) {
+      async put(key, value, options) {
         const bytes = typeof value === "string"
           ? new TextEncoder().encode(value)
           : value instanceof ArrayBuffer
             ? new Uint8Array(value)
             : new Uint8Array(await new Response(value).arrayBuffer());
         stored.set(key, bytes);
-        return metadata(bytes);
+        if (options?.customMetadata) storedCustomMetadata.set(key, options.customMetadata);
+        else storedCustomMetadata.delete(key);
+        return metadata(bytes, key);
+      },
+      async delete(key) {
+        for (const item of Array.isArray(key) ? key : [key]) {
+          stored.delete(item);
+          storedCustomMetadata.delete(item);
+        }
       },
       async createMultipartUpload(key) {
         const uploadId = `upload-${multipart.size + 1}-abcdefghijklmnop`;
@@ -206,6 +217,21 @@ test("exchanges the shared invite code for CLI and browser sessions", async () =
   const logout = await handleApiRequest(apiRequest("/api/v1/auth/logout", { method: "POST" }), env);
   assert.equal(logout.status, 200);
   assert.match(logout.headers.get("Set-Cookie") ?? "", /Max-Age=0/u);
+});
+
+test("maps existing participant and operator codes into the configured legacy group", async () => {
+  const { env } = createEnv({ DAVIS_LEGACY_GROUP_ID: "bmss26" });
+  const participant = await exchange(env);
+  const participantStatus = await handleApiRequest(apiRequest("/api/v1/auth/session", {
+    headers: { Authorization: `Bearer ${participant.body.token}` },
+  }), env);
+  assert.equal((await participantStatus.json() as { group_id: string }).group_id, "bmss26");
+
+  const operator = await exchangeOperator(env);
+  const operatorStatus = await handleApiRequest(apiRequest("/api/v1/operator/auth/session", {
+    headers: { Authorization: `Bearer ${operator.body.token}` },
+  }), env);
+  assert.equal((await operatorStatus.json() as { group_id: string }).group_id, "bmss26");
 });
 
 test("rejects an incorrect invite code and a cross-origin exchange", async () => {
@@ -383,7 +409,12 @@ test("plans, uploads, and completes an operator multipart object", async () => {
     }),
   }), env);
   assert.equal(completed.status, 200);
-  assert.deepEqual(stored.get(`objects/blake3/aa/${"a".repeat(62)}`), payload);
+  assert.equal(stored.has(`objects/blake3/aa/${"a".repeat(62)}`), false);
+  const compressed = stored.get(`objects-gzip/v1/blake3/aa/${"a".repeat(62)}.gz`)!;
+  const decoded = new Uint8Array(await new Response(
+    new Blob([compressed]).stream().pipeThrough(new DecompressionStream("gzip")),
+  ).arrayBuffer());
+  assert.deepEqual(decoded, payload);
 });
 
 test("rejects undersized non-final multipart parts before R2 completion", async () => {
@@ -596,6 +627,36 @@ test("streams an authorized R2 object and supports byte ranges", async () => {
     doubles: [1],
     indexes: [sampleFile.object.oid],
   }]);
+});
+
+test("compresses an R2 object, removes the raw copy, and preserves ranged downloads", async () => {
+  const { env, stored } = createEnv();
+  const admin = await exchangeAdmin(env);
+  const compressed = await handleApiRequest(apiRequest("/api/v1/admin/storage/compress", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${admin.body.token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ oid: sampleFile.object.oid, size: sampleFile.object.size }),
+  }), env);
+  assert.equal(compressed.status, 200);
+  const result = await compressed.json() as { format: string; original_size: number; compressed_size: number };
+  assert.equal(result.format, "davis.gzip/v1");
+  assert.equal(result.original_size, contents.length);
+  assert.ok(result.compressed_size > 0);
+  assert.equal(stored.has("objects/blake3/e2/d004c4d48e0a7b166c588fc479eec8610940be7a58f0456b86c90dd0126cc9"), false);
+
+  const { body } = await exchange(env);
+  const grantResponse = await handleApiRequest(apiRequest("/api/v1/download-grants", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${body.token}` },
+    body: JSON.stringify({ file_ids: [sampleFile.id] }),
+  }), env);
+  const grants = await grantResponse.json() as { grants: Array<{ url: string }> };
+  const download = await handleApiRequest(new Request(grants.grants[0].url, {
+    headers: { Range: "bytes=3-7" },
+  }), env);
+  assert.equal(download.status, 206);
+  assert.equal(download.headers.get("Content-Range"), `bytes 3-7/${contents.length}`);
+  assert.deepEqual(new Uint8Array(await download.arrayBuffer()), contents.slice(3, 8));
 });
 
 test("does not fail a download when analytics recording fails", async () => {

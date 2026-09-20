@@ -4,3 +4,4 @@ DAVIS_OPERATOR_CODE=replace-with-a-separate-long-operator-code
 # Optional. Configure this only when access-group administration is needed.
 DAVIS_ADMIN_CODE=replace-with-a-separate-site-admin-code
 DAVIS_TOKEN_SECRET=replace-with-at-least-32-random-characters
+DAVIS_LEGACY_GROUP_ID=bmss26

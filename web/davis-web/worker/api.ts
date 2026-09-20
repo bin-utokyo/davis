@@ -31,6 +31,7 @@ const CATALOG_DOCUMENTS = new Set([
   "facets.json",
 ]);
 const ACCESS_CONTROL_KEY = "access/control.json";
+const COMPRESSED_OBJECT_FORMAT = "davis.gzip/v1";
 const GROUP_ID_PATTERN = /^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$/u;
 
 type AssetFetcher = {
@@ -50,6 +51,7 @@ type R2ObjectMetadata = {
   size: number;
   httpEtag: string;
   range?: R2Range;
+  customMetadata?: Record<string, string>;
   writeHttpMetadata(headers: Headers): void;
 };
 type R2ObjectBody = R2ObjectMetadata & { body: ReadableStream };
@@ -69,7 +71,9 @@ type R2Bucket = {
   head(key: string): Promise<R2ObjectMetadata | null>;
   put(key: string, value: string | ArrayBuffer | ReadableStream, options?: {
     httpMetadata?: { contentType?: string };
+    customMetadata?: Record<string, string>;
   }): Promise<R2ObjectMetadata>;
+  delete(key: string | string[]): Promise<void>;
   createMultipartUpload(key: string): Promise<R2MultipartUpload>;
   resumeMultipartUpload(key: string, uploadId: string): R2MultipartUpload;
 };
@@ -89,6 +93,7 @@ export type DavisWorkerEnv = {
   DAVIS_ADMIN_CODE?: string;
   DAVIS_ADMIN_ACCESS_REVISION?: string;
   DAVIS_ADMIN_SESSION_TTL_SECONDS?: string;
+  DAVIS_LEGACY_GROUP_ID?: string;
 };
 
 type AccessGroup = {
@@ -101,6 +106,13 @@ type AccessControl = {
   version: 1;
   groups: Record<string, AccessGroup>;
   dataset_grants: Record<string, string[]>;
+};
+
+type CompressedObjectDescriptor = {
+  format: typeof COMPRESSED_OBJECT_FORMAT;
+  oid: string;
+  original_size: number;
+  compressed_size: number;
 };
 
 type CatalogFile = {
@@ -165,6 +177,11 @@ export async function handleApiRequest(request: Request, env: DavisWorkerEnv): P
     if (request.method !== "PUT") return methodNotAllowed("PUT");
     if (!sameOrigin(request, url)) return errorResponse(403, "origin_forbidden", "Origin is not allowed");
     return updateDatasetAccess(request, env);
+  }
+  if (url.pathname === "/api/v1/admin/storage/compress") {
+    if (request.method !== "POST") return methodNotAllowed("POST");
+    if (!sameOrigin(request, url)) return errorResponse(403, "origin_forbidden", "Origin is not allowed");
+    return compressAdminObject(request, env);
   }
   if (url.pathname === "/api/v1/operator/uploads/plan") {
     if (request.method !== "POST") return methodNotAllowed("POST");
@@ -255,6 +272,7 @@ async function exchangeInviteCode(request: Request, env: DavisWorkerEnv): Promis
   const legacyMatch = env.DAVIS_INVITE_CODE
     ? await codesMatch(inviteCode, env.DAVIS_INVITE_CODE)
     : false;
+  if (legacyMatch && env.DAVIS_LEGACY_GROUP_ID) groupId = env.DAVIS_LEGACY_GROUP_ID;
   if (!legacyMatch) groupId = await findGroupByCode(inviteCode, "participant", env) ?? undefined;
   if (!legacyMatch && !groupId) {
     return errorResponse(401, "invalid_invite_code", "Invite code is invalid");
@@ -299,6 +317,7 @@ async function exchangeOperatorCode(request: Request, env: DavisWorkerEnv): Prom
   const legacyMatch = env.DAVIS_OPERATOR_CODE
     ? await codesMatch(operatorCode, env.DAVIS_OPERATOR_CODE)
     : false;
+  if (legacyMatch && env.DAVIS_LEGACY_GROUP_ID) groupId = env.DAVIS_LEGACY_GROUP_ID;
   if (!legacyMatch) groupId = await findGroupByCode(operatorCode, "operator", env) ?? undefined;
   if (!legacyMatch && !groupId) {
     return errorResponse(401, "invalid_operator_code", "Operator code is invalid");
@@ -395,7 +414,10 @@ async function listAccessGroups(request: Request, env: DavisWorkerEnv): Promise<
   const control = await readAccessControl(env);
   if (!control) return errorResponse(503, "access_control_unavailable", "Access control is unavailable");
   return json({
-    groups: Object.keys(control.groups).sort(),
+    groups: [...new Set([
+      ...Object.keys(control.groups),
+      ...(env.DAVIS_LEGACY_GROUP_ID ? [env.DAVIS_LEGACY_GROUP_ID] : []),
+    ])].sort(),
     dataset_grants: control.dataset_grants,
   });
 }
@@ -442,7 +464,8 @@ async function updateDatasetAccess(request: Request, env: DavisWorkerEnv): Promi
   }
   const control = await readAccessControl(env);
   if (!control) return errorResponse(503, "access_control_unavailable", "Access control is unavailable");
-  const unknown = allowedGroupIds.filter((groupId) => !control.groups[groupId]);
+  const unknown = allowedGroupIds.filter((groupId) => !control.groups[groupId]
+    && groupId !== env.DAVIS_LEGACY_GROUP_ID);
   if (unknown.length > 0) {
     return errorResponse(400, "unknown_access_group", "One or more access groups do not exist", { group_ids: unknown });
   }
@@ -453,7 +476,90 @@ async function updateDatasetAccess(request: Request, env: DavisWorkerEnv): Promi
   return json({ dataset_id: datasetId, allowed_group_ids: control.dataset_grants[datasetId] });
 }
 
+async function compressAdminObject(request: Request, env: DavisWorkerEnv): Promise<Response> {
+  const session = await requireAdmin(request, env);
+  if (session instanceof Response) return session;
+  const body = await readJson(request);
+  const object = parseOperatorObject(body);
+  if (!object) return errorResponse(400, "invalid_request", "A valid oid and size are required");
+  const compressed = await compressStoredObject(env.DAVIS_DATA!, object);
+  return compressed instanceof Response ? compressed : json(compressed);
+}
+
+async function compressStoredObject(
+  bucket: R2Bucket,
+  object: OperatorObject,
+): Promise<CompressedObjectDescriptor | Response> {
+  const compressedKey = compressedObjectKey(object.oid);
+  const existing = await bucket.head(compressedKey).catch(() => null);
+  if (existing && isCompressedRepresentation(existing, object)) {
+    const raw = await bucket.head(objectKey(object.oid)).catch(() => null);
+    if (raw) await bucket.delete(objectKey(object.oid));
+    return compressedDescriptor(existing, object);
+  }
+
+  const raw = await bucket.get(objectKey(object.oid)).catch(() => null);
+  if (!raw || !("body" in raw)) {
+    return errorResponse(404, "object_not_found", "The uncompressed object was not found");
+  }
+  if (raw.size !== object.size) {
+    return errorResponse(409, "object_size_mismatch", "Stored object size does not match the catalog");
+  }
+
+  let stored: R2ObjectMetadata;
+  try {
+    stored = await bucket.put(
+      compressedKey,
+      raw.body.pipeThrough(new CompressionStream("gzip")),
+      {
+        httpMetadata: { contentType: "application/gzip" },
+        customMetadata: {
+          davisFormat: COMPRESSED_OBJECT_FORMAT,
+          davisOid: object.oid,
+          davisOriginalSize: String(object.size),
+        },
+      },
+    );
+  } catch {
+    return errorResponse(502, "object_compression_failed", "R2 failed while storing the compressed object");
+  }
+
+  try {
+    const check = await bucket.get(compressedKey);
+    if (!check || !("body" in check) || !isCompressedRepresentation(check, object)) {
+      throw new Error("compressed object metadata is invalid");
+    }
+    const decodedBytes = await countStreamBytes(check.body.pipeThrough(new DecompressionStream("gzip")));
+    if (decodedBytes !== object.size) throw new Error("decoded size does not match");
+  } catch {
+    await bucket.delete(compressedKey).catch(() => undefined);
+    return errorResponse(502, "object_compression_verification_failed", "Compressed object verification failed");
+  }
+
+  try {
+    await bucket.delete(objectKey(object.oid));
+  } catch {
+    return errorResponse(502, "raw_object_delete_failed", "Compressed object is valid but the raw object could not be removed");
+  }
+  return compressedDescriptor(stored, object);
+}
+
+async function countStreamBytes(stream: ReadableStream): Promise<number> {
+  const reader = stream.getReader();
+  let size = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) return size;
+    size += value.byteLength;
+  }
+}
+
 type OperatorObject = { oid: string; size: number };
+
+type StoredRepresentation = {
+  kind: "raw" | "gzip";
+  metadata: R2ObjectMetadata;
+};
 
 async function planOperatorUploads(request: Request, env: DavisWorkerEnv): Promise<Response> {
   const session = await requireOperator(request, env);
@@ -464,9 +570,9 @@ async function planOperatorUploads(request: Request, env: DavisWorkerEnv): Promi
   let results: Array<OperatorObject & { status: string; actual_size?: number }>;
   try {
     results = await Promise.all(objects.map(async (object) => {
-      const stored = await env.DAVIS_DATA!.head(objectKey(object.oid));
-      if (stored && stored.size !== object.size) {
-        return { ...object, status: "size_mismatch", actual_size: stored.size };
+      const stored = await findStoredRepresentation(env.DAVIS_DATA!, object);
+      if (stored === "size_mismatch") {
+        return { ...object, status: "size_mismatch" };
       }
       return { ...object, status: stored ? "existing" : "missing" };
     }));
@@ -486,14 +592,14 @@ async function createOperatorUpload(request: Request, env: DavisWorkerEnv): Prom
   const object = parseOperatorObject(body);
   if (!object) return errorResponse(400, "invalid_request", "A valid oid and size are required");
   const key = objectKey(object.oid);
-  let stored: R2ObjectMetadata | null;
+  let stored: StoredRepresentation | "size_mismatch" | null;
   try {
-    stored = await env.DAVIS_DATA!.head(key);
+    stored = await findStoredRepresentation(env.DAVIS_DATA!, object);
   } catch {
     return errorResponse(502, "r2_object_check_failed", "R2 failed while checking the upload object");
   }
   if (stored) {
-    if (stored.size !== object.size) {
+    if (stored === "size_mismatch") {
       return errorResponse(409, "object_size_mismatch", "Stored object has an unexpected size");
     }
     return json({ oid: object.oid, size: object.size, already_present: true });
@@ -589,7 +695,9 @@ async function completeOperatorUpload(request: Request, env: DavisWorkerEnv): Pr
   if (!stored || stored.size !== object.size) {
     return errorResponse(409, "object_size_mismatch", "Completed object size does not match the declared size");
   }
-  return json({ oid: object.oid, size: object.size, uploaded: true });
+  const compressed = await compressStoredObject(env.DAVIS_DATA!, object);
+  if (compressed instanceof Response) return compressed;
+  return json({ oid: object.oid, size: object.size, uploaded: true, storage: compressed });
 }
 
 async function abortOperatorUpload(request: Request, env: DavisWorkerEnv): Promise<Response> {
@@ -634,10 +742,10 @@ async function publishOperatorCatalog(request: Request, env: DavisWorkerEnv): Pr
   const uniqueObjects = new Map<string, number>();
   for (const file of files) uniqueObjects.set(file.object.oid, file.object.size);
   const coverage = await Promise.all([...uniqueObjects].map(async ([oid, size]) => {
-    const stored = await env.DAVIS_DATA!.head(objectKey(oid));
-    return { oid, size, actual_size: stored?.size ?? null };
+    const stored = await findStoredRepresentation(env.DAVIS_DATA!, { oid, size });
+    return { oid, size, present: !!stored && stored !== "size_mismatch" };
   }));
-  const missing = coverage.filter((object) => object.actual_size !== object.size);
+  const missing = coverage.filter((object) => !object.present);
   if (missing.length > 0) {
     return errorResponse(409, "catalog_objects_missing", "Catalog references missing or invalid objects", { objects: missing });
   }
@@ -826,7 +934,54 @@ async function downloadObject(request: Request, env: DavisWorkerEnv): Promise<Re
   }
   recordDownloadAttempt(env, payload, request.headers.has("Range"));
 
-  const object = await env.DAVIS_DATA.get(objectKey(payload.oid), {
+  const representation = await findStoredRepresentation(env.DAVIS_DATA, {
+    oid: payload.oid,
+    size: payload.size,
+  });
+  if (!representation) return errorResponse(404, "object_not_found", "Object was not found");
+  if (representation === "size_mismatch") {
+    return errorResponse(409, "object_size_mismatch", "Stored object size does not match the catalog");
+  }
+  if (representation.kind === "raw") return downloadRawObject(request, env.DAVIS_DATA, payload);
+
+  const object = await env.DAVIS_DATA.get(compressedObjectKey(payload.oid));
+  if (!object || !("body" in object) || !isCompressedRepresentation(object, payload)) {
+    return errorResponse(409, "object_size_mismatch", "Compressed object metadata does not match the catalog");
+  }
+  const etag = `"${payload.oid.slice("blake3:".length)}"`;
+  if (request.headers.get("If-Match") && request.headers.get("If-Match") !== etag) {
+    return new Response(null, { status: 412 });
+  }
+  if (request.headers.get("If-None-Match") === etag) {
+    return new Response(null, { status: 304, headers: { ETag: etag } });
+  }
+  const range = parseByteRange(request.headers.get("Range"), payload.size);
+  if (range === "invalid") {
+    return new Response(null, {
+      status: 416,
+      headers: { "Content-Range": `bytes */${payload.size}` },
+    });
+  }
+  let body = object.body.pipeThrough(new DecompressionStream("gzip"));
+  if (range) body = body.pipeThrough(byteRangeStream(range));
+
+  const headers = downloadHeaders(payload, etag);
+  if (range) {
+    const end = range.offset + range.length - 1;
+    headers.set("Content-Range", `bytes ${range.offset}-${end}/${payload.size}`);
+    headers.set("Content-Length", String(range.length));
+  } else {
+    headers.set("Content-Length", String(payload.size));
+  }
+  return new Response(body, { status: range ? 206 : 200, headers });
+}
+
+async function downloadRawObject(
+  request: Request,
+  bucket: R2Bucket,
+  payload: DownloadToken,
+): Promise<Response> {
+  const object = await bucket.get(objectKey(payload.oid), {
     onlyIf: request.headers,
     range: request.headers,
   });
@@ -836,14 +991,9 @@ async function downloadObject(request: Request, env: DavisWorkerEnv): Promise<Re
   }
   if (!("body" in object)) return new Response(null, { status: 412 });
 
-  const headers = new Headers();
+  const headers = downloadHeaders(payload, object.httpEtag);
   object.writeHttpMetadata(headers);
-  headers.set("ETag", object.httpEtag);
   headers.set("Accept-Ranges", "bytes");
-  headers.set("Cache-Control", "private, no-store");
-  headers.set("Referrer-Policy", "no-referrer");
-  headers.set("Content-Disposition", contentDisposition(payload.path));
-  headers.set("Content-Type", headers.get("Content-Type") ?? "application/octet-stream");
   if (object.range) {
     const end = object.range.offset + object.range.length - 1;
     headers.set("Content-Range", `bytes ${object.range.offset}-${end}/${object.size}`);
@@ -852,6 +1002,62 @@ async function downloadObject(request: Request, env: DavisWorkerEnv): Promise<Re
     headers.set("Content-Length", String(object.size));
   }
   return new Response(object.body, { status: object.range ? 206 : 200, headers });
+}
+
+function downloadHeaders(payload: DownloadToken, etag: string): Headers {
+  return new Headers({
+    ETag: etag,
+    "Accept-Ranges": "bytes",
+    "Cache-Control": "private, no-store",
+    "Referrer-Policy": "no-referrer",
+    "Content-Disposition": contentDisposition(payload.path),
+    "Content-Type": contentTypeForPath(payload.path),
+  });
+}
+
+function parseByteRange(header: string | null, size: number): R2Range | "invalid" | null {
+  if (!header) return null;
+  const match = header.match(/^bytes=(\d*)-(\d*)$/u);
+  if (!match || (!match[1] && !match[2]) || size === 0) return "invalid";
+  if (!match[1]) {
+    const suffix = Number.parseInt(match[2], 10);
+    if (!Number.isSafeInteger(suffix) || suffix <= 0) return "invalid";
+    const length = Math.min(suffix, size);
+    return { offset: size - length, length };
+  }
+  const offset = Number.parseInt(match[1], 10);
+  const requestedEnd = match[2] ? Number.parseInt(match[2], 10) : size - 1;
+  if (!Number.isSafeInteger(offset) || !Number.isSafeInteger(requestedEnd)
+    || offset < 0 || requestedEnd < offset || offset >= size) return "invalid";
+  const end = Math.min(requestedEnd, size - 1);
+  return { offset, length: end - offset + 1 };
+}
+
+function byteRangeStream(range: R2Range): TransformStream<Uint8Array, Uint8Array> {
+  let position = 0;
+  const rangeEnd = range.offset + range.length;
+  return new TransformStream({
+    transform(chunk, controller) {
+      const chunkStart = position;
+      const chunkEnd = position + chunk.byteLength;
+      position = chunkEnd;
+      if (chunkEnd <= range.offset) return;
+      const start = Math.max(0, range.offset - chunkStart);
+      const end = Math.min(chunk.byteLength, rangeEnd - chunkStart);
+      if (end > start) controller.enqueue(chunk.slice(start, end));
+      if (chunkEnd >= rangeEnd) controller.terminate();
+    },
+  });
+}
+
+function contentTypeForPath(path: string): string {
+  const lower = path.toLowerCase();
+  if (lower.endsWith(".csv")) return "text/csv; charset=utf-8";
+  if (lower.endsWith(".json")) return "application/json; charset=utf-8";
+  if (lower.endsWith(".txt") || lower.endsWith(".md")) return "text/plain; charset=utf-8";
+  if (lower.endsWith(".pdf")) return "application/pdf";
+  if (lower.endsWith(".zip")) return "application/zip";
+  return "application/octet-stream";
 }
 
 function recordDownloadAttempt(
@@ -1039,6 +1245,9 @@ function validateAuthConfiguration(env: DavisWorkerEnv): Response | null {
   if (env.DAVIS_TOKEN_SECRET.length < 32) {
     return errorResponse(503, "authentication_unavailable", "Authentication secret is too short");
   }
+  if (env.DAVIS_LEGACY_GROUP_ID && !GROUP_ID_PATTERN.test(env.DAVIS_LEGACY_GROUP_ID)) {
+    return errorResponse(503, "authentication_unavailable", "Legacy access group is invalid");
+  }
   return null;
 }
 
@@ -1048,6 +1257,9 @@ function validateOperatorConfiguration(env: DavisWorkerEnv): Response | null {
   }
   if (env.DAVIS_TOKEN_SECRET.length < 32) {
     return errorResponse(503, "operator_authentication_unavailable", "Authentication secret is too short");
+  }
+  if (env.DAVIS_LEGACY_GROUP_ID && !GROUP_ID_PATTERN.test(env.DAVIS_LEGACY_GROUP_ID)) {
+    return errorResponse(503, "operator_authentication_unavailable", "Legacy access group is invalid");
   }
   return null;
 }
@@ -1204,6 +1416,42 @@ function isUploadedPart(value: unknown): value is { part_number: number; etag: s
 function objectKey(oid: string): string {
   const [algorithm, digest] = oid.split(":", 2);
   return `objects/${algorithm}/${digest.slice(0, 2)}/${digest.slice(2)}`;
+}
+
+function compressedObjectKey(oid: string): string {
+  const [algorithm, digest] = oid.split(":", 2);
+  return `objects-gzip/v1/${algorithm}/${digest.slice(0, 2)}/${digest.slice(2)}.gz`;
+}
+
+function isCompressedRepresentation(metadata: R2ObjectMetadata, object: OperatorObject): boolean {
+  return metadata.customMetadata?.davisFormat === COMPRESSED_OBJECT_FORMAT
+    && metadata.customMetadata.davisOid === object.oid
+    && metadata.customMetadata.davisOriginalSize === String(object.size);
+}
+
+function compressedDescriptor(
+  metadata: R2ObjectMetadata,
+  object: OperatorObject,
+): CompressedObjectDescriptor {
+  return {
+    format: COMPRESSED_OBJECT_FORMAT,
+    oid: object.oid,
+    original_size: object.size,
+    compressed_size: metadata.size,
+  };
+}
+
+async function findStoredRepresentation(
+  bucket: R2Bucket,
+  object: OperatorObject,
+): Promise<StoredRepresentation | "size_mismatch" | null> {
+  const compressed = await bucket.head(compressedObjectKey(object.oid));
+  if (compressed && isCompressedRepresentation(compressed, object)) {
+    return { kind: "gzip", metadata: compressed };
+  }
+  const raw = await bucket.head(objectKey(object.oid));
+  if (!raw) return compressed ? "size_mismatch" : null;
+  return raw.size === object.size ? { kind: "raw", metadata: raw } : "size_mismatch";
 }
 
 function contentDisposition(path: string): string {
