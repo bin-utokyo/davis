@@ -856,7 +856,7 @@ dependencies = [
 
 [[package]]
 name = "davis-app"
-version = "0.5.9"
+version = "0.5.10"
 dependencies = [
  "csv",
  "davis-cli",
@@ -875,7 +875,7 @@ dependencies = [
 
 [[package]]
 name = "davis-catalog"
-version = "0.5.9"
+version = "0.5.10"
 dependencies = [
  "blake3",
  "davis-core",
@@ -889,7 +889,7 @@ dependencies = [
 
 [[package]]
 name = "davis-cli"
-version = "0.5.9"
+version = "0.5.10"
 dependencies = [
  "blake3",
  "clap",
@@ -919,7 +919,7 @@ dependencies = [
 
 [[package]]
 name = "davis-core"
-version = "0.5.9"
+version = "0.5.10"
 dependencies = [
  "blake3",
  "jiff",
@@ -931,7 +931,7 @@ dependencies = [
 
 [[package]]
 name = "davis-document"
-version = "0.5.9"
+version = "0.5.10"
 dependencies = [
  "davis-core",
  "fullbleed",
@@ -940,7 +940,7 @@ dependencies = [
 
 [[package]]
 name = "davis-model-api"
-version = "0.5.9"
+version = "0.5.10"
 dependencies = [
  "semver",
  "serde",
@@ -952,7 +952,7 @@ dependencies = [
 
 [[package]]
 name = "davis-model-runner"
-version = "0.5.9"
+version = "0.5.10"
 dependencies = [
  "blake3",
  "csv",
@@ -965,7 +965,7 @@ dependencies = [
 
 [[package]]
 name = "davis-runtime"
-version = "0.5.9"
+version = "0.5.10"
 dependencies = [
  "blake3",
  "csv",
@@ -985,7 +985,7 @@ dependencies = [
 
 [[package]]
 name = "davis-storage"
-version = "0.5.9"
+version = "0.5.10"
 dependencies = [
  "davis-core",
  "futures",

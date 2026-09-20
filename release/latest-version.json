@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
-  "latest": "0.5.9",
+  "latest": "0.5.10",
   "minimum_supported": "0.5.0",
   "released_at": "2026-09-20",
-  "release_url": "https://github.com/bin-utokyo/davis/releases/tag/v0.5.9",
+  "release_url": "https://github.com/bin-utokyo/davis/releases/tag/v0.5.10",
   "message": {
-    "ja": "アクセスグループによるdataset権限管理と，端末側gzip圧縮・透過解凍によるR2容量削減に対応しました．",
-    "en": "Adds access-group dataset permissions and R2 storage savings through client-side gzip compression with transparent decoding."
+    "ja": "login中のaccess group表示とCLI session status確認を追加し，多数のfile選択時にWebの選択barが一覧を遮る問題を修正しました．",
+    "en": "Displays the active access group, adds CLI session status, and keeps the Web file list usable behind the selection bar."
   }
 }
